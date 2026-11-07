@@ -25,7 +25,7 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-import { suppressAndProposeStageEffect } from "../../jobs/stages/propose";
+import { suppressAndProposeStageEffect } from "../suppress-and-propose";
 
 async function log() {
   const rows = await listAllActivity();

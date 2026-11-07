@@ -35,11 +35,11 @@ vi.mock("@watchdog/caps", () => ({
   }),
 }));
 
-vi.mock("../../evidence/evidence", () => ({
+vi.mock("../../graph/graph-evidence", () => ({
   assertEvidenceIdsInCaseEffect: () => Effect.void,
 }));
 
-vi.mock("../../graph/patch/guards", () => ({
+vi.mock("../../cases/access", () => ({
   assertCaseInOrgEffect: (caseId: string) => Effect.succeed(caseId.trim()),
   assertEntityInCaseEffect: (_caseId: string, entityId: string) =>
     Effect.succeed(entityId.trim()),

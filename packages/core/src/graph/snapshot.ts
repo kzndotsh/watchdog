@@ -13,13 +13,13 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import type { Db } from "../infra/db-service";
-import { graphSnapshotRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-} from "./patch/guards";
+} from "../cases/access";
+import type { Db } from "../infra/db-service";
+import { graphSnapshotRepoFxDb } from "../infra/repos-fx";
+import type { DomainTag } from "../infra/tagged-errors";
 
 export type GraphSnapshotEntity = {
   readonly id: string;

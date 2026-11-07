@@ -17,21 +17,23 @@ import type {
 } from "@watchdog/schemas/shared";
 import { trimmedOrNull } from "@watchdog/schemas/shared";
 
-import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
+import { dossierChannel } from "../activity/graph-activity";
+import {
+  assertEntityInCaseEffect,
+  requireTrimmedGraphId,
+} from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
-import { dossierChannel } from "./graph-activity";
+import {
+  parseGraphEvidenceIdsEffect,
+  assertConfidenceEvidenceEffect,
+} from "./graph-evidence";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   identifiersTable,
   toIdentifierRecord,
   type IdentifierRecord,
 } from "./mutation/tables";
-import {
-  assertConfidenceEvidenceEffect,
-  assertEntityInCaseEffect,
-  requireTrimmedGraphId,
-} from "./patch/guards";
 
 export type { IdentifierRecord };
 

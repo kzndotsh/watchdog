@@ -69,8 +69,11 @@ vi.mock("@watchdog/core/export", () => ({
   requireRawBodyOptInEffect: optInMock,
   requireBreachCredentialOptInEffect: breachOptInMock,
   measureCaseExportEffect: measureMock,
-  startCaseExportJobEffect: startJobMock,
   writeCaseExportZipEffect: writeZipMock,
+}));
+
+vi.mock("@watchdog/core/jobs", () => ({
+  startCaseExportJobEffect: startJobMock,
   caseExportLinkEffect: linkMock,
 }));
 

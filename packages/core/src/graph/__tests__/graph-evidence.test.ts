@@ -1,14 +1,18 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy";
+import { CONFIDENCE_TIERS } from "@watchdog/schemas/shared";
 import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain";
+import { InvalidError } from "../../infra/tagged-errors";
 import {
+  assertConfidenceEvidenceEffect,
   assertEvidenceIdsInCaseEffect,
   parseGraphEvidenceIdsEffect,
-} from "../evidence";
+} from "../graph-evidence";
 
 const listIdsInCase = vi.fn();
 
@@ -95,5 +99,38 @@ describe("parseGraphEvidenceIdsEffect", () => {
       parseGraphEvidenceIdsEffect([`  ${evidenceId}  `])
     );
     expect(parsed).toEqual([evidenceId]);
+  });
+});
+
+describe("assertConfidenceEvidenceEffect", () => {
+  it("refuses confirmed without Evidence as an InvalidError carrying the policy message", async () => {
+    const failure = await Effect.runPromise(
+      Effect.flip(assertConfidenceEvidenceEffect("confirmed", []))
+    );
+    expect(failure).toBeInstanceOf(InvalidError);
+    expect(failure.message).toBe(CONFIRMED_REQUIRES_EVIDENCE);
+  });
+
+  it("counts every id: one is enough, more are fine", async () => {
+    await expect(
+      Effect.runPromise(
+        assertConfidenceEvidenceEffect("confirmed", [testId(1)])
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      Effect.runPromise(
+        assertConfidenceEvidenceEffect("confirmed", [testId(1), testId(2)])
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  it("never asks a lower tier for Evidence", async () => {
+    for (const confidence of CONFIDENCE_TIERS) {
+      if (confidence === "confirmed") continue;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one tier at a time names the failing tier
+      await expect(
+        Effect.runPromise(assertConfidenceEvidenceEffect(confidence, []))
+      ).resolves.toBeUndefined();
+    }
   });
 });

@@ -7,8 +7,6 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 import {
-  parseGraphUuidList,
-  parseTrimmedCaseId,
   parseTrimmedUuid,
   trimmedOrNull,
   trimmedOrUndefined,
@@ -25,15 +23,13 @@ import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
-} from "../graph/patch/guards";
+} from "../cases/access";
 import { createPresignedGetEffect, uploadArtifactEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
-import { onExec } from "../infra/repo-fx";
 import { evidenceRepoFxDb, evidenceRepoFx } from "../infra/repos-fx";
 import {
-  boundEchoedId,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -381,51 +377,4 @@ export function createAttestationEffect(
         : yield* createCapturedEvidenceEffect(input.tx, scopedCaseId, values);
     return yield* labeledEvidence(row);
   });
-}
-
-const INVALID_GRAPH_EVIDENCE_IDS = "One or more Evidence ids are invalid";
-const EVIDENCE_NOT_IN_CASE =
-  "One or more Evidence ids are missing or not in this Case";
-
-/** Reject when any non-empty evidence id is not a valid graph UUID. */
-export function parseGraphEvidenceIdsEffect(
-  evidenceIds: Iterable<string | null | undefined>
-): Effect.Effect<string[], DomainTag> {
-  const unique = parseGraphUuidList(evidenceIds);
-  if (unique === null) {
-    return new InvalidError({
-      reason: INVALID_GRAPH_EVIDENCE_IDS,
-    });
-  }
-  return Effect.succeed(unique);
-}
-
-/** Assert each id exists in Case Evidence (hidden rows allowed for graph citations). */
-export function assertEvidenceIdsInCaseEffect(
-  caseId: CaseId,
-  evidenceIds: string[],
-  exec?: DbExec
-): Effect.Effect<void, DomainTag, Db> {
-  const scopedCaseId = parseTrimmedCaseId(caseId);
-  if (scopedCaseId === null) {
-    return new NotFoundError({ entity: "Case", id: boundEchoedId(caseId) });
-  }
-  const unique = parseGraphUuidList(evidenceIds);
-  if (unique === null) {
-    return new InvalidError({
-      reason: INVALID_GRAPH_EVIDENCE_IDS,
-    });
-  }
-  if (unique.length === 0) return Effect.void;
-  return onExec(exec, (handle) =>
-    evidenceRepoFx.listIdsInCase(handle, scopedCaseId, unique)
-  ).pipe(
-    Effect.flatMap((rows) =>
-      rows.length === unique.length
-        ? Effect.void
-        : new InvalidError({
-            reason: EVIDENCE_NOT_IN_CASE,
-          })
-    )
-  );
 }

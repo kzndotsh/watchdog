@@ -29,7 +29,7 @@ export {
 } from "./lifecycle/reconcile";
 export { JobFibers, type JobFibersApi } from "./job-fibers";
 export { interruptOnQueueSignal } from "./queue-signal";
-export { jobActivityLabel } from "./job-display";
+export { jobActivityLabel } from "../display/job-display";
 export {
   executeJobOnMap,
   type JobRunOutcome,
@@ -55,6 +55,7 @@ export {
   type CollectQueueTitles,
 } from "./collect-list";
 export { cancelJobEffect, cancelPlaybookRunEffect } from "./cancel-jobs";
+export { cancelWithin, type CancelOutcome } from "./lifecycle/cancel";
 export {
   runPlaybookEffect,
   type RunPlaybookInput,
@@ -73,4 +74,16 @@ export {
   type ProviderCallRecord,
   type ProviderCallRequestBody,
   type ProviderCallResponse,
-} from "./provider-call-view";
+} from "../evidence/provider-call-view";
+export {
+  processEvidenceEffect,
+  markEvidenceProcessedEffect,
+  enrichUrlEvidenceEffect,
+} from "./process-evidence";
+export {
+  caseExportLinkEffect,
+  startCaseExportJobEffect,
+  type CaseExportLink,
+  type StartCaseExportInput,
+  type StartedCaseExport,
+} from "./export-job";

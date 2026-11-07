@@ -33,8 +33,6 @@ vi.mock("@watchdog/core/evidence", async (importOriginal) => {
     presignUploadEffect,
     confirmFileUploadEffect: vi.fn(),
     getEvidenceDownloadUrlEffect: vi.fn(),
-    processEvidenceEffect: vi.fn(),
-    enrichUrlEvidenceEffect: vi.fn(),
   };
 });
 

@@ -20,6 +20,7 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
+import { assertCaseInOrgEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
@@ -33,7 +34,6 @@ import {
   type EventRecord,
   type QuestionRecord,
 } from "./mutation/tables";
-import { assertCaseInOrgEffect } from "./patch/guards";
 
 /*
  * The Case-wide lists of an Entity's children (ADR-0007): Claims, Events, Questions and

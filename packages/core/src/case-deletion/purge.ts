@@ -3,9 +3,9 @@ import { Cause, Effect } from "effect";
 import type { CasePurgeCounts } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
+import { setHistoryContextEffect } from "../activity/graph-activity";
 import { optionalActorId } from "../actors/require-actor-id";
-import { setHistoryContextEffect } from "../graph/graph-activity";
-import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
+import { requireTrimmedCaseIdEffect } from "../cases/access";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";

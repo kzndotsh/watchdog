@@ -5,18 +5,20 @@ import {
   confirmFileUploadEffect,
   dumpPasteEffect,
   dumpUrlEffect,
-  enrichUrlEvidenceEffect,
   getEvidenceDownloadUrlEffect,
   getEvidenceEffect,
   listEvidenceEffect,
   listEvidencePickerEffect,
   presignUploadEffect,
-  processEvidenceEffect,
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
   getEvidenceByIdsEffect,
 } from "@watchdog/core/evidence";
-import { listEvidenceProviderCallsEffect } from "@watchdog/core/jobs";
+import {
+  enrichUrlEvidenceEffect,
+  listEvidenceProviderCallsEffect,
+  processEvidenceEffect,
+} from "@watchdog/core/jobs";
 import {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,

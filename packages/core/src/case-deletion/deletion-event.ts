@@ -7,7 +7,7 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import { appendGraphActivityEffect } from "../graph/graph-activity";
+import { appendGraphActivityEffect } from "../activity/graph-activity";
 import { requireWritten } from "../infra/postgres-effect";
 import { caseDeletionRecordsRepoFx } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";

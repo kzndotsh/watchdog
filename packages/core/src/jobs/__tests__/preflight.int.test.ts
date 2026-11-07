@@ -2,7 +2,7 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { capVersion } from "@watchdog/caps";
-import { deleteCaseEffect } from "@watchdog/core/cases";
+import { deleteCaseEffect } from "@watchdog/core/case-deletion";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, jobsRepo } from "@watchdog/db";

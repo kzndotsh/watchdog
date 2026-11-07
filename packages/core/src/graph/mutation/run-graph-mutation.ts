@@ -9,9 +9,17 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import {
-  assertEvidenceIdsInCaseEffect,
-  parseGraphEvidenceIdsEffect,
-} from "../../evidence/evidence";
+  appendGraphActivityEffect,
+  graphActorFields,
+  setHistoryContextEffect,
+  type GraphActivityInput,
+  type GraphActivityKind,
+} from "../../activity/graph-activity";
+import {
+  assertCaseInOrgEffect,
+  requireTrimmedCaseIdEffect,
+  requireTrimmedGraphId,
+} from "../../cases/access";
 import type { Db } from "../../infra/db-service";
 import {
   requireWritten,
@@ -30,17 +38,9 @@ import {
   type VersionedEntity,
 } from "../../infra/tagged-errors";
 import {
-  appendGraphActivityEffect,
-  graphActorFields,
-  setHistoryContextEffect,
-  type GraphActivityInput,
-  type GraphActivityKind,
-} from "../graph-activity";
-import {
-  assertCaseInOrgEffect,
-  requireTrimmedCaseIdEffect,
-  requireTrimmedGraphId,
-} from "../patch/guards";
+  assertEvidenceIdsInCaseEffect,
+  parseGraphEvidenceIdsEffect,
+} from "../graph-evidence";
 import type {
   GraphTable,
   GraphTransition,

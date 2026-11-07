@@ -1,4 +1,9 @@
 export {
+  assertCaseExistsUncheckedEffect,
+  assertCaseInOrgEffect,
+  assertEntityInCaseEffect,
+} from "./access";
+export {
   createCaseEffect,
   listCasesEffect,
   resolveActiveCaseEffect,
@@ -16,23 +21,3 @@ export {
   type CaseCounts,
 } from "./counts";
 export { caseRetentionDays, daysUntilPurge, purgeDueAt } from "./retention";
-export {
-  deleteCaseEffect,
-  getDeletedCaseBySlugEffect,
-  getDeletionPolicyEffect,
-  listDeletedCasesEffect,
-  restoreCaseEffect,
-  type CaseActor,
-  type DeletedCaseRecord,
-  type RestoredCaseRecord,
-  type DeletionPolicy,
-} from "./tombstone";
-export {
-  deleteOrganizationCasesEffect,
-  PURGE_BATCH,
-  purgeCaseEffect,
-  purgeExpiredCasesEffect,
-  purgeTombstonedCaseEffect,
-  type PurgeOutcome,
-  type PurgeRunSummary,
-} from "./purge";

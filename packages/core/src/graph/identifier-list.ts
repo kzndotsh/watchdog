@@ -10,13 +10,13 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
+import { assertCaseInOrgEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { toCaseIdentifierRecord } from "./identifiers";
 import type { CaseIdentifierRecord } from "./identifiers";
-import { assertCaseInOrgEffect } from "./patch/guards";
 
 /** Rows to wire records, with each Identifier's Evidence ids. */
 function identifierItems(

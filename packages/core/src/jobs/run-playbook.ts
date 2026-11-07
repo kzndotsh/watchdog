@@ -29,11 +29,11 @@ import {
   BREACH_DISABLED_MESSAGE,
   breachCapsEnabled,
 } from "../caps/breach-caps";
-import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-} from "../graph/patch/guards";
+} from "../cases/access";
+import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";

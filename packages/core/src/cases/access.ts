@@ -1,29 +1,22 @@
 import { Effect } from "effect";
 
 import type { DbExec } from "@watchdog/db";
-import { confirmedEvidenceViolation } from "@watchdog/policy";
 import {
   parseTrimmedCaseId,
   parseTrimmedUuid,
   type CaseId,
-  type ConfidenceTier,
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import type { Db } from "../../infra/db-service";
-import { onExec } from "../../infra/repo-fx";
-import {
-  casesRepoFx,
-  entitiesRepoFx,
-  evidenceRepoFx,
-} from "../../infra/repos-fx";
+import type { Db } from "../infra/db-service";
+import { onExec } from "../infra/repo-fx";
+import { casesRepoFx, entitiesRepoFx, evidenceRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
-  InvalidError,
   NotFoundError,
   type DomainTag,
   type NotFoundEntity,
-} from "../../infra/tagged-errors";
+} from "../infra/tagged-errors";
 
 /** Trim a graph id or fail not_found — use before repo queries that key on the id. */
 export function requireTrimmedGraphId(
@@ -130,16 +123,4 @@ export function assertEvidenceInCaseEffect(
     }
     return trimmedEvidenceId;
   });
-}
-
-export function assertConfidenceEvidenceEffect(
-  confidence: ConfidenceTier,
-  evidenceIds: string[]
-): Effect.Effect<void, DomainTag> {
-  const reason = confirmedEvidenceViolation({
-    confidence,
-    evidenceCount: evidenceIds.length,
-  });
-  if (reason !== null) return new InvalidError({ reason });
-  return Effect.void;
 }

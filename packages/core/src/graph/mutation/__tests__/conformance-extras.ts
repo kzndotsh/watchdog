@@ -5,8 +5,8 @@ import { runDomain } from "@watchdog/core/infra";
 import { listAllActivity, listAllGraphHistory } from "@watchdog/test-db";
 import { rendezvous, testId } from "@watchdog/test-kit";
 
+import { setHistoryContextEffect } from "../../../activity/graph-activity";
 import { transact } from "../../../infra/postgres-tx";
-import { setHistoryContextEffect } from "../../graph-activity";
 import { runGraphMutationInTx } from "../run-graph-mutation";
 import {
   ACTOR,

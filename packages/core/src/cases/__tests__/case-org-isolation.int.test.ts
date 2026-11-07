@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listRecentActivityEffect } from "@watchdog/core/activity";
 import {
   createCaseEffect,
   getCaseByIdEffect,
@@ -9,6 +8,7 @@ import {
 } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import { listEvidenceEffect } from "@watchdog/core/evidence";
+import { listRecentActivityEffect } from "@watchdog/core/feed";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { listJobsForCaseEffect } from "@watchdog/core/jobs";

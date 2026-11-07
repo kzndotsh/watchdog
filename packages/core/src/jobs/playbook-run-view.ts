@@ -15,10 +15,7 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import {
-  assertCaseInOrgEffect,
-  requireTrimmedGraphId,
-} from "../graph/patch/guards";
+import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { jobsRepoFxDb, playbookRunsRepoFxDb } from "../infra/repos-fx";
 import {

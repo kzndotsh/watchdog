@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
 import {
-  createCaseEffect,
   deleteCaseEffect,
   deleteOrganizationCasesEffect,
+} from "@watchdog/core/case-deletion";
+import {
+  createCaseEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
   updateCaseEffect,
