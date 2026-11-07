@@ -12,7 +12,10 @@ import { claimListView, claimsKeys } from "@/domains/entities/claims/queries";
 import { edgeListView, edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventListView, eventsKeys } from "@/domains/entities/events/queries";
-import { historyKeys } from "@/domains/entities/history/queries";
+import {
+  graphHistoryListView,
+  historyKeys,
+} from "@/domains/entities/history/queries";
 import {
   identifierListView,
   identifiersKeys,
@@ -102,6 +105,7 @@ const factories: readonly Factory[] = [
   factory("eventsKeys", eventsKeys.all(CASE), eventsKeys, () => []),
   factory("historyKeys", historyKeys.all(CASE), historyKeys, (k) => [
     k.row(CASE, "claim", ID),
+    k.attribution(CASE, "claim", ID),
   ]),
   factory(
     "identifiersKeys",
@@ -199,6 +203,11 @@ const listViews: readonly (readonly [string, Key, Key])[] = [
   ],
   ["deletedCaseListView", casesKeys.all, deletedCaseListView.prefix({})],
   ["activityListView", activityKeys.all, activityListView.prefix({})],
+  [
+    "graphHistoryListView",
+    historyKeys.row(CASE, "claim", ID),
+    graphHistoryListView.prefix({ caseId: CASE, kind: "claim", rowId: ID }),
+  ],
 ];
 
 function startsWith(key: Key, prefix: Key): boolean {

@@ -8,6 +8,7 @@ import { edgeListRepo } from "../repos/edge-list.repo";
 import { entityListRepo } from "../repos/entity-list.repo";
 import { eventListRepo } from "../repos/event-list.repo";
 import { evidenceListRepo } from "../repos/evidence-list.repo";
+import { graphHistoryListRepo } from "../repos/graph-history-list.repo";
 import { graphWriteListRepo } from "../repos/graph-write-list.repo";
 import { identifierListRepo } from "../repos/identifier-list.repo";
 import { jobListRepo } from "../repos/job-list.repo";
@@ -37,4 +38,5 @@ export const LIST_REPOS: readonly AnyListRepo[] = [
   jobListRepo,
   graphWriteListRepo,
   activityListRepo,
+  graphHistoryListRepo,
 ];

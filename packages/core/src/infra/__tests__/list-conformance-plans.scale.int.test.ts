@@ -32,7 +32,7 @@ import { runDomainWith } from "../run-domain";
  *
  * - Without `q`, every declared sort and direction, first and second page, is index-ordered:
  *   no Sort node, and the index scanned leads with the scope column then the sort key (with the
- *   binding's `sortLead` column between them, when every read compares one by equality).
+ *   binding's `sortLeads` columns between them, when every read compares them by equality).
  * - Without `q`, each filter alone under the default sort has no Sort node; a `selective` filter
  *   scans an index led by its column (or by the scope column, then its column). An either-column
  *   filter (`selectiveEither`: a Connection's `entityId`, at `from_id` or `to_id`) may Sort the
@@ -65,6 +65,23 @@ const fieldOfColumn = (column: string) =>
 if (PERF_URL === undefined && process.env.CI === "true") {
   throw new Error("WD_PERF_DATABASE_URL is required in CI (the plan gate)");
 }
+
+/**
+ * The rest of a list's scope beyond the Case, from the perf seed: row history is read for one
+ * Graph row, the one of `perf-case-1` with the longest history (so a second page exists).
+ */
+const SCOPE_EXTRAS: Readonly<
+  Record<
+    string,
+    (planDb: PlanDb, caseId: string) => Promise<Record<string, string>>
+  >
+> = {
+  "graph-history": async (planDb, caseId) => {
+    const row = await planDb.longestHistoryRow(caseId);
+    expect(row, `a history row in ${PERF_CASE}`).not.toBeNull();
+    return { kind: row?.kind ?? "", rowId: row?.rowId ?? "" };
+  },
+};
 
 const report: Record<string, unknown> = {};
 
@@ -147,8 +164,9 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       if (def.context === undefined) {
         const caseId = (await planDb.caseIdBySlug(PERF_CASE)) ?? "";
         expect(caseId, `${PERF_CASE} in the perf seed`).not.toBe("");
-        scope = { caseId };
-        wireScope = { caseId };
+        const extras = (await SCOPE_EXTRAS[def.name]?.(planDb, caseId)) ?? {};
+        scope = { caseId, ...extras };
+        wireScope = { caseId, ...extras };
         scopeValue = caseId;
       } else {
         scope = { organizationId: PERF_ORG };
@@ -183,17 +201,17 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
             expect(plan.sorts, `${value}: no Sort node`).toEqual([]);
             expect(
               plan.indexes.some((keys) => {
-                const lead = indexNeeds.sortLead;
-                const sortAt = lead === undefined ? 1 : 2;
+                const leads = indexNeeds.sortLeads;
+                const sortAt = leads.length + 1;
                 return (
                   keys[0] === indexNeeds.scopeColumn &&
-                  (lead === undefined || keys[1] === lead) &&
+                  leads.every((lead, index) => keys[index + 1] === lead) &&
                   (keys[sortAt] ?? "").includes(
                     indexNeeds.sortColumns[key] ?? "?"
                   )
                 );
               }),
-              `${value}: led by (${[indexNeeds.scopeColumn, indexNeeds.sortLead, indexNeeds.sortColumns[key]].filter((part) => part !== undefined).join(", ")}), used ${plan.names.join(", ")}`
+              `${value}: led by (${[indexNeeds.scopeColumn, ...indexNeeds.sortLeads, indexNeeds.sortColumns[key]].join(", ")}), used ${plan.names.join(", ")}`
             ).toBe(true);
           }
           plans[value] = { first: first.names, second: second.names };

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { trimmedCaseIdSchema } from "./ids";
 import { jsonObjectSchema } from "./json-wire";
+import { defineList } from "./lists/define-list";
 import { trimmedUuidSchema } from "./primitives";
 import {
   GRAPH_HISTORY_CHANNELS,
@@ -9,30 +10,40 @@ import {
   GRAPH_HISTORY_OPS,
 } from "./vocab";
 
-/** Largest page `listGraphHistory` returns; a larger `limit` is rejected, not clamped. */
-export const GRAPH_HISTORY_PAGE_MAX = 100;
-export const GRAPH_HISTORY_PAGE_DEFAULT = 25;
-
 /** A row's snapshot: the JSON a Graph row had at that moment (dates as ISO text). */
 export const graphHistorySnapshotSchema = jsonObjectSchema;
 export type GraphHistorySnapshot = z.output<typeof graphHistorySnapshotSchema>;
 
-export const listGraphHistoryInputSchema = z.object({
+/** The scope of one row's history: its Case, its kind and its id. */
+const graphHistoryScopeSchema = z.object({
   caseId: trimmedCaseIdSchema,
   kind: z.enum(GRAPH_HISTORY_KINDS),
   rowId: trimmedUuidSchema,
-  /** Opaque cursor from the previous page's `nextCursor`; omit for the newest entries. */
-  cursor: z.string().trim().min(1).max(32).optional(),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(GRAPH_HISTORY_PAGE_MAX)
-    .default(GRAPH_HISTORY_PAGE_DEFAULT),
 });
-export type ListGraphHistoryInput = z.output<
-  typeof listGraphHistoryInputSchema
->;
+
+/** The row a history or its attribution is asked for. */
+export const graphHistoryRowInputSchema = graphHistoryScopeSchema;
+export type GraphHistoryRowInput = z.output<typeof graphHistoryRowInputSchema>;
+
+/**
+ * One Graph row's history (ADR-0007): every create, update, retract and delete of one Entity,
+ * Edge, Claim, Identifier, Event, Question or Task, newest first. The scope is the row (Case,
+ * kind, id); there is no filter and no search, and the one sort is the history id itself, in
+ * both directions (`graph_history_case_row_idx` is `(case_id, kind, row_id, id desc)`). A row's
+ * id is the history's bigint, so the cursor carries digits, not a uuid.
+ */
+export const graphHistoryList = defineList({
+  name: "graph-history",
+  noun: { one: "change", many: "changes" },
+  scope: graphHistoryScopeSchema,
+  idType: "int",
+  filters: {},
+  sorts: {
+    change: { label: "Change", type: "int", dirs: ["desc", "asc"] },
+  },
+  defaultSort: "change.desc",
+  limit: { default: 25, max: 100 },
+});
 
 export const graphHistoryEntrySchema = z.object({
   id: z.number().int().positive(),
@@ -65,21 +76,3 @@ export const graphHistoryAttributionSchema = z.object({
 export type GraphHistoryAttribution = z.output<
   typeof graphHistoryAttributionSchema
 >;
-
-export const graphHistoryPageSchema = z.object({
-  /** The live row's authorship; null once the row is deleted (its history stays). */
-  attribution: graphHistoryAttributionSchema.nullable(),
-  items: z.array(graphHistoryEntrySchema),
-  /** Pass as `cursor` for the next (older) page; null on the last page. */
-  nextCursor: z.string().nullable(),
-});
-export type GraphHistoryPage = z.output<typeof graphHistoryPageSchema>;
-
-const CURSOR_PATTERN = /^[1-9]\d{0,15}$/;
-
-/** Parse a history cursor (a row id); null when malformed. */
-export function parseGraphHistoryCursor(raw: string): number | null {
-  if (!CURSOR_PATTERN.test(raw)) return null;
-  const id = Number(raw);
-  return Number.isSafeInteger(id) ? id : null;
-}

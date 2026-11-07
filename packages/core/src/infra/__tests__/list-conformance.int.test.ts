@@ -184,12 +184,14 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
       const first = await pageOf(inputOf({ sort: firstSort }));
       const cursor = first.nextCursor;
       if (cursor === null) throw new Error("expected a second page");
+      // A list with no filter (row history) has none to change the view with.
       const [filterKey, sample] = Object.entries(fixture.samples)[0] ?? [];
-      if (filterKey === undefined) throw new Error("expected a filter sample");
 
       const stale = [
         inputOf({ sort: secondSort, cursor }),
-        inputOf({ sort: firstSort, cursor, [filterKey]: sample?.[0] }),
+        ...(filterKey === undefined
+          ? []
+          : [inputOf({ sort: firstSort, cursor, [filterKey]: sample?.[0] })]),
         // A list that declares no search has no `q` to change the view with.
         ...(def.search === undefined
           ? []

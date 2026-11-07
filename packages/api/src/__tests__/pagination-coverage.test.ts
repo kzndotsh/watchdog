@@ -62,19 +62,6 @@ const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
     "the Dashboard's due list: the first TASK_DUE_LIST_LIMIT (8) open Tasks overdue or due soon and their capped total; the full set is the board",
 };
 
-/**
- * Paged procedures that are not declared lists (ADR-0007): the one named legacy feed, with
- * its reason (`apps/web`'s infinite query for the web feed is exempt in `oxlint.config.ts`
- * by the same name). Every other
- * procedure that returns a page takes a `LIST_DEFS` member's `input` and returns a list page
- * (`total` beside `items` and `nextCursor`): a hand-rolled paged procedure fails this file until
- * its list is declared or it is listed here.
- */
-const NOT_DECLARED: Readonly<Record<string, string>> = {
-  "history.list":
-    "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
-};
-
 function procedureAt(path: string) {
   let current: unknown = router;
   for (const key of path.split(".")) {
@@ -257,7 +244,6 @@ describe("paged lists are declared lists", () => {
 
   it("takes a declared list's input and returns a list page with a total", () => {
     for (const path of paged) {
-      if (path in NOT_DECLARED) continue;
       const procedure = procedureAt(path);
       const output = unwrap(procedure?.["~orpc"].outputSchema);
       expect(
@@ -268,17 +254,6 @@ describe("paged lists are declared lists", () => {
         output instanceof z.ZodObject && "total" in output.shape,
         `${path} returns total`
       ).toBe(true);
-    }
-  });
-
-  it("keeps every undeclared entry a real paged procedure without a total", () => {
-    for (const path of Object.keys(NOT_DECLARED)) {
-      expect(paged, `${path} is a paged procedure`).toContain(path);
-      const output = unwrap(procedureAt(path)?.["~orpc"].outputSchema);
-      expect(
-        output instanceof z.ZodObject && "total" in output.shape,
-        `${path} returns total: declare it and drop the entry`
-      ).toBe(false);
     }
   });
 

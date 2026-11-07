@@ -124,26 +124,30 @@ describe.each(LIST_DEFS.map((def) => [def.name, def] as const))(
       );
     });
 
-    it("never makes an input the wire rejects through withFilter", () => {
-      const edit = fc.oneof(
-        ...Object.entries(def.filters).map(([key, filter]) =>
-          queryValueArb(filter).map((value) => ({ key, value }))
-        )
-      );
-      fc.assert(
-        fc.property(
-          rawSearchArb(def),
-          fc.array(edit, { maxLength: 6 }),
-          (raw, edits) => {
-            let query = ops.queryOf(url.parse(raw));
-            for (const { key, value } of edits)
-              query = ops.withFilter(query, key, value);
-            const input = { caseId: testCaseId(1), ...ops.toSearch(query) };
-            expect(def.input.safeParse(input).success).toBe(true);
-          }
-        )
-      );
-    });
+    // A list with no filter (row history) has none to set.
+    it.skipIf(Object.keys(def.filters).length === 0)(
+      "never makes an input the wire rejects through withFilter",
+      () => {
+        const edit = fc.oneof(
+          ...Object.entries(def.filters).map(([key, filter]) =>
+            queryValueArb(filter).map((value) => ({ key, value }))
+          )
+        );
+        fc.assert(
+          fc.property(
+            rawSearchArb(def),
+            fc.array(edit, { maxLength: 6 }),
+            (raw, edits) => {
+              let query = ops.queryOf(url.parse(raw));
+              for (const { key, value } of edits)
+                query = ops.withFilter(query, key, value);
+              const input = { caseId: testCaseId(1), ...ops.toSearch(query) };
+              expect(def.input.safeParse(input).success).toBe(true);
+            }
+          )
+        );
+      }
+    );
 
     it("writes a flag to the URL only as true, and a short q never", () => {
       fc.assert(

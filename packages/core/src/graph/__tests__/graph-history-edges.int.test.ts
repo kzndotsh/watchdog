@@ -150,7 +150,7 @@ describe("Graph history edge cases", () => {
     }
   });
 
-  it("never reads another Case's row, with or without a cursor", async () => {
+  it("never reads another Case's row, and no cursor opens it", async () => {
     const mine = await seedCase(db, { slug: "mine" });
     const theirs = await seedCase(db, {
       slug: "theirs",
@@ -171,8 +171,8 @@ describe("Graph history edge cases", () => {
         (error: unknown) => (isDomainTag(error) ? error.code : "other")
       );
     expect(await outcome()).toBe("not_found");
-    expect(await outcome("1")).toBe("not_found");
-    expect(await outcome("999999")).toBe("not_found");
+    // a cursor of this list is for one row (its view's fingerprint): a made-up one never lists
+    expect(await outcome("1")).toBe("invalid");
   });
 });
 

@@ -116,6 +116,7 @@ describe("declared scopes", () => {
         "graph.snapshot": "cases:read",
         "graph.write": "graph:write",
         "health": "public",
+        "history.attribution": "cases:read",
         "history.list": "cases:read",
         "identifiers.create": "graph:write",
         "identifiers.delete": "graph:write",

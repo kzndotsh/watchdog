@@ -7,6 +7,7 @@ import { edgeList } from "../edge-list";
 import { entityList } from "../entity-list";
 import { eventList } from "../event-list";
 import { evidenceList } from "../evidence-list";
+import { graphHistoryList } from "../graph-history";
 import { graphWriteList } from "../graph-write-list";
 import { identifierList } from "../identifier-list";
 import { jobList } from "../job-list";
@@ -36,4 +37,5 @@ export const LIST_DEFS: readonly AnyListDef[] = [
   jobList,
   graphWriteList,
   activityList,
+  graphHistoryList,
 ];

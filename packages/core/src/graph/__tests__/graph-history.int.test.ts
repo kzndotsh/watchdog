@@ -10,6 +10,7 @@ import {
   createIdentifierEffect,
   createQuestionEffect,
   deleteEntityEffect,
+  graphRowAttributionEffect,
   listGraphHistoryEffect,
   updateClaimEffect,
   updateEntityFieldsEffect,
@@ -533,7 +534,15 @@ describe("listing a row's history", () => {
         limit: 10,
       })
     );
-    expect(page.attribution).toBeNull();
+    expect(
+      await runDomain(
+        graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
+          caseId: cased.id,
+          kind: "entity",
+          rowId: entity.id,
+        })
+      )
+    ).toBeNull();
     expect(page.items.map((entry) => entry.op)).toEqual([
       "delete",
       "update",
@@ -560,25 +569,43 @@ describe("listing a row's history", () => {
       actorName: null,
     });
     expect(page.nextCursor).toBeNull();
-    expect(page.attribution).toMatchObject({
-      createdBy: null,
-      updatedBy: null,
-    });
-    expect(page.attribution?.createdAt).not.toBe("");
+    const attribution = await runDomain(
+      graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
+        caseId: cased.id,
+        kind: "entity",
+        rowId: seeded.id,
+      })
+    );
+    expect(attribution).toMatchObject({ createdBy: null, updatedBy: null });
+    expect(attribution?.createdAt).not.toBe("");
+  });
+
+  it("answers not_found for the authors of a row this Case never had", async () => {
+    const { cased } = await entityWithEdits(0);
+    await expect(
+      runDomain(
+        graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
+          caseId: cased.id,
+          kind: "entity",
+          rowId: testId(4040),
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
   });
 
   it("names the live row's creator and last editor", async () => {
     const { cased, entity } = await entityWithEdits(1);
-    const page = await runDomain(
-      listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
+    const attribution = await runDomain(
+      graphRowAttributionEffect(TEST_ORGANIZATION_ID, {
         caseId: cased.id,
         kind: "entity",
         rowId: entity.id,
-        limit: 10,
       })
     );
     // no auth.user row exists for the test actor, so the label falls back to its id
-    expect(page.attribution).toMatchObject({
+    expect(attribution).toMatchObject({
       createdBy: TEST_ACTOR_ID,
       updatedBy: TEST_ACTOR_ID,
     });
