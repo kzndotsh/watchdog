@@ -31,7 +31,8 @@ export type CollectFetchEnv = {
 
 /**
  * How a Case Export carries a breach Cap's snapshot: `"unchanged"` for a snapshot with no
- * credentials (parsed, so unknown content is refused, and kept), or a transform that cuts the
+ * credentials (parsed with the Cap's schema: keys off the schema are dropped, a type mismatch is
+ * refused), or a transform that cuts the
  * credential fields to their safe-mode attributes.
  */
 export type BreachExportRedaction<TSnap> =
@@ -76,7 +77,8 @@ function exportRedactorFor<TSnap>(
       redaction === "unchanged"
         ? parsed.data
         : redaction(parsed.data, fingerprint);
-    return JSON.stringify(out, null, 2);
+    // `JSON.stringify` answers undefined for an undefined value: withhold it, never write it.
+    return JSON.stringify(out, null, 2) ?? null;
   };
 }
 
