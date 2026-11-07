@@ -6,6 +6,9 @@ import { testId } from "@watchdog/test-kit";
 const useParamsMock = vi.hoisted(() =>
   vi.fn(() => ({ caseSlug: "alpha", entitySlug: "target" }))
 );
+const loaderDataMock = vi.hoisted(() =>
+  vi.fn(() => ({ entitySlug: "target" }))
+);
 const useNavigateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -16,7 +19,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     getRouteApi: () => ({
       useParams: useParamsMock,
-      useLoaderData: () => ({ entitySlug: useParamsMock().entitySlug }),
+      useLoaderData: loaderDataMock,
       useSearch: () => ({ tab: "overview" }),
       useNavigate: () => useNavigateMock,
     }),
@@ -135,6 +138,20 @@ describe("entity slug route", () => {
     const Page = Route.options.component!;
     render(<Page />);
     expect(screen.getByText("Dossier target (overview)")).toBeInTheDocument();
+  });
+
+  it("hands the Dossier the loader's normalized slug, not the raw param", () => {
+    useParamsMock.mockReturnValue({
+      caseSlug: "alpha",
+      entitySlug: "  Padded Slug ",
+    });
+    loaderDataMock.mockReturnValue({ entitySlug: "padded-slug" });
+    const Page = Route.options.component!;
+    render(<Page />);
+    expect(
+      screen.getByText("Dossier padded-slug (overview)")
+    ).toBeInTheDocument();
+    loaderDataMock.mockReturnValue({ entitySlug: "target" });
   });
 
   it("trims padded dossier tab in the search", () => {

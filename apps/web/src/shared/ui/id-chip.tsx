@@ -1,7 +1,7 @@
 import { CheckIcon, CopyIcon, EyeIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useCopyText } from "@/shared/hooks/use-copy-text";
 import { MiddleTruncate } from "@/shared/ui/middle-truncate";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 
@@ -57,23 +57,10 @@ export function IdChip({
   size = "sm",
   className,
 }: IdChipProps) {
-  const [isCopied, setIsCopied] = useState(false);
-  const copiedTimerRef = useRef<number | null>(null);
-  const isMountedRef = useRef(true);
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-  useEffect(
-    () => () => {
-      if (copiedTimerRef.current !== null) {
-        window.clearTimeout(copiedTimerRef.current);
-      }
-    },
-    []
-  );
+  const { copy, isCopied } = useCopyText({
+    resetMs: 1200,
+    onCopied,
+  });
   const dims = PRESET[preset];
   const h = head ?? dims.head;
   const t = tail ?? dims.tail;
@@ -114,23 +101,9 @@ export function IdChip({
     />
   );
 
-  async function handleCopy() {
+  function handleCopy() {
     if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      if (!isMountedRef.current) return;
-      setIsCopied(true);
-      onCopied?.(value);
-      if (copiedTimerRef.current !== null) {
-        window.clearTimeout(copiedTimerRef.current);
-      }
-      copiedTimerRef.current = window.setTimeout(() => {
-        copiedTimerRef.current = null;
-        setIsCopied(false);
-      }, 1200);
-    } catch {
-      // Parent may surface failure via onCopied absence + own handling.
-    }
+    void copy(value);
   }
 
   if (isCopyable) {
@@ -150,7 +123,7 @@ export function IdChip({
           data-slot="id-chip"
           aria-label={isCopied ? "Copied" : "Copy id"}
           className={chrome}
-          onClick={() => void handleCopy()}
+          onClick={handleCopy}
         >
           {label}
           <span

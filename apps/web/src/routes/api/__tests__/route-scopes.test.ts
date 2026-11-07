@@ -61,10 +61,14 @@ describe("routes under routes/api that accept an API key", () => {
   for (const [file, route] of Object.entries(ROUTES)) {
     it(`${file}: ${route.kind}`, () => {
       if (route.kind === "scoped") {
-        const source =
-          "logic" in route
-            ? readFileSync(path.join(webSrc, route.logic), "utf-8")
-            : read(file);
+        let source = read(file);
+        if ("logic" in route) {
+          // A wiring-only route imports its `@/lib` module and hands its handler to it.
+          const specifier = `@/${route.logic.replace(/\.ts$/, "")}`;
+          expect(source).toContain(`from "${specifier}"`);
+          expect(source).toMatch(/GET: async[\s\S]*=>\s*\w+\(request/);
+          source = readFileSync(path.join(webSrc, route.logic), "utf-8");
+        }
         expect(source).toContain("createApiContext");
         expect(source).toMatch(
           new RegExp(

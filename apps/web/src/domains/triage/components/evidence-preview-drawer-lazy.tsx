@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useState } from "react";
 
 import { evidenceByIdQuery } from "@/domains/intake/queries";
 import { loadEvidencePreviewDrawer } from "@/domains/triage/components/evidence-preview-drawer-load";
+import { lazyOverlay } from "@/shared/lib/lazy-overlay";
 
-const LoadedEvidencePreviewDrawer = lazy(async () => {
-  const { EvidencePreviewDrawer } = await loadEvidencePreviewDrawer();
-  return { default: EvidencePreviewDrawer };
-});
+const EvidencePreviewDrawerOverlay = lazyOverlay(
+  loadEvidencePreviewDrawer,
+  (module) => module.EvidencePreviewDrawer,
+  { isOpen: (props) => props.evidence !== null }
+);
 
 type LazyEvidencePreviewDrawerProps = {
   /** The Evidence to preview, read by id when it is set (the Detail only holds titles). */
@@ -28,16 +29,11 @@ export function LazyEvidencePreviewDrawer({
 }: LazyEvidencePreviewDrawerProps) {
   const query = useQuery(evidenceByIdQuery(caseId, evidenceId));
   const evidence = evidenceId === null ? null : (query.data ?? null);
-  const [isMounted, setIsMounted] = useState(false);
-  if (evidence !== null && !isMounted) setIsMounted(true);
-  if (!isMounted) return null;
   return (
-    <Suspense fallback={null}>
-      <LoadedEvidencePreviewDrawer
-        evidence={evidence}
-        caseId={caseId}
-        onClose={onClose}
-      />
-    </Suspense>
+    <EvidencePreviewDrawerOverlay
+      evidence={evidence}
+      caseId={caseId}
+      onClose={onClose}
+    />
   );
 }

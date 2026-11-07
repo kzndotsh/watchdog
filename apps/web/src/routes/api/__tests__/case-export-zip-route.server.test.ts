@@ -86,6 +86,7 @@ vi.mock("@watchdog/core/jobs", () => ({
   caseExportLinkEffect: linkMock,
 }));
 
+import { exportFilename } from "@/lib/case-export.server";
 import { Route } from "@/routes/api/v1/cases.$caseId.export[.]zip";
 import { Route as DownloadRoute } from "@/routes/api/v1/cases.$caseId.exports.$jobId";
 
@@ -115,6 +116,15 @@ function signedIn(log = vi.fn()) {
     log: { set: log },
   });
 }
+
+describe("exportFilename", () => {
+  it("keeps only [A-Za-z0-9._-] so a slug cannot break out of the header", () => {
+    const name = exportFilename('al"pha\r\nX-Evil: 1/../é');
+    expect(name).toMatch(/^alphaX-Evil1\.\.-\d{12}\.zip$/);
+    expect(name).not.toMatch(/["\r\n/]/);
+    expect(exportFilename('"\r\n')).toMatch(/^case-\d{12}\.zip$/);
+  });
+});
 
 describe("case export zip route", () => {
   it("returns 401 when unauthenticated", async () => {

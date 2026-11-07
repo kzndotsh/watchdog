@@ -7,6 +7,7 @@ import type {
 import { CopyIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { copyText } from "@/shared/hooks/use-copy-text";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import {
@@ -67,14 +68,10 @@ export function IdentifierValueCopyControl({ value }: { value: string }) {
       title="Copy value"
       onClick={(event) => {
         event.stopPropagation();
-        void (async () => {
-          try {
-            await navigator.clipboard.writeText(value);
-            toast.success(TOAST_COPIED);
-          } catch {
-            toast.error(TOAST_COULDNT_COPY);
-          }
-        })();
+        void copyText(value, {
+          success: TOAST_COPIED,
+          failure: TOAST_COULDNT_COPY,
+        });
       }}
     >
       <CopyIcon className="size-3" aria-hidden />

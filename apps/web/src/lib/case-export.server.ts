@@ -125,9 +125,11 @@ async function pumpExport(
   }
 }
 
-function exportFilename(caseSlug: string): string {
+/** The download name; anything outside `[A-Za-z0-9._-]` is dropped so the header can never be broken out of. */
+export function exportFilename(caseSlug: string): string {
   const ts = new Date().toISOString().slice(0, 16).replaceAll(/[-T:]/g, "");
-  return `${caseSlug}-${ts}.zip`;
+  const safe = caseSlug.replaceAll(/[^A-Za-z0-9._-]/g, "");
+  return `${safe === "" ? "case" : safe}-${ts}.zip`;
 }
 
 /** The answer to GET `/api/v1/cases/:caseId/export.zip`: the streamed archive, a 202 export Job, or the refusal. */
