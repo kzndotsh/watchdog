@@ -6,7 +6,7 @@ export type KnownCredential = CredentialSlotMeta;
 
 /**
  * Vault slot catalog for Settings, derived from the Cap registry: every slot a Cap's
- * `credentials` names, once, in registry order. Adding a Cap that declares a new slot adds it
+ * `credentials` names, once, sorted by label (a stable order Settings shows as is). Adding a Cap that declares a new slot adds it
  * here with no second edit. A slot several Caps declare must carry identical metadata (a shared
  * constant, `src/credentials.ts`); a conflict throws.
  *
@@ -33,7 +33,7 @@ function deriveCatalog(): KnownCredential[] {
       }
     }
   }
-  return [...byName.values()];
+  return [...byName.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
 let catalog: readonly KnownCredential[] | undefined;
