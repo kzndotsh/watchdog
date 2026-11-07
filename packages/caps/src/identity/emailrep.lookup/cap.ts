@@ -23,7 +23,16 @@ export const emailrepLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("emailrep.io", { keyed: true })],
-  credentials: [{ name: "EMAILREP_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "EMAILREP_API_KEY",
+        label: "EmailRep",
+        description:
+          "EmailRep.io API key for identity.emailrep.lookup (unauthenticated API is disabled).",
+      },
+    },
+  ],
   consumes: [{ kind: "identifier", type: "email" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

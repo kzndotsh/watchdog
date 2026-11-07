@@ -5,6 +5,7 @@ import {
   threatfoxLookupSnapshotSchema,
 } from "@watchdog/tools/threat";
 
+import { abuseChAuthKey } from "../../credentials";
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abusech } from "../../providers";
 import { contact } from "../../sdk";
@@ -23,7 +24,7 @@ export const threatfoxLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("threatfox-api.abuse.ch", { keyed: true })],
-  credentials: [{ name: "THREATFOX_API_KEY" }],
+  credentials: [{ slot: abuseChAuthKey }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

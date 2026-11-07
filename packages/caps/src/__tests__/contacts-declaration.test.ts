@@ -16,7 +16,7 @@ import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 import { egressPolicyFor } from "@watchdog/tools/http";
 
 import { CAPABILITIES } from "../registry";
-import type { CapabilityDef } from "../sdk";
+import { credentialSpecSlots, type CapabilityDef } from "../sdk";
 import {
   createCapRunHarness,
   createRecordedRun,
@@ -84,8 +84,8 @@ function capById(id: string): CapabilityDef<z.ZodType> {
 function secretsFor(cap: CapabilityDef<z.ZodType>): Record<string, string> {
   const secrets: Record<string, string> = {};
   for (const spec of cap.credentials ?? []) {
-    for (const name of "anyOf" in spec ? spec.anyOf : [spec.name]) {
-      secrets[name] = SECRET;
+    for (const slot of credentialSpecSlots(spec)) {
+      secrets[slot.name] = SECRET;
     }
   }
   return secrets;

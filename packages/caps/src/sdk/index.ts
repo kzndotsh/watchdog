@@ -2,6 +2,8 @@ export {
   defineCapability,
   DEFAULT_CAP_TIMEOUT_MS,
   capTimeoutMs,
+  credentialSpecSlots,
+  type CredentialSlotMeta,
   type CapArtifact,
   type CapRun,
   type CapRunResult,

@@ -26,7 +26,15 @@ export const whoisXmlLookup = defineCollectCap({
   contacts: [contact.provider("www.whoisxmlapi.com", { keyed: true })],
   consumes: [{ kind: "host" }],
   produces: [{ kind: "evidence", evidenceKind: "file" }],
-  credentials: [{ name: "WHOIS_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "WHOIS_API_KEY",
+        label: "WhoisXML",
+        description: "WhoisXML API key for network.whoisxml.lookup.",
+      },
+    },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },

@@ -24,7 +24,17 @@ export const greynoiseLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.greynoise.io", { keyed: true })],
-  credentials: [{ name: "GREYNOISE_API_KEY", optional: true }],
+  credentials: [
+    {
+      slot: {
+        name: "GREYNOISE_API_KEY",
+        label: "GreyNoise Community",
+        description:
+          "Optional GreyNoise Community API key for threat.greynoise.lookup (free signup).",
+      },
+      optional: true,
+    },
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

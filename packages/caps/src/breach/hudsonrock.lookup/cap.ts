@@ -23,7 +23,16 @@ export const hudsonrockLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive"],
   contacts: [contact.provider("api.hudsonrock.com", { keyed: true })],
-  credentials: [{ name: "HUDSONROCK_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "HUDSONROCK_API_KEY",
+        label: "Hudson Rock",
+        description:
+          "Hudson Rock Cavalier API key for breach.hudsonrock.lookup.",
+      },
+    },
+  ],
   consumes: [
     { kind: "ip" },
     { kind: "host" },

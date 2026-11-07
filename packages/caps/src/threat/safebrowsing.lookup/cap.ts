@@ -23,7 +23,16 @@ export const safebrowsingLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("safebrowsing.googleapis.com", { keyed: true })],
-  credentials: [{ name: "GOOGLE_SAFEBROWSING_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "GOOGLE_SAFEBROWSING_API_KEY",
+        label: "Google Safe Browsing",
+        description:
+          "Google Safe Browsing v4 API key for threat.safebrowsing.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

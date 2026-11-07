@@ -72,7 +72,9 @@ describe("defineCapability", () => {
         id: "test.cap",
         title: "Test",
         input,
-        credentials: [{ name: "  " }],
+        credentials: [
+          { slot: { name: "  ", label: "Blank", description: "Blank." } },
+        ],
         contacts: [],
         run: () => Effect.succeed({ artifacts: [] }),
       })
@@ -117,7 +119,15 @@ describe("toCapMetadata", () => {
       title: "Cred",
       input,
       timeoutMs: 9000,
-      credentials: [{ name: "SHODAN_API_KEY" }],
+      credentials: [
+        {
+          slot: {
+            name: "SHODAN_API_KEY",
+            label: "Shodan",
+            description: "Shodan API key.",
+          },
+        },
+      ],
       contacts: [],
       run: () => Effect.succeed({ artifacts: [] }),
     });

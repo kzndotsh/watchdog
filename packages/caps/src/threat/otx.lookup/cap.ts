@@ -23,7 +23,16 @@ export const otxLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("otx.alienvault.com", { keyed: true })],
-  credentials: [{ name: "OTX_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "OTX_API_KEY",
+        label: "AlienVault OTX",
+        description:
+          "AlienVault OTX (LevelBlue) API key for threat.otx.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }, { kind: "host" }, { kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

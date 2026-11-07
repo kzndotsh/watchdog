@@ -174,10 +174,10 @@ function serializeCredentials(
   if (!credentials?.length) return undefined;
   return credentials.map((spec) => {
     if ("anyOf" in spec) {
-      return { anyOf: [...spec.anyOf] };
+      return { anyOf: spec.anyOf.map((slot) => slot.name) };
     }
     return {
-      name: spec.name,
+      name: spec.slot.name,
       ...(spec.optional === true ? { optional: true } : {}),
     };
   });

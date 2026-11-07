@@ -16,7 +16,7 @@
  *      `testing/` or a test file) holds no Cap id and no Vault slot name as a string
  *      literal. A Cap hands its facts to a tool as parameters (the user agent, the key
  *      value); the lists are read from packages/caps/capabilities.gen.json (Cap ids and
- *      declared credentials) and the credential catalog in packages/caps/src/known-credentials.ts.
+ *      declared credentials, `anyOf` groups included).
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
@@ -179,11 +179,8 @@ function importsOf(source) {
 /** Cap ids and Vault slot names, read from the Cap sources of truth, never copied here. */
 function capFacts() {
   const gen = path.join(root, "packages/caps/capabilities.gen.json");
-  const catalog = path.join(root, "packages/caps/src/known-credentials.ts");
-  if (!existsSync(gen) || !existsSync(catalog)) {
-    console.error(
-      "✗ the tools rule needs packages/caps/capabilities.gen.json and packages/caps/src/known-credentials.ts"
-    );
+  if (!existsSync(gen)) {
+    console.error("✗ the tools rule needs packages/caps/capabilities.gen.json");
     process.exit(1);
   }
   /** @type {unknown} */
@@ -196,14 +193,12 @@ function capFacts() {
     for (const cred of Array.isArray(entry.credentials)
       ? entry.credentials
       : []) {
-      const name = asRecord(cred).name;
-      if (typeof name === "string") facts.set(name, "Vault slot name");
+      const spec = asRecord(cred);
+      const names = Array.isArray(spec.anyOf) ? spec.anyOf : [spec.name];
+      for (const name of names) {
+        if (typeof name === "string") facts.set(name, "Vault slot name");
+      }
     }
-  }
-  for (const m of readFileSync(catalog, "utf-8").matchAll(
-    /\bname:\s*["'](?<name>[A-Z][A-Z0-9_]*)["']/g
-  )) {
-    if (m.groups?.name) facts.set(m.groups.name, "Vault slot name");
   }
   return facts;
 }
