@@ -7,7 +7,6 @@ import {
   buildEntityDisplayMaps,
   entityIdsFromNullable,
   entityNameForId,
-  firstEntityNameFromPatch,
 } from "../entity-display";
 
 describe("entity-display", () => {
@@ -52,112 +51,5 @@ describe("entity-display", () => {
       "ent-2": "beta-llc",
     });
     expect(Object.keys(maps).sort()).toEqual(["entityNames", "entitySlugs"]);
-  });
-
-  it("firstEntityNameFromPatch uses the first named entity", () => {
-    expect(
-      firstEntityNameFromPatch(
-        [
-          {
-            op: "create",
-            resource: "claim",
-            id: "00000000-0000-4000-8000-000000000001",
-            data: {
-              entityId: "00000000-0000-4000-8000-000000000002",
-              text: "observed",
-            },
-          },
-        ],
-        {
-          "00000000-0000-4000-8000-000000000002": "Beta Holdings",
-        }
-      )
-    ).toBe("Beta Holdings");
-  });
-
-  it("firstEntityNameFromPatch resolves edge endpoint names", () => {
-    expect(
-      firstEntityNameFromPatch(
-        [
-          {
-            op: "create",
-            resource: "edge",
-            id: "00000000-0000-4000-8000-000000000003",
-            data: {
-              fromId: "00000000-0000-4000-8000-000000000004",
-              toId: "00000000-0000-4000-8000-000000000005",
-              predicate: "knows",
-            },
-          },
-        ],
-        {
-          "00000000-0000-4000-8000-000000000004": "Alpha Corp",
-          "00000000-0000-4000-8000-000000000005": "Beta LLC",
-        }
-      )
-    ).toBe("Alpha Corp");
-  });
-
-  it("firstEntityNameFromPatch falls back to slug when name maps are missing", () => {
-    const entityId = "00000000-0000-4000-8000-000000000001";
-    expect(
-      firstEntityNameFromPatch(
-        [
-          {
-            op: "create",
-            resource: "claim",
-            id: "00000000-0000-4000-8000-000000000002",
-            data: {
-              entityId,
-              text: "observed",
-            },
-          },
-        ],
-        {},
-        { [entityId]: "alpha-corp" }
-      )
-    ).toBe("alpha-corp");
-  });
-
-  it("firstEntityNameFromPatch resolves entity create op body without display maps", () => {
-    expect(
-      firstEntityNameFromPatch(
-        [
-          {
-            op: "create",
-            resource: "entity",
-            id: "00000000-0000-4000-8000-000000000010",
-            data: { name: "Acme Corp", slug: "acme-corp" },
-          },
-        ],
-        {}
-      )
-    ).toBe("Acme Corp");
-  });
-
-  it("firstEntityNameFromPatch skips first cited entity without display maps", () => {
-    const knownId = "00000000-0000-4000-8000-000000000003";
-    expect(
-      firstEntityNameFromPatch(
-        [
-          {
-            op: "create",
-            resource: "claim",
-            id: "00000000-0000-4000-8000-000000000001",
-            data: {
-              entityId: "00000000-0000-4000-8000-000000000099",
-              text: "orphan",
-            },
-          },
-          {
-            op: "create",
-            resource: "claim",
-            id: "00000000-0000-4000-8000-000000000002",
-            data: { entityId: knownId, text: "known" },
-          },
-        ],
-        { [knownId]: "Beta LLC" }
-      )
-    ).toBe("Beta LLC");
   });
 });

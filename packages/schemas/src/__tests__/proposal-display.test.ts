@@ -50,6 +50,67 @@ describe("proposalEntityName", () => {
       })
     ).toBe("Acme Corp");
   });
+  it("names the first cited entity", () => {
+    expect(
+      proposalEntityName({
+        patch: [
+          {
+            op: "create",
+            resource: "claim",
+            id: "00000000-0000-4000-8000-000000000001",
+            data: {
+              entityId: "00000000-0000-4000-8000-000000000002",
+              text: "observed",
+            },
+          },
+        ],
+        entityNames: {
+          "00000000-0000-4000-8000-000000000002": "Beta Holdings",
+        },
+      })
+    ).toBe("Beta Holdings");
+  });
+
+  it("names an edge by its from endpoint", () => {
+    expect(
+      proposalEntityName({
+        patch: [
+          {
+            op: "create",
+            resource: "edge",
+            id: "00000000-0000-4000-8000-000000000003",
+            data: {
+              fromId: "00000000-0000-4000-8000-000000000004",
+              toId: "00000000-0000-4000-8000-000000000005",
+              predicate: "knows",
+            },
+          },
+        ],
+        entityNames: {
+          "00000000-0000-4000-8000-000000000004": "Alpha Corp",
+          "00000000-0000-4000-8000-000000000005": "Beta LLC",
+        },
+      })
+    ).toBe("Alpha Corp");
+  });
+
+  it("falls back to the slug when no name is known", () => {
+    const entityId = "00000000-0000-4000-8000-000000000001";
+    expect(
+      proposalEntityName({
+        patch: [
+          {
+            op: "create",
+            resource: "claim",
+            id: "00000000-0000-4000-8000-000000000002",
+            data: { entityId, text: "observed" },
+          },
+        ],
+        entityNames: {},
+        entitySlugs: { [entityId]: "alpha-corp" },
+      })
+    ).toBe("alpha-corp");
+  });
 });
 
 describe("proposalEntityId", () => {

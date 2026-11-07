@@ -1,9 +1,7 @@
 import {
   AbortedError,
   HttpVendorError,
-  MissingCredentialError,
   ParseVendorError,
-  RateLimitedError,
   ValidationVendorError,
 } from "./tagged-errors";
 
@@ -23,17 +21,6 @@ export function httpVendorError(
     status,
     ...(detail === undefined ? {} : { detail }),
   });
-}
-
-export function missingCredentialError(slot: string): MissingCredentialError {
-  return new MissingCredentialError({ slot });
-}
-
-export function rateLimitedVendorError(
-  service: string,
-  subject: string
-): RateLimitedError {
-  return new RateLimitedError({ service, subject });
 }
 
 export function parseVendorError(

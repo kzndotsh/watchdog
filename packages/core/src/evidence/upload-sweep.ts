@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import type { DomainTag } from "../errors/tagged-errors";
 import { deleteObjectKeysEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
-import { nowDateEffect } from "../infra/clock";
+import { DAY_MS, nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -15,7 +15,7 @@ import {
  * How long a presigned upload may stay unconfirmed before its object is deleted. The presigned
  * URL itself lives 15 minutes; the rest is slack for a slow upload and a retried confirmation.
  */
-export const UPLOAD_SWEEP_GRACE_MS = 24 * 60 * 60 * 1000;
+export const UPLOAD_SWEEP_GRACE_MS = DAY_MS;
 
 /** Uploads one sweep run removes (one S3 batch delete); the rest wait for the next run. */
 export const UPLOAD_SWEEP_BATCH = 500;

@@ -12,9 +12,7 @@ import {
   abortedError,
   errorMessage,
   httpVendorError,
-  missingCredentialError,
   parseVendorError,
-  rateLimitedVendorError,
   validationVendorError,
 } from "../vendor-errors";
 
@@ -22,12 +20,18 @@ describe("vendor errors", () => {
   it("constructors return the tagged error with its stable code", () => {
     expect(httpVendorError("Example", 502)).toBeInstanceOf(HttpVendorError);
     expect(httpVendorError("Example", 502).code).toBe("vendor_http");
-    expect(missingCredentialError("TEST_KEY")).toBeInstanceOf(
+    expect(new MissingCredentialError({ slot: "TEST_KEY" })).toBeInstanceOf(
       MissingCredentialError
     );
-    expect(missingCredentialError("TEST_KEY").code).toBe("missing_credential");
-    expect(rateLimitedVendorError("Svc", "x")).toBeInstanceOf(RateLimitedError);
-    expect(rateLimitedVendorError("Svc", "x").code).toBe("rate_limited");
+    expect(new MissingCredentialError({ slot: "TEST_KEY" }).code).toBe(
+      "missing_credential"
+    );
+    expect(
+      new RateLimitedError({ service: "Svc", subject: "x" })
+    ).toBeInstanceOf(RateLimitedError);
+    expect(new RateLimitedError({ service: "Svc", subject: "x" }).code).toBe(
+      "rate_limited"
+    );
     expect(parseVendorError("Svc", "x")).toBeInstanceOf(ParseVendorError);
     expect(validationVendorError("bad")).toBeInstanceOf(ValidationVendorError);
     expect(abortedError("stop")).toBeInstanceOf(AbortedError);
@@ -37,8 +41,8 @@ describe("vendor errors", () => {
   it("every vendor code is distinct", () => {
     const codes = [
       httpVendorError("a", 500),
-      missingCredentialError("a"),
-      rateLimitedVendorError("a", "b"),
+      new MissingCredentialError({ slot: "a" }),
+      new RateLimitedError({ service: "a", subject: "b" }),
       parseVendorError("a", "b"),
       validationVendorError("a"),
       abortedError("a"),
@@ -51,10 +55,10 @@ describe("vendor errors", () => {
     expect(httpVendorError("Shodan", 401, "key rejected").message).toBe(
       "key rejected"
     );
-    expect(rateLimitedVendorError("Censys", "8.8.8.8").message).toBe(
-      "Censys rate-limited for 8.8.8.8"
-    );
-    expect(missingCredentialError("SHODAN_API_KEY").message).toBe(
+    expect(
+      new RateLimitedError({ service: "Censys", subject: "8.8.8.8" }).message
+    ).toBe("Censys rate-limited for 8.8.8.8");
+    expect(new MissingCredentialError({ slot: "SHODAN_API_KEY" }).message).toBe(
       "SHODAN_API_KEY required"
     );
     expect(parseVendorError("Svc", "q").message).toBe(

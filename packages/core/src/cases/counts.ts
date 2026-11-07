@@ -8,7 +8,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
-import { nowDateEffect } from "../infra/clock";
+import { DAY_MS, nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { caseCountsRepoFxDb } from "../infra/repos-fx";
 import { assertCaseInOrgEffect } from "./access";
@@ -26,8 +26,6 @@ export type CaseCounts = {
 
 /** A task is "due soon" through this many calendar days after today. */
 export const TASK_DUE_SOON_DAYS = 7;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function totalOf(count: number): ListTotal {
   return count > LIST_TOTAL_CAP

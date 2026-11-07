@@ -3,6 +3,7 @@ import type { HttpClient } from "effect/http";
 
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { isRecord } from "../parse/coerce";
 import type { WhoisSnapshot } from "./schema";
 import { whoisSnapshotSchema } from "./schema";
 import {
@@ -11,10 +12,6 @@ import {
   readRdapLdhName,
   whoisStatusList,
 } from "./shared";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 export function fetchRdapWhoisEffect(
   host: string,
