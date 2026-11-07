@@ -11,15 +11,17 @@ const { claimCaseExportEffect } = vi.hoisted(() => ({
   ),
 }));
 
-vi.mock("@watchdog/core/worker", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
+vi.mock("@watchdog/core/export", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/export")>();
   return {
     ...actual,
     claimCaseExportEffect,
   };
 });
 
-import { Db, recordingBlobStore, fakeVault } from "@watchdog/core/worker";
+import { recordingBlobStore } from "@watchdog/core/blob";
+import { Db } from "@watchdog/core/infra";
+import { fakeVault } from "@watchdog/core/vault";
 
 import { handleExportEntryEffect, rescanAllCasesEffect } from "../boot-worker";
 

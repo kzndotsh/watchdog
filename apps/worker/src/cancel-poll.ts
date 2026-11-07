@@ -1,11 +1,11 @@
 import { Effect, Result, Schedule } from "effect";
 
-import type { Db } from "@watchdog/core/worker";
+import type { Db } from "@watchdog/core/infra";
 import {
   findCancelledJobIdsEffect,
   JobFibers,
   stop,
-} from "@watchdog/core/worker";
+} from "@watchdog/core/jobs";
 import { createLogger } from "@watchdog/log";
 
 /** Dual SoT cancel: product `jobs.status` is polled on this spacing. */

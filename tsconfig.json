@@ -34,7 +34,6 @@
       "@watchdog/core/proposal-display": [
         "./packages/core/src/display/proposal-display.ts"
       ],
-      "@watchdog/core/worker": ["./packages/core/src/worker-entry.ts"],
       "@watchdog/core/*": ["./packages/core/src/*"],
 
       "@watchdog/db": ["./packages/db/src/index.ts"],

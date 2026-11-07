@@ -2,6 +2,7 @@ export { Db, sharedDb, type OwnedPool } from "./db-service";
 export { tryDb, tryDbWith, mapPostgresCatch } from "./postgres-effect";
 export { outsideTransaction, transact } from "./postgres-tx";
 export { runDomain, runDomainWith } from "./run-domain";
+export { coreServicesLayer } from "./services";
 export {
   READINESS_REASONS,
   READINESS_TIMEOUT_MS,

@@ -6,6 +6,7 @@ export {
 export {
   ExportIOError,
   ExportWriteServices,
+  claimCaseExportEffect,
   exportWritesSettledEffect,
   isolatedExportWriteServices,
   writeCaseExportEffect,
