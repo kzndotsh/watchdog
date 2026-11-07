@@ -1,7 +1,7 @@
 import { fixedContactHost } from "@watchdog/schemas/caps";
 
 import { CAPABILITIES } from "./registry";
-import type { RedistributionVerdict } from "./sdk";
+import type { CapProvider, RedistributionVerdict } from "./sdk";
 
 export type { RedistributionVerdict };
 
@@ -14,16 +14,16 @@ let verdicts: ReadonlyMap<string, RedistributionVerdict> | undefined;
 function hostVerdicts(): ReadonlyMap<string, RedistributionVerdict> {
   if (verdicts === undefined) {
     const map = new Map<string, RedistributionVerdict>();
-    const owner = new Map<string, string>();
+    const owner = new Map<string, CapProvider>();
     for (const { provider } of CAPABILITIES) {
       for (const [host, verdict] of Object.entries(provider.hosts ?? {})) {
         const other = owner.get(host);
-        if (other !== undefined && other !== provider.name) {
+        if (other !== undefined && other !== provider) {
           throw new Error(
-            `Host ${host} has a verdict on two providers: ${other} and ${provider.name}`
+            `Host ${host} has a verdict on two providers: ${other.name} and ${provider.name}`
           );
         }
-        owner.set(host, provider.name);
+        owner.set(host, provider);
         map.set(host, verdict);
       }
     }

@@ -53,6 +53,14 @@ describe("redistribution verdicts", () => {
     expect(redistributionVerdictFor("constructor")).toBe("unknown");
   });
 
+  it("answers each reviewed host with the verdict its provider declares", () => {
+    const verdicts = providerVerdicts();
+    expect(verdicts.size).toBeGreaterThan(50);
+    for (const [host, verdict] of verdicts) {
+      expect(redistributionVerdictFor(host), host).toBe(verdict);
+    }
+  });
+
   it("reads a host in any case and with a trailing dot", () => {
     expect(redistributionVerdictFor("CRT.sh.")).toBe(
       providerVerdicts().get("crt.sh")

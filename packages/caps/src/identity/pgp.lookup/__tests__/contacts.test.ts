@@ -27,6 +27,7 @@ describe("identity.pgp.lookup contacts", () => {
   });
 
   it("derives the provider's hosts and an unreviewed verdict from the keyserver list", () => {
+    expect(pgpLookup.provider.commercialUse).toBe("unknown");
     expect(Object.keys(pgpLookup.provider.hosts ?? {})).toEqual(HOSTS);
     for (const host of HOSTS) {
       expect(redistributionVerdictFor(host)).toBe("unknown");
