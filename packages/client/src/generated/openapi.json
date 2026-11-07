@@ -1990,7 +1990,7 @@
     "/activity/recent": {
       "get": {
         "operationId": "activity.listRecent",
-        "summary": "List recent activity across cases",
+        "summary": "List recent activity across cases, a page at a time, newest first unless sorted otherwise; one entry per playbook run, optionally for one case",
         "tags": [
           "activity"
         ],
@@ -2000,7 +2000,21 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "maxLength": 256
+              "maxLength": 256,
+              "description": "Case"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "at.desc",
+                "at.asc"
+              ],
+              "type": "string"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -2106,11 +2120,36 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "total": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "count": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "isCapped": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "count",
+                            "isCapped"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
                     "items",
-                    "nextCursor"
+                    "nextCursor",
+                    "total"
                   ]
                 }
               }

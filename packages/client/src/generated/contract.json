@@ -60,7 +60,7 @@
         "route": {
           "method": "GET",
           "path": "/activity/recent",
-          "summary": "List recent activity across cases",
+          "summary": "List recent activity across cases, a page at a time, newest first unless sorted otherwise; one entry per playbook run, optionally for one case",
           "tags": [
             "activity"
           ]

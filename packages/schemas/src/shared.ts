@@ -368,5 +368,6 @@ export {
   listPageSchema,
   listSearchWireSchema,
   listTotalSchema,
+  parseIntRowId,
 } from "./lists/list-page";
 export type { ListPage, ListTotal } from "./lists/list-page";

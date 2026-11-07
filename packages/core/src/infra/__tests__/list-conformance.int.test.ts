@@ -81,7 +81,7 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
     let wireScope: Readonly<Record<string, string>> = {};
     const tagOf = new Map(fixture.rows.map((row) => [row.id, row.tag]));
     const tags = (rows: readonly ListRow[]) =>
-      rows.map((row) => tagOf.get(row.id) ?? `foreign:${row.id}`);
+      rows.map((row) => tagOf.get(String(row.id)) ?? `foreign:${row.id}`);
 
     const inputOf = (wire: Readonly<Record<string, unknown>>) =>
       ops.input.parse({ ...wireScope, limit: fixture.pageLimit, ...wire });
@@ -190,7 +190,10 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
       const stale = [
         inputOf({ sort: secondSort, cursor }),
         inputOf({ sort: firstSort, cursor, [filterKey]: sample?.[0] }),
-        inputOf({ sort: firstSort, cursor, q: "zzz" }),
+        // A list that declares no search has no `q` to change the view with.
+        ...(def.search === undefined
+          ? []
+          : [inputOf({ sort: firstSort, cursor, q: "zzz" })]),
       ];
       for (const input of stale) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- one refusal per view
@@ -256,6 +259,11 @@ describe.each(LIST_DEFS.map((def) => entryOf(def)))(
     });
 
     it("searches literally, matches display labels, keeps the sort and refuses a short q", async () => {
+      if (def.search === undefined) {
+        // No `q`: nothing to search, and the fixture says so.
+        expect(fixture.searches).toEqual([]);
+        return;
+      }
       for (const search of fixture.searches) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- one walk per search
         const rows = await walk({ ...search.filters, q: search.q });

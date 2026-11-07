@@ -11,8 +11,6 @@ import {
   scopeJobDetail,
   scopeJobDetailEnabled,
   scopeOptionalUuid,
-  scopeRecentActivityEnabled,
-  scopeRecentActivityFilters,
   scopeSearchCaseInput,
 } from "@/shared/lib/query-ingress";
 import { testId } from "@watchdog/test-kit";
@@ -46,17 +44,6 @@ describe("query ingress helpers", () => {
       caseId: "",
       q: "alpha",
     });
-  });
-
-  it("normalizes padded activity case ids for query keys", () => {
-    const caseId = testId(10);
-    expect(scopeRecentActivityFilters({ caseId: `  ${caseId}  ` })).toEqual({
-      caseId,
-    });
-  });
-
-  it("drops invalid activity case ids for query keys", () => {
-    expect(scopeRecentActivityFilters({ caseId: "case-1" })).toEqual({});
   });
 
   it("normalizes padded evidence download scope and gates invalid ids", () => {
@@ -99,9 +86,6 @@ describe("query ingress helpers", () => {
     expect(scopeEntityScopeEnabled("case-1", entityId)).toBe(false);
     expect(scopeJobDetailEnabled(caseId, jobId)).toBe(true);
     expect(scopeJobDetailEnabled(caseId, "job-1")).toBe(false);
-    expect(scopeRecentActivityEnabled({ caseId })).toBe(true);
-    expect(scopeRecentActivityEnabled({ caseId: "case-1" })).toBe(false);
-    expect(scopeRecentActivityEnabled()).toBe(true);
   });
 
   it("gates entity slug scope when case id or slug is invalid", () => {

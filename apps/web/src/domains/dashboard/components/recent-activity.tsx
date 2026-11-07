@@ -1,9 +1,9 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
-import { recentActivityQuery } from "@/domains/activity/queries";
+import { activityListView } from "@/domains/activity/queries";
 import type { CaseRecord } from "@/domains/cases/types";
+import { useListFeed } from "@/shared/hooks/list/use-list-feed";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -25,6 +25,7 @@ import {
 } from "@/shared/ui/vocab";
 import {
   activityKindLabel,
+  activityList,
   type ActivityItem,
   type ActivityKind,
 } from "@watchdog/schemas/feed";
@@ -221,8 +222,10 @@ function RecentActivityList({
   caseSlugById,
   onClearFilter,
 }: RecentActivityListProps) {
-  const activityQuery = useInfiniteQuery(
-    recentActivityQuery(caseId ? { caseId } : undefined)
+  const activityQuery = useListFeed(
+    activityListView,
+    {},
+    activityList.queryOf(caseId ? { caseId } : {})
   );
   const activityPending = listPending(activityQuery);
   const activityLoadError = queryLoadError(

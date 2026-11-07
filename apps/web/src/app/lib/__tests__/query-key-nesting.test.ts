@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { activityKeys } from "@/domains/activity/queries";
+import { activityKeys, activityListView } from "@/domains/activity/queries";
 import { casesKeys, deletedCaseListView } from "@/domains/cases/queries";
 import { collectKeys } from "@/domains/collect/collect-keys";
 import { collectListView } from "@/domains/collect/queries";
@@ -75,10 +75,7 @@ function factory<T extends object>(
 }
 
 const factories: readonly Factory[] = [
-  factory("activityKeys", activityKeys.all, activityKeys, (k) => [
-    k.recent(),
-    k.recent({}),
-  ]),
+  factory("activityKeys", activityKeys.all, activityKeys, () => []),
   factory("casesKeys", casesKeys.all, casesKeys, (k) => [
     k.context(),
     k.detail(CASE),
@@ -201,6 +198,7 @@ const listViews: readonly (readonly [string, Key, Key])[] = [
     proposalListView.prefix({ caseId: CASE }),
   ],
   ["deletedCaseListView", casesKeys.all, deletedCaseListView.prefix({})],
+  ["activityListView", activityKeys.all, activityListView.prefix({})],
 ];
 
 function startsWith(key: Key, prefix: Key): boolean {

@@ -233,7 +233,7 @@ Retention, the restore boot check and the removal of everything the log replaced
 
 ## As built: #257 (performance)
 
-- **Recent activity is windowed.** `activityLogRepo.recentFeed` ranks entries inside a lookback window instead of the organization's whole history: one day, widened to 7, 30 and finally everything while the page comes back short (`FEED_LOOKBACK_DAYS`, index `activity_created_at_id_idx`). The answer is unchanged: a group's newest entry lies inside any window that holds one of its entries, and a group outside the window is older than every group inside it, so a full page from a window is the full page. An organization with little history runs at most four statements and ends on the unbounded query. `RecentFeedOpts.now` pins the clock.
+- **Recent activity is windowed.** `activityLogRepo.recentFeed` ranks entries inside a lookback window instead of the organization's whole history: one day, widened to 7, 30 and finally everything while the page comes back short (`FEED_LOOKBACK_DAYS`, index `activity_created_at_id_idx`). The answer is unchanged: a group's newest entry lies inside any window that holds one of its entries, and a group outside the window is older than every group inside it, so a full page from a window is the full page. An organization with little history runs at most four statements and ends on the unbounded query. `RecentFeedOpts.now` pins the clock. _Superseded by #619:_ Recent activity is the declared `activityList` (ADR-0007); `organization_id` on the log and `activity_org_created_idx` replace the window, and the group collapse is a probe of `activity_group_created_idx`.
 
 ## As built: #303 (attribution and Graph history)
 

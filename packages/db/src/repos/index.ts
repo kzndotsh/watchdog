@@ -1,4 +1,4 @@
-export type { KeyColumn, KeysetAfter, ListAfter } from "./_keyset";
+export type { ListAfter } from "./_keyset";
 export type {
   AnyListRepo,
   ListIndexNeeds,
@@ -45,17 +45,16 @@ export type { EdgeListPageRow } from "./edge-list.repo";
 export { activityCursorsRepo } from "./activity-cursors.repo";
 export { activityFloorRepo } from "./activity-floor.repo";
 export { activityLogRepo } from "./activity-log.repo";
+export { activityListRepo } from "./activity-list.repo";
+export type { ActivityFeedRow } from "./activity-list.repo";
 export type {
   ActivityRow,
   DrainActivityOpts,
-  FeedFilter,
   JobActivityLabelRow,
   NewActivityRow,
   PruneActivityOpts,
   PruneActivityResult,
   ProposalActivityLabelRow,
-  RecentActivityLogRow,
-  RecentFeedOpts,
 } from "./activity-log.repo";
 export { caseDeletionRecordsRepo } from "./case-deletion-records.repo";
 export type {

@@ -17,9 +17,16 @@ vi.mock("@tanstack/react-router", () => ({
 const askedFilters = vi.hoisted(() => [] as ({ caseId: string } | undefined)[]);
 
 vi.mock("@/domains/activity/queries", () => ({
-  recentActivityQuery: (filter?: { caseId: string }) => {
-    askedFilters.push(filter);
-    return { queryKey: ["activity", "recent"] };
+  activityListView: {
+    key: () => ["activity", "list", "activity"],
+    infinite: (
+      _scope: unknown,
+      query: { filters: { caseId: string | null } }
+    ) => {
+      const { caseId } = query.filters;
+      askedFilters.push(caseId === null ? undefined : { caseId });
+      return { queryKey: ["activity", "list", "activity"] };
+    },
   },
 }));
 
@@ -37,6 +44,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
+    useQueryClient: () => ({ resetQueries: vi.fn() }),
     useInfiniteQuery: () => ({
       hasNextPage: activityState.hasNextPage,
       isFetchingNextPage: activityState.isFetchingNextPage,

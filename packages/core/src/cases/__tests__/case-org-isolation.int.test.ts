@@ -13,6 +13,7 @@ import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { listJobsForCaseEffect } from "@watchdog/core/jobs";
 import { evidenceList } from "@watchdog/schemas/evidence";
+import { activityList } from "@watchdog/schemas/feed";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -112,7 +113,7 @@ describe("case organization isolation", () => {
       runDomain(
         listRecentActivityEffect({
           organizationId: TEST_ORGANIZATION_ID,
-          caseId: theirs.id,
+          input: activityList.input.parse({ caseId: theirs.id }),
         }).pipe(Effect.map((page) => page.items))
       )
     ).rejects.toSatisfy(

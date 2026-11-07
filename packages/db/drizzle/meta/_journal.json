@@ -134,6 +134,13 @@
       "when": 1793091758479,
       "tag": "0018_touch_updated_at",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794071421164,
+      "tag": "0019_activity_org_list_indexes",
+      "breakpoints": true
     }
   ]
 }
