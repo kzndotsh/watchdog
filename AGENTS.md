@@ -119,10 +119,10 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Confirmed requires evidence (rule and message; retyping the text fails `watchdog/no-reimplemented-custody-message`) | `packages/policy/src/confirmed-evidence.ts` | `confirmedNeedsEvidence`, `confirmedEvidenceViolation`, `CONFIRMED_REQUIRES_EVIDENCE` |
 | Confirmed-blocked check over a web form's evidence ids | `apps/web/src/shared/lib/confirmed-evidence.ts` | `isConfirmedBlocked` |
 | Active-Case switch | `apps/web/src/domains/cases/hooks/use-select-active-case.ts` | `useSelectActiveCase` |
-| Case in caller's org (guard) | `packages/core/src/graph/patch/guards.ts` | `assertCaseInOrgEffect` |
+| Case in caller's org (guard) | `packages/core/src/cases/access.ts` | `assertCaseInOrgEffect` |
 | Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
 | Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |
-| Who writes the Graph, for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest) | `packages/core/src/graph/graph-activity.ts` | `setHistoryContextEffect` |
+| Who writes the Graph, for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest) | `packages/core/src/activity/graph-activity.ts` | `setHistoryContextEffect` |
 | Job status change (the only writer; a lint rule bans others): claim, finish, fail, cancel, reclaim | `packages/core/src/jobs/lifecycle/settle.ts` | `settleJobEffect` |
 | Cancel Jobs inside the caller's transaction (API cancel, Case delete; `afterCommit` aborts fibers and advances runs) | `packages/core/src/jobs/lifecycle/cancel.ts` | `cancelWithin` |
 | Stop Jobs from outside a transaction (abort, timeout, access loss) | `packages/core/src/jobs/lifecycle/stop.ts` | `stop` |

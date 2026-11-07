@@ -1,7 +1,10 @@
 import { Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { deleteCaseEffect, purgeCaseEffect } from "@watchdog/core/cases";
+import {
+  deleteCaseEffect,
+  purgeCaseEffect,
+} from "@watchdog/core/case-deletion";
 import {
   caseDeletionRecordsRepo,
   casesRepo,

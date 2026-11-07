@@ -70,11 +70,6 @@ export {
   type UpdateEdgeInput,
 } from "./edges";
 export {
-  assertCaseExistsUncheckedEffect,
-  assertCaseInOrgEffect,
-  assertEntityInCaseEffect,
-} from "./patch/guards";
-export {
   getEntitiesByIdsEffect,
   listEntitiesForCaseEffect,
   listEntityPickerEffect,
@@ -101,3 +96,4 @@ export {
   type GraphSnapshotEdge,
   type GraphSnapshotEntity,
 } from "./snapshot";
+export { recordOpenInEffect, type RecordOpenInOpts } from "./open-in";

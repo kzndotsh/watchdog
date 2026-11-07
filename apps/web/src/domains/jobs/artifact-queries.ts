@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { getArtifactContentFn } from "@/domains/jobs/jobs-artifact.functions";
-import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { artifactKeys } from "@/domains/jobs/jobs-keys";
 import {
   getArtifactContentInputSchema,
   type GetArtifactContentInput,
@@ -12,7 +12,7 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 function artifactContentQueryKey(input: GetArtifactContentInput) {
   const scoped = getArtifactContentInputSchema.safeParse(input);
   if (scoped.success && scoped.data.source === "job") {
-    return jobsKeys.jobArtifact(
+    return artifactKeys.job(
       scoped.data.caseId,
       scoped.data.jobId,
       scoped.data.sha256,
@@ -20,21 +20,21 @@ function artifactContentQueryKey(input: GetArtifactContentInput) {
     );
   }
   if (scoped.success && scoped.data.source === "evidence") {
-    return jobsKeys.evidenceArtifact(
+    return artifactKeys.evidence(
       scoped.data.caseId,
       scoped.data.evidenceId,
       scoped.data.mime
     );
   }
   if (input.source === "job") {
-    return jobsKeys.jobArtifact(
+    return artifactKeys.job(
       input.caseId,
       input.jobId,
       input.sha256,
       input.mime
     );
   }
-  return jobsKeys.evidenceArtifact(input.caseId, input.evidenceId, input.mime);
+  return artifactKeys.evidence(input.caseId, input.evidenceId, input.mime);
 }
 
 export function artifactContentQuery(input: GetArtifactContentInput) {

@@ -35,20 +35,18 @@ export function useUpdateIdentifier({
       updateIdentifierFn({
         data: buildUpdateIdentifierData(caseId, patch),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onUpdated?.();
       toast.success(TOAST_IDENTIFIER_UPDATED);
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
     },
-    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+    onError: (caughtError, { caseId, entityId }) => {
       notifyStale(caughtError, {
         noun: "identifier",
         caseId,
         entityId,
-        entitySlug,
         onReload,
       });
       onError?.(errMessage(caughtError, couldnt("update", "identifier")));

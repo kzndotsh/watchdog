@@ -8,9 +8,9 @@ import {
   listEntitiesForCaseEffect,
   listEntityPickerEffect,
   matchEntityNamesEffect,
+  recordOpenInEffect,
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
-import { recordOpenInEffect } from "@watchdog/core/organization";
 import {
   createEntityInputSchema,
   deleteEntityInputSchema,

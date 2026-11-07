@@ -15,20 +15,19 @@ const { suppressAndProposeStageEffect, getProposalForCaseEffect } = vi.hoisted(
   })
 );
 
-vi.mock("../../graph/patch/guards", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../../graph/patch/guards")>();
+vi.mock("../../cases/access", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../cases/access")>();
   return {
     ...actual,
     assertCaseInOrgEffect: (caseId: string) => Effect.succeed(caseId),
   };
 });
-vi.mock("../../evidence/evidence", async (importOriginal) => {
+vi.mock("../../graph/graph-evidence", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../evidence/evidence")>();
+    await importOriginal<typeof import("../../graph/graph-evidence")>();
   return { ...actual, assertEvidenceIdsInCaseEffect: () => Effect.void };
 });
-vi.mock("../../jobs/stages/propose", () => ({ suppressAndProposeStageEffect }));
+vi.mock("../suppress-and-propose", () => ({ suppressAndProposeStageEffect }));
 vi.mock("../proposals", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../proposals")>();
   return { ...actual, getProposalForCaseEffect };

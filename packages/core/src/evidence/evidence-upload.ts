@@ -9,7 +9,7 @@ import {
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
+import { assertCaseInOrgEffect } from "../cases/access";
 import {
   createPresignedPutEffect,
   verifyUploadedObjectEffect,

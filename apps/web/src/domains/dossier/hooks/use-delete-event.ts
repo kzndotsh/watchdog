@@ -21,10 +21,9 @@ export function useDeleteEvent({
       deleteEventFn({
         data: eventScopeInputSchema.parse({ caseId, eventId }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Event deleted");
     },

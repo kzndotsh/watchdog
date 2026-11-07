@@ -16,13 +16,6 @@ export {
   type ActivityTailerApi,
 } from "./tailer";
 export {
-  FEED_ACTIONS,
-  listRecentActivityEffect,
-  proposalEventAction,
-  taskEventAction,
-  type ListRecentActivityOpts,
-} from "./recent-activity";
-export {
   runActivityConsumerEffect,
   type ActivityConsumerOpts,
 } from "./consumer";

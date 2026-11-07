@@ -36,7 +36,7 @@ import {
   entityIdsFromPatches,
   entityNameForId,
   loadEntityDisplayMapsForIdsEffect,
-} from "../entities/entity-display";
+} from "../display/entity-display";
 import type { Db } from "../infra/db-service";
 import {
   entitiesRepoFxDb,

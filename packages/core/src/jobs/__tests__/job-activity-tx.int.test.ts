@@ -2,7 +2,6 @@ import { Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { processEvidenceEffect } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import {
   cancelJobEffect,
@@ -10,6 +9,7 @@ import {
   recordingJobQueue,
   runPlaybookEffect,
   startJobEffect,
+  processEvidenceEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { activityLogRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";

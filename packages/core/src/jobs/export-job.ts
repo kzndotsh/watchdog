@@ -9,6 +9,7 @@ import type {
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
+import { assertCaseInOrgEffect } from "../cases/access";
 import { getCaseByIdEffect } from "../cases/cases";
 import {
   requireBreachCredentialCallerEffect,
@@ -28,7 +29,6 @@ import {
   caseExportSettings,
   type CaseExportSettings,
 } from "../export/settings";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { createPresignedGetEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";

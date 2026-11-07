@@ -2,11 +2,11 @@ import { Effect } from "effect";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
 
+import { assertEntityInCaseEffect } from "../../cases/access";
 import type { Db } from "../../infra/db-service";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { questionsTable } from "../mutation/tables";
-import { assertEntityInCaseEffect } from "./guards";
 import { decodeOpData, questionOpData } from "./op-data";
 
 export function applyQuestionOpEffect(

@@ -27,31 +27,31 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
+import { setHistoryContextEffect } from "../activity/graph-activity";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import {
+  assertCaseInOrgEffect,
+  requireTrimmedCaseIdEffect,
+  requireTrimmedGraphId,
+} from "../cases/access";
+import {
   buildEntityDisplayMaps,
   type EntityDisplayMaps,
-} from "../entities/entity-display";
+} from "../display/entity-display";
+import { createAttestationEffect } from "../evidence/evidence";
 import {
   assertEvidenceIdsInCaseEffect,
-  createAttestationEffect,
   parseGraphEvidenceIdsEffect,
-} from "../evidence/evidence";
-import { setHistoryContextEffect } from "../graph/graph-activity";
+} from "../graph/graph-evidence";
 import {
   loadIdentifierCollisionsEffect,
   type IdentifierCollision,
 } from "../graph/identifier-collisions";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
-import {
-  assertCaseInOrgEffect,
-  requireTrimmedCaseIdEffect,
-  requireTrimmedGraphId,
-} from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";

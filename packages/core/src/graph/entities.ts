@@ -20,6 +20,8 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
+import { dossierChannel } from "../activity/graph-activity";
+import { assertCaseInOrgEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
@@ -31,14 +33,12 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
-import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   entitiesTable,
   toEntityRecord,
   type EntityRecord,
 } from "./mutation/tables";
-import { assertCaseInOrgEffect } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 
 export type { EntityRecord };

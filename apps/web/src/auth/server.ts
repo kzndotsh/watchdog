@@ -17,7 +17,7 @@ export const auth = createAuth({
   // dir) first, so removing an organization never orphans evidence.
   beforeDeleteOrganization: async ({ organizationId, actorId }) => {
     const { deleteOrganizationCasesEffect } =
-      await import("@watchdog/core/cases");
+      await import("@watchdog/core/case-deletion");
     const { runDomain } = await import("@watchdog/core/infra");
     await runDomain(deleteOrganizationCasesEffect(organizationId, { actorId }));
   },

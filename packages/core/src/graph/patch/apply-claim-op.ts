@@ -3,11 +3,11 @@ import { Effect } from "effect";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
+import { assertEntityInCaseEffect } from "../../cases/access";
 import type { Db } from "../../infra/db-service";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { claimsTable } from "../mutation/tables";
-import { assertEntityInCaseEffect } from "./guards";
 import { claimOpData, decodeOpData } from "./op-data";
 
 export function applyClaimOpEffect(

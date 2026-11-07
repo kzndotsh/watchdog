@@ -16,7 +16,7 @@ import {
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
-import { setHistoryContextEffect } from "../../graph/graph-activity";
+import { setHistoryContextEffect } from "../../activity/graph-activity";
 
 /*
  * Issue #352: the database refuses a Graph write by the application role with no history

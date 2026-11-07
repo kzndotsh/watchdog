@@ -25,7 +25,7 @@ import {
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
-import { deleteCaseEffect } from "../../../cases/tombstone.ts";
+import { deleteCaseEffect } from "../../../case-deletion/tombstone.ts";
 import { recordingBlobStore } from "../../../infra/blob-store.ts";
 import { Db } from "../../../infra/db-service.ts";
 import { transact } from "../../../infra/postgres-tx.ts";

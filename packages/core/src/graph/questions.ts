@@ -9,11 +9,15 @@ import type {
 } from "@watchdog/schemas/shared";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
+import { dossierChannel } from "../activity/graph-activity";
+import {
+  assertEntityInCaseEffect,
+  requireTrimmedGraphId,
+} from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { questionsRepoFx } from "../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
-import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   questionsTable,
@@ -21,10 +25,6 @@ import {
   resolveQuestion,
   type QuestionRecord,
 } from "./mutation/tables";
-import {
-  assertEntityInCaseEffect,
-  requireTrimmedGraphId,
-} from "./patch/guards";
 
 export type { QuestionRecord };
 

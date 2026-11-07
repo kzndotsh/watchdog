@@ -20,12 +20,12 @@ import { testId } from "@watchdog/test-kit";
 describe("questions queries", () => {
   it("keys every list view under the Case prefix that invalidation names", () => {
     const caseId = testCaseId(1);
-    expect(questionsKeys.prefix(caseId)).toEqual(["questions", caseId]);
+    expect(questionsKeys.all(caseId)).toEqual(["questions", caseId]);
     const key = questionListView.key(
       { caseId },
       questionList.queryOf({}, { entityId: testId(2) })
     );
-    expect(key.slice(0, 2)).toEqual(questionsKeys.prefix(caseId));
+    expect(key.slice(0, 2)).toEqual(questionsKeys.all(caseId));
     expect(key[2]).toBe("list");
   });
 

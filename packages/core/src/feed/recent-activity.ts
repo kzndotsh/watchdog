@@ -20,13 +20,13 @@ import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
-import { loadEntityDisplayMapsForProposalPatchesEffect } from "../entities/entity-display";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
+import { assertCaseInOrgEffect } from "../cases/access";
+import { loadEntityDisplayMapsForProposalPatchesEffect } from "../display/entity-display";
+import { proposalActivityLabel } from "../display/proposal-display";
 import type { Db } from "../infra/db-service";
 import { nextCursorOf, pageWindow } from "../infra/page";
 import { activityLogRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
-import { proposalActivityLabel } from "../proposals/proposal-display";
 import { mapJobFeedRowsEffect } from "./job-feed";
 
 type FeedUsers = ReadonlyMap<string, { name: string; email: string }>;

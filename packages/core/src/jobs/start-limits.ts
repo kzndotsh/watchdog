@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 
 import type { DbExec } from "@watchdog/db";
-import { env } from "@watchdog/env/server";
 import type {
   JobStartLimitScope,
   OrganizationId,
@@ -12,25 +11,7 @@ import {
   jobStartLimitsRepoFx,
 } from "../infra/repos-fx";
 import { JobStartLimitError, type DomainTag } from "../infra/tagged-errors";
-
-/** What Job start limiting reads from configuration (`WD_JOB_START_*`). */
-export type JobStartLimitSettings = {
-  /** Length of the fixed counting window, in seconds. */
-  readonly windowSeconds: number;
-  /** Instance default: starts per window for an organization with no override. */
-  readonly organizationLimit: number;
-  /** Instance default: starts per window for an API key with no override. */
-  readonly keyLimit: number;
-};
-
-/** Read at call time, so every web process and the worker agree. */
-export function jobStartLimitSettings(): JobStartLimitSettings {
-  return {
-    windowSeconds: env.WD_JOB_START_WINDOW_SECONDS,
-    organizationLimit: env.WD_JOB_START_LIMIT_ORG,
-    keyLimit: env.WD_JOB_START_LIMIT_KEY,
-  };
-}
+import { jobStartLimitSettings } from "../organization/job-start-limits";
 
 export type JobStartCaller = {
   readonly organizationId: OrganizationId;

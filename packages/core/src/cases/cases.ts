@@ -19,8 +19,7 @@ import {
 import {
   appendGraphActivityEffect,
   graphActorFields,
-} from "../graph/graph-activity";
-import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
+} from "../activity/graph-activity";
 import type { Db } from "../infra/db-service";
 import {
   renameCaseExportDirEffect,
@@ -39,6 +38,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "../organization/roles";
+import { requireTrimmedCaseIdEffect } from "./access";
 import { toRecord, type CaseRecord } from "./case-record";
 
 export type { CaseRecord } from "./case-record";

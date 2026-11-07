@@ -27,11 +27,10 @@ export function useReopenQuestion({
       reopenQuestionFn({
         data: questionScopeInputSchema.parse({ caseId, questionId }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onReopened?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Question reopened");
     },

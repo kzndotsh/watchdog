@@ -1,10 +1,8 @@
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  deleteCaseEffect,
-  resolveActiveCaseEffect,
-} from "@watchdog/core/cases";
+import { deleteCaseEffect } from "@watchdog/core/case-deletion";
+import { resolveActiveCaseEffect } from "@watchdog/core/cases";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import {

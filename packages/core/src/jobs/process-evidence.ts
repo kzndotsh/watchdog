@@ -24,7 +24,8 @@ import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
-} from "../graph/patch/guards";
+} from "../cases/access";
+import { appendEvidenceActivityEffect } from "../evidence/evidence-activity";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
@@ -35,18 +36,17 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
-import { assertCapAvailabilityEffect } from "../jobs/cap-availability";
-import { parseValidatedCapInputEffect } from "../jobs/cap-input";
-import { appendJobActivityEffect } from "../jobs/job-activity";
-import type { JobQueue } from "../jobs/job-queue";
+import { assertCapAvailabilityEffect } from "./cap-availability";
+import { parseValidatedCapInputEffect } from "./cap-input";
+import { appendJobActivityEffect } from "./job-activity";
+import type { JobQueue } from "./job-queue";
 import {
   enqueueCreatedJobEffect,
   NO_PLAYBOOK,
   toJobRecord,
   type JobRecord,
-} from "../jobs/start-job";
-import { takeJobStartEffect } from "../jobs/start-limits";
-import { appendEvidenceActivityEffect } from "./evidence-activity";
+} from "./start-job";
+import { takeJobStartEffect } from "./start-limits";
 
 function startCapForEvidenceEffect(input: {
   caseId: CaseId;

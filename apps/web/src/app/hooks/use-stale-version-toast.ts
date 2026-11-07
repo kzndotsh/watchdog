@@ -13,7 +13,6 @@ export type StaleVersionTarget = {
   noun: string;
   caseId: string;
   entityId?: string;
-  entitySlug?: string;
   /** Runs when the person chooses Reload, after the caches refetch (close the open editor). */
   onReload?: () => void;
 };
@@ -31,7 +30,7 @@ export function useStaleVersionToast(): (
 ) => boolean {
   const queryClient = useQueryClient();
   return useCallback(
-    (error, { noun, caseId, entityId, entitySlug, onReload }) => {
+    (error, { noun, caseId, entityId, onReload }) => {
       if (!isStaleVersionError(error)) return false;
       toast.add({
         title: staleVersionMessage(noun),
@@ -42,7 +41,6 @@ export function useStaleVersionToast(): (
             onReload?.();
             void invalidateAfterEntityChanged(queryClient, caseId, {
               entityId,
-              slug: entitySlug,
             });
           },
         },

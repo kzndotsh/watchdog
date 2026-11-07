@@ -6,7 +6,7 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { identifierList } from "@watchdog/schemas/graph";
 
 export const identifiersKeys = {
-  prefix: (caseId: string) => ["identifiers", caseId] as const,
+  all: (caseId: string) => ["identifiers", caseId] as const,
 };
 
 /** The scope of the Case's Identifier list: one per Case. */
@@ -14,7 +14,7 @@ export type IdentifierListScope = { readonly caseId: string };
 
 /**
  * The Case's Identifier list (`identifierList`, ADR-0007), a page at a time: the Identifiers
- * table, and the Dossier tab with `entityId` fixed. Keys sit under `identifiersKeys.prefix`, so
+ * table, and the Dossier tab with `entityId` fixed. Keys sit under `identifiersKeys.all`, so
  * every Entity and Proposal invalidation refreshes each open view.
  */
 export const identifierListView = listView(identifierList, {

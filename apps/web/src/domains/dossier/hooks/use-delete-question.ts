@@ -27,11 +27,10 @@ export function useDeleteQuestion({
       deleteQuestionFn({
         data: questionScopeInputSchema.parse({ caseId, questionId }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onDeleted?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Question deleted");
     },

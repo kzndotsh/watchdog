@@ -13,10 +13,7 @@ import type {
   ProviderRequestBodyState,
 } from "@watchdog/schemas/shared";
 
-import {
-  assertCaseInOrgEffect,
-  requireTrimmedGraphId,
-} from "../graph/patch/guards";
+import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import { readArtifactBytesEffect, sha256Hex } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
