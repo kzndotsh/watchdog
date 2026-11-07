@@ -10,10 +10,6 @@ import { jobsRepoFx } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { appendJobLogActivityEffect } from "./job-activity";
 
-/** The defaults of `WD_JOB_LOG_*`, for a process where `env` is not validated (lint, unit tests). */
-const DEFAULT_MAX_LINES = 1000;
-const DEFAULT_MAX_KB = 128;
-const DEFAULT_FLUSH_MS = 1000;
 const BYTES_PER_KB = 1024;
 
 /** One line is cut here, whatever the line limit: a Cap logging a whole body must not fill the budget. */
@@ -28,13 +24,10 @@ export type JobLogSettings = {
 
 /** Read at call time, so the worker and the tests always agree. */
 export function jobLogSettings(): JobLogSettings {
-  const maxLines: number | undefined = env.WD_JOB_LOG_MAX_LINES;
-  const maxKb: number | undefined = env.WD_JOB_LOG_MAX_KB;
-  const flushMs: number | undefined = env.WD_JOB_LOG_FLUSH_MS;
   return {
-    maxLines: maxLines ?? DEFAULT_MAX_LINES,
-    maxBytes: (maxKb ?? DEFAULT_MAX_KB) * BYTES_PER_KB,
-    flushMs: flushMs ?? DEFAULT_FLUSH_MS,
+    maxLines: env.WD_JOB_LOG_MAX_LINES,
+    maxBytes: env.WD_JOB_LOG_MAX_KB * BYTES_PER_KB,
+    flushMs: env.WD_JOB_LOG_FLUSH_MS,
   };
 }
 

@@ -120,11 +120,11 @@ export const smtpFields = {
     .int()
     .min(1)
     .max(65_535)
-    .optional()
+    .default(587)
     .meta(
       meta({
         description:
-          "SMTP port. Unset sends on 587 (STARTTLS); 465 uses implicit TLS.",
+          "SMTP port. The default 587 uses STARTTLS; 465 uses implicit TLS.",
         sensitive: false,
         usedBy: ["web"],
       })
@@ -489,5 +489,4 @@ export const createEnvOptions = {
   runtimeEnv: process.env,
   emptyStringAsUndefined: true as const,
   isServer: typeof window === "undefined",
-  skipValidation: process.env.SKIP_ENV_VALIDATION === "1",
 };

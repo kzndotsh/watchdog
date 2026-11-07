@@ -2,17 +2,12 @@ import { env } from "@watchdog/env/server";
 
 const DAY_MS = 86_400_000;
 
-/** The restore window when `WD_CASE_RETENTION_DAYS` is unset: how long a deleted Case stays restorable. */
-export const DEFAULT_CASE_RETENTION_DAYS = 30;
-
 /**
- * Days a deleted Case stays restorable (`WD_CASE_RETENTION_DAYS`, default 30). Read at call
+ * Days a deleted Case stays restorable (`WD_CASE_RETENTION_DAYS`). Read at call
  * time, so the delete dialog, the Deleted Cases list and the purge job always agree.
  */
 export function caseRetentionDays(): number {
-  // `env` is not validated under SKIP_ENV_VALIDATION (lint, unit tests): fall back to the default.
-  const configured: number | undefined = env.WD_CASE_RETENTION_DAYS;
-  return configured ?? DEFAULT_CASE_RETENTION_DAYS;
+  return env.WD_CASE_RETENTION_DAYS;
 }
 
 /**

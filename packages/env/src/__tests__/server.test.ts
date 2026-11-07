@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@t3-oss/env-core", () => ({
   createEnv: vi.fn(() => ({
@@ -14,6 +14,11 @@ vi.mock("@t3-oss/env-core", () => ({
 }));
 
 describe("server env entrypoint", () => {
+  // The validated path: `createEnv` runs only when validation is not skipped (vitest skips it).
+  beforeEach(() => {
+    vi.stubEnv("SKIP_ENV_VALIDATION", "0");
+  });
+
   it("exports validated env from createEnv", async () => {
     const { env } = await import("../server");
     expect(env.DATABASE_URL).toBe("postgres://app:pw@db/wd");

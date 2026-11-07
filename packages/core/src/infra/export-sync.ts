@@ -13,7 +13,6 @@ import nodePath from "node:path";
 import { Context, Data, Effect, Fiber, Layer, SynchronizedRef } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
-import { env } from "@watchdog/env/server";
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import {
   parseTrimmedCaseId,
@@ -21,6 +20,7 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
+import { caseExportDir } from "../export/settings";
 import { readArtifactBytesEffect } from "./blob";
 import {
   blobStoreLayer,
@@ -44,19 +44,12 @@ function mapExportCatch(error: unknown): ExportIOError {
   return new ExportIOError({ reason: errorMessage(error) });
 }
 
-function exportRoot(): string {
-  return (
-    env.WD_EXPORT_DIR ??
-    nodePath.join(new URL("../../../../export", import.meta.url).pathname)
-  );
-}
-
 /** `<export>/<organizationId>/<caseSlug>`; null if either segment would escape the export root. */
 function exportDirFor(
   organizationId: OrganizationId,
   slug: string
 ): string | null {
-  const root = nodePath.resolve(exportRoot());
+  const root = nodePath.resolve(caseExportDir());
   const orgDir = nodePath.resolve(root, organizationId);
   const dir = nodePath.resolve(orgDir, slug);
   if (

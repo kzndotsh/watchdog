@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 import { allEnvFields, createEnvOptions } from "./fragments";
+import { lenientEnv } from "./lenient";
 import { loadRepoEnv } from "./load";
 import { readFieldMeta } from "./meta";
 
@@ -13,12 +14,13 @@ loadRepoEnv();
  *
  * Call sites must use `env.FOO`. The `wd` CLI parses `WD_API_*` in-process
  * (see `@watchdog/cli`), not this package.
- * Set `SKIP_ENV_VALIDATION=1` only for lint/Docker without secrets.
+ * Set `SKIP_ENV_VALIDATION=1` only for lint/Docker without secrets (and unit tests): fields are
+ * then parsed leniently on read, so a defaulted field still carries its schema default.
  */
-export const env = createEnv({
-  server: allEnvFields,
-  ...createEnvOptions,
-});
+export const env =
+  process.env.SKIP_ENV_VALIDATION === "1"
+    ? lenientEnv(allEnvFields, process.env)
+    : createEnv({ server: allEnvFields, ...createEnvOptions });
 
 /**
  * The values of every field marked `sensitive`, for scrubbing: error reports remove each of them
