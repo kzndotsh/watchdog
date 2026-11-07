@@ -74,6 +74,7 @@ vi.mock("@/shared/layout/page-header", () => ({
 }));
 
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
+import { casesKeys } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected/cases/$caseSlug";
 import { Route as OverviewRoute } from "@/routes/_protected/cases/$caseSlug/index";
 import { buildDeletedCaseRecord } from "@/testing/records";
@@ -202,10 +203,6 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     ).toBeInTheDocument();
     expect(getDeletedCaseBySlugFn).not.toHaveBeenCalled();
     expect(screen.queryByText(/deleted/i)).not.toBeInTheDocument();
-  });
-
-  it("is a layout: it renders the screens of the Case through the outlet", () => {
-    expect(Route.options.component).toBeDefined();
   });
 
   it("answers not found for a slug the organization cannot see (another organization's Case)", async () => {
@@ -339,10 +336,9 @@ describe("case slug route (the Case segment of Work URLs)", () => {
       await result;
 
       expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-      expect(queryClient.setQueryData).not.toHaveBeenCalledWith(
-        ["cases", "context"],
-        expect.anything()
-      );
+      expect(
+        queryClient.setQueryData.mock.calls.map(([key]) => key)
+      ).not.toContainEqual(casesKeys.context());
     });
 
     it("does not call the server when a switch already bumped the epoch before the heal", async () => {

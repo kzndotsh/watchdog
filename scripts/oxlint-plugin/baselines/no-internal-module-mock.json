@@ -54,7 +54,6 @@
   "apps/web/src/domains/entities/edges/__tests__/edges.functions.test.ts": 1,
   "apps/web/src/domains/entities/events/__tests__/events.functions.test.ts": 1,
   "apps/web/src/domains/entities/hooks/__tests__/use-delete-entity.component.test.tsx": 1,
-  "apps/web/src/domains/entities/hooks/__tests__/use-delete-identifier.component.test.tsx": 1,
   "apps/web/src/domains/entities/identifiers/__tests__/identifiers.functions.test.ts": 1,
   "apps/web/src/domains/entities/questions/__tests__/questions.functions.test.ts": 1,
   "apps/web/src/domains/intake/__tests__/intake.functions.test.ts": 1,

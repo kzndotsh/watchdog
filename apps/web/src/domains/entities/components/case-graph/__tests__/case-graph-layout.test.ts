@@ -76,12 +76,11 @@ describe("case-graph-layout", () => {
     ];
 
     const flow = caseGraphLayout({ entities, edges });
-    const operator = flow.nodes.find((node) => node.id === operatorId);
-    const operated = flow.nodes.find((node) => node.id === operatedId);
+    const rowOf = (id: string) =>
+      flow.nodes.find((node) => node.id === id)?.position.y ?? Number.NaN;
 
-    expect(operator).toBeDefined();
-    expect(operated).toBeDefined();
-    expect(operated!.position.y).toBeGreaterThan(operator!.position.y);
+    // The operated Entity sits on a later row than its operator (a missing node is NaN: fails).
+    expect(rowOf(operatedId)).toBeGreaterThan(rowOf(operatorId));
   });
 
   it("falls back to slug when an entity name is blank", () => {
@@ -133,12 +132,10 @@ describe("case-graph-layout", () => {
       ]),
     });
 
-    const top = positions.get("top");
-    const bottom = positions.get("bottom");
-    expect(top).toBeDefined();
-    expect(bottom).toBeDefined();
+    const topY = positions.get("top")?.y ?? Number.NaN;
+    const bottomY = positions.get("bottom")?.y ?? Number.NaN;
 
-    const verticalGap = bottom!.y - (top!.y + GRAPH_NODE_HEIGHT);
+    const verticalGap = bottomY - (topY + GRAPH_NODE_HEIGHT);
 
     expect(verticalGap).toBe(CASE_GRAPH_NODE_MARGIN_Y);
     expect(verticalGap).toBeGreaterThanOrEqual(80);
