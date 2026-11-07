@@ -105,6 +105,8 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one), and what the screen asked it for last | `apps/web/src/testing/memory-list.ts` | `memoryListPage`, `lastListRequest` |
 | A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list) | `apps/web/src/shared/hooks/use-picker-source.ts` | `usePickerSource`, `useRecordsByIds` |
 | A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`) | `apps/web/src/testing/memory-picker-port.tsx` | `memoryPickerPort` |
+| A lazy dialog or drawer (mounts on first open and stays mounted; optional prefetch after `OVERLAY_PREFETCH_MS`; never hand-write the `lazy` + `isMounted` + timer) | `apps/web/src/shared/lib/lazy-overlay.ts` | `lazyOverlay` |
+| Copy text to the clipboard with the copied state and toasts (never call `navigator.clipboard.writeText` in a component): `useCopyText` for a control with a copied state, `copyText` for a one-shot | `apps/web/src/shared/hooks/use-copy-text.ts` | `useCopyText`, `copyText` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |

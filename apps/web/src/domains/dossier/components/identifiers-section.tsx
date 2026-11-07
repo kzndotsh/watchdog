@@ -20,7 +20,6 @@ import {
 } from "@/domains/entities/identifiers/mutations";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
-import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidencePickerPort } from "@/domains/intake/queries";
@@ -28,9 +27,10 @@ import { errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
 import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { useListTable } from "@/shared/hooks/list/use-list-table";
+import { copyText } from "@/shared/hooks/use-copy-text";
 import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
 import type { AppAction } from "@/shared/lib/app-action";
-import { TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
+import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import { DataTableAddRow, tableComposerKeyDown } from "@/shared/ui/data-table";
 import {
   isHandleWithoutPlatform,
@@ -49,7 +49,6 @@ import { warmComposer } from "@/shared/ui/identifiers/identifier-composer-load";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
-import { toast } from "@/shared/ui/toast";
 import {
   HANDLE_REQUIRES_PLATFORM,
   type identifierList,
@@ -217,13 +216,10 @@ export function IdentifiersSection({
       saveEvidence,
       saveNotes,
       onCopyValue: (value) => {
-        void (async () => {
-          try {
-            await copyIdentifierValue(value);
-          } catch {
-            toast.error(TOAST_COULDNT_COPY);
-          }
-        })();
+        void copyText(value, {
+          success: TOAST_COPIED,
+          failure: TOAST_COULDNT_COPY,
+        });
       },
       onDeleteIdentifier: (row) => {
         setDeleteTarget({

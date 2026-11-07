@@ -12,6 +12,7 @@ import { useResendInvitation } from "@/domains/organization/hooks/use-resend-inv
 import { useUpdateMemberRole } from "@/domains/organization/hooks/use-update-member-role";
 import { organizationKeys } from "@/domains/organization/queries";
 import { cn, couldnt, errMessage, messageOr } from "@/lib/utils";
+import { copyText } from "@/shared/hooks/use-copy-text";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -24,7 +25,6 @@ import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SettingsMembersSkeleton } from "@/shared/ui/skeletons";
-import { toast } from "@/shared/ui/toast";
 import {
   buildInvitationAcceptUrl,
   invitationAcceptPath,
@@ -81,12 +81,10 @@ function memberMatches(
 }
 
 async function copyInviteLink(url: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(url);
-    toast.success(TOAST_COPIED);
-  } catch (error) {
-    toast.error(errMessage(error, couldnt("copy", "invite link")));
-  }
+  await copyText(url, {
+    success: TOAST_COPIED,
+    failure: (error) => errMessage(error, couldnt("copy", "invite link")),
+  });
 }
 
 function invitationAcceptUrl(invitationId: string): string {

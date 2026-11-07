@@ -2,10 +2,10 @@
 
 import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
 import { Check, Copy, Key } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
+import { useCopyText } from "@/shared/hooks/use-copy-text";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,6 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
-import { toast } from "@/shared/ui/toast";
 import {
   InputGroup,
   InputGroupButton,
@@ -40,41 +39,12 @@ export function NewApiKeyDialog({
   const { localization } = useAuth();
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
-  const [copied, setCopied] = useState(false);
-  const copiedTimerRef = useRef<number | null>(null);
-  const isMountedRef = useRef(true);
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-  useEffect(
-    () => () => {
-      if (copiedTimerRef.current !== null) {
-        window.clearTimeout(copiedTimerRef.current);
-      }
-    },
-    []
-  );
-
+  const { copy, isCopied } = useCopyText({
+    failure: (error) => errMessage(error, couldnt("copy", "API key")),
+  });
   const copySecretKey = async () => {
     if (!secretKey) return;
-
-    try {
-      await navigator.clipboard.writeText(secretKey);
-      if (!isMountedRef.current) return;
-      setCopied(true);
-      if (copiedTimerRef.current !== null) {
-        window.clearTimeout(copiedTimerRef.current);
-      }
-      copiedTimerRef.current = window.setTimeout(() => {
-        copiedTimerRef.current = null;
-        setCopied(false);
-      }, 1500);
-    } catch (error) {
-      toast.error(errMessage(error, couldnt("copy", "API key")));
-    }
+    await copy(secretKey);
   };
 
   return (
@@ -112,7 +82,7 @@ export function NewApiKeyDialog({
                 void copySecretKey();
               }}
             >
-              {copied ? <Check /> : <Copy />}
+              {isCopied ? <Check /> : <Copy />}
             </InputGroupButton>
           </InputGroup>
         </div>
