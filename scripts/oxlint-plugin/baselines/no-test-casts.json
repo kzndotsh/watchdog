@@ -19,7 +19,6 @@
   "apps/web/src/routes/__tests__/identifiers-index.component.test.tsx": 1,
   "apps/web/src/routes/__tests__/protected-index.component.test.tsx": 1,
   "apps/web/src/routes/__tests__/protected.component.test.tsx": 4,
-  "apps/web/src/routes/__tests__/settings-index.component.test.tsx": 6,
   "apps/web/src/routes/__tests__/triage-index.component.test.tsx": 1,
   "apps/web/src/shared/lib/__tests__/query-placeholder.test.ts": 5,
   "apps/web/src/shared/lib/__tests__/warm-query.test.ts": 4,

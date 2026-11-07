@@ -1,225 +1,28 @@
-import { QueryClient } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-
-const useSession = vi.hoisted(() =>
-  vi.fn(() => ({
-    data: { user: { id: "u1", role: "user" } },
-    isPending: false,
-  }))
-);
-
-vi.mock("@better-auth-ui/react", () => ({
-  useSession: () => useSession(),
-}));
-
-vi.mock("@/auth/client", () => ({
-  authClient: {},
-}));
-
-const useSearchMock = vi.hoisted(() => vi.fn(() => ({ tab: undefined })));
-const useNavigateMock = vi.hoisted(() => vi.fn());
-const searchStrMock = vi.hoisted(() => vi.fn(() => ""));
-
-vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@tanstack/react-router")>();
-  return {
-    ...actual,
-    useRouterState: ({
-      select,
-    }: {
-      select: (s: {
-        status: string;
-        location: { searchStr: string };
-      }) => unknown;
-    }) => select({ status: "idle", location: { searchStr: searchStrMock() } }),
-    createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
-    getRouteApi: () => ({
-      useSearch: useSearchMock,
-      useNavigate: () => useNavigateMock,
-    }),
-  };
-});
-
-vi.mock("@/auth/ui/api-key/api-keys", () => ({
-  ApiKeys: () => <div>API keys panel</div>,
-}));
-
-vi.mock("@/auth/ui/settings/settings", () => ({
-  Settings: ({ view }: { view: string }) => <div>Auth settings {view}</div>,
-}));
-
-vi.mock("@/domains/settings/components/settings-credentials-form", () => ({
-  SettingsCredentialsForm: () => <div>Credentials form</div>,
-}));
-
-vi.mock("@/domains/organization/components/organization-members", () => ({
-  OrganizationMembers: () => <div>Team panel</div>,
-}));
-
-vi.mock("@/domains/organization/components/organization-profile", () => ({
-  OrganizationProfile: () => <div>Organization profile</div>,
-}));
-
-vi.mock("@/domains/organization/components/your-organizations", () => ({
-  YourOrganizations: () => <div>Your organizations panel</div>,
-}));
-
-vi.mock("@/domains/settings/components/settings-users", () => ({
-  SettingsUsers: () => <div>Users panel</div>,
-}));
-
-vi.mock("@/domains/settings/components/settings-shell", () => ({
-  SETTINGS_TABS: [
-    "account",
-    "security",
-    "appearance",
-    "api-keys",
-    "credentials",
-    "organizations",
-    "organization",
-    "members",
-    "users",
-  ],
-  SettingsShell: ({
-    activeTab,
-    children,
-  }: {
-    activeTab: string;
-    children: React.ReactNode;
-  }) => (
-    <div>
-      Settings shell {activeTab}
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock("@/shared/layout/page", () => ({
-  Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/shared/layout/page-header", () => ({
-  PageHeader: () => <div>Settings header</div>,
-}));
-
-vi.mock("@/shared/ui/skeletons", () => ({
-  StackBodySkeleton: () => <div>Loading credentials</div>,
-  StackBodySkeletonLayout: () => <div>Loading credentials layout</div>,
-}));
+import { describe, expect, it } from "vitest";
 
 import { Route } from "@/routes/_protected/settings/index";
 
-describe("settings index route", () => {
-  it("prefetches credentials in the loader", async () => {
-    const client = new QueryClient();
-    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+// What the route renders for each tab, who sees Users, and the URL clean-up run through the
+// real router in `settings-tabs.component.test.tsx`. This file keeps the search parser.
+const validateSearch = Route.options.validateSearch as {
+  parse: (value: unknown) => { tab?: string };
+};
 
-    await loader({
-      context: { queryClient: client },
-    } as never);
-
-    expect(query).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders the account settings panel by default", () => {
-    useSearchMock.mockReturnValue({ tab: undefined });
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(screen.getByText("Settings header")).toBeInTheDocument();
-    expect(screen.getByText("Settings shell account")).toBeInTheDocument();
-    expect(screen.getByText("Auth settings account")).toBeInTheDocument();
-  });
-
-  it("renders the credentials panel when selected", () => {
-    useSearchMock.mockReturnValue({ tab: "credentials" } as never);
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(screen.getByText("Settings shell credentials")).toBeInTheDocument();
-    expect(screen.getByText("Credentials form")).toBeInTheDocument();
-  });
-
-  it("renders the members and organization panels under the Organization group", () => {
-    useSearchMock.mockReturnValue({ tab: "members" } as never);
-    const Page = Route.options.component!;
-    const { unmount } = render(<Page />);
-    expect(screen.getByText("Team panel")).toBeInTheDocument();
-    unmount();
-
-    useSearchMock.mockReturnValue({ tab: "organization" } as never);
-    render(<Page />);
-    expect(screen.getByText("Organization profile")).toBeInTheDocument();
-  });
-
+describe("settings index route search", () => {
   it("treats the retired team tab as no tab", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
     expect(validateSearch.parse({ tab: "team" }).tab).toBeUndefined();
   });
 
-  it("clears an invalid ?tab= from the URL using the router location", () => {
-    useNavigateMock.mockClear();
-    searchStrMock.mockReturnValue("?tab=bogus");
-    useSearchMock.mockReturnValue({ tab: undefined });
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(useNavigateMock).toHaveBeenCalledTimes(1);
-    searchStrMock.mockReturnValue("");
-  });
-
-  it("leaves the URL alone when no tab is present", () => {
-    useNavigateMock.mockClear();
-    searchStrMock.mockReturnValue("");
-    useSearchMock.mockReturnValue({ tab: undefined });
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(useNavigateMock).not.toHaveBeenCalled();
-  });
-
-  it("keeps a valid settings tab and drops an invalid one in validateSearch", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
+  it("keeps a valid settings tab and drops an invalid one", () => {
     expect(validateSearch.parse({ tab: "security" })).toEqual({
       tab: "security",
     });
     expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
   });
 
-  it("trims padded settings tab in validateSearch", () => {
-    const validateSearch = Route.options.validateSearch as {
-      parse: (value: unknown) => { tab?: string };
-    };
+  it("trims a padded settings tab", () => {
     expect(validateSearch.parse({ tab: "  credentials  " })).toEqual({
       tab: "credentials",
     });
-  });
-
-  it("denies the users panel when the session is not install admin", () => {
-    useSession.mockReturnValue({
-      data: { user: { id: "u1", role: "user" } },
-      isPending: false,
-    });
-    useSearchMock.mockReturnValue({ tab: "users" } as never);
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(
-      screen.getByText("Only server admins can manage accounts.")
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Users panel")).not.toBeInTheDocument();
-  });
-
-  it("renders the users panel for server admins", () => {
-    useSession.mockReturnValue({
-      data: { user: { id: "u-admin", role: "admin" } },
-      isPending: false,
-    });
-    useSearchMock.mockReturnValue({ tab: "users" } as never);
-    const Page = Route.options.component!;
-    render(<Page />);
-    expect(screen.getByText("Users panel")).toBeInTheDocument();
   });
 });

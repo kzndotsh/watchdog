@@ -4,14 +4,12 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 const deleteIdentifierFn = vi.hoisted(() => vi.fn());
-const invalidateAfterEntityChanged = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   deleteIdentifierFn,
 }));
-vi.mock("@/app/lib/query-invalidation", () => ({
-  invalidateAfterEntityChanged,
-}));
+
+import { identifiersKeys } from "@/domains/entities/identifiers/queries";
 
 import { useDeleteIdentifier } from "../use-delete-identifier";
 
@@ -36,10 +34,13 @@ describe("useDeleteIdentifier", () => {
         finish = resolve;
       })
     );
-    invalidateAfterEntityChanged.mockResolvedValue(undefined);
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false } },
     });
+    // Each Case has a cached Identifier list: only the Case the deletion started in goes stale.
+    for (const caseId of [CASE_A, CASE_B]) {
+      queryClient.setQueryData(identifiersKeys.all(caseId), []);
+    }
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
@@ -68,17 +69,13 @@ describe("useDeleteIdentifier", () => {
     });
 
     await waitFor(() => {
-      expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
-        queryClient,
-        CASE_A,
-        { entityId: ENTITY_ID, slug: "acme" }
-      );
+      expect(
+        queryClient.getQueryState(identifiersKeys.all(CASE_A))?.isInvalidated
+      ).toBe(true);
     });
-    expect(invalidateAfterEntityChanged).not.toHaveBeenCalledWith(
-      queryClient,
-      CASE_B,
-      expect.anything()
-    );
+    expect(
+      queryClient.getQueryState(identifiersKeys.all(CASE_B))?.isInvalidated
+    ).toBe(false);
     expect(deleteIdentifierFn).toHaveBeenCalledWith({
       data: { caseId: CASE_A, identifierId: IDENTIFIER_ID },
     });
