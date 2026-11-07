@@ -295,8 +295,9 @@ const SPECIFIER_PATTERNS = [
   /\bfrom\s*["'](?<spec>[^"'\n]+)["']/g,
   // Side-effect `import "m"`.
   /\bimport\s*["'](?<spec>[^"'\n]+)["']/g,
-  /\b(?:import|require)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
-  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
+  // Dynamic `import(...)` / `require(...)`, block comments allowed before the specifier.
+  /\b(?:import|require)\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["'](?<spec>[^"'\n]+)["']/g,
+  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["'](?<spec>[^"'\n]+)["']/g,
 ];
 
 /**
