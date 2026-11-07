@@ -6,12 +6,12 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { questionList } from "@watchdog/schemas/graph";
 
 export const questionsKeys = {
-  prefix: (caseId: string) => ["questions", caseId] as const,
+  all: (caseId: string) => ["questions", caseId] as const,
 };
 
 /**
  * The Case's Question list (`questionList`, ADR-0007), a page at a time: the Dossier Questions tab is this
- * list with `entityId` fixed. Keys sit under `questionsKeys.prefix`, so every Entity, Proposal and live
+ * list with `entityId` fixed. Keys sit under `questionsKeys.all`, so every Entity, Proposal and live
  * Graph invalidation refreshes each open view.
  */
 export const questionListView = listView(questionList, {

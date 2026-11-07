@@ -84,7 +84,7 @@ describe("EvidencePreviewDrawer", () => {
   it("fetches URI-backed JSON text when inline body is empty", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
-      if (key[0] === "artifact" && key[1] === "evidence") {
+      if (key[0] === "jobs" && key[2] === "artifact" && key[3] === "evidence") {
         return fetchedQuery({ text: '{"status":"ok"}' });
       }
       if (key[0] === "evidence" && key[2] === "download") {

@@ -30,7 +30,7 @@ import { testId } from "@watchdog/test-kit";
 describe("edges queries", () => {
   it("keys the list views, the ego graph and the snapshot under the Case prefix", () => {
     const caseId = testCaseId(1);
-    const prefix = edgesKeys.prefix(caseId);
+    const prefix = edgesKeys.all(caseId);
     expect(prefix).toEqual(["edges", caseId]);
     const listKey = edgeListView.key(
       { caseId },

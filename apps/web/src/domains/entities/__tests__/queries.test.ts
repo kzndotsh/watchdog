@@ -26,8 +26,8 @@ describe("entities queries", () => {
     expect(entitiesKeys.all("case-1")).toEqual(["entities", "case-1"]);
     expect(entitiesKeys.detail("case-1", "alpha")).toEqual([
       "entities",
-      "detail",
       "case-1",
+      "detail",
       "alpha",
     ]);
   });

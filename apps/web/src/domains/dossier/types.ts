@@ -5,7 +5,7 @@ export type DossierEmptyPresentation = "inline" | "panel";
 export type DossierSectionProps = {
   caseId: string;
   entityId: string;
-  /** Entity slug for `invalidateAfterEntityChanged` / detail cache keys. */
+  /** Entity slug for the detail cache key. */
   entitySlug: string;
   /**
    * How to render list blank-slates.

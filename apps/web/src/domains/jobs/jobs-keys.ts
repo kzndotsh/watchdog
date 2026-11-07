@@ -10,8 +10,9 @@ export const jobsKeys = {
   /** Under `all`, so a Job's status change (SSE) refreshes the calls it made. */
   providerCalls: (caseId: string, jobId: string) =>
     ["jobs", caseId, "provider-calls", jobId] as const,
+  /** Under `all`, like every other read of the Case's Jobs. */
   jobArtifact: (caseId: string, jobId: string, sha256: string, mime: string) =>
-    ["artifact", "job", caseId, jobId, sha256, mime] as const,
+    ["jobs", caseId, "artifact", "job", jobId, sha256, mime] as const,
   evidenceArtifact: (caseId: string, evidenceId: string, mime: string) =>
-    ["artifact", "evidence", caseId, evidenceId, mime] as const,
+    ["jobs", caseId, "artifact", "evidence", evidenceId, mime] as const,
 };

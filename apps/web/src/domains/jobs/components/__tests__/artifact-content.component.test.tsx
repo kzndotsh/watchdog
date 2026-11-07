@@ -134,9 +134,10 @@ describe("ArtifactContent", () => {
       expect.objectContaining({
         enabled: true,
         queryKey: [
+          "jobs",
+          testId(10),
           "artifact",
           "evidence",
-          testId(10),
           testId(40),
           "text/plain",
         ],

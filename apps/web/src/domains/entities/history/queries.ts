@@ -12,7 +12,7 @@ import type { GraphHistoryKind } from "@watchdog/schemas/shared";
 const HISTORY_PAGE_SIZE = 8;
 
 export const historyKeys = {
-  prefix: (caseId: string) => ["graph-history", caseId] as const,
+  all: (caseId: string) => ["graph-history", caseId] as const,
   row: (caseId: string, kind: GraphHistoryKind, rowId: string) =>
     ["graph-history", caseId, kind, rowId] as const,
 };

@@ -32,11 +32,10 @@ export function useCreateEvent({ onCreated }: { onCreated?: () => void } = {}) {
           where: value.where,
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onCreated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Event added");
     },

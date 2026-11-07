@@ -25,7 +25,6 @@ async function invalidateDossierEntity(
 ): Promise<void> {
   await invalidateAfterEntityChanged(ctx.queryClient, ctx.caseId, {
     entityId: ctx.entity.id,
-    slug: ctx.entity.slug,
   });
 }
 

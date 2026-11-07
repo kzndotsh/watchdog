@@ -19,7 +19,7 @@ import { testId } from "@watchdog/test-kit";
 
 describe("identifiers queries", () => {
   it("builds the case-wide key", () => {
-    expect(identifiersKeys.prefix("case-1")).toEqual(["identifiers", "case-1"]);
+    expect(identifiersKeys.all("case-1")).toEqual(["identifiers", "case-1"]);
   });
 
   it("keys every list view under the Case prefix that invalidation names", () => {
@@ -28,7 +28,7 @@ describe("identifiers queries", () => {
       { caseId },
       identifierList.queryOf({ type: ["email"] }, { entityId: testId(2) })
     );
-    expect(key.slice(0, 2)).toEqual(identifiersKeys.prefix(caseId));
+    expect(key.slice(0, 2)).toEqual(identifiersKeys.all(caseId));
     expect(key[2]).toBe("list");
   });
 

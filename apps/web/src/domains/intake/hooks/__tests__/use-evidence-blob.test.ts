@@ -61,7 +61,7 @@ describe("useEvidenceBlob", () => {
   it("loads blob text when evidence stores only a URI", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
-      if (key[0] === "artifact" && key[1] === "evidence") {
+      if (key[0] === "jobs" && key[2] === "artifact" && key[3] === "evidence") {
         return {
           data: { text: "fetched body" },
           isFetched: true,
@@ -100,7 +100,7 @@ describe("useEvidenceBlob", () => {
   it("loads blob text for attestation evidence stored only in object storage", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
-      if (key[0] === "artifact" && key[1] === "evidence") {
+      if (key[0] === "jobs" && key[2] === "artifact" && key[3] === "evidence") {
         return {
           data: { text: "attestation body" },
           isFetched: true,
@@ -140,7 +140,7 @@ describe("useEvidenceBlob", () => {
   it("surfaces contentLoadError when blob fetch fails", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
-      if (key[0] === "artifact" && key[1] === "evidence") {
+      if (key[0] === "jobs" && key[2] === "artifact" && key[3] === "evidence") {
         return {
           data: undefined,
           isFetched: true,
@@ -181,7 +181,7 @@ describe("useEvidenceBlob", () => {
   it("hides contentLoadError while refetching after a failure", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
-      if (key[0] === "artifact" && key[1] === "evidence") {
+      if (key[0] === "jobs" && key[2] === "artifact" && key[3] === "evidence") {
         return {
           data: undefined,
           isFetched: true,
@@ -223,7 +223,7 @@ describe("useEvidenceBlob", () => {
   it("defers contentLoadError while the sibling query is still pending", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
-      if (key[0] === "artifact" && key[1] === "evidence") {
+      if (key[0] === "jobs" && key[2] === "artifact" && key[3] === "evidence") {
         return {
           data: undefined,
           isFetched: false,
