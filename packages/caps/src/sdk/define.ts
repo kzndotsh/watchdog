@@ -19,6 +19,8 @@ import type {
 import type { ToolsTag } from "@watchdog/tools/errors";
 import type { Egress } from "@watchdog/tools/http";
 
+import type { BREACH_CAP_CATEGORY } from "./descriptor";
+import { isBreachCapId } from "./descriptor";
 import type { JobLane } from "./lane";
 import { assertCapProvider, type CapProvider } from "./provider";
 import type { RawResponsePolicy } from "./raw-response";
@@ -199,8 +201,30 @@ export type CapIoKind =
   | { kind: "url" }
   | { kind: "hash" };
 
-export type CapabilityDef<TSchema extends z.ZodType> = {
-  id: string;
+/**
+ * How a breach Cap's stored artifact is redacted for a Case Export: parses the artifact with the
+ * Cap's own snapshot schema and returns it redacted as JSON text, or `null` when it does not
+ * match the schema (the Export then withholds the file).
+ */
+export type BreachExportRedactor = (
+  value: unknown,
+  fingerprint: CredentialFingerprint
+) => string | null;
+
+/**
+ * The redactor a Cap declares: required for a breach Cap (an id under `breach.`), so a breach Cap
+ * without one fails typecheck; optional on a Cap whose id is not known to be one.
+ */
+export type BreachRedactorDecl<TId extends string> =
+  TId extends `${typeof BREACH_CAP_CATEGORY}.${string}`
+    ? { exportRedactor: BreachExportRedactor }
+    : { exportRedactor?: BreachExportRedactor };
+
+export type CapabilityDef<
+  TSchema extends z.ZodType,
+  TId extends string = string,
+> = {
+  id: TId;
   title: string;
   /** Who the data comes from and on what terms; required, see `CapProvider`. */
   provider: CapProvider;
@@ -257,12 +281,23 @@ export type CapabilityDef<TSchema extends z.ZodType> = {
    * success (including cache hits). Independent of `produces`.
    */
   pivots?: (report: JsonValue) => JobPivots | undefined;
+  /** How a Case Export redacts this Cap's artifact; required for a breach Cap (`BreachRedactorDecl`). */
+  exportRedactor?: BreachExportRedactor;
 };
 
-export function defineCapability<TSchema extends z.ZodType>(
-  def: CapabilityDef<TSchema>
-): CapabilityDef<TSchema> {
+/**
+ * The declaration's runtime checks, for a definer that builds the Cap generically
+ * (`defineCollectCap`) and so cannot show the compiler the redactor rule for a generic id: it
+ * enforces that rule itself, by throwing.
+ */
+export function validateCapability<
+  TSchema extends z.ZodType,
+  const TId extends string,
+>(def: CapabilityDef<TSchema, TId>): CapabilityDef<TSchema, TId> {
   if (!def.id.trim()) throw new Error("Capability id is required");
+  if (isBreachCapId(def.id) && def.exportRedactor === undefined) {
+    throw new Error(`Breach Capability ${def.id} needs an exportRedactor`);
+  }
   if (!def.title.trim()) throw new Error("Capability title is required");
   assertCapProvider(def.provider);
   if (def.timeoutMs !== undefined && def.timeoutMs <= 0) {
@@ -296,6 +331,20 @@ export function defineCapability<TSchema extends z.ZodType>(
     }
   }
   return def;
+}
+
+/**
+ * Declares a Cap. A breach Cap (an id under `breach.`) must carry an `exportRedactor`: the type
+ * refuses one without it (`BreachRedactorDecl`).
+ */
+export function defineCapability<
+  TSchema extends z.ZodType,
+  const TId extends string,
+>(
+  def: Omit<CapabilityDef<TSchema, TId>, "exportRedactor"> &
+    BreachRedactorDecl<TId>
+): CapabilityDef<TSchema, TId> {
+  return validateCapability(def);
 }
 
 /** Fallback Cap abort window when `timeoutMs` is omitted on the Cap. */

@@ -82,12 +82,12 @@ export type CapDescriptor = {
 export const BREACH_CAP_CATEGORY = "breach";
 
 /**
- * Whether a Cap is a breach Cap: the one predicate the register, the API, the availability
+ * Whether a Cap id is a breach Cap's: the one predicate the register, the API, the availability
  * gates and the UI share. The category is the id's first segment, so a new Cap under
  * `breach/` is gated without a second declaration.
  */
-export function isBreachCap(cap: { id: string }): boolean {
-  return cap.id.split(".")[0] === BREACH_CAP_CATEGORY;
+export function isBreachCapId(id: string): boolean {
+  return id.split(".")[0] === BREACH_CAP_CATEGORY;
 }
 
 /**
@@ -112,7 +112,7 @@ export function deriveCapFlags(def: {
   }
   if (authored.has("slow")) flags.push("slow");
   if (authored.has("invasive")) flags.push("invasive");
-  if (def.id !== undefined && isBreachCap({ id: def.id })) flags.push("breach");
+  if (def.id !== undefined && isBreachCapId(def.id)) flags.push("breach");
   return flags;
 }
 

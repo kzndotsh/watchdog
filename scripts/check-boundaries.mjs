@@ -20,7 +20,7 @@
  *   5. Core folders form no import cycle: the top-level folders of packages/core/src
  *      (`activity`, `cases`, `jobs`, ...) depend on one another in one direction only, so a
  *      concept lives in the folder that owns it. Tests (`__tests__`, `*.test.ts`) are not
- *      counted; files directly under src (`worker-entry.ts`) are entry points, not folders.
+ *      counted; files directly under src (`vault-rekey-cli.ts`) are entry points, not folders.
  *      Edges that may close a cycle are named in CORE_CYCLE_ALLOWLIST (empty today).
  *   6. Infra holds no domain: a non-test file of `packages/core/src/infra/` imports no core
  *      folder but `errors` (the error vocabulary, not a domain). Infra is the leaf the domain
@@ -223,7 +223,7 @@ function recordCoreEdge(rel, target, where, spec) {
   const from = CORE_FOLDER_FILE.exec(rel)?.groups?.folder;
   if (from === undefined || !target.startsWith(CORE_SRC)) return;
   const to = target.slice(CORE_SRC.length).split("/")[0];
-  // `../jobs` (a folder's index) names the folder; `../worker-entry` is a file beside the folders.
+  // `../jobs` (a folder's index) names the folder; a file beside the folders (`../vault-rekey-cli`) is not a folder.
   if (to === undefined || to === from || !coreFolders.has(to)) return;
   if (from === "infra" && !INFRA_MAY_IMPORT.has(to)) {
     infraImportProblems.push(
@@ -295,8 +295,9 @@ const SPECIFIER_PATTERNS = [
   /\bfrom\s*["'](?<spec>[^"'\n]+)["']/g,
   // Side-effect `import "m"`.
   /\bimport\s*["'](?<spec>[^"'\n]+)["']/g,
-  /\b(?:import|require)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
-  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
+  // Dynamic `import(...)` / `require(...)`, block comments allowed before the specifier.
+  /\b(?:import|require)\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["'](?<spec>[^"'\n]+)["']/g,
+  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["'](?<spec>[^"'\n]+)["']/g,
 ];
 
 /**

@@ -57,6 +57,7 @@ async function append(caseId: CaseId, label: string, ageDays: number) {
     .insert(activity)
     .values({
       caseId,
+      organizationId: TEST_ORGANIZATION_ID,
       kind: "task",
       action: "created",
       label,

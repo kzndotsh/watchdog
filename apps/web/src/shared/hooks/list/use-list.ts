@@ -1,17 +1,13 @@
-import {
-  hashKey,
-  useInfiniteQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useEffect, useEffectEvent, useMemo } from "react";
+import { hashKey, useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import { couldnt, errMessage } from "@/lib/utils";
 import { useListSearchDraft } from "@/shared/hooks/list/use-list-search-draft";
 import { useListSelection } from "@/shared/hooks/list/use-list-selection";
+import { useListViewReset } from "@/shared/hooks/list/use-list-view-reset";
 import { listPending } from "@/shared/lib/list-pending";
 import { listControlsOf } from "@/shared/lib/list/list-controls";
 import { listStateOf } from "@/shared/lib/list/list-state";
-import { isListViewReset } from "@/shared/lib/list/list-status";
 import type { ListHandle, UseListArgs } from "@/shared/lib/list/list-types";
 import type { ListView } from "@/shared/lib/list/list-view";
 import {
@@ -81,22 +77,11 @@ export function useList<
       return true;
     });
   }, [pages, isMoving, getId]);
-  const isResetting = result.isError && isListViewReset(result.error);
-
-  // The query marked a stale cursor: starting the view again is a cache write (external).
-  const queryClient = useQueryClient();
-  const resetView = useEffectEvent(() => {
-    void queryClient.resetQueries({
-      queryKey: view.key(args.scope, query),
-      exact: true,
-    });
-  });
-  // Per-view state (the reset, the selection) is keyed by scope and view: another Case with the
-  // same filters is another view.
+  // A stale cursor restarts the view from page one (one implementation, shared with feeds).
+  const isResetting = useListViewReset(view, args.scope, query, result);
+  // Per-view state (the selection) is keyed by scope and view: another Case with the same
+  // filters is another view.
   const stateKey = hashKey(view.key(args.scope, query));
-  useEffect(() => {
-    if (isResetting) resetView();
-  }, [isResetting, stateKey]);
 
   const state = listStateOf(
     {

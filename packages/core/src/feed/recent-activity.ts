@@ -1,18 +1,17 @@
 import { Effect } from "effect";
 
+import { activityListRepo } from "@watchdog/db";
+import type { ProposalActivityLabelRow, ActivityFeedRow } from "@watchdog/db";
+import { activityList, type ActivityItem } from "@watchdog/schemas/feed";
 import type {
-  ProposalActivityLabelRow,
-  RecentActivityLogRow,
-} from "@watchdog/db";
-import {
-  RECENT_ACTIVITY_LIMIT_DEFAULT,
-  RECENT_ACTIVITY_LIMIT_MAX,
-  type ActivityItem,
-} from "@watchdog/schemas/feed";
-import type { Page, CaseId, OrganizationId } from "@watchdog/schemas/shared";
+  ListInput,
+  ListPage,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   OPEN_IN_DESTINATION_LABELS,
   openInDestinationSchema,
+  opsOf,
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
@@ -25,46 +24,11 @@ import { loadEntityDisplayMapsForProposalPatchesEffect } from "../display/entity
 import { proposalActivityLabel } from "../display/proposal-display";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { nextCursorOf, pageWindow } from "../infra/page";
+import { listPageEffect } from "../infra/list-page";
 import { activityLogRepoFxDb } from "../infra/repos-fx";
 import { mapJobFeedRowsEffect } from "./job-feed";
 
 type FeedUsers = ReadonlyMap<string, { name: string; email: string }>;
-
-export type ListRecentActivityOpts = {
-  organizationId: OrganizationId;
-  caseId?: CaseId;
-  cursor?: string;
-  limit?: number;
-};
-
-const DEFAULT_LIMIT = RECENT_ACTIVITY_LIMIT_DEFAULT;
-const MAX_LIMIT = RECENT_ACTIVITY_LIMIT_MAX;
-
-function clampActivityLimit(value: number | undefined): number {
-  const n = value ?? DEFAULT_LIMIT;
-  if (!Number.isFinite(n)) return DEFAULT_LIMIT;
-  return Math.min(Math.max(1, Math.trunc(n)), MAX_LIMIT);
-}
-
-export { clampActivityLimit };
-
-/**
- * The `(kind, action)` pairs of the activity log the workspace feed shows
- * (ADR-0005 decision 5); everything else in the log drives the live signal only.
- * Task edits that keep the status and reorders are in the log (they notify) but
- * not in the feed, as before. Evidence shows when it was captured (hide, restore,
- * attach and process are not feed rows, as before). Proposals show as history:
- * proposed, then accepted or rejected (ADR-0005 "As built: S6"). Graph and Case
- * entries stay out: widening the feed to them is a product decision.
- */
-export const FEED_ACTIONS = {
-  task: ["created", "status_changed", "deleted"],
-  job: ["queued", "running", "succeeded", "failed", "cancelled"],
-  evidence: ["captured"],
-  proposal: ["created", "accepted", "rejected"],
-  open_in: ["opened"],
-} as const;
 
 /** Map stored task event codes → display verb. */
 export function taskEventAction(
@@ -81,10 +45,7 @@ export function taskEventAction(
   return "Updated";
 }
 
-function mapTaskEvent(
-  row: RecentActivityLogRow,
-  users: FeedUsers
-): ActivityItem {
+function mapTaskEvent(row: ActivityFeedRow, users: FeedUsers): ActivityItem {
   return {
     id: String(row.id),
     kind: "task",
@@ -101,7 +62,7 @@ function mapTaskEvent(
 }
 
 function mapEvidenceEntry(
-  row: RecentActivityLogRow,
+  row: ActivityFeedRow,
   users: FeedUsers
 ): ActivityItem {
   return {
@@ -120,10 +81,7 @@ function mapEvidenceEntry(
 }
 
 /** A Dossier opened in an outside tool: the Entity, the destination and who did it; never the text. */
-function mapOpenInEntry(
-  row: RecentActivityLogRow,
-  users: FeedUsers
-): ActivityItem {
+function mapOpenInEntry(row: ActivityFeedRow, users: FeedUsers): ActivityItem {
   const destination = openInDestinationSchema.safeParse(row.toValue);
   return {
     id: String(row.id),
@@ -150,7 +108,7 @@ export function proposalEventAction(action: string): string {
 }
 
 function mapProposalEntry(
-  row: RecentActivityLogRow,
+  row: ActivityFeedRow,
   users: FeedUsers,
   label: string
 ): ActivityItem {
@@ -174,7 +132,7 @@ function mapProposalEntry(
 }
 
 function proposalLabelsEffect(
-  rows: readonly RecentActivityLogRow[]
+  rows: readonly ActivityFeedRow[]
 ): Effect.Effect<Map<string, string>, DomainTag, Db> {
   return Effect.gen(function* proposalLabelsGen() {
     const proposalIds = rows.flatMap((row) =>
@@ -204,50 +162,10 @@ function proposalLabelsEffect(
   });
 }
 
-/**
- * Recent activity (ADR-0005 decision 5): one org-scoped read of the log through
- * the `FEED_ACTIONS` allowlist, newest first, collapsed by `group_id` in SQL,
- * then labels and actor names resolved with joins. History, not current state:
- * a Job shows as queued, running and succeeded rows, a Proposal as proposed and
- * decided. It never reads the Evidence, Job or Proposal tables for rows, only
- * for the labels of entries the log already named.
- */
-export function listRecentActivityEffect(
-  opts: ListRecentActivityOpts
-): Effect.Effect<Page<ActivityItem>, DomainTag, Db> {
-  const limit = clampActivityLimit(opts.limit);
-  const scopedCaseFilter =
-    opts.caseId === undefined ? undefined : parseTrimmedCaseId(opts.caseId);
-  if (scopedCaseFilter === null) {
-    return Effect.succeed({ items: [], nextCursor: null });
-  }
-
-  return Effect.gen(function* listRecentActivityGen() {
-    const window = {
-      ...(yield* pageWindow(
-        { cursor: opts.cursor, limit },
-        { list: "activity", id: "int", keys: ["time"] }
-      )),
-      limit,
-    };
-    const scopedCaseId =
-      scopedCaseFilter === undefined
-        ? undefined
-        : yield* assertCaseInOrgEffect(scopedCaseFilter, opts.organizationId);
-    const found = yield* activityLogRepoFxDb.recentFeed({
-      organizationId: opts.organizationId,
-      caseId: scopedCaseId,
-      filters: [
-        { kind: "task", actions: FEED_ACTIONS.task },
-        { kind: "job", actions: FEED_ACTIONS.job },
-        { kind: "evidence", actions: FEED_ACTIONS.evidence },
-        { kind: "proposal", actions: FEED_ACTIONS.proposal },
-        { kind: "open_in", actions: FEED_ACTIONS.open_in },
-      ],
-      limit: limit + 1,
-      ...(window.after === undefined ? {} : { after: window.after }),
-    });
-    const rows = found.slice(0, limit);
+function itemsOfRowsEffect(
+  rows: readonly ActivityFeedRow[]
+): Effect.Effect<readonly ActivityItem[], DomainTag, Db> {
+  return Effect.gen(function* itemsOfRowsGen() {
     const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
     const jobItems = yield* mapJobFeedRowsEffect(
       rows.filter((row) => row.kind === "job"),
@@ -277,12 +195,38 @@ export function listRecentActivityEffect(
         if (item !== undefined) items.push(item);
       }
     }
-    return {
-      items,
-      nextCursor: nextCursorOf(found, window, (row) => ({
-        id: String(row.id),
-        values: [row.keyTime],
-      })),
+    return items;
+  });
+}
+
+/**
+ * Recent activity (ADR-0005 decision 5, ADR-0007): a page of `activityList`, the organization's
+ * log through the `FEED_ACTIONS` allowlist, newest first, collapsed by `group_id` in SQL, then
+ * labels and actor names resolved with joins. History, not current state: a Job shows as queued,
+ * running and succeeded rows, a Proposal as proposed and decided. It never reads the Evidence,
+ * Job or Proposal tables for rows, only for the labels of entries the log already named. A Case
+ * filter must name a Case of the organization (`not_found` otherwise). Without `input` it is the
+ * first page of the default view.
+ */
+export function listRecentActivityEffect(opts: {
+  organizationId: OrganizationId;
+  input?: ListInput<typeof activityList>;
+}): Effect.Effect<ListPage<ActivityItem>, DomainTag, Db> {
+  return Effect.gen(function* listRecentActivityGen() {
+    const input = opts.input ?? {
+      limit: opsOf(activityList).pageLimit.default,
     };
+    const caseId =
+      input.caseId === undefined ? null : parseTrimmedCaseId(input.caseId);
+    if (caseId !== null) {
+      yield* assertCaseInOrgEffect(caseId, opts.organizationId);
+    }
+    return yield* listPageEffect({
+      def: activityList,
+      repo: activityListRepo,
+      scope: { organizationId: opts.organizationId },
+      input,
+      toItems: itemsOfRowsEffect,
+    });
   });
 }

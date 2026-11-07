@@ -2,12 +2,12 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, FiberMap } from "effect";
 import { vi } from "vitest";
 
+import { Db } from "@watchdog/core/infra";
 import {
-  Db,
   JobFibers,
   makeJobQueueLayers,
   type BossDriver,
-} from "@watchdog/core/worker";
+} from "@watchdog/core/jobs";
 
 import { provideWorkerLayers } from "../layers";
 

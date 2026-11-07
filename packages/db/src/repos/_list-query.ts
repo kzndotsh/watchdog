@@ -2,7 +2,12 @@ import { and, count, getTableName, ilike, inArray, or, sql } from "drizzle-orm";
 import type { AnyColumn, SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
-import { ARRAY_MAX, normalizeUuidList, opsOf } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  normalizeUuidList,
+  opsOf,
+  parseIntRowId,
+} from "@watchdog/schemas/shared";
 import type {
   AnyListDef,
   FilterKey,
@@ -72,9 +77,9 @@ export type ListSelect<Row> = PromiseLike<Row[]> & {
   readonly limit: (limit: number) => ListSelect<Row>;
 };
 
-/** A list table: has a NOT NULL string `id`. */
+/** A list table: has a NOT NULL `id`, a uuid string or (`def.idType` `int`) an integer. */
 export type ListTable = PgTable & {
-  readonly id: AnyColumn<{ notNull: true; data: string }>;
+  readonly id: AnyColumn<{ notNull: true; data: string | number }>;
 };
 
 /** The declared `choices` filters of a list. */
@@ -93,7 +98,7 @@ type SearchField<Def extends AnyListDef> = Def["search"] extends {
 
 /** Every page row carries its id and the active sort key's cursor value. */
 export type ListRow = {
-  readonly id: string;
+  readonly id: string | number;
   readonly listKey: string | number;
 };
 
@@ -206,7 +211,7 @@ export type ListRepo<Def extends AnyListDef, Row> = {
     cap: number
   ) => Promise<number>;
   /**
-   * Rows of the scope by id (at most `ARRAY_MAX`; ids that are not uuids are skipped), in the
+   * Rows of the scope by id (at most `ARRAY_MAX`; ids that are not uuids, or for an `idType: "int"` list not positive safe integers as text, are skipped), in the
    * default sort. Filters do not apply: a URL-selected row shows even when a filter hides it.
    */
   readonly byIds: (
@@ -254,6 +259,14 @@ export function listRepoOf<Def extends AnyListDef>(
 ): ListRepo<Def, ListRow> {
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the erased boundary: an AnyListRepo is a ListRepo over its own def
   return repo as unknown as ListRepo<Def, ListRow>;
+}
+
+/** The ids of an integer-id list (`idType: "int"`) as numbers; anything `parseIntRowId` refuses is skipped. */
+function normalizeIntIds(ids: readonly string[]): number[] {
+  return ids.flatMap((id) => {
+    const parsed = parseIntRowId(id);
+    return parsed === null ? [] : [parsed];
+  });
 }
 
 function isNullableSort<T extends PgTable, V>(
@@ -372,7 +385,9 @@ export function defineListRepo<
       return row?.n ?? 0;
     },
     async byIds(exec, scope, ids) {
-      const wanted = normalizeUuidList(ids).slice(0, ARRAY_MAX);
+      const wanted = (
+        def.idType === "int" ? normalizeIntIds(ids) : normalizeUuidList(ids)
+      ).slice(0, ARRAY_MAX);
       if (wanted.length === 0) return [];
       return binding
         .base(exec, keysetKey(defaultOrder))

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { deletedCaseList } from "@watchdog/schemas/cases";
+import { activityList } from "@watchdog/schemas/feed";
 import {
   opsOf,
   type CaseDeletionEvent,
@@ -19,6 +20,7 @@ import {
 } from "@watchdog/test-db";
 
 import type { DbExec } from "../../exec.ts";
+import { activityListRepo } from "../activity-list.repo.ts";
 import { activityLogRepo } from "../activity-log.repo.ts";
 import { caseDeletionRecordsRepo } from "../case-deletion-records.repo.ts";
 import { casesRepo, type CaseRow } from "../cases.repo.ts";
@@ -162,14 +164,12 @@ describe("casesRepo", () => {
         ).toBeNull();
         // Joins: the Entity's Case, the activity feed and the org-scoped replay.
         expect(await entitiesRepo.getWithCase(tx, entity.id)).toBeNull();
-        const feed = await activityLogRepo.recentFeed(tx, {
-          organizationId: org,
-          filters: [
-            { kind: "evidence", actions: ["captured"] },
-            { kind: "entity", actions: ["created"] },
-          ],
-          limit: 50,
-        });
+        const feed = await activityListRepo.page(
+          tx,
+          { organizationId: org },
+          opsOf(activityList).queryOf({}),
+          { limit: 50, after: undefined }
+        );
         expect(feed.some((row) => row.caseId === gone.id)).toBe(false);
         const replay = await activityLogRepo.drain(tx, {
           after: { xid: "0", id: 0 },

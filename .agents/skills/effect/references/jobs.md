@@ -7,14 +7,14 @@ package AGENTS.md files link here.
 ## Boot
 
 - Process entry: `NodeRuntime.runMain(provideWorkerLayers(bootWorkerEffect, jobQueueWorkerLayer))`;
-  it provides `JobFibers.layer` once (a scoped `Context.Service` owning the
+  it provides core's `coreServicesLayer` (release order documented there), `JobFibers.layer` once (a scoped `Context.Service` owning the
   FiberMap **and** each attempt's stop slot), `Db.owned` (the pool's owner, released last), and the worker queue
   Layer.
 - Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
   fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the
   queue Layer releases with `boss.stop({ graceful: true, timeout:
   gracefulStopTimeoutMs() })` so in-flight Cap Jobs finish; then `JobFibers`
-  interrupts leftovers; then `Db`. The queue Layer must stay innermost in
+  interrupts leftovers; then core's services (vault, blob store, outbound client); then `Db`. The queue Layer must stay innermost in
   `provideWorkerLayers`; the `WorkerShutdown` Layer (signal listeners) is
   outermost, so a repeated signal also works during boot and the drain and
   force-exits (143 SIGTERM, 130
@@ -112,7 +112,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
   only stops if it honours `ctx.signal`.
 - Reconcile: `reconcileJobsEffect` keeps `DomainTag` in `E`; the worker edge
-  (`jobReconcileLoopEffect`, `apps/worker/src/job-reconcile.ts`) catches and
+  (`apps/worker/src/maintenance.ts`, task `JOB_RECONCILE`) catches and
   logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
   core never forks a loop.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue

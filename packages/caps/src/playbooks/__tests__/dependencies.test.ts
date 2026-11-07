@@ -7,6 +7,7 @@ import {
   listPlaybookDescriptors,
   requirePlaybook,
   type PlaybookDef,
+  type PlaybookStepDef,
 } from "../index.ts";
 
 function synthetic(steps: PlaybookDef["steps"]): PlaybookDef {
@@ -19,7 +20,7 @@ function synthetic(steps: PlaybookDef["steps"]): PlaybookDef {
   };
 }
 
-const bindTo = (step: number) => ({
+const bindTo = (step: number): PlaybookStepDef => ({
   capabilityId: "evidence.harvest",
   bind: { evidenceId: { step, bag: "evidenceId" as const } },
 });

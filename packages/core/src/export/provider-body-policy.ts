@@ -1,6 +1,6 @@
 import {
   CAPABILITIES,
-  isBreachCap,
+  isBreachCapId,
   redistributionVerdictFor,
   type RedistributionVerdict,
 } from "@watchdog/caps";
@@ -140,7 +140,7 @@ export function rawBodyDecision(
   if (!options.shouldIncludeRawBodies) {
     return { include: false, reason: "not_opted_in" };
   }
-  if (isBreachCap({ id: job.capabilityId })) {
+  if (isBreachCapId(job.capabilityId)) {
     return { include: false, reason: "breach" };
   }
   const contacts = capContacts(job.capabilityId);

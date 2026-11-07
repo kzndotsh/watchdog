@@ -1,4 +1,5 @@
 import type { AnyListRepo } from "../repos/_list-query";
+import { activityListRepo } from "../repos/activity-list.repo";
 import { caseListRepo } from "../repos/case-list.repo";
 import { claimListRepo } from "../repos/claim-list.repo";
 import { collectListRepo } from "../repos/collect-list.repo";
@@ -35,4 +36,5 @@ export const LIST_REPOS: readonly AnyListRepo[] = [
   caseListRepo,
   jobListRepo,
   graphWriteListRepo,
+  activityListRepo,
 ];

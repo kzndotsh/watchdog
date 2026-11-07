@@ -1,8 +1,7 @@
 import { z } from "zod";
 
 import { caseIdSchema, type CaseId } from "./ids";
-import { pageInputFields } from "./pagination";
-import { optionalCaseIdSchema, parseTrimmedCaseId } from "./primitives";
+import { parseTrimmedCaseId } from "./primitives";
 
 export const ACTIVITY_KINDS = [
   "evidence",
@@ -42,24 +41,6 @@ export const activityItemSchema = z.object({
   actor: z.string().optional(),
 });
 export type ActivityItem = z.output<typeof activityItemSchema>;
-
-/** Recent-activity page size: a short dashboard feed, so its own default and maximum. */
-export const RECENT_ACTIVITY_LIMIT_DEFAULT = 15;
-export const RECENT_ACTIVITY_LIMIT_MAX = 50;
-
-export const listRecentActivityInputSchema = z.object({
-  caseId: optionalCaseIdSchema,
-  cursor: pageInputFields.cursor,
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(RECENT_ACTIVITY_LIMIT_MAX)
-    .default(RECENT_ACTIVITY_LIMIT_DEFAULT),
-});
-export type ListRecentActivityInput = z.output<
-  typeof listRecentActivityInputSchema
->;
 
 export type SseCaseIdFilter = {
   caseId: CaseId | null;

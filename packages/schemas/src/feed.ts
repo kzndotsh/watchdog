@@ -16,10 +16,10 @@ export {
   isActivityActionForKind,
   parseActivityCursor,
 } from "./activity-log";
+export { activityList, FEED_ACTIONS } from "./activity-list";
 export type {
   ActivityItem,
   ActivityKind,
-  ListRecentActivityInput,
   ParseSseCaseIdParamResult,
   SseCaseIdFilter,
 } from "./activity";
@@ -29,9 +29,6 @@ export {
   activityItemSchema,
   activityKindLabel,
   activityKindSchema,
-  RECENT_ACTIVITY_LIMIT_DEFAULT,
-  RECENT_ACTIVITY_LIMIT_MAX,
-  listRecentActivityInputSchema,
   normalizeSseCaseId,
   parseSseCaseIdParam,
 } from "./activity";

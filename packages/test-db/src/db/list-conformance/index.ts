@@ -1,3 +1,4 @@
+import { activityConformance } from "./activity.ts";
 import { caseConformance } from "./cases.ts";
 import { claimConformance } from "./claims.ts";
 import { collectConformance } from "./collect.ts";
@@ -33,6 +34,7 @@ export const LIST_CONFORMANCE: Readonly<Record<string, ListConformance>> = {
   [caseConformance.list]: caseConformance,
   [jobConformance.list]: jobConformance,
   [graphWriteConformance.list]: graphWriteConformance,
+  [activityConformance.list]: activityConformance,
 };
 
 export type {

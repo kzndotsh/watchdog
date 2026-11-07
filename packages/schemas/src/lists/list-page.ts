@@ -21,6 +21,19 @@ export const LIST_TOTAL_CAP = 1000;
 export const LIST_MAX_PAGES = 10;
 
 /**
+ * The integer row id of a list with `idType: "int"` (the activity log), from its text form in a
+ * cursor or an id list: digits only, a positive safe integer, else null. Drizzle reads a bigint
+ * column as a JS number (`mode: "number"`), which is exact only up to `Number.MAX_SAFE_INTEGER`
+ * (2^53 - 1, 16 digits), so a larger id could not be a row id this code ever produced; the cursor
+ * decoder and the repo's `byIds` both use this one rule.
+ */
+export function parseIntRowId(text: string): number | null {
+  if (!/^[1-9]\d*$/.test(text)) return null;
+  const id = Number(text);
+  return Number.isSafeInteger(id) ? id : null;
+}
+
+/**
  * Shortest list `q`: a trigram index cannot serve a pattern under 3 characters. The wire rejects
  * a trimmed `q` of 1 or 2 characters; the URL drops it quietly. The command palette keeps
  * `SEARCH_MIN_QUERY_LENGTH` (2).

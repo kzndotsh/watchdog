@@ -4,10 +4,6 @@ import {
   searchCaseInputSchema,
 } from "@watchdog/schemas/cases";
 import {
-  listRecentActivityInputSchema,
-  type ListRecentActivityInput,
-} from "@watchdog/schemas/feed";
-import {
   caseScopeInputSchema,
   entityScopeInputSchema,
   entitySlugScopeInputSchema,
@@ -24,12 +20,6 @@ import {
   parseTrimmedCaseId,
   parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
-
-/** Filters carry plain strings; the Case id brand is minted when they are parsed. */
-export type RecentActivityFilters = Omit<
-  Partial<ListRecentActivityInput>,
-  "caseId" | "cursor"
-> & { caseId?: string };
 
 /** Normalize query keys; strict parse happens again in queryFn. */
 export function scopeCaseSlugSegment(caseSlug: string): string {
@@ -101,15 +91,6 @@ export function scopeJobDetailEnabled(caseId: string, jobId: string): boolean {
   return (
     parseTrimmedCaseId(caseId) !== null && parseTrimmedUuid(jobId) !== null
   );
-}
-
-/** True when optional case filter is absent or a valid graph UUID. */
-export function scopeRecentActivityEnabled(
-  filters?: RecentActivityFilters
-): boolean {
-  const caseId = filters?.caseId;
-  if (caseId === undefined) return true;
-  return parseTrimmedCaseId(caseId) !== null;
 }
 
 /** Trim + validate optional graph UUID for URL/query keys; invalid → undefined. */
@@ -207,37 +188,4 @@ export function scopeSearchCaseInput(caseId: string, q: string) {
 
 export function parseSearchCaseInput(caseId: string, q: string) {
   return searchCaseInputSchema.parse({ caseId, q: q.trim() });
-}
-
-export function scopeRecentActivityFilters(filters?: RecentActivityFilters) {
-  const parsed = listRecentActivityInputSchema.safeParse(filters ?? {});
-  if (!parsed.success) {
-    const scoped: RecentActivityFilters = {};
-    const caseId = filters?.caseId;
-    if (caseId !== undefined) {
-      const normalized = parseTrimmedCaseId(caseId);
-      if (normalized !== null) scoped.caseId = normalized;
-    }
-    const limit = filters?.limit;
-    if (typeof limit === "number" && limit >= 1 && limit <= 50) {
-      scoped.limit = limit;
-    }
-    return scoped;
-  }
-  const scoped: RecentActivityFilters = {
-    ...(parsed.data.caseId === undefined ? {} : { caseId: parsed.data.caseId }),
-    // The schema defaults the limit; the key carries it only when the caller chose one.
-    ...(filters?.limit === undefined ? {} : { limit: parsed.data.limit }),
-  };
-  return scoped;
-}
-
-export function parseListRecentActivityInput(
-  filters?: RecentActivityFilters,
-  cursor?: string
-) {
-  return listRecentActivityInputSchema.parse({
-    ...filters,
-    ...(cursor === undefined ? {} : { cursor }),
-  });
 }

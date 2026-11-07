@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import type { ListAfter } from "@watchdog/db";
-import { CURSOR_MAX, URL_MAX } from "@watchdog/schemas/shared";
+import { CURSOR_MAX, parseIntRowId, URL_MAX } from "@watchdog/schemas/shared";
 import type { ListKeyType } from "@watchdog/schemas/shared";
 
 import { InvalidError, StaleCursorError } from "../errors/tagged-errors";
@@ -22,7 +22,6 @@ import { InvalidError, StaleCursorError } from "../errors/tagged-errors";
  * - `StaleCursorError` (400, `cursor_stale`): this list's cursor, issued for another sort, filter
  *   set, search or scope. A client resets the view to its first page on this code.
  * The fingerprint is a misuse check, not a secret: the query still applies the scope.
- * Legacy (undeclared) lists keep cursor v1 (`page.ts`) until they move.
  */
 
 /** One view's cursors: built by `listPageSpec`, never by hand. */
@@ -31,6 +30,8 @@ export type ListCursorSpec = {
   readonly sort: string;
   readonly fingerprint: string;
   readonly key: ListKeyType;
+  /** The row id in the cursor: a uuid, or digits for an integer id (`def.idType`). */
+  readonly id: "uuid" | "int";
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -120,7 +121,12 @@ export function decodeListCursor(
     if (sort !== spec.sort || fingerprint !== spec.fingerprint) {
       return yield* new StaleCursorError({ list: spec.list });
     }
-    if (typeof id !== "string" || !UUID.test(id)) return yield* invalid;
+    if (
+      typeof id !== "string" ||
+      !(spec.id === "int" ? parseIntRowId(id) !== null : UUID.test(id))
+    ) {
+      return yield* invalid;
+    }
     if (!validValue(spec.key, value)) return yield* invalid;
     return { id, value };
   });
@@ -128,12 +134,15 @@ export function decodeListCursor(
 
 /** The cursor after the last of the first `limit` rows, or null when no row was left over. */
 export function nextListCursor(
-  rows: readonly { readonly id: string; readonly listKey: string | number }[],
+  rows: readonly {
+    readonly id: string | number;
+    readonly listKey: string | number;
+  }[],
   limit: number,
   spec: ListCursorSpec
 ): string | null {
   const last = rows.slice(0, limit).at(-1);
   return rows.length > limit && last !== undefined
-    ? encodeListCursor(spec, { id: last.id, value: last.listKey })
+    ? encodeListCursor(spec, { id: String(last.id), value: last.listKey })
     : null;
 }

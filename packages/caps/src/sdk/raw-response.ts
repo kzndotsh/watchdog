@@ -1,4 +1,4 @@
-import { isBreachCap } from "./descriptor";
+import { isBreachCapId } from "./descriptor";
 
 /**
  * What a Job keeps of a Cap's provider responses in storage (the raw body; the hash and size
@@ -19,13 +19,13 @@ export type CapBodyPolicy =
  * How a Cap's response bodies are stored. A `breach.*` Cap is fingerprint-only whatever it
  * declares: the owner decided not to collect the bodies of breach and leak corpora, and
  * deriving it from the id means a new breach Cap needs no second declaration (see
- * `isBreachCap`). Model calls are hash-only at the door, whatever the Cap says.
+ * `isBreachCapId`). Model calls are hash-only at the door, whatever the Cap says.
  */
 export function capBodyPolicy(cap: {
   id: string;
   rawResponse?: RawResponsePolicy;
 }): CapBodyPolicy {
-  if (isBreachCap(cap)) return { kind: "hash_only" };
+  if (isBreachCapId(cap.id)) return { kind: "hash_only" };
   const keep = cap.rawResponse?.keep;
   if (keep === "hash_only") return { kind: "hash_only" };
   return { kind: "keep", maxBytes: keep?.maxBytes };

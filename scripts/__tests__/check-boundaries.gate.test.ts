@@ -412,7 +412,7 @@ describe("check-boundaries gate", () => {
         "src/cases/access.ts": "export const c = 1;\n",
         "src/cases/__tests__/access.test.ts":
           'import { s } from "../../jobs/start";\nexport const t = s;\n',
-        "src/worker-entry.ts":
+        "src/entry.ts":
           'export { s } from "./jobs/start";\nexport { c } from "./cases/access";\n',
       });
       expect(res.output).toContain("check:boundaries: ok");
@@ -539,6 +539,17 @@ describe("check-boundaries gate", () => {
       });
       expect(res.output).toContain("check:boundaries: ok");
       expect(res.code).toBe(0);
+    });
+
+    it("sees a dynamic import with a comment before its specifier", () => {
+      const res = web({
+        "src/domains/jobs/a.ts":
+          'export const load = () => import(/* webpackChunkName: "b" */ "@/domains/cases/b");\n',
+        "src/domains/cases/b.ts":
+          'import { load } from "../jobs/a";\nexport const c = load;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("cases, jobs import each other in a cycle");
     });
 
     it("fails a two-domain cycle and names the domains and one import per edge", () => {
