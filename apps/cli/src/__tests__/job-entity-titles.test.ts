@@ -1,56 +1,40 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ARRAY_MAX } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const apiMocks = vi.hoisted(() => ({
-  getEntities: vi.fn(),
-}));
-
-vi.mock("../client", () => ({
-  api: () => ({
-    entities: {
-      getMany: apiMocks.getEntities,
-    },
-  }),
-}));
-
 import { entityTitlesForJobs } from "../job-entity-titles";
+import { queryIds, standInApi } from "./stand-in-api";
+
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
+
+const standIn = standInApi();
+
+function entity(id: string, name: string) {
+  return { id, name, slug: id, kind: "org", summary: null, notes: null };
+}
 
 describe("entityTitlesForJobs", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns an empty map when jobs have no entityId inputs", async () => {
+  it("returns an empty map and sends no request when jobs have no entityId inputs", async () => {
     const titles = await entityTitlesForJobs(testCaseId(0), [
       { input: { host: "x" } },
     ]);
     expect(titles.size).toBe(0);
-    expect(apiMocks.getEntities).not.toHaveBeenCalled();
+    expect(standIn.seen).toEqual([]);
   });
 
   it("loads entity display labels for referenced ids", async () => {
     const caseId = testCaseId(0);
     const entityId = "00000000-0000-4000-8000-000000000001";
-    apiMocks.getEntities.mockResolvedValue([
-      {
-        id: entityId,
-        name: "Acme Corp",
-        slug: "acme-corp",
-        kind: "org",
-        summary: null,
-        notes: null,
-      },
+    standIn.json("get", `/cases/${caseId}/entities-by-ids`, [
+      entity(entityId, "Acme Corp"),
     ]);
 
     const titles = await entityTitlesForJobs(caseId, [{ input: { entityId } }]);
 
-    expect(apiMocks.getEntities).toHaveBeenCalledWith({
-      caseId,
-      ids: [entityId],
-    });
     expect(titles.get(entityId)).toBe("Acme Corp");
+    expect(standIn.seen.map((r) => queryIds(r.url))).toEqual([[entityId]]);
   });
 
   it("reads more than ARRAY_MAX ids in chunks and merges the labels", async () => {
@@ -60,15 +44,8 @@ describe("entityTitlesForJobs", () => {
       (_, index) =>
         `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`
     );
-    apiMocks.getEntities.mockImplementation(async (input: { ids: string[] }) =>
-      input.ids.map((id) => ({
-        id,
-        name: `Entity ${id.slice(-4)}`,
-        slug: id,
-        kind: "org",
-        summary: null,
-        notes: null,
-      }))
+    standIn.json("get", `/cases/${caseId}/entities-by-ids`, (request) =>
+      queryIds(request.url).map((id) => entity(id, `Entity ${id.slice(-4)}`))
     );
 
     const titles = await entityTitlesForJobs(
@@ -76,10 +53,12 @@ describe("entityTitlesForJobs", () => {
       ids.map((entityId) => ({ input: { entityId } }))
     );
 
-    expect(apiMocks.getEntities).toHaveBeenCalledTimes(2);
-    for (const [call] of apiMocks.getEntities.mock.calls) {
-      expect(call.ids.length).toBeLessThanOrEqual(ARRAY_MAX);
+    expect(standIn.seen).toHaveLength(2);
+    for (const request of standIn.seen) {
+      expect(queryIds(request.url).length).toBeLessThanOrEqual(ARRAY_MAX);
     }
     expect(titles.size).toBe(ARRAY_MAX + 1);
+    const last = ids.at(-1) ?? "";
+    expect(titles.get(last)).toBe(`Entity ${last.slice(-4)}`);
   });
 });

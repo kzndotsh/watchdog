@@ -1,95 +1,65 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const apiMocks = vi.hoisted(() => ({
-  getEntities: vi.fn(),
-  getEntity: vi.fn(),
-}));
-
-vi.mock("../client", () => ({
-  api: () => ({
-    entities: {
-      getMany: apiMocks.getEntities,
-      get: apiMocks.getEntity,
-    },
-  }),
-}));
-
 import { requireCaseId, resolveEntityId, resolveEntitySlug } from "../ids";
+import { API_URL, queryIds, standInApi } from "./stand-in-api";
 
-describe("resolveEntityRef", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
-  it("slugifies display names before entities.get", async () => {
+const standIn = standInApi();
+
+function entity(id: string, slug: string, name: string) {
+  return { id, slug, name, kind: "org", summary: null, notes: null };
+}
+
+describe("resolveEntityId / resolveEntitySlug", () => {
+  it("slugifies a display name and reads the Entity by slug", async () => {
     const caseId = testCaseId(1);
     const entityId = testId(2);
-    apiMocks.getEntity.mockResolvedValue({
-      id: entityId,
-      slug: "alpha-corp",
-      name: "Alpha Corp",
-      kind: "org",
-      summary: null,
-      notes: null,
-    });
+    standIn.json(
+      "get",
+      `/cases/${caseId}/entities/alpha-corp`,
+      entity(entityId, "alpha-corp", "Alpha Corp")
+    );
 
     const id = await resolveEntityId(caseId, "  Alpha Corp  ");
     const slug = await resolveEntitySlug(caseId, "Alpha Corp");
 
-    expect(apiMocks.getEntity).toHaveBeenCalledWith({
-      caseId,
-      slug: "alpha-corp",
-    });
     expect(id).toBe(entityId);
     expect(slug).toBe("alpha-corp");
   });
 
-  it("resolves entity UUID by id without entities.get", async () => {
+  it("resolves an Entity uuid by id, never through the slug route", async () => {
     const caseId = testCaseId(3);
     const entityId = testId(4);
-    apiMocks.getEntities.mockResolvedValue([
-      {
-        id: entityId,
-        slug: "beta-llc",
-        name: "Beta LLC",
-        kind: "org",
-        summary: null,
-        notes: null,
-      },
+    standIn.json("get", `/cases/${caseId}/entities-by-ids`, [
+      entity(entityId, "beta-llc", "Beta LLC"),
     ]);
 
     const id = await resolveEntityId(caseId, `  ${entityId}  `);
 
-    expect(apiMocks.getEntities).toHaveBeenCalledWith({
-      caseId,
-      ids: [entityId],
-    });
-    expect(apiMocks.getEntity).not.toHaveBeenCalled();
     expect(id).toBe(entityId);
+    expect(standIn.seen.map((r) => r.path)).toEqual([
+      `/cases/${caseId}/entities-by-ids`,
+    ]);
+    expect(queryIds(standIn.seen[0]?.url ?? new URL(API_URL))).toEqual([
+      entityId,
+    ]);
   });
 
-  it("normalizes padded case id before entities.getMany", async () => {
+  it("accepts a padded case id", async () => {
     const caseId = testCaseId(5);
     const entityId = testId(6);
-    apiMocks.getEntities.mockResolvedValue([
-      {
-        id: entityId,
-        slug: "gamma",
-        name: "Gamma",
-        kind: "org",
-        summary: null,
-        notes: null,
-      },
+    standIn.json("get", `/cases/${caseId}/entities-by-ids`, [
+      entity(entityId, "gamma", "Gamma"),
     ]);
 
-    await resolveEntityId(requireCaseId(`  ${caseId}  `), entityId);
+    const id = await resolveEntityId(requireCaseId(`  ${caseId}  `), entityId);
 
-    expect(apiMocks.getEntities).toHaveBeenCalledWith({
-      caseId,
-      ids: [entityId],
-    });
+    expect(id).toBe(entityId);
+    expect(standIn.seen[0]?.path).toBe(`/cases/${caseId}/entities-by-ids`);
   });
 });

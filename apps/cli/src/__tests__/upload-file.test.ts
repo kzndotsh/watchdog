@@ -1,126 +1,170 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
+import { HttpResponse, http, mockServer } from "@watchdog/test-kit/http";
+
+import { uploadEvidenceFile } from "../upload-file";
+import { failureOf, standInApi } from "./stand-in-api";
+
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 const CASE_ID = testCaseId(0);
+const PUT_URL = "http://objects.test/evidence/object";
+const standIn = standInApi();
 
-const apiMocks = vi.hoisted(() => {
-  const caseId = "11111111-1111-4111-8111-000000000000";
-  const sha256 = "a".repeat(64);
-  return {
-    presign: vi.fn().mockResolvedValue({
-      url: "http://127.0.0.1:9100/evidence/object",
-      uri: `${caseId}/${sha256}`,
-      sha256,
-      mime: "text/plain",
-      byteLength: 5,
-      headers: { "Content-Type": "text/plain" },
-    }),
-    confirmFile: vi.fn().mockResolvedValue({ id: "evidence-1" }),
-  };
-});
-
-const fsMocks = vi.hoisted(() => ({
-  stat: vi.fn(async () => ({
-    isFile: () => true,
-    size: 5,
-  })),
-  readFile: vi.fn(async () => Buffer.from("hello")),
-}));
-
-vi.mock("../client", () => ({
-  api: () => ({
-    evidence: {
-      presign: apiMocks.presign,
-      confirmFile: apiMocks.confirmFile,
-    },
-  }),
-}));
-
-vi.mock("node:fs/promises", () => fsMocks);
-
-vi.mock("../io", () => ({
-  fail: vi.fn((code: string, message: string) => {
-    throw new Error(`${code}: ${message}`);
-  }),
-}));
-
-import { fail } from "../io";
-import { uploadEvidenceFile } from "../upload-file";
+/** The API's presign + confirm routes, and the object store's PUT (status `putStatus`). */
+function serveUpload(putStatus = 200): {
+  put: { headers: Headers; body: string }[];
+} {
+  const put: { headers: Headers; body: string }[] = [];
+  standIn.json("post", `/cases/${CASE_ID}/evidence/presign`, (request) => {
+    const input = request.body as {
+      sha256: string;
+      mime: string;
+      byteLength: number;
+    };
+    return {
+      url: PUT_URL,
+      uri: `${CASE_ID}/${input.sha256}`,
+      sha256: input.sha256,
+      mime: input.mime,
+      byteLength: input.byteLength,
+      headers: {
+        "Content-Type": input.mime,
+        "x-amz-meta-sha256": input.sha256,
+      },
+    };
+  });
+  standIn.json("post", `/cases/${CASE_ID}/evidence/file`, { id: "evidence-1" });
+  mockServer.use(
+    http.put(PUT_URL, async ({ request }) => {
+      put.push({ headers: request.headers, body: await request.text() });
+      return new HttpResponse(null, { status: putStatus });
+    })
+  );
+  return { put };
+}
 
 describe("uploadEvidenceFile", () => {
+  let dir: string;
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    fsMocks.stat.mockResolvedValue({
-      isFile: () => true,
-      size: 5,
-    });
-    fsMocks.readFile.mockResolvedValue(Buffer.from("hello"));
+    dir = mkdtempSync(path.join(tmpdir(), "wd-upload-"));
   });
-  it("presigns, uploads, and confirms an evidence file", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function fileWith(name: string, content: string): string {
+    const file = path.join(dir, name);
+    writeFileSync(file, content);
+    return file;
+  }
+
+  it("presigns, uploads the bytes with the signed headers, and confirms the Evidence", async () => {
+    const { put } = serveUpload();
+    const file = fileWith("note.txt", "hello");
+    const sha256 = createHash("sha256").update("hello").digest("hex");
 
     const row = await uploadEvidenceFile({
       caseId: CASE_ID,
-      path: "/tmp/note.txt",
+      path: file,
       label: "Note",
     });
 
-    expect(apiMocks.presign).toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalled();
-    expect(apiMocks.confirmFile).toHaveBeenCalled();
     expect(row).toEqual({ id: "evidence-1" });
-  });
-
-  it("fails with USAGE when the file is missing", async () => {
-    fsMocks.stat.mockRejectedValueOnce(
-      Object.assign(new Error("ENOENT"), { code: "ENOENT" })
-    );
-
-    await expect(
-      uploadEvidenceFile({ caseId: CASE_ID, path: "/tmp/missing.txt" })
-    ).rejects.toThrow(/USAGE: File not found/);
-    expect(fail).toHaveBeenCalledWith(
-      "USAGE",
-      "File not found: /tmp/missing.txt",
-      expect.objectContaining({ help: expect.any(Array) })
-    );
-    expect(apiMocks.presign).not.toHaveBeenCalled();
-  });
-
-  it("fails with USAGE when the file is empty", async () => {
-    fsMocks.stat.mockResolvedValueOnce({
-      isFile: () => true,
-      size: 0,
+    expect(standIn.seen.map((r) => `${r.method} ${r.path}`)).toEqual([
+      `POST /cases/${CASE_ID}/evidence/presign`,
+      `POST /cases/${CASE_ID}/evidence/file`,
+    ]);
+    expect(standIn.seen[0]?.body).toMatchObject({
+      sha256,
+      mime: "text/plain",
+      byteLength: 5,
+      name: "note.txt",
     });
-
-    await expect(
-      uploadEvidenceFile({ caseId: CASE_ID, path: "/tmp/empty.txt" })
-    ).rejects.toThrow(/USAGE: File is empty/);
-    expect(apiMocks.presign).not.toHaveBeenCalled();
+    expect(put).toHaveLength(1);
+    expect(put[0]?.body).toBe("hello");
+    expect(put[0]?.headers.get("x-amz-meta-sha256")).toBe(sha256);
+    expect(standIn.seen[1]?.body).toMatchObject({
+      uri: `${CASE_ID}/${sha256}`,
+      sha256,
+      byteLength: 5,
+      label: "Note",
+    });
   });
 
-  it("fails with UPLOAD_FAILED when read fails after stat", async () => {
-    fsMocks.readFile.mockRejectedValueOnce(
-      Object.assign(new Error("EACCES"), { code: "EACCES" })
+  it("fails USAGE without a request when the file is missing", async () => {
+    const missing = path.join(dir, "missing.txt");
+
+    const failure = await failureOf(() =>
+      uploadEvidenceFile({ caseId: CASE_ID, path: missing })
     );
 
-    await expect(
-      uploadEvidenceFile({ caseId: CASE_ID, path: "/tmp/note.txt" })
-    ).rejects.toThrow(/UPLOAD_FAILED/);
-    expect(apiMocks.presign).not.toHaveBeenCalled();
+    expect(failure.error.code).toBe("USAGE");
+    expect(failure.error.message).toBe(`File not found: ${missing}`);
+    expect(failure.help?.length).toBeGreaterThan(0);
+    expect(standIn.seen).toEqual([]);
   });
 
-  it("fails with UPLOAD_FAILED when the S3 PUT is not ok", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(null, { status: 403 }))
+  it("fails USAGE without a request when the file is empty", async () => {
+    const failure = await failureOf(() =>
+      uploadEvidenceFile({ caseId: CASE_ID, path: fileWith("empty.txt", "") })
     );
 
-    await expect(
-      uploadEvidenceFile({ caseId: CASE_ID, path: "/tmp/note.txt" })
-    ).rejects.toThrow(/UPLOAD_FAILED: Upload failed \(403\)/);
-    expect(apiMocks.confirmFile).not.toHaveBeenCalled();
+    expect(failure.error).toMatchObject({
+      code: "USAGE",
+      message: "File is empty",
+    });
+    expect(standIn.seen).toEqual([]);
+  });
+
+  it("fails USAGE without a request when the path is a directory", async () => {
+    const failure = await failureOf(() =>
+      uploadEvidenceFile({ caseId: CASE_ID, path: dir })
+    );
+
+    expect(failure.error.code).toBe("USAGE");
+    expect(failure.error.message).toBe(`Not a file: ${dir}`);
+    expect(standIn.seen).toEqual([]);
+  });
+
+  it.skipIf(process.getuid?.() === 0)(
+    "fails UPLOAD_FAILED without a request when the file cannot be read",
+    async () => {
+      const file = fileWith("secret.txt", "hello");
+      chmodSync(file, 0o000);
+
+      const failure = await failureOf(() =>
+        uploadEvidenceFile({ caseId: CASE_ID, path: file })
+      );
+
+      expect(failure.error.code).toBe("UPLOAD_FAILED");
+      expect(standIn.seen).toEqual([]);
+    }
+  );
+
+  it("fails UPLOAD_FAILED and does not confirm when the object store refuses the PUT", async () => {
+    serveUpload(403);
+
+    const failure = await failureOf(() =>
+      uploadEvidenceFile({
+        caseId: CASE_ID,
+        path: fileWith("note.txt", "hello"),
+      })
+    );
+
+    expect(failure.error.code).toBe("UPLOAD_FAILED");
+    expect(failure.error.message).toBe("Upload failed (403)");
+    expect(standIn.seen.map((r) => r.path)).toEqual([
+      `/cases/${CASE_ID}/evidence/presign`,
+    ]);
   });
 });

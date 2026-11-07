@@ -1,28 +1,51 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  CONFIRMED_REFUSED_MESSAGE,
+  USER_OVERRIDE_REQUIRED_MESSAGE,
+} from "@watchdog/policy";
+
+import {
+  parseOptionalConfidence,
   refuseConfirmed,
   requireUserOverride,
-  parseOptionalConfidence,
 } from "../custody";
+import { failureOf } from "./stand-in-api";
 
-vi.mock("../io", () => ({
-  fail: vi.fn((code: string, message: string) => {
-    throw new Error(`${code}: ${message}`);
-  }),
-}));
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 describe("custody helpers", () => {
-  it("requireUserOverride throws when override is disabled", () => {
-    expect(() => {
+  it("requireUserOverride fails CUSTODY with the shared message when override is disabled", async () => {
+    const failure = await failureOf(() => {
       requireUserOverride(false);
-    }).toThrow(/CUSTODY/);
+    });
+    expect(failure.exitCode).toBe(1);
+    expect(failure.error.code).toBe("CUSTODY");
+    expect(failure.error.message).toBe(USER_OVERRIDE_REQUIRED_MESSAGE);
+    expect(failure.help?.length).toBeGreaterThan(0);
   });
 
-  it("refuseConfirmed throws for confirmed confidence", () => {
+  it("requireUserOverride passes when override is enabled", () => {
     expect(() => {
+      requireUserOverride(true);
+    }).not.toThrow();
+  });
+
+  it("refuseConfirmed fails CUSTODY with the shared message for the confirmed tier", async () => {
+    const failure = await failureOf(() => {
       refuseConfirmed("confirmed");
-    }).toThrow(/CUSTODY/);
+    });
+    expect(failure.error.code).toBe("CUSTODY");
+    expect(failure.error.message).toBe(CONFIRMED_REFUSED_MESSAGE);
+  });
+
+  it("refuseConfirmed lets the lower tiers through", () => {
+    expect(() => {
+      refuseConfirmed("unverified");
+      refuseConfirmed("possible");
+      refuseConfirmed(undefined);
+    }).not.toThrow();
   });
 
   it("parseOptionalConfidence returns undefined for omitted values", () => {
@@ -35,9 +58,8 @@ describe("custody helpers", () => {
     expect(parseOptionalConfidence("unverified")).toBe("unverified");
   });
 
-  it("parseOptionalConfidence rejects invalid tiers", () => {
-    expect(() => {
-      parseOptionalConfidence("bogus");
-    }).toThrow(/USAGE/);
+  it("parseOptionalConfidence rejects invalid tiers with USAGE", async () => {
+    const failure = await failureOf(() => parseOptionalConfidence("bogus"));
+    expect(failure.error.code).toBe("USAGE");
   });
 });
