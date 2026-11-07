@@ -15,6 +15,7 @@ import {
   resolveQuestionFn,
   updateQuestionFn,
 } from "@/domains/entities/questions/questions.functions";
+import { buildQuestionRecord } from "@/testing/records";
 import { callServerFn, orpc } from "@/testing/server-fn";
 import { testId } from "@watchdog/test-kit";
 
@@ -34,6 +35,42 @@ describe("deleteQuestionFn", () => {
       { caseId: CASE_ID, questionId: testId(1) },
     ]);
   });
+});
+
+describe("question lifecycle server functions", () => {
+  const question = buildQuestionRecord({ id: testId(1) });
+  const scope = { caseId: CASE_ID, questionId: testId(1) };
+
+  it.each([
+    [
+      "createQuestionFn",
+      createQuestionFn,
+      "questions.create",
+      { caseId: CASE_ID, entityId: testId(20), text: "Who owns it?" },
+    ],
+    [
+      "resolveQuestionFn",
+      resolveQuestionFn,
+      "questions.resolve",
+      { ...scope, resolvedNote: "Found in WHOIS" },
+    ],
+    [
+      "updateQuestionFn",
+      updateQuestionFn,
+      "questions.update",
+      { ...scope, text: "Updated", expectedVersion: 1 },
+    ],
+    ["reopenQuestionFn", reopenQuestionFn, "questions.reopen", scope],
+  ] as const)(
+    "%s sends its input to its procedure and answers the record",
+    async (_name, fn, path, input) => {
+      orpc.reply(path, question);
+
+      await expect(callServerFn(fn, input)).resolves.toEqual(question);
+
+      expect(orpc.calls(path)).toMatchObject([input]);
+    }
+  );
 });
 
 describe("input validation", () => {

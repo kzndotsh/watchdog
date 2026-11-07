@@ -17,21 +17,24 @@ beforeEach(() => orpc.reset());
 
 describe("putCredentialFn", () => {
   it("sends the name, secret and label and nothing else", async () => {
-    orpc.reply("credentials.put", {
+    const slot = {
       name: "SHODAN_API_KEY",
       label: "Shodan",
       description: "",
       configured: true,
       updatedAt: null,
       breachDisabled: false,
-    });
+    };
+    orpc.reply("credentials.put", slot);
 
-    await callServerFn(putCredentialFn, {
-      name: "SHODAN_API_KEY",
-      secret: "abc",
-      label: "Shodan",
-      organizationId: "org-evil",
-    });
+    await expect(
+      callServerFn(putCredentialFn, {
+        name: "SHODAN_API_KEY",
+        secret: "abc",
+        label: "Shodan",
+        organizationId: "org-evil",
+      })
+    ).resolves.toEqual(slot);
 
     expect(orpc.calls("credentials.put")).toEqual([
       { name: "SHODAN_API_KEY", secret: "abc", label: "Shodan" },

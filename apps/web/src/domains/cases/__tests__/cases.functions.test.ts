@@ -225,8 +225,11 @@ describe("createCaseFn", () => {
   it("makes the new Case Active", async () => {
     orpc.reply("cases.create", CASE_A);
 
-    await callServerFn(createCaseFn, { name: "Alpha" });
+    await expect(
+      callServerFn(createCaseFn, { name: "Alpha" }, ORG_CONTEXT)
+    ).resolves.toEqual(CASE_A);
 
+    expect(orpc.calls("cases.create")).toMatchObject([{ name: "Alpha" }]);
     expect(cookie()).toBe(CASE_A.id);
   });
 });
