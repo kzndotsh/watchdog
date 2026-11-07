@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import {
+  redactSnusbaseSnapshot,
   fetchSnusbaseLookupEffect,
   snusbaseLookupSnapshotSchema,
 } from "@watchdog/tools/breach";
@@ -42,6 +43,7 @@ export const snusbaseLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: snusbaseLookupSnapshotSchema,
+  exportRedaction: redactSnusbaseSnapshot,
   fetch: (ctx, { userAgent }) =>
     Effect.gen(function* snusbaseLookupFetch() {
       const query = ctx.input.query;

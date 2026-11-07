@@ -4,11 +4,11 @@ import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
 import { CAPABILITIES } from "../../registry";
-import { isBreachCap } from "../../sdk";
+import { isBreachCapId } from "../../sdk";
 import { createCapRunHarness, runCap } from "../../testing";
 import { dehashedLookup } from "../dehashed.lookup/cap";
 import { dehashedLookupInput } from "../dehashed.lookup/input";
-import { breachRedactorIds, redactBreachArtifact } from "../export-redaction";
+import { redactBreachArtifact } from "../export-redaction";
 import { snusbaseLookup } from "../snusbase.lookup/cap";
 import { snusbaseLookupInput } from "../snusbase.lookup/input";
 
@@ -155,10 +155,13 @@ describe("breach Cap credential modes", () => {
 
 describe("export redaction table", () => {
   it("has a redactor for every breach Cap and for nothing else", () => {
-    const breach = CAPABILITIES.filter((cap) => isBreachCap(cap)).map(
+    const withRedactor = CAPABILITIES.filter(
+      (cap) => cap.exportRedactor !== undefined
+    ).map((cap) => cap.id);
+    const breach = CAPABILITIES.filter((cap) => isBreachCapId(cap.id)).map(
       (cap) => cap.id
     );
-    expect([...breachRedactorIds()].sort()).toEqual([...breach].sort());
+    expect([...withRedactor].sort()).toEqual([...breach].sort());
   });
 
   it("refuses an unknown Cap id and an artifact that does not match its schema", () => {

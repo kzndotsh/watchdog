@@ -41,6 +41,7 @@ export const hibpLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: hibpLookupSnapshotSchema,
+  exportRedaction: "unchanged",
   fetch: (ctx, { userAgent }) =>
     Effect.gen(function* hibpLookupFetch() {
       const email = ctx.input.email;

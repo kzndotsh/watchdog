@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   checkPlaybookAvailability,
   formatPlanError,
-  isBreachCap,
+  isBreachCapId,
   requireCapability,
   requirePlaybook,
   planPlaybook,
@@ -142,9 +142,7 @@ function blockedEgressCapabilityId(
 }
 
 function breachCapabilityId(playbook: ReturnType<typeof requirePlaybook>) {
-  return playbookCapabilityIds(playbook).find((id) =>
-    isBreachCap(requireCapability(id))
-  );
+  return playbookCapabilityIds(playbook).find((id) => isBreachCapId(id));
 }
 
 function ensurePlaybookRunnable(

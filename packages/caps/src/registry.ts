@@ -74,7 +74,7 @@ import { pageEnrich } from "./web/page.enrich/cap";
 import { urlUnshorten } from "./web/url.unshorten/cap";
 
 /** Cap SoT — register here only (no duplicate named re-exports). */
-export const CAPABILITIES: CapabilityDef<z.ZodType>[] = [
+const REGISTERED = [
   dnsLookup,
   dnsReverse,
   ipLookup,
@@ -140,7 +140,12 @@ export const CAPABILITIES: CapabilityDef<z.ZodType>[] = [
   extractAi,
   fileAnalyze,
   emlAnalyze,
-];
+] as const satisfies readonly CapabilityDef<z.ZodType>[];
+
+/** Every registered Cap id, as a union: a renamed or misspelled id fails typecheck where it is used. */
+export type CapId = (typeof REGISTERED)[number]["id"];
+
+export const CAPABILITIES: readonly CapabilityDef<z.ZodType>[] = REGISTERED;
 
 export function requireCapability(id: string) {
   const found = CAPABILITIES.find((c) => c.id === id);

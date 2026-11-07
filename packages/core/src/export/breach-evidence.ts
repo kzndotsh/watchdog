@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { isBreachCap, redactBreachArtifact } from "@watchdog/caps";
+import { isBreachCapId, redactBreachArtifact } from "@watchdog/caps";
 import type { CaseId } from "@watchdog/schemas/shared";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
@@ -74,7 +74,7 @@ export function evidenceOriginsEffect(
     for (const { evidenceId, capabilityId } of links) {
       if (capabilityId === null) {
         origins.set(evidenceId, { kind: "unknown_producer" });
-      } else if (isBreachCap({ id: capabilityId })) {
+      } else if (isBreachCapId(capabilityId)) {
         // A breach producer wins over anything else that linked the file.
         origins.set(evidenceId, { kind: "breach", capabilityId });
       }

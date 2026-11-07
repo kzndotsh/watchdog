@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { requireCapability } from "@watchdog/caps";
+import { requireCapability, type CapId } from "@watchdog/caps";
 import type { EvidenceCapSeed, JobRow } from "@watchdog/db";
 import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
@@ -55,7 +55,7 @@ function startCapForEvidenceEffect(input: {
   actorId: string;
   actorLabel?: string | null;
   actorKeyId?: string | null;
-  capabilityId: string;
+  capabilityId: CapId;
   matchActive: (job: JobRow, seed: EvidenceCapSeed) => boolean;
   buildInput: (seed: EvidenceCapSeed) => JsonObject;
   assertSeed?: (seed: EvidenceCapSeed) => Effect.Effect<void, DomainTag>;
