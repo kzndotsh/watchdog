@@ -158,7 +158,8 @@ async function docLeavesInTree() {
     input: files.join("\n"),
     encoding: "utf-8",
   });
-  const ignored = new Set(res.stdout.split("\n").filter(Boolean));
+  // No git (spawn failed): nothing is known to be ignored, so every file is checked.
+  const ignored = new Set((res.stdout ?? "").split("\n").filter(Boolean));
   return files.filter((file) => !ignored.has(file));
 }
 
