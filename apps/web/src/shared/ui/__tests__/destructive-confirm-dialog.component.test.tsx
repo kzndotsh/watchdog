@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
@@ -25,5 +25,22 @@ describe("DestructiveConfirmDialog", () => {
     });
     fireEvent.click(confirm);
     expect(onConfirm).toHaveBeenCalled();
+  });
+
+  it("focuses the typed-name field when it opens", async () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        onOpenChange={vi.fn()}
+        title="Delete API key"
+        confirmLabel="Delete API key"
+        verificationPhrase="DELETE"
+        onConfirm={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("DELETE")).toHaveFocus();
+    });
   });
 });

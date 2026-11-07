@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -69,17 +69,6 @@ export function DestructiveConfirmDialog({
     }
   }
 
-  useEffect(() => {
-    if (!open) {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return requires an explicit value alongside the cleanup-returning branch below
-      return undefined;
-    }
-    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
-    return () => {
-      window.clearTimeout(t);
-    };
-  }, [open]);
-
   return (
     <AlertDialog
       open={open}
@@ -88,7 +77,10 @@ export function DestructiveConfirmDialog({
         onOpenChange(next);
       }}
     >
-      <AlertDialogContent className={cn("gap-3 sm:max-w-xl", className)}>
+      <AlertDialogContent
+        initialFocus={inputRef}
+        className={cn("gap-3 sm:max-w-xl", className)}
+      >
         <div className="flex flex-col gap-2.5 text-left">
           <AlertDialogTitle className="flex items-center gap-2">
             {media ? (
