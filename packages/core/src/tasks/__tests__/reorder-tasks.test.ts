@@ -13,7 +13,7 @@ vi.mock("@watchdog/db", () => ({
   tasksRepo: { listColumn: vi.fn(), rewriteOrder: vi.fn() },
 }));
 
-vi.mock("../../graph/patch/guards", () => ({
+vi.mock("../../cases/access", () => ({
   assertCaseInOrgEffect: (caseId: string) => Effect.succeed(caseId),
   assertEntityInCaseEffect: vi.fn(),
   requireTrimmedGraphId: vi.fn(),

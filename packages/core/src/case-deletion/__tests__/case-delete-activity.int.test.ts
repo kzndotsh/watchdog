@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { replayActivityEffect } from "@watchdog/core/activity";
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { deleteCaseEffect, purgeCaseEffect } from "@watchdog/core/cases";
-import { isDomainTag } from "@watchdog/core/errors";
 import {
-  createEntityEffect,
-  assertCaseInOrgEffect,
-} from "@watchdog/core/graph";
+  deleteCaseEffect,
+  purgeCaseEffect,
+} from "@watchdog/core/case-deletion";
+import { assertCaseInOrgEffect } from "@watchdog/core/cases";
+import { isDomainTag } from "@watchdog/core/errors";
+import { createEntityEffect } from "@watchdog/core/graph";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { activityLogRepo, db } from "@watchdog/db";

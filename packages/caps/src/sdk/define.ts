@@ -96,14 +96,39 @@ export type CapJobPolicy = {
 };
 
 /**
+ * A Vault slot as Settings shows it. A Cap states the slots it reads and this is the one place
+ * a slot's label, description and secrecy live: Settings' catalog derives from the Caps'
+ * declarations (`listKnownCredentials`). A slot several Caps share is one constant they all
+ * reference (`src/credentials.ts`); the derivation fails when two declarations of one name differ.
+ */
+export type CredentialSlotMeta = {
+  name: string;
+  label: string;
+  description: string;
+  /**
+   * Whether the value is a secret (default true). A secret value read through `getCredential` is
+   * found and hidden by value in recorded provider calls; a configuration value such as a base
+   * URL is not, so the record names the real destination.
+   */
+  secret?: boolean;
+};
+
+/**
  * Declared Cap secrets. Runner preflights before `run`:
- * - `{ name }` — required (fail closed if missing)
- * - `{ name, optional: true }` — present-or-skip
- * - `{ anyOf }` — at least one of the names must be set
+ * - `{ slot }` — required (fail closed if missing)
+ * - `{ slot, optional: true }` — present-or-skip
+ * - `{ anyOf }` — at least one of the slots must be set
  */
 export type CapCredentialSpec =
-  | { name: string; optional?: boolean }
-  | { anyOf: readonly [string, ...string[]] };
+  | { slot: CredentialSlotMeta; optional?: boolean }
+  | { anyOf: readonly [CredentialSlotMeta, ...CredentialSlotMeta[]] };
+
+/** The Vault slots a credential spec names. */
+export function credentialSpecSlots(
+  spec: CapCredentialSpec
+): readonly CredentialSlotMeta[] {
+  return "anyOf" in spec ? spec.anyOf : [spec.slot];
+}
 
 export type CapContext<TInput> = {
   input: TInput;
@@ -253,14 +278,21 @@ export function defineCapability<TSchema extends z.ZodType>(
     );
   }
   for (const spec of def.credentials ?? []) {
-    if ("anyOf" in spec) {
-      if (!spec.anyOf.some((name) => name.trim() !== "")) {
-        throw new Error(
-          "Capability credential anyOf must name at least one slot"
-        );
+    if ("anyOf" in spec && spec.anyOf.length === 0) {
+      throw new Error(
+        "Capability credential anyOf must name at least one slot"
+      );
+    }
+    for (const slot of credentialSpecSlots(spec)) {
+      if (slot.name.trim() === "") {
+        throw new Error("Capability credential name is required");
       }
-    } else if (spec.name.trim() === "") {
-      throw new Error("Capability credential name is required");
+      if (slot.label.trim() === "") {
+        throw new Error(`Credential ${slot.name} needs a Settings label`);
+      }
+      if (slot.description.trim() === "") {
+        throw new Error(`Credential ${slot.name} needs a Settings description`);
+      }
     }
   }
   return def;

@@ -4,16 +4,16 @@ import { strToU8 } from "fflate";
 import type { ProviderCallWithOutcome } from "@watchdog/db";
 import type { CaseId, ProvenanceState } from "@watchdog/schemas/shared";
 
+import {
+  readStoredResponseEffect,
+  toProviderCallRecordsEffect,
+  type ProviderCallRecord,
+} from "../evidence/provider-call-view";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
 import { providerCallsRepoFxDb } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
-import {
-  readStoredResponseEffect,
-  toProviderCallRecordsEffect,
-  type ProviderCallRecord,
-} from "../jobs/provider-call-view";
 import type { BreachExportNotes } from "./breach-evidence";
 import {
   buildAttributionMarkdown,

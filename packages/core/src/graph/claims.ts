@@ -10,22 +10,24 @@ import type {
 } from "@watchdog/schemas/shared";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
+import { dossierChannel } from "../activity/graph-activity";
 import { requireActorIdEffect } from "../actors/require-actor-id";
-import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
+import {
+  assertEntityInCaseEffect,
+  requireTrimmedGraphId,
+} from "../cases/access";
 import type { Db } from "../infra/db-service";
 import {
   ConflictError,
   InvalidError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { dossierChannel } from "./graph-activity";
+import {
+  parseGraphEvidenceIdsEffect,
+  assertConfidenceEvidenceEffect,
+} from "./graph-evidence";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import { claimsTable, retractClaim, type ClaimRecord } from "./mutation/tables";
-import {
-  assertConfidenceEvidenceEffect,
-  assertEntityInCaseEffect,
-  requireTrimmedGraphId,
-} from "./patch/guards";
 
 export type { ClaimRecord };
 

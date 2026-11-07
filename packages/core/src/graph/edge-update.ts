@@ -11,6 +11,7 @@ import {
   type EntityKind,
 } from "@watchdog/schemas/shared";
 
+import { assertEntityInCaseEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { onExec } from "../infra/repo-fx";
 import { entitiesRepoFx, edgesRepoFx } from "../infra/repos-fx";
@@ -20,10 +21,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import type { UpdateEdgeInput } from "./edges";
-import {
-  assertConfidenceEvidenceEffect,
-  assertEntityInCaseEffect,
-} from "./patch/guards";
+import { assertConfidenceEvidenceEffect } from "./graph-evidence";
 
 export type ValidatedEdgeUpdate = {
   existing: NonNullable<Awaited<ReturnType<typeof edgesRepo.getInCase>>>;

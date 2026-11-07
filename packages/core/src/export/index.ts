@@ -28,10 +28,3 @@ export {
 } from "./breach-credential-opt-in";
 export { sweepExpiredCaseExportsEffect } from "./export-objects";
 export type { ZipSink } from "./zip-writer";
-export {
-  caseExportLinkEffect,
-  startCaseExportJobEffect,
-  type CaseExportLink,
-  type StartCaseExportInput,
-  type StartedCaseExport,
-} from "../jobs/export-job";

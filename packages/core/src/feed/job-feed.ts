@@ -17,6 +17,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { labelForActor } from "../actors/resolve-actor-labels";
+import { jobActivityLabel } from "../display/job-display";
 import type { Db } from "../infra/db-service";
 import {
   entitiesRepoFxDb,
@@ -24,7 +25,6 @@ import {
   activityLogRepoFxDb,
 } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
-import { jobActivityLabel } from "../jobs/job-display";
 
 /** The Job fields a feed label is built from: the Job itself, or a run's seed step. */
 type JobLabelSubject = {

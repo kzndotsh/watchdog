@@ -3,7 +3,7 @@ import { unzipSync, strFromU8 } from "fflate";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { appRuntime } from "@watchdog/api";
-import { deleteCaseEffect } from "@watchdog/core/cases";
+import { deleteCaseEffect } from "@watchdog/core/case-deletion";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import {

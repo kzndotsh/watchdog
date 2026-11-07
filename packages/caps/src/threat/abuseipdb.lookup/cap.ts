@@ -24,7 +24,15 @@ export const abuseIpdbLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.abuseipdb.com", { keyed: true })],
-  credentials: [{ name: "ABUSEIPDB_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "ABUSEIPDB_API_KEY",
+        label: "AbuseIPDB",
+        description: "AbuseIPDB API key for threat.abuseipdb.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

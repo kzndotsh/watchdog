@@ -17,10 +17,13 @@ import {
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
-import { getCaseByIdEffect, listCasesEffect } from "../cases";
+import {
+  getCaseByIdEffect,
+  listCasesEffect,
+  assertCaseInOrgEffect,
+} from "../cases";
 import type { CaseRecord } from "../cases";
 import type { EvidenceRecord } from "../evidence";
-import { assertCaseInOrgEffect } from "../graph";
 import type { EntityRecord } from "../graph";
 import type { JobRecord } from "../jobs";
 import type { ProposalRecord } from "../proposals";

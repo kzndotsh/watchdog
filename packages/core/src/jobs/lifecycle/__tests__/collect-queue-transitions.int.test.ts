@@ -6,7 +6,7 @@ import {
   deleteCaseEffect,
   purgeCaseEffect,
   restoreCaseEffect,
-} from "@watchdog/core/cases";
+} from "@watchdog/core/case-deletion";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { db, evidenceLinksRepo, evidenceRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";

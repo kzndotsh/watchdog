@@ -23,7 +23,15 @@ export const dehashedLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive"],
   contacts: [contact.provider("api.dehashed.com", { keyed: true })],
-  credentials: [{ name: "DEHASHED_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "DEHASHED_API_KEY",
+        label: "DeHashed",
+        description: "DeHashed API key for breach.dehashed.lookup.",
+      },
+    },
+  ],
   consumes: [
     { kind: "ip" },
     { kind: "host" },

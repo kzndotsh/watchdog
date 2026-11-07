@@ -4,10 +4,7 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
-import {
-  assertCaseInOrgEffect,
-  requireTrimmedGraphId,
-} from "../graph/patch/guards";
+import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";

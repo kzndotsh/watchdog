@@ -68,7 +68,10 @@ export {
   type JobStartPruneSummary,
 } from "./jobs/start-limits-prune";
 export { sweepExpiredCaseExportsEffect } from "./export/export-objects";
-export { purgeExpiredCasesEffect, type PurgeRunSummary } from "./cases/purge";
+export {
+  purgeExpiredCasesEffect,
+  type PurgeRunSummary,
+} from "./case-deletion/purge";
 export {
   claimCaseExportEffect,
   ExportWriteServices,

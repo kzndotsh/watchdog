@@ -16,7 +16,12 @@
  *      `testing/` or a test file) holds no Cap id and no Vault slot name as a string
  *      literal. A Cap hands its facts to a tool as parameters (the user agent, the key
  *      value); the lists are read from packages/caps/capabilities.gen.json (Cap ids and
- *      declared credentials) and the credential catalog in packages/caps/src/known-credentials.ts.
+ *      declared credentials, `anyOf` groups included).
+ *   5. Core folders form no import cycle: the top-level folders of packages/core/src
+ *      (`activity`, `cases`, `jobs`, ...) depend on one another in one direction only, so a
+ *      concept lives in the folder that owns it. Tests (`__tests__`, `*.test.ts`) are not
+ *      counted; files directly under src (`worker-entry.ts`) are entry points, not folders.
+ *      The one allowed edge is named in CORE_CYCLE_ALLOWLIST.
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
@@ -67,6 +72,7 @@ const workspaceYaml = asRecord(
  *   isApp: boolean,
  *   declared: Set<string>,
  *   exportKeys: string[],
+ *   exportTargets: Record<string, unknown>,
  * }} Pkg
  */
 
@@ -101,6 +107,12 @@ for (const glob of globs) {
         DEP_FIELDS.flatMap((f) => Object.keys(asRecord(manifest[f])))
       ),
       // Conditional-only maps (`{ import, default }`) describe the root entry.
+      /** Subpath -> file, for the string-valued entries (a self-import is resolved through them). */
+      exportTargets: Object.fromEntries(
+        Object.entries(asRecord(exportsField)).filter(
+          ([, value]) => typeof value === "string"
+        )
+      ),
       exportKeys: exportKeys.some((k) => k.startsWith("."))
         ? exportKeys.filter((k) => k.startsWith("."))
         : ["."],
@@ -142,6 +154,91 @@ const RELATIVE_ALLOWED = new Set([
 ]);
 
 /**
+ * Core folder edges (`from -> to`) that may close an import cycle. Each is a known violation
+ * waiting on the issue that removes it; the gate ignores these edges only, fails on any other
+ * cycle, and fails when an entry no longer matches an import (so the entry is deleted with the fix).
+ * TODO(#617): infra imports the export folder's settings; when infra imports no domain, delete this.
+ */
+const CORE_CYCLE_ALLOWLIST = new Set(["infra -> export"]);
+const CORE_SRC = "packages/core/src/";
+/** A non-test file inside a top-level folder of core's src. */
+const CORE_FOLDER_FILE =
+  /^packages\/core\/src\/(?<folder>[^/]+)\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
+
+/** The top-level folders of core's src, from the tracked files. */
+const coreFolders = new Set();
+
+/** @type {Map<string, string>} "from -> to" -> first file:line and specifier that makes it */
+const coreEdges = new Map();
+
+/**
+ * @param {string} rel the importing file
+ * @param {string} target the resolved import, repo-relative
+ * @param {string} where file:line of the import
+ * @param {string} spec
+ */
+function recordCoreEdge(rel, target, where, spec) {
+  const from = CORE_FOLDER_FILE.exec(rel)?.groups?.folder;
+  if (from === undefined || !target.startsWith(CORE_SRC)) return;
+  const to = target.slice(CORE_SRC.length).split("/")[0];
+  // `../jobs` (a folder's index) names the folder; `../worker-entry` is a file beside the folders.
+  if (to === undefined || to === from || !coreFolders.has(to)) return;
+  const key = `${from} -> ${to}`;
+  if (!coreEdges.has(key)) coreEdges.set(key, `${where} "${spec}"`);
+}
+
+/**
+ * Strongly connected groups of two or more folders (Tarjan), over the edges not allowed.
+ * @param {string[]} edgeKeys "from -> to"
+ * @returns {string[][]}
+ */
+function importCycles(edgeKeys) {
+  /** @type {Map<string, string[]>} */
+  const graph = new Map();
+  for (const key of edgeKeys) {
+    const [from = "", to = ""] = key.split(" -> ");
+    graph.set(from, [...(graph.get(from) ?? []), to]);
+  }
+  /** @type {Map<string, number>} */
+  const index = new Map();
+  /** @type {Map<string, number>} */
+  const low = new Map();
+  /** @type {string[]} */
+  const stack = [];
+  const onStack = new Set();
+  /** @type {string[][]} */
+  const groups = [];
+  /** @param {string} v */
+  const visit = (v) => {
+    index.set(v, index.size);
+    low.set(v, index.get(v) ?? 0);
+    stack.push(v);
+    onStack.add(v);
+    for (const w of graph.get(v) ?? []) {
+      if (!index.has(w)) {
+        visit(w);
+        low.set(v, Math.min(low.get(v) ?? 0, low.get(w) ?? 0));
+      } else if (onStack.has(w)) {
+        low.set(v, Math.min(low.get(v) ?? 0, index.get(w) ?? 0));
+      }
+    }
+    if (low.get(v) === index.get(v)) {
+      /** @type {string[]} */
+      const group = [];
+      let w;
+      do {
+        w = stack.pop() ?? v;
+        onStack.delete(w);
+        group.push(w);
+      } while (w !== v);
+      if (group.length > 1) groups.push(group.sort());
+    }
+  };
+  for (const v of [...graph.keys()].sort()) if (!index.has(v)) visit(v);
+  return groups;
+}
+
+/**
  * Specifier string literals, matched over the whole file text so a specifier on its
  * own line (`import(\n "m"\n)`, `vi.mock(\n "m",`, `} from "m"` closing a multi-line
  * clause) is found like a one-line import.
@@ -179,11 +276,8 @@ function importsOf(source) {
 /** Cap ids and Vault slot names, read from the Cap sources of truth, never copied here. */
 function capFacts() {
   const gen = path.join(root, "packages/caps/capabilities.gen.json");
-  const catalog = path.join(root, "packages/caps/src/known-credentials.ts");
-  if (!existsSync(gen) || !existsSync(catalog)) {
-    console.error(
-      "✗ the tools rule needs packages/caps/capabilities.gen.json and packages/caps/src/known-credentials.ts"
-    );
+  if (!existsSync(gen)) {
+    console.error("✗ the tools rule needs packages/caps/capabilities.gen.json");
     process.exit(1);
   }
   /** @type {unknown} */
@@ -196,14 +290,12 @@ function capFacts() {
     for (const cred of Array.isArray(entry.credentials)
       ? entry.credentials
       : []) {
-      const name = asRecord(cred).name;
-      if (typeof name === "string") facts.set(name, "Vault slot name");
+      const spec = asRecord(cred);
+      const names = Array.isArray(spec.anyOf) ? spec.anyOf : [spec.name];
+      for (const name of names) {
+        if (typeof name === "string") facts.set(name, "Vault slot name");
+      }
     }
-  }
-  for (const m of readFileSync(catalog, "utf-8").matchAll(
-    /\bname:\s*["'](?<name>[A-Z][A-Z0-9_]*)["']/g
-  )) {
-    if (m.groups?.name) facts.set(m.groups.name, "Vault slot name");
   }
   return facts;
 }
@@ -303,6 +395,13 @@ const problems = [];
 let scanned = 0;
 
 for (const rel of listed) {
+  const folder = rel.startsWith(CORE_SRC)
+    ? rel.slice(CORE_SRC.length).split("/")
+    : [];
+  if (folder.length > 1 && folder[0]) coreFolders.add(folder[0]);
+}
+
+for (const rel of listed) {
   if (!SOURCE.test(rel)) continue;
   const owner = packages.find((p) => rel.startsWith(`${p.dir}/`));
   if (!owner || !existsSync(path.join(root, rel))) continue;
@@ -326,13 +425,22 @@ for (const rel of listed) {
           `${where}: relative import "${spec}" reaches into ${other.name}; import it through its public entry points: ${entryPoints(other)}`
         );
       }
+      recordCoreEdge(rel, target, where, spec);
       continue;
     }
 
     if (!spec.startsWith(SCOPE)) continue;
     const [scope = "", pkgName = "", ...rest] = spec.split("/");
     const name = `${scope}/${pkgName}`;
-    if (name === owner.name) continue;
+    if (name === owner.name) {
+      // A self-import through a public subpath (`@watchdog/core/cases`) is a folder edge too.
+      const file =
+        owner.exportTargets[`.${rest.length > 0 ? `/${rest.join("/")}` : ""}`];
+      if (typeof file === "string") {
+        recordCoreEdge(rel, path.posix.join(owner.dir, file), where, spec);
+      }
+      continue;
+    }
     const target = byName.get(name);
     if (!target) {
       problems.push(`${where}: "${spec}": no workspace package named ${name}`);
@@ -359,10 +467,34 @@ for (const rel of listed) {
   }
 }
 
+if (listed.some((f) => f.startsWith(CORE_SRC))) {
+  for (const key of CORE_CYCLE_ALLOWLIST) {
+    if (!coreEdges.has(key)) {
+      problems.push(
+        `${CORE_SRC}: CORE_CYCLE_ALLOWLIST names "${key}", which no import makes any more; delete the entry from scripts/check-boundaries.mjs`
+      );
+    }
+  }
+  const counted = [...coreEdges.keys()].filter(
+    (key) => !CORE_CYCLE_ALLOWLIST.has(key)
+  );
+  for (const group of importCycles(counted)) {
+    const inside = counted.filter((key) => {
+      const [from = "", to = ""] = key.split(" -> ");
+      return group.includes(from) && group.includes(to);
+    });
+    problems.push(
+      `${CORE_SRC}: the folders ${group.join(", ")} import each other in a cycle; move the shared code to the folder that owns it. Edges (first import each): ${inside
+        .map((key) => `${key} (${coreEdges.get(key)})`)
+        .join("; ")}`
+    );
+  }
+}
+
 if (problems.length > 0) {
   for (const p of problems) console.error(`✗ ${p}`);
   console.error(
-    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot. See docs/contributing/ci-gates.md."
+    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot; core folders import no cycle. See docs/contributing/ci-gates.md."
   );
   process.exit(1);
 }

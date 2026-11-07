@@ -24,7 +24,13 @@ import { breachCapsMode } from "../caps/breach-caps";
 import {
   assertCaseInOrgEffect,
   requireTrimmedCaseIdEffect,
-} from "../graph/patch/guards";
+} from "../cases/access";
+import { toRecord, type CaseRecord } from "../cases/case-record";
+import {
+  caseRetentionDays,
+  daysUntilPurge,
+  purgeDueAt,
+} from "../cases/retention";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { errorMessage } from "../infra/error-utils";
@@ -48,15 +54,12 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import type { JobQueue } from "../jobs/job-queue";
-import { cancelWithin, type CancelOutcome } from "../jobs/lifecycle/cancel";
+import { cancelWithin, type CancelOutcome, type JobQueue } from "../jobs";
 import {
   isOrganizationManagerEffect,
   requireOrganizationManagerEffect,
 } from "../organization/roles";
-import { toRecord, type CaseRecord } from "./case-record";
 import { recordDeletionEventEffect } from "./deletion-event";
-import { caseRetentionDays, daysUntilPurge, purgeDueAt } from "./retention";
 
 /**
  * Who a tombstone, restore or purge is attributed to: the user (an API key's user) and the

@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import type {
-  CaseCounts as CoreCaseCounts,
-  CaseRecord as CoreCaseRecord,
   DeletedCaseRecord as CoreDeletedCaseRecord,
   DeletionPolicy as CoreDeletionPolicy,
   RestoredCaseRecord as CoreRestoredCaseRecord,
+} from "@watchdog/core/case-deletion";
+import type {
+  CaseCounts as CoreCaseCounts,
+  CaseRecord as CoreCaseRecord,
 } from "@watchdog/core/cases";
 import type {
   getCaseBySlugInputSchema,

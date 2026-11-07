@@ -286,13 +286,13 @@ const CASE_TASK_REPOS = ["cases", "tasks"] as const;
 const CASE_TASK_EXEMPTIONS: Readonly<Record<string, string>> = {
   "cases/cases.ts#createCaseEffect":
     "a new Case has no Graph and no `case.created` verb (ADR-0005 lists only `case.updated`); the Case list is not live",
-  "cases/tombstone.ts#tombstoneInTx":
+  "case-deletion/tombstone.ts#tombstoneInTx":
     "a Case delete is a tombstone (#304) that touches no Graph row; `recordDeletionEventEffect` writes the deletion record and the Case-level `deleted` activity entry in the same transaction, and the Jobs it cancels append their own entries",
-  "cases/tombstone.ts#restoreCaseEffect":
+  "case-deletion/tombstone.ts#restoreCaseEffect":
     "a restore clears the tombstone and touches no Graph row; `recordDeletionEventEffect` writes the deletion record and the Case-level `restored` activity entry in the same transaction",
-  "cases/purge.ts#purgeTombstonedCaseEffect":
+  "case-deletion/purge.ts#purgeTombstonedCaseEffect":
     "a purge erases the whole Case, its activity entries with it (FK cascade); the permanent deletion record, written in the same transaction, is its trace",
-  "cases/purge.ts#recordPurgeFailureEffect":
+  "case-deletion/purge.ts#recordPurgeFailureEffect":
     "stores the last purge failure on the tombstoned Case row; not a Graph write",
 };
 /**

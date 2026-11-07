@@ -13,7 +13,8 @@ import {
   type GraphActor,
 } from "@watchdog/schemas/shared";
 
-import { parseGraphEvidenceIdsEffect } from "../evidence/evidence";
+import { dossierChannel } from "../activity/graph-activity";
+import { assertEntityInCaseEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { edgesRepoFx, evidenceLinksRepoFx } from "../infra/repos-fx";
@@ -23,16 +24,15 @@ import {
   edgeUpdatePatchEffect,
   validateEdgeUpdateEffect,
 } from "./edge-update";
-import { dossierChannel } from "./graph-activity";
+import {
+  parseGraphEvidenceIdsEffect,
+  assertConfidenceEvidenceEffect,
+} from "./graph-evidence";
 import {
   runGraphMutation,
   type GraphWriter,
 } from "./mutation/run-graph-mutation";
 import { edgesTable, type EdgeWritten } from "./mutation/tables";
-import {
-  assertConfidenceEvidenceEffect,
-  assertEntityInCaseEffect,
-} from "./patch/guards";
 
 export type EdgeRecord = {
   id: string;

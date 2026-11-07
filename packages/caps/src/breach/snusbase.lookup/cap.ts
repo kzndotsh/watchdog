@@ -23,7 +23,15 @@ export const snusbaseLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive"],
   contacts: [contact.provider("api.snusbase.com", { keyed: true })],
-  credentials: [{ name: "SNUSBASE_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "SNUSBASE_API_KEY",
+        label: "Snusbase",
+        description: "Snusbase API key for breach.snusbase.lookup.",
+      },
+    },
+  ],
   consumes: [
     { kind: "ip" },
     { kind: "host" },

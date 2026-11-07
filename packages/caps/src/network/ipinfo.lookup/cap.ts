@@ -24,7 +24,15 @@ export const ipinfoLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("ipinfo.io", { keyed: true })],
-  credentials: [{ name: "IPINFO_API_TOKEN" }],
+  credentials: [
+    {
+      slot: {
+        name: "IPINFO_API_TOKEN",
+        label: "IPinfo",
+        description: "IPinfo.io API token for network.ipinfo.lookup.",
+      },
+    },
+  ],
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

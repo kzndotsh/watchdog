@@ -1,9 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
+import {
+  assertCaseInOrgEffect,
+  listVisibleCaseIdsEffect,
+} from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
-import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import {
   TEST_ORGANIZATION_ID,
