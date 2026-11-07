@@ -44,7 +44,6 @@
   "apps/web/src/domains/dossier/components/ego-graph/__tests__/connection-dialog.component.test.tsx": 3,
   "apps/web/src/domains/dossier/components/ego-graph/__tests__/ego-neighborhood-canvas.component.test.tsx": 1,
   "apps/web/src/domains/dossier/hooks/__tests__/use-dossier-shell.test.ts": 1,
-  "apps/web/src/domains/dossier/hooks/__tests__/use-invalidate-entity.component.test.tsx": 1,
   "apps/web/src/domains/entities/__tests__/entities.functions.test.ts": 1,
   "apps/web/src/domains/entities/claims/__tests__/claims.functions.test.ts": 1,
   "apps/web/src/domains/entities/components/__tests__/connection-composer-fields.component.test.tsx": 2,

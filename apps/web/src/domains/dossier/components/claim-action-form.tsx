@@ -1,9 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 
 import { ClaimComposerActions } from "@/domains/dossier/components/claim-composer-actions";
-import { useRetractClaim } from "@/domains/dossier/hooks/use-retract-claim";
 import type { ClaimRowActionKind } from "@/domains/dossier/lib/claim-row-actions";
 import type { DossierEntityScope } from "@/domains/dossier/types";
+import { useRetractClaim } from "@/domains/entities/claims/mutations";
 import { couldnt, errMessage } from "@/lib/utils";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FieldMessage } from "@/shared/ui/field-message";
@@ -19,12 +19,6 @@ const ACTION_TO_KIND: Record<ClaimAction, RetractKind> = {
   contest: "contested",
   disprove: "disproved",
   retract: "retracted",
-};
-
-const ACTION_SUCCESS_LABEL: Record<ClaimAction, string> = {
-  contest: "Claim contested",
-  disprove: "Claim disproved",
-  retract: "Claim retracted",
 };
 
 const ACTION_LABELS = {
@@ -56,10 +50,7 @@ export function ClaimActionForm({
   onError,
   onSaved,
 }: ClaimActionFormProps) {
-  const retractMutation = useRetractClaim({
-    successMessage: ACTION_SUCCESS_LABEL[action],
-    onRetracted: onSaved,
-  });
+  const retractMutation = useRetractClaim({ onSuccess: onSaved });
 
   const failureCopy = couldnt(ACTION_LABELS[action].toLowerCase(), "claim");
   const actionForm = useForm({

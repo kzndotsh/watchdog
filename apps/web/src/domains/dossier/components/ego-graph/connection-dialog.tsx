@@ -2,7 +2,10 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useMemo, useState, type SubmitEvent } from "react";
 
-import type { EdgeRecord } from "@/domains/entities/edges/types";
+import type {
+  ConnectionFormValues,
+  EdgeRecord,
+} from "@/domains/entities/edges/types";
 import { entityPickerPort } from "@/domains/entities/queries";
 import { evidencePickerPort } from "@/domains/intake/queries";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
@@ -31,9 +34,7 @@ import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence
 import {
   parseOptionalTrimmedUuid,
   trimmedConfidenceTierSchema,
-  type ConfidenceTier,
   type EdgeOrientation,
-  type EdgePredicate,
   type EntityKind,
   entityDisplayLabel,
   EDGE_PREDICATE_META,
@@ -55,15 +56,6 @@ type ConnectionPeer = {
   name: string;
   slug: string;
   kind: EntityKind;
-};
-
-export type ConnectionFormValues = {
-  peerId: string;
-  predicate: EdgePredicate;
-  orientation: EdgeOrientation;
-  notes: string;
-  confidence: ConfidenceTier;
-  evidenceIds: string[];
 };
 
 type Props = {

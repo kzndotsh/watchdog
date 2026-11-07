@@ -6,17 +6,12 @@ import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
 import { TargetActionsHost } from "@/domains/dossier/components/target-actions-host";
-import { useCreateQuestion } from "@/domains/dossier/hooks/use-create-question";
-import { useDeleteQuestion } from "@/domains/dossier/hooks/use-delete-question";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import type { DossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
-import { useReopenQuestion } from "@/domains/dossier/hooks/use-reopen-question";
-import { useResolveQuestion } from "@/domains/dossier/hooks/use-resolve-question";
 import {
   useSectionListView,
   type SectionListView,
 } from "@/domains/dossier/hooks/use-section-list-view";
-import { useUpdateQuestion } from "@/domains/dossier/hooks/use-update-question";
 import type { DossierQuestionsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import {
   openQuestionRowActions,
@@ -26,6 +21,13 @@ import type {
   DossierEntityScope,
   DossierSectionProps,
 } from "@/domains/dossier/types";
+import {
+  useCreateQuestion,
+  useDeleteQuestion,
+  useReopenQuestion,
+  useResolveQuestion,
+  useUpdateQuestion,
+} from "@/domains/entities/questions/mutations";
 import { questionListView } from "@/domains/entities/questions/queries";
 import type { QuestionRecord } from "@/domains/entities/questions/types";
 import { cn, couldnt, errMessage } from "@/lib/utils";
@@ -243,7 +245,7 @@ function ResolveForm({
   onError,
   onSaved,
 }: ResolveFormProps) {
-  const resolveMutation = useResolveQuestion({ onResolved: onSaved });
+  const resolveMutation = useResolveQuestion({ onSuccess: onSaved });
 
   const resolveForm = useForm({
     defaultValues: { resolveNote: "" },
@@ -576,16 +578,16 @@ export function QuestionsSection({
   const editor = useDossierSectionEditor();
 
   const createMutation = useCreateQuestion({
-    onCreated: editor.handleStopAdding,
+    onSuccess: editor.handleStopAdding,
   });
 
   const updateMutation = useUpdateQuestion({
-    onUpdated: editor.handleCloseEdit,
+    onSuccess: editor.handleCloseEdit,
     onReload: editor.handleCloseEdit,
   });
 
   const reopenMutation = useReopenQuestion({
-    onReopened: () => {
+    onSuccess: () => {
       editor.handleCloseEdit();
       editor.handleError(null);
     },
@@ -593,7 +595,7 @@ export function QuestionsSection({
   });
 
   const deleteMutation = useDeleteQuestion({
-    onDeleted: () => {
+    onSuccess: () => {
       editor.handleCloseEdit();
       editor.handleError(null);
       setResolvingId(null);

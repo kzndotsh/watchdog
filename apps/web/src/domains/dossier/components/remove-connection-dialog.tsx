@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import { useDeleteConnection } from "@/domains/dossier/hooks/use-delete-connection";
 import type { DossierEntityScope } from "@/domains/dossier/types";
+import { useDeleteConnection } from "@/domains/entities/edges/mutations";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,7 @@ export function RemoveConnectionDialog({
 }: RemoveConnectionDialogProps) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteMutation = useDeleteConnection({
-    onDeleted: () => {
+    onSuccess: () => {
       setDeleteError(null);
       onClose();
     },

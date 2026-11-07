@@ -14,6 +14,18 @@ import type {
 
 export type EntityRecord = CoreEntityRecord;
 
+/**
+ * Case + Entity a Graph child write (a Claim, Connection, Event, Open Question or Identifier of
+ * the Entity) was started for. Mutations take it in their variables, never in hook props: props
+ * follow re-renders (an Active Case switch) and would redirect the invalidation of a pending write.
+ */
+export type EntityScope = {
+  caseId: string;
+  entityId: string;
+  /** Entity slug for the detail cache key. */
+  entitySlug: string;
+};
+
 /** A row of the Entity list: the Entity with its Connection counts and its one Connection. */
 export type EntityListItem = CoreEntityListItem;
 
