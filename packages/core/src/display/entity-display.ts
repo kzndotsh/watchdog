@@ -5,7 +5,6 @@ import {
   entityTitleMapFromRows,
   patchOpRelatedEntityIds,
 } from "@watchdog/schemas/graph";
-import { proposalEntityName } from "@watchdog/schemas/jobs";
 import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
@@ -104,18 +103,6 @@ export function entityIdsFromNullable(
     if (trimmed !== undefined) ids.add(trimmed);
   }
   return [...ids];
-}
-
-export function firstEntityNameFromPatch(
-  patch: readonly PatchOp[],
-  entityNames: Readonly<Record<string, string>>,
-  entitySlugs?: Readonly<Record<string, string>>
-): string | null {
-  return proposalEntityName({
-    patch: [...patch],
-    entityNames,
-    entitySlugs,
-  });
 }
 
 export function entityNameForId(

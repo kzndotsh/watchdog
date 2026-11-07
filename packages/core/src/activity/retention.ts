@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import type { DomainTag } from "../errors/tagged-errors";
+import { DAY_MS } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -15,8 +16,6 @@ export const ACTIVITY_RETENTION_DAYS = 90;
 export const ACTIVITY_KEEP_PER_CASE = 200;
 /** Rows deleted per transaction. */
 export const ACTIVITY_PRUNE_BATCH = 5000;
-
-const DAY_MS = 86_400_000;
 
 export type PruneActivityOpts = {
   /** The clock; tests pin it. */

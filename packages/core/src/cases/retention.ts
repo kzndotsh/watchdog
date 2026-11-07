@@ -1,6 +1,6 @@
 import { env } from "@watchdog/env/server";
 
-const DAY_MS = 86_400_000;
+import { DAY_MS } from "../infra/clock";
 
 /**
  * Days a deleted Case stays restorable (`WD_CASE_RETENTION_DAYS`). Read at call

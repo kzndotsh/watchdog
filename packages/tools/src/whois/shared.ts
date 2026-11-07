@@ -1,6 +1,4 @@
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+import { isRecord } from "../parse/coerce";
 
 export function whoisStatusList(status: unknown): string[] {
   if (Array.isArray(status)) return status.map(String);

@@ -9,11 +9,7 @@ import {
   UnexpectedToolError,
   ValidationVendorError,
 } from "../tagged-errors";
-import {
-  httpVendorError,
-  missingCredentialError,
-  rateLimitedVendorError,
-} from "../vendor-errors";
+import { httpVendorError } from "../vendor-errors";
 
 describe("mapToolsCatch", () => {
   it("keeps tagged vendor errors", () => {
@@ -47,7 +43,9 @@ describe("mapToolsCatch", () => {
   });
 
   it("keeps rate-limited fields exactly, whatever the message says", () => {
-    const mapped = mapToolsCatch(rateLimitedVendorError("Censys", "8.8.8.8"));
+    const mapped = mapToolsCatch(
+      new RateLimitedError({ service: "Censys", subject: "8.8.8.8" })
+    );
     expect(mapped).toBeInstanceOf(RateLimitedError);
     expect(mapped).toMatchObject({ service: "Censys", subject: "8.8.8.8" });
   });
@@ -71,7 +69,7 @@ describe("mapToolsCatch", () => {
       service: "Shodan",
       status: 401,
     });
-    const slot = missingCredentialError("SHODAN_API_KEY");
+    const slot = new MissingCredentialError({ slot: "SHODAN_API_KEY" });
     expect(mapToolsCatch(slot)).toBeInstanceOf(MissingCredentialError);
     expect(mapToolsCatch(slot)).toMatchObject({ slot: "SHODAN_API_KEY" });
   });
