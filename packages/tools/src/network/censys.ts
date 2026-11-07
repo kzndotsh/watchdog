@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord, recordRows } from "../parse/coerce";
@@ -52,24 +51,16 @@ function censysHostnames(
  */
 export function fetchCensysHostEffect(
   ipRaw: string,
-  apiId: string,
-  apiSecret: string,
+  id: string,
+  secret: string,
   signal: AbortSignal,
-  options?: { userAgent?: string }
+  options: { userAgent: string }
 ): Effect.Effect<CensysLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCensysHostGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const id = apiId.trim();
-    const secret = apiSecret.trim();
-    if (!id) {
-      return yield* new MissingCredentialError({ slot: "CENSYS_API_ID" });
-    }
-    if (!secret) {
-      return yield* new MissingCredentialError({ slot: "CENSYS_API_SECRET" });
-    }
 
-    const ua = options?.userAgent ?? watchdogUserAgent("network.censys.lookup");
+    const ua = options.userAgent;
     const auth = Buffer.from(`${id}:${secret}`).toString("base64");
     const url = `https://search.censys.io/api/v2/hosts/${encodeURIComponent(ip)}`;
 

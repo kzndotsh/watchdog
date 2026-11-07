@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord, recordRows } from "../parse/coerce";
@@ -141,13 +140,13 @@ export function parseGravatarBody(
  */
 
 type GravatarOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchGravatarLookupEffect(
   emailRaw: string,
   signal: AbortSignal,
-  options?: GravatarOptions
+  options: GravatarOptions
 ): Effect.Effect<GravatarLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGravatarLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -156,8 +155,7 @@ export function fetchGravatarLookupEffect(
       catch: mapToolsCatch,
     });
     const hash = gravatarEmailHash(email);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("identity.gravatar.lookup");
+    const ua = options.userAgent;
 
     const url = `https://secure.gravatar.com/${hash}.json`;
     const { status, body } = yield* fetchJsonObjectEffect({

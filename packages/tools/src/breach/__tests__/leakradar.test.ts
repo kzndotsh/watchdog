@@ -58,7 +58,7 @@ function serve(respond: (seen: Seen[number], n: number) => Response): Seen {
 const signal = () => new AbortController().signal;
 const lookup = (
   query: string,
-  options: Parameters<typeof fetchLeakradarLookupEffect>[3] = {}
+  options: Partial<Parameters<typeof fetchLeakradarLookupEffect>[3]> = {}
 ) =>
   fetchLeakradarLookupEffect(query, KEY, signal(), {
     userAgent: "watchdog-test",
@@ -132,7 +132,10 @@ describe("fetchLeakradarLookupEffect", () => {
     it.effect("searches a username with is_email false", () =>
       Effect.gen(function* usernameRequestGen() {
         const seen = serve(() => page([]));
-        const named = yield* lookup("alice_99", { kind: "username" });
+        const named = yield* lookup("alice_99", {
+          userAgent: "watchdog-test",
+          kind: "username",
+        });
         const bare = yield* lookup("alice");
         expect(seen.map((s) => s.body)).toEqual([
           { email: "alice_99", is_email: false },
@@ -190,6 +193,7 @@ describe("fetchLeakradarLookupEffect", () => {
               })
         );
         const snap = yield* lookup("example.com", {
+          userAgent: "watchdog-test",
           includeRecords: true,
           pageSize: 10,
         });
@@ -221,7 +225,10 @@ describe("fetchLeakradarLookupEffect", () => {
             customers_compromised: 0,
           })
         );
-        const snap = yield* lookup("example.com", { includeRecords: true });
+        const snap = yield* lookup("example.com", {
+          userAgent: "watchdog-test",
+          includeRecords: true,
+        });
         expect(seen).toHaveLength(1);
         expect(snap.found).toBe(false);
       }).pipe(Effect.provide(toolsHttpClientLayer))
@@ -260,10 +267,20 @@ describe("fetchLeakradarLookupEffect", () => {
                   customers_compromised: 0,
                 })
           );
-          yield* lookup("a@example.com", { page: 2 });
-          yield* lookup("alice", { kind: "username" });
+          yield* lookup("a@example.com", {
+            userAgent: "watchdog-test",
+            page: 2,
+          });
+          yield* lookup("alice", {
+            userAgent: "watchdog-test",
+            kind: "username",
+          });
           yield* lookup("example.com");
-          yield* lookup("example.com", { includeRecords: true, page: 3 });
+          yield* lookup("example.com", {
+            userAgent: "watchdog-test",
+            includeRecords: true,
+            page: 3,
+          });
           expect(seen.length).toBeGreaterThanOrEqual(5);
           for (const req of seen) {
             expect(req.path).not.toMatch(/unlock|export|password/i);
@@ -393,7 +410,10 @@ describe("fetchLeakradarLookupEffect", () => {
           );
           const snaps = [
             yield* lookup("a@example.com"),
-            yield* lookup("example.com", { includeRecords: true }),
+            yield* lookup("example.com", {
+              userAgent: "watchdog-test",
+              includeRecords: true,
+            }),
           ];
           for (const snap of snaps) {
             const text = JSON.stringify(snap);
@@ -477,9 +497,19 @@ describe("fetchLeakradarLookupEffect", () => {
     it.effect("flags a truncated page and clears it on the last", () =>
       Effect.gen(function* truncationGen() {
         serve(() => page([MASKED_ITEM, MASKED_ITEM], { total: 5 }));
-        const first = yield* lookup("a@example.com", { pageSize: 2 });
-        const last = yield* lookup("a@example.com", { pageSize: 2, page: 3 });
-        const exact = yield* lookup("a@example.com", { pageSize: 5 });
+        const first = yield* lookup("a@example.com", {
+          userAgent: "watchdog-test",
+          pageSize: 2,
+        });
+        const last = yield* lookup("a@example.com", {
+          userAgent: "watchdog-test",
+          pageSize: 2,
+          page: 3,
+        });
+        const exact = yield* lookup("a@example.com", {
+          userAgent: "watchdog-test",
+          pageSize: 5,
+        });
         expect(first.isTruncated).toBe(true);
         expect(last.isTruncated).toBe(false);
         expect(exact.isTruncated).toBe(false);
@@ -497,13 +527,18 @@ describe("fetchLeakradarLookupEffect", () => {
           )
         );
         const snap = yield* lookup("a@example.com", {
+          userAgent: "watchdog-test",
           page: 99,
           pageSize: 1000,
         });
         expect(seen[0]?.params.get("page")).toBe("10");
         expect(seen[0]?.params.get("page_size")).toBe("100");
         expect(snap.records).toHaveLength(100);
-        yield* lookup("a@example.com", { page: 0, pageSize: 0 });
+        yield* lookup("a@example.com", {
+          userAgent: "watchdog-test",
+          page: 0,
+          pageSize: 0,
+        });
         expect(seen[1]?.params.get("page")).toBe("1");
         expect(seen[1]?.params.get("page_size")).toBe("1");
       }).pipe(Effect.provide(toolsHttpClientLayer))

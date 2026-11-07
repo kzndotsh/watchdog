@@ -62,6 +62,7 @@ const run = (
   options?: Parameters<typeof fetchPgpLookupEffect>[2]
 ) =>
   fetchPgpLookupEffect(query, AbortSignal.timeout(5000), {
+    userAgent: "watchdog-test",
     serverTimeoutMs: 100,
     ...options,
   }).pipe(
@@ -220,7 +221,11 @@ describe("fetchPgpLookupEffect", () => {
         "pgpkeys.eu": pgpkeys(),
       });
       const started = Date.now();
-      const snap = yield* run(EMAIL, { serverTimeoutMs: 50, concurrency: 2 });
+      const snap = yield* run(EMAIL, {
+        userAgent: "watchdog-test",
+        serverTimeoutMs: 50,
+        concurrency: 2,
+      });
       // Five servers, two at a time, 50 ms each: well under the 5 s signal.
       expect(Date.now() - started).toBeLessThan(2000);
       expect(statusOf(snap, "pgp.mit.edu")).toBe("timeout");
@@ -319,7 +324,10 @@ describe("fetchPgpLookupEffect", () => {
         "keys.mailvelope.com": text("", 404),
         "pgpkeys.eu": pgpkeys(),
       });
-      const snap = yield* run(EMAIL, { serverTimeoutMs: 3000 });
+      const snap = yield* run(EMAIL, {
+        userAgent: "watchdog-test",
+        serverTimeoutMs: 3000,
+      });
       const big = snap.servers.find((s) => s.host === "keyserver.ubuntu.com");
       expect(big).toMatchObject({
         status: "error",
@@ -347,9 +355,10 @@ describe("fetchPgpLookupEffect", () => {
         "keys.mailvelope.com": "reset",
         "pgpkeys.eu": "reset",
       });
-      const error = yield* run(EMAIL, { serverTimeoutMs: 3000 }).pipe(
-        Effect.flip
-      );
+      const error = yield* run(EMAIL, {
+        userAgent: "watchdog-test",
+        serverTimeoutMs: 3000,
+      }).pipe(Effect.flip);
       expect(error._tag).toBe("HttpVendorError");
     })
   );

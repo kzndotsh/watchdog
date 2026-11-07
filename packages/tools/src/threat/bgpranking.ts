@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
@@ -109,19 +108,18 @@ function fetchAsnRankingEffect(
  */
 
 type BgprankingOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchBgprankingLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: BgprankingOptions
+  options: BgprankingOptions
 ): Effect.Effect<BgprankingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchBgprankingLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.bgpranking.lookup");
+    const ua = options.userAgent;
 
     const asn = yield* fetchLatestAsnEffect(ip, signal, ua);
     if (asn === null) {

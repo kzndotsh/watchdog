@@ -52,7 +52,7 @@ export const noDerivedCapMetadata = {
           context.report({
             node,
             message:
-              "Hard-coded Watchdog User-Agent: use `watchdogUserAgent(id)` from @watchdog/tools/errors; a defineCollectCap `fetch(ctx, { userAgent })` already receives it (conventions: derived Cap metadata has one source).",
+              "Hard-coded Watchdog User-Agent: use `watchdogUserAgent(id)` from the Cap sdk (`../../sdk`); a defineCollectCap `fetch(ctx, { userAgent })` already receives it (conventions: derived Cap metadata has one source).",
           });
         }
       },

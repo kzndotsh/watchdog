@@ -64,7 +64,8 @@ describe("ipctl", () => {
 
       const snap = yield* fetchIpctlLookupEffect(
         "8.8.8.8",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.asn).toBe(15_169);

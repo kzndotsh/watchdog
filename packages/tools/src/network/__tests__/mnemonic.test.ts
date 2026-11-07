@@ -80,7 +80,8 @@ describe("mnemonic", () => {
 
       const snap = yield* fetchMnemonicPdnsEffect(
         "dns.google",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.query).toBe("dns.google");

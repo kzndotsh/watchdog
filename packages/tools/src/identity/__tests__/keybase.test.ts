@@ -53,7 +53,8 @@ describe("keybase", () => {
 
       const snap = yield* fetchKeybaseLookupEffect(
         "a",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.query).toBe("a");

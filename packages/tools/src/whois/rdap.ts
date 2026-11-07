@@ -2,7 +2,6 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import type { WhoisSnapshot } from "./schema";
 import { whoisSnapshotSchema } from "./schema";
@@ -20,10 +19,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function fetchRdapWhoisEffect(
   host: string,
   signal: AbortSignal,
-  options?: { userAgent?: string }
+  options: { userAgent: string }
 ): Effect.Effect<WhoisSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchRdapWhoisGen() {
-    const ua = options?.userAgent ?? watchdogUserAgent("network.whois.lookup");
+    const ua = options.userAgent;
     const { body: parsed } = yield* fetchJsonObjectEffect({
       url: `https://rdap.org/domain/${encodeURIComponent(host)}`,
       signal,

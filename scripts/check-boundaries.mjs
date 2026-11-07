@@ -12,6 +12,11 @@
  *      workspace directory (`../../core/src/...`) fails and the message lists the
  *      public entry points.
  *   3. Downward: apps are leaves. No package or other app imports an app.
+ *   4. Tools know no Cap: a production source file of packages/tools/src (not `__tests__`,
+ *      `testing/` or a test file) holds no Cap id and no Vault slot name as a string
+ *      literal. A Cap hands its facts to a tool as parameters (the user agent, the key
+ *      value); the lists are read from packages/caps/capabilities.gen.json (Cap ids and
+ *      declared credentials) and the credential catalog in packages/caps/src/known-credentials.ts.
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
@@ -171,6 +176,67 @@ function importsOf(source) {
   return [...found.values()].sort((x, y) => x.line - y.line);
 }
 
+/** Cap ids and Vault slot names, read from the Cap sources of truth, never copied here. */
+function capFacts() {
+  const gen = path.join(root, "packages/caps/capabilities.gen.json");
+  const catalog = path.join(root, "packages/caps/src/known-credentials.ts");
+  if (!existsSync(gen) || !existsSync(catalog)) {
+    console.error(
+      "✗ the tools rule needs packages/caps/capabilities.gen.json and packages/caps/src/known-credentials.ts"
+    );
+    process.exit(1);
+  }
+  /** @type {unknown} */
+  const caps = JSON.parse(readFileSync(gen, "utf-8"));
+  /** @type {Map<string, string>} literal -> what it names */
+  const facts = new Map();
+  for (const cap of Array.isArray(caps) ? caps : []) {
+    const entry = asRecord(cap);
+    if (typeof entry.id === "string") facts.set(entry.id, "Cap id");
+    for (const cred of Array.isArray(entry.credentials)
+      ? entry.credentials
+      : []) {
+      const name = asRecord(cred).name;
+      if (typeof name === "string") facts.set(name, "Vault slot name");
+    }
+  }
+  for (const m of readFileSync(catalog, "utf-8").matchAll(
+    /\bname:\s*["'](?<name>[A-Z][A-Z0-9_]*)["']/g
+  )) {
+    if (m.groups?.name) facts.set(m.groups.name, "Vault slot name");
+  }
+  return facts;
+}
+
+const TOOLS_SOURCE =
+  /^packages\/tools\/src\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
+const capFactsByLiteral = capFacts();
+
+/**
+ * @param {string} rel
+ * @param {string} source
+ * @returns {string[]}
+ */
+function capFactProblems(rel, source) {
+  if (!TOOLS_SOURCE.test(rel)) return [];
+  /** @type {string[]} */
+  const out = [];
+  for (const [index, text] of source.split("\n").entries()) {
+    if (/^\s*(?:\/\/|\*|\/\*)/.test(text)) continue;
+    for (const m of text.matchAll(
+      /(?<quote>["'`])(?<lit>[^"'`\n]+)\k<quote>/g
+    )) {
+      const kind = capFactsByLiteral.get(m.groups?.lit ?? "");
+      if (kind) {
+        out.push(
+          `${rel}:${index + 1}: "${m.groups?.lit}" is a ${kind}; a tool takes it as a parameter from its Cap and never names one`
+        );
+      }
+    }
+  }
+  return out;
+}
+
 const listed = execFileSync(
   "git",
   ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
@@ -189,6 +255,7 @@ for (const rel of listed) {
   if (!owner || !existsSync(path.join(root, rel))) continue;
   scanned += 1;
   const source = readFileSync(path.join(root, rel), "utf-8");
+  problems.push(...capFactProblems(rel, source));
   for (const { line, spec } of importsOf(source)) {
     const where = `${rel}:${line}`;
 
@@ -242,7 +309,7 @@ for (const rel of listed) {
 if (problems.length > 0) {
   for (const p of problems) console.error(`✗ ${p}`);
   console.error(
-    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported. See docs/contributing/ci-gates.md."
+    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot. See docs/contributing/ci-gates.md."
   );
   process.exit(1);
 }

@@ -35,7 +35,8 @@ describe("threatfox", () => {
       const snap = yield* fetchThreatfoxLookupEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(threatfoxLookupSnapshotSchema.parse(snap).found).toBe(true);
@@ -66,7 +67,8 @@ describe("threatfox", () => {
         const snap = yield* fetchThreatfoxLookupEffect(
           "8.8.8.8",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.found).toBe(true);
@@ -98,7 +100,8 @@ describe("threatfox", () => {
           fetchThreatfoxLookupEffect(
             "secret-ioc.example",
             "test-key",
-            AbortSignal.timeout(5000)
+            AbortSignal.timeout(5000),
+            { userAgent: "watchdog-test" }
           )
         );
 

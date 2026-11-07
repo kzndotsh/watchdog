@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import type { Egress } from "../http/egress";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { createServedCache } from "../http/served-cache";
@@ -88,12 +87,12 @@ function fetchExitAddressesEffect(
  */
 
 type TorExitOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 export function fetchTorExitLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: TorExitOptions
+  options: TorExitOptions
 ): Effect.Effect<
   TorExitLookupSnapshot,
   ToolsTag,
@@ -102,8 +101,7 @@ export function fetchTorExitLookupEffect(
   return Effect.gen(function* fetchTorExitLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("network.tor_exit.lookup");
+    const ua = options.userAgent;
 
     const exits = yield* fetchExitAddressesEffect(signal, ua);
 

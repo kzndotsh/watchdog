@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import {
   parseVendorError,
   validationVendorError,
@@ -255,13 +254,13 @@ export function parseKeybaseBody(
  */
 
 type KeybaseOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchKeybaseLookupEffect(
   queryRaw: string,
   signal: AbortSignal,
-  options?: KeybaseOptions
+  options: KeybaseOptions
 ): Effect.Effect<KeybaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchKeybaseLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -269,8 +268,7 @@ export function fetchKeybaseLookupEffect(
       try: () => classifyQuery(queryRaw),
       catch: mapToolsCatch,
     });
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("identity.keybase.lookup");
+    const ua = options.userAgent;
 
     const url = new URL("https://keybase.io/_/api/1.0/user/lookup.json");
     url.searchParams.set(param, value);

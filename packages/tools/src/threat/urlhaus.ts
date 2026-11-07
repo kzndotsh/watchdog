@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import {
   assertHttpUrlScheme,
@@ -89,14 +88,14 @@ function urlhausHostUrlHasSubstance(row: Record<string, unknown>): boolean {
  */
 
 type UrlhausOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchUrlhausLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: UrlhausOptions
+  options: UrlhausOptions
 ): Effect.Effect<UrlhausLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchUrlhausLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -104,12 +103,8 @@ export function fetchUrlhausLookupEffect(
       try: () => classifyQuery(queryRaw),
       catch: mapToolsCatch,
     });
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "THREATFOX_API_KEY" });
-    }
 
-    const ua = options?.userAgent ?? watchdogUserAgent("threat.urlhaus.lookup");
+    const ua = options.userAgent;
 
     let endpoint: "url" | "payload" | "host";
     if (kind === "url") {

@@ -2,8 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, isRecord } from "../parse/coerce";
@@ -71,28 +70,24 @@ function parseHit(row: unknown): C99SubdomainHit | null {
  */
 
 type C99Options = {
-  userAgent?: string;
+  userAgent: string;
   realtime?: boolean;
   limit?: number;
 };
 
 export function fetchC99SubdomainsEffect(
   hostRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: C99Options
+  options: C99Options
 ): Effect.Effect<C99LookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchC99SubdomainsGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "C99_API_KEY" });
-    }
 
-    const realtime = options?.realtime === true;
-    const limit = options?.limit ?? 200;
-    const ua = options?.userAgent ?? watchdogUserAgent("network.c99.lookup");
+    const realtime = options.realtime === true;
+    const limit = options.limit ?? 200;
+    const ua = options.userAgent;
 
     const url = new URL("https://api.c99.nl/subdomainfinder");
     url.searchParams.set("key", key);

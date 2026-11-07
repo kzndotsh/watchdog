@@ -4,7 +4,6 @@ import type { z } from "zod";
 import {
   RateLimitedError,
   ValidationVendorError,
-  watchdogUserAgent,
 } from "@watchdog/tools/errors";
 import {
   fetchWaybackLookupEffect,
@@ -13,7 +12,7 @@ import {
 } from "@watchdog/tools/wayback";
 
 import { uploadJsonReportPair } from "../../lib/collect/upload-json-report-pair";
-import type { CapContext, CapRun } from "../../sdk";
+import { watchdogUserAgent, type CapContext, type CapRun } from "../../sdk";
 import { PAGE_HISTORY_DEFAULT_VERSIONS, type pageHistoryInput } from "./input";
 import {
   collectVersions,

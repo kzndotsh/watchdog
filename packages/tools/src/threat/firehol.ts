@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import type { Egress } from "../http/egress";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { createServedCache } from "../http/served-cache";
@@ -142,12 +141,12 @@ function fetchCidrListEffect(
  */
 
 type FireholOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 export function fetchFireholLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: FireholOptions
+  options: FireholOptions
 ): Effect.Effect<
   FireholLookupSnapshot,
   ToolsTag,
@@ -156,7 +155,7 @@ export function fetchFireholLookupEffect(
   return Effect.gen(function* fetchFireholLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options?.userAgent ?? watchdogUserAgent("threat.firehol.lookup");
+    const ua = options.userAgent;
 
     let found = false;
     const list = yield* fetchCidrListEffect(signal, ua);

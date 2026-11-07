@@ -2,8 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
@@ -40,24 +39,20 @@ function firstArray(body: Record<string, unknown>, keys: string[]): unknown[] {
  */
 
 type LeakixOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchLeakixLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: LeakixOptions
+  options: LeakixOptions
 ): Effect.Effect<LeakixLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchLeakixLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "LEAKIX_API_KEY" });
-    }
 
     const { kind, value } = classifyIpOrHost(queryRaw);
-    const ua = options?.userAgent ?? watchdogUserAgent("network.leakix.lookup");
+    const ua = options.userAgent;
     const path = kind === "ip" ? "host" : "domain";
     const url = `https://leakix.net/${path}/${encodeURIComponent(value)}`;
 

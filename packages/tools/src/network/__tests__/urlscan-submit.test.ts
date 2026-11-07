@@ -21,7 +21,8 @@ describe("urlscan-submit", () => {
           badUrl,
           "test-key",
           "unlisted",
-          new AbortController().signal
+          new AbortController().signal,
+          { userAgent: "watchdog-test" }
         )
       );
 
@@ -39,7 +40,8 @@ describe("urlscan-submit", () => {
           "http://127.0.0.1/",
           "test-key",
           "unlisted",
-          new AbortController().signal
+          new AbortController().signal,
+          { userAgent: "watchdog-test" }
         )
       );
 
@@ -71,7 +73,8 @@ describe("urlscan-submit", () => {
         "https://example.com",
         "test-key",
         "unlisted",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(urlscanSubmitSnapshotSchema.parse(snap).accepted).toBe(true);

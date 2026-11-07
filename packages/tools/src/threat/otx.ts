@@ -6,8 +6,7 @@ import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import {
   assertHttpUrlScheme,
@@ -118,27 +117,23 @@ function extractPulseInfo(body: Record<string, unknown>): {
  */
 
 type OtxOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchOtxLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: OtxOptions
+  options: OtxOptions
 ): Effect.Effect<OtxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchOtxLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "OTX_API_KEY" });
-    }
 
     const { kind, otxType, value } = yield* Effect.try({
       try: () => classifyOtxIndicator(queryRaw),
       catch: mapToolsCatch,
     });
-    const ua = options?.userAgent ?? watchdogUserAgent("threat.otx.lookup");
+    const ua = options.userAgent;
     const url = `https://otx.alienvault.com/api/v1/indicators/${otxType}/${encodeURIComponent(value)}/general`;
 
     const { status, body } = yield* fetchJsonObjectEffect({

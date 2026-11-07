@@ -2,10 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-} from "../../errors/tagged-errors";
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchHudsonrockLookupEffect,
@@ -13,23 +10,6 @@ import {
 } from "../hudsonrock";
 
 describe("hudsonrock", () => {
-  it.effect("fetchHudsonrockLookupEffect requires HUDSONROCK_API_KEY", () =>
-    Effect.gen(function* missingKeyGen() {
-      const outcome = yield* Effect.result(
-        fetchHudsonrockLookupEffect(
-          "alice@mailhost.test",
-          "",
-          AbortSignal.timeout(5000)
-        )
-      );
-      expect(Result.isFailure(outcome)).toBe(true);
-      if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure).toMatchObject({ slot: "HUDSONROCK_API_KEY" });
-      }
-    }).pipe(Effect.provide(toolsHttpClientLayer))
-  );
-
   it("parses empty lookup snapshots", () => {
     const snap = hudsonrockLookupSnapshotSchema.parse({
       query: "alice@mailhost.test",
@@ -53,7 +33,8 @@ describe("hudsonrock", () => {
       const snap = yield* fetchHudsonrockLookupEffect(
         "alice@mailhost.test",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(false);
@@ -78,7 +59,8 @@ describe("hudsonrock", () => {
       const snap = yield* fetchHudsonrockLookupEffect(
         "alice@mailhost.test",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(true);
@@ -103,7 +85,8 @@ describe("hudsonrock", () => {
           fetchHudsonrockLookupEffect(
             query,
             "test-key",
-            AbortSignal.timeout(5000)
+            AbortSignal.timeout(5000),
+            { userAgent: "watchdog-test" }
           )
         );
         expect(Result.isFailure(outcome)).toBe(true);

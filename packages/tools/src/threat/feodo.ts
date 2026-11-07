@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import type { Egress } from "../http/egress";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { createServedCache } from "../http/served-cache";
@@ -38,7 +37,7 @@ const BLOCKLIST_CACHE_KEY = "ipblocklist_recommended";
 const blocklistCache = createServedCache<FeodoEntry[]>(CACHE_TTL_MS);
 
 type FeodoOptions = {
-  userAgent?: string;
+  userAgent: string;
   apiKey?: string;
 };
 
@@ -106,7 +105,7 @@ function toFeodoSnapshot(
 export function fetchFeodoLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: FeodoOptions
+  options: FeodoOptions
 ): Effect.Effect<
   FeodoLookupSnapshot,
   ToolsTag,
@@ -115,8 +114,8 @@ export function fetchFeodoLookupEffect(
   return Effect.gen(function* fetchFeodoLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
-    const entries = yield* fetchBlocklistEffect(signal, ua, options?.apiKey);
+    const ua = options.userAgent;
+    const entries = yield* fetchBlocklistEffect(signal, ua, options.apiKey);
     return toFeodoSnapshot(ip, findFeodoEntry(entries, ip), queriedAt);
   });
 }

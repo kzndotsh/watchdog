@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { validationVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString } from "../parse/coerce";
@@ -44,7 +43,7 @@ export function normalizeGithubHandle(raw: string): string {
 
 type GithubUserOptions = {
   token?: string;
-  userAgent?: string;
+  userAgent: string;
 };
 
 function notFoundGithubSnapshot(
@@ -98,21 +97,20 @@ function githubUserFromBody(
 export function fetchGithubUserEffect(
   handleRaw: string,
   signal: AbortSignal,
-  options?: GithubUserOptions
+  options: GithubUserOptions
 ): Effect.Effect<GithubUserSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGithubUserGen() {
     const handle = yield* Effect.try({
       try: () => normalizeGithubHandle(handleRaw),
       catch: mapToolsCatch,
     });
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("identity.github.lookup");
+    const ua = options.userAgent;
     const headers: Record<string, string> = {
       Accept: "application/vnd.github+json",
       "User-Agent": ua,
       "X-GitHub-Api-Version": "2022-11-28",
     };
-    const token = options?.token?.trim();
+    const token = options.token?.trim();
     if (token) headers.Authorization = `Bearer ${token}`;
     const authenticated = Boolean(token);
 

@@ -31,7 +31,8 @@ describe("leakix", () => {
       const snap = yield* fetchLeakixLookupEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(false);
@@ -55,7 +56,8 @@ describe("leakix", () => {
       const snap = yield* fetchLeakixLookupEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(true);

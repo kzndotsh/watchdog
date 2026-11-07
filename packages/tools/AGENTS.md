@@ -2,7 +2,7 @@
 
 > Scope: `packages/tools` (inherits root AGENTS.md)
 
-Dumb HTTP / DNS / WHOIS / CT / breach / threat helpers: raw fetch/parse output only. No Graph, Cap types, or DB (held by `package.json`). Caps orchestrate these in `run` and pass their own OPSEC UA/limits as params.
+Dumb HTTP / DNS / WHOIS / CT / breach / threat helpers: raw fetch/parse output only. No Graph, Cap types, or DB (held by `package.json`). Caps orchestrate these in `run` and pass every Cap fact as a parameter: `userAgent` is a required option of every tool that sends HTTP (never built or defaulted here), and a key is taken as a value only. A tool names no Cap id and no Vault slot, and never checks for a missing key: the Cap's `ctx.getCredential(name)` is the one missing-key failure (`MissingCredentialError`, "<SLOT> required", mapped in core's collect stage; the vault trims on put and refuses an empty secret, so a stored value is never blank). Enforced by `check:boundaries` (rule 4: no Cap id or slot literal in `packages/tools/src`, lists read from `capabilities.gen.json` and `known-credentials.ts`).
 
 ## Commands
 

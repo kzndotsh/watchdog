@@ -35,7 +35,8 @@ describe("censys", () => {
         "8.8.8.8",
         "id",
         "secret",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(false);

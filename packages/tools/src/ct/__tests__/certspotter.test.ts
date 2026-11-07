@@ -68,7 +68,8 @@ describe("certspotter", () => {
 
       const snap = yield* fetchCertspotterLookupEffect(
         "example.com",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.host).toBe("example.com");
@@ -87,7 +88,9 @@ describe("certspotter", () => {
       );
 
       const outcome = yield* Effect.result(
-        fetchCertspotterLookupEffect("example.com", AbortSignal.timeout(5000))
+        fetchCertspotterLookupEffect("example.com", AbortSignal.timeout(5000), {
+          userAgent: "watchdog-test",
+        })
       );
       expect(outcome._tag).toBe("Failure");
     }).pipe(Effect.provide(toolsHttpClientLayer))

@@ -176,7 +176,7 @@ describe("DeHashed credential modes", () => {
         "alice@example.com",
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: SAFE }
+        { userAgent: "watchdog-test", credentials: SAFE }
       );
       const bytes = JSON.stringify(snap);
       expect(bytes).not.toContain(FAKE_PASSWORD);
@@ -212,7 +212,7 @@ describe("DeHashed credential modes", () => {
         "alice@example.com",
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
       expect(snap.credentialMode).toBe("full");
       expect(snap.entries[0]).toMatchObject({
@@ -233,14 +233,14 @@ describe("DeHashed credential modes", () => {
         "alice@example.com",
         "test-key",
         signal,
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
       stubFetch(dehashedBody);
       const safe = yield* fetchDehashedLookupEffect(
         "alice@example.com",
         "test-key",
         signal,
-        { credentials: SAFE }
+        { userAgent: "watchdog-test", credentials: SAFE }
       );
       const redacted = redactDehashedSnapshot(full, SAFE.fingerprint);
       expect({ ...redacted, queriedAt: "" }).toEqual({
@@ -265,7 +265,7 @@ describe("redaction after a key change", () => {
           "alice@example.com",
           "test-key",
           AbortSignal.timeout(5000),
-          { credentials: FULL }
+          { userAgent: "watchdog-test", credentials: FULL }
         );
       }).pipe(
         Effect.provide(toolsHttpClientLayer),
@@ -311,7 +311,7 @@ describe("Snusbase credential modes", () => {
         "alice@example.com",
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: SAFE }
+        { userAgent: "watchdog-test", credentials: SAFE }
       );
       const bytes = JSON.stringify(snap);
       expect(bytes).not.toContain(FAKE_PASSWORD);
@@ -339,7 +339,7 @@ describe("Snusbase credential modes", () => {
         "alice@example.com",
         "test-key",
         signal,
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
       expect(full.entries[0]).toMatchObject({
         password: FAKE_PASSWORD,
@@ -350,7 +350,7 @@ describe("Snusbase credential modes", () => {
         "alice@example.com",
         "test-key",
         signal,
-        { credentials: SAFE }
+        { userAgent: "watchdog-test", credentials: SAFE }
       );
       const redacted = redactSnusbaseSnapshot(full, SAFE.fingerprint);
       expect({ ...redacted, queriedAt: "" }).toEqual({

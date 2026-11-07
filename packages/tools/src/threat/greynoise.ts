@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, asString } from "../parse/coerce";
@@ -37,20 +36,19 @@ export type GreynoiseLookupSnapshot = z.infer<
 
 type GreynoiseOptions = {
   apiKey?: string;
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchGreynoiseCommunityEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: GreynoiseOptions
+  options: GreynoiseOptions
 ): Effect.Effect<GreynoiseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGreynoiseCommunityGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const key = options?.apiKey?.trim() ?? "";
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.greynoise.lookup");
+    const key = options.apiKey?.trim() ?? "";
+    const ua = options.userAgent;
 
     const headers: Record<string, string> = {
       Accept: "application/json",

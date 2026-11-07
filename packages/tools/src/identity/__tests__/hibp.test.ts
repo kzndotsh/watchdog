@@ -28,7 +28,8 @@ describe("hibp", () => {
         fetchHibpBreachedAccountEffect(
           "not-an-email",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         )
       );
 
@@ -51,7 +52,8 @@ describe("hibp", () => {
         const snap = yield* fetchHibpBreachedAccountEffect(
           "alice@mailhost.test",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.found).toBe(false);
@@ -89,7 +91,8 @@ describe("hibp", () => {
         const snap = yield* fetchHibpBreachedAccountEffect(
           "alice@mailhost.test",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.found).toBe(true);
@@ -126,7 +129,7 @@ describe("hibp", () => {
           "alice@mailhost.test",
           "test-key",
           AbortSignal.timeout(5000),
-          { truncate: 40 }
+          { userAgent: "watchdog-test", truncate: 40 }
         );
 
         expect(snap.breachCount).toBe(41);

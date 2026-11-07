@@ -29,7 +29,9 @@ describe("submitWaybackSaveEffect", () => {
     Effect.gen(function* rejectBadSchemeGen() {
       const badUrl = ["javascript", ":alert(1)"].join("");
       const outcome = yield* Effect.result(
-        submitWaybackSaveEffect(badUrl, new AbortController().signal)
+        submitWaybackSaveEffect(badUrl, new AbortController().signal, {
+          userAgent: "watchdog-test",
+        })
       );
 
       expect(Result.isFailure(outcome)).toBe(true);
@@ -49,7 +51,8 @@ describe("submitWaybackSaveEffect", () => {
       );
       const snap = yield* submitWaybackSaveEffect(
         "https://example.com/",
-        new AbortController().signal
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
       );
       expect(snap.results[0]?.accepted).toBe(true);
       expect(snap.results[0]?.status).toBe(429);
@@ -66,7 +69,8 @@ describe("submitWaybackSaveEffect", () => {
       );
       const snap = yield* submitWaybackSaveEffect(
         "https://example.com/",
-        new AbortController().signal
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
       );
       expect(snap.results[0]?.accepted).toBe(false);
       expect(snap.results[0]?.status).toBe(503);

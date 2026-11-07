@@ -3,12 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { normalizeEmail } from "../identity/email-lookup";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -85,28 +80,23 @@ function summarize(raw: unknown): {
  */
 
 type HudsonrockOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchHudsonrockLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: HudsonrockOptions
+  options: HudsonrockOptions
 ): Effect.Effect<HudsonrockLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHudsonrockLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "HUDSONROCK_API_KEY" });
-    }
 
     const { kind, value } = yield* Effect.try({
       try: () => classifyHudsonrockQuery(queryRaw),
       catch: mapToolsCatch,
     });
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("breach.hudsonrock.lookup");
+    const ua = options.userAgent;
 
     let path: string;
     let body: Record<string, unknown>;

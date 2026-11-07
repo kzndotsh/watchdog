@@ -5,7 +5,6 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import type { Egress } from "../http/egress";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { createServedCache } from "../http/served-cache";
@@ -97,13 +96,13 @@ function fetchScannerFeedEffect(
  */
 
 type GreedybearOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchGreedybearLookupEffect(
   queryRaw: string,
   signal: AbortSignal,
-  options?: GreedybearOptions
+  options: GreedybearOptions
 ): Effect.Effect<
   GreedybearLookupSnapshot,
   ToolsTag,
@@ -112,8 +111,7 @@ export function fetchGreedybearLookupEffect(
   return Effect.gen(function* fetchGreedybearLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.greedybear.lookup");
+    const ua = options.userAgent;
 
     const feed = yield* fetchScannerFeedEffect(signal, ua);
 

@@ -3,7 +3,6 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
@@ -51,7 +50,7 @@ function parseRanks(value: unknown): TrancoRankRow[] {
  */
 
 type TrancoOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 function readTrancoBodyEffect(
@@ -81,12 +80,12 @@ function readTrancoBodyEffect(
 export function fetchTrancoLookupEffect(
   domainRaw: string,
   signal: AbortSignal,
-  options?: TrancoOptions
+  options: TrancoOptions
 ): Effect.Effect<TrancoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchTrancoLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const domain = normalizeHost(domainRaw);
-    const ua = options?.userAgent ?? watchdogUserAgent("network.tranco.lookup");
+    const ua = options.userAgent;
 
     const body = yield* readTrancoBodyEffect(domain, signal, ua);
     const rows = parseRanks(body.ranks).sort((a, b) =>

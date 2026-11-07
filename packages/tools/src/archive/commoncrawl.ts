@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { validationVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
@@ -199,7 +198,7 @@ function fetchCdxHitsForIndexEffect(
 }
 
 type CommoncrawlLookupOptions = {
-  userAgent?: string;
+  userAgent: string;
   /** How many newest indexes to query (default 2). */
   indexes?: number;
   /** Max hits to keep across indexes (default 40). */
@@ -214,16 +213,15 @@ type CommoncrawlLookupOptions = {
 export function fetchCommoncrawlLookupEffect(
   hostRaw: string,
   signal: AbortSignal,
-  options?: CommoncrawlLookupOptions
+  options: CommoncrawlLookupOptions
 ): Effect.Effect<CommoncrawlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCommoncrawlLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const resolved = options ?? {};
+    const resolved = options;
     const host = normalizeHost(hostRaw);
     const indexCount = Math.min(Math.max(resolved.indexes ?? 2, 1), 6);
     const limit = Math.min(Math.max(resolved.limit ?? 40, 1), 200);
-    const ua =
-      resolved.userAgent ?? watchdogUserAgent("archive.commoncrawl.lookup");
+    const ua = resolved.userAgent;
 
     const { body: coll } = yield* fetchJsonUnknownEffect({
       url: "https://index.commoncrawl.org/collinfo.json",
