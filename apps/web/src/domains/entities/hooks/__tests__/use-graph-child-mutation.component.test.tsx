@@ -1,3 +1,4 @@
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const serverFn = vi.hoisted(() => vi.fn());
@@ -13,7 +14,9 @@ import type { EntityScope } from "@/domains/entities/types";
 import { toast } from "@/shared/ui/toast";
 
 import {
+  CASE_A,
   SCOPE_A,
+  createHarness,
   expectReportsFailure,
   expectSettlesStartingCase,
 } from "./helpers/entity-write-harness";
@@ -42,6 +45,24 @@ describe("defineGraphChildMutation", () => {
       data: { caseId: SCOPE_A.caseId, label: "Alpha" },
     });
     expect(toast.success).toHaveBeenCalledWith("Renamed to Alpha");
+  });
+
+  it("toasts only after the starting Case's Entity caches are invalidated", async () => {
+    serverFn.mockResolvedValue({});
+    const { wrapper, invalidated } = createHarness();
+    const settledAtToast: boolean[] = [];
+    vi.mocked(toast.success).mockImplementation(() => {
+      settledAtToast.push(invalidated(CASE_A).every(Boolean));
+      return "toast-id";
+    });
+    const { result } = renderHook(() => useRenameThing(), { wrapper });
+    act(() => {
+      result.current.mutate(variables);
+    });
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledTimes(1);
+    });
+    expect(settledAtToast).toEqual([true]);
   });
 
   it("reports a rejected write with the server's message and settles nothing", async () => {

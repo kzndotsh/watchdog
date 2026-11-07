@@ -55,7 +55,8 @@ function settledKeys(caseId: string) {
   ] as const;
 }
 
-function createHarness() {
+/** A QueryClient seeded with both Cases' Entity caches, and a probe of which are invalidated. */
+export function createHarness() {
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
