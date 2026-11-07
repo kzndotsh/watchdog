@@ -75,7 +75,8 @@ export function RowHistoryPopup({ caseId, kind, rowId }: RowHistoryPopupProps) {
     scope,
     graphHistoryList.queryOf({})
   );
-  const attribution = useQuery(graphRowAttributionQuery(scope)).data ?? null;
+  const attributionQuery = useQuery(graphRowAttributionQuery(scope));
+  const attribution = attributionQuery.data ?? null;
   const entries = history.data ?? [];
 
   return (
@@ -83,6 +84,11 @@ export function RowHistoryPopup({ caseId, kind, rowId }: RowHistoryPopupProps) {
       {history.isError ? (
         <p role="alert" className="text-destructive text-xs">
           {errMessage(history.error, couldnt("load", "history"))}
+        </p>
+      ) : null}
+      {attributionQuery.isError ? (
+        <p role="alert" className="text-destructive text-xs">
+          {errMessage(attributionQuery.error, couldnt("load", "authorship"))}
         </p>
       ) : null}
       {history.isPending ? <InlineLoading label="Loading…" /> : null}

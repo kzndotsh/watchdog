@@ -203,4 +203,16 @@ describe("RowHistory", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("boom");
   });
+
+  it("shows the failure when the authorship cannot be loaded", async () => {
+    vi.mocked(listGraphHistoryFn).mockResolvedValue(page({}));
+    vi.mocked(graphRowAttributionFn).mockRejectedValue(new Error("no authors"));
+    const user = userEvent.setup();
+    renderHistory();
+    await user.click(
+      screen.getByRole("button", { name: "History of this claim" })
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("no authors");
+  });
 });

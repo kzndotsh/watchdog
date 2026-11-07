@@ -127,7 +127,8 @@ SELECT e.case_id, 'entity', e.id, 'create', 'system', NULL, to_jsonb(e), e.creat
 FROM entities e ORDER BY e.case_id, e.id;
 INSERT INTO graph_history (case_id, kind, row_id, op, channel, before, after, at)
 SELECT e.case_id, 'entity', e.id, 'update', 'system',
-       to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || (k - 1)),
+       CASE WHEN k = 1 THEN to_jsonb(e)
+            ELSE to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || (k - 1)) END,
        to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || k),
        e.created_at + k * interval '1 hour'
 FROM entities e CROSS JOIN generate_series(1, 60) AS k

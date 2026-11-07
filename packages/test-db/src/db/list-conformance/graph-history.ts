@@ -38,11 +38,16 @@ function entry(
 
 /**
  * The history table is written by triggers and the application role has no INSERT, so the
- * fixture writes it as the table owner (`DATABASE_URL_MIGRATE`, which the harness points at the
- * same database), with explicit ids.
+ * fixture writes it as the table owner (`DATABASE_URL_MIGRATE`, else `DATABASE_URL`, the same database), with explicit ids.
  */
 async function insertAsOwner(rows: readonly ReturnType<typeof entry>[]) {
-  const owner = postgres(process.env.DATABASE_URL_MIGRATE ?? "", {
+  const url = process.env.DATABASE_URL_MIGRATE ?? process.env.DATABASE_URL;
+  if (url === undefined || url === "") {
+    throw new Error(
+      "graph-history fixture: DATABASE_URL_MIGRATE or DATABASE_URL is required"
+    );
+  }
+  const owner = postgres(url, {
     max: 1,
     idle_timeout: 5,
   });

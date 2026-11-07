@@ -12,6 +12,7 @@ import {
   graphHistoryList,
   graphHistorySnapshotSchema,
 } from "@watchdog/schemas/graph";
+import { opsOf } from "@watchdog/schemas/shared";
 import type {
   CaseId,
   GraphHistoryKind,
@@ -31,7 +32,7 @@ import {
   type DomainTag,
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { listPageEffect } from "../infra/list-page";
+import { listCappedEffect, listPageEffect } from "../infra/list-page";
 import {
   claimsRepoFxDb,
   edgesRepoFxDb,
@@ -194,6 +195,22 @@ function toEntry(
   };
 }
 
+/** Whether the row has any history entry in the Case: one row read, no count. */
+function hasEntryEffect(
+  caseId: CaseId,
+  kind: GraphHistoryKind,
+  rowId: string
+): Effect.Effect<boolean, DomainTag, Db> {
+  return listCappedEffect({
+    def: graphHistoryList,
+    repo: graphHistoryListRepo,
+    scope: { caseId, kind, rowId },
+    query: opsOf(graphHistoryList).queryOf({}),
+    cap: 1,
+    toItems: (rows) => Effect.succeed(rows),
+  }).pipe(Effect.map((found) => found.items.length > 0));
+}
+
 function entriesOfRowsEffect(
   rows: readonly GraphHistoryRow[]
 ): Effect.Effect<readonly GraphHistoryEntry[], DomainTag, Db> {
@@ -233,11 +250,14 @@ export function listGraphHistoryEffect(
       input,
       toItems: entriesOfRowsEffect,
     });
-    // The live row, read through the Case: another Case's row of the same id is never read.
-    // A first page with no entry and no live row is a row that never had history here.
-    if (input.cursor === undefined && page.items.length === 0) {
+    // An empty page is fine past the end of a deleted row's history; a row this Case never had
+    // (no live row, no entry) is not found, with a cursor or without.
+    if (page.items.length === 0) {
       const live = yield* liveRowInCase(caseId, input.kind, rowId);
-      if (live === null) {
+      if (
+        live === null &&
+        !(yield* hasEntryEffect(caseId, input.kind, rowId))
+      ) {
         return yield* new NotFoundError({
           entity: NOT_FOUND_ENTITY[input.kind],
           id: rowId,
@@ -267,14 +287,7 @@ export function graphRowAttributionEffect(
     if (authors === null) {
       // Gone: its history stays, so a row with an entry here is `null`, and a row this Case never
       // had is not found, like any foreign child id.
-      const anyEntry = yield* listPageEffect({
-        def: graphHistoryList,
-        repo: graphHistoryListRepo,
-        scope: { caseId, kind: input.kind, rowId },
-        input: { caseId, kind: input.kind, rowId, limit: 1 },
-        toItems: (rows) => Effect.succeed(rows),
-      });
-      if (anyEntry.items.length === 0) {
+      if (!(yield* hasEntryEffect(caseId, input.kind, rowId))) {
         return yield* new NotFoundError({
           entity: NOT_FOUND_ENTITY[input.kind],
           id: rowId,

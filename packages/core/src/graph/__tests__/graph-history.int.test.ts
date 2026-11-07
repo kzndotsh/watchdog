@@ -22,6 +22,8 @@ import {
 } from "@watchdog/core/proposals";
 import { createTaskEffect } from "@watchdog/core/tasks";
 import { db } from "@watchdog/db";
+import { graphHistoryList } from "@watchdog/schemas/graph";
+import { opsOf } from "@watchdog/schemas/shared";
 import type {
   CaseId,
   GraphHistoryKind,
@@ -44,6 +46,8 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
+import { encodeListCursor } from "../../infra/list-cursor";
+import { listPageSpec } from "../../infra/list-page";
 import { editEntityRetrying } from "./edit-retrying";
 
 const REVIEWER = testId(950);
@@ -578,6 +582,49 @@ describe("listing a row's history", () => {
     );
     expect(attribution).toMatchObject({ createdBy: null, updatedBy: null });
     expect(attribution?.createdAt).not.toBe("");
+  });
+
+  it("is not_found for a never-seen row even with a well-formed cursor, and an empty page past a deleted row's history", async () => {
+    const { cased, entity } = await entityWithEdits(0);
+    const ask = (rowId: string, cursor?: string) =>
+      runDomain(
+        listGraphHistoryEffect(TEST_ORGANIZATION_ID, {
+          caseId: cased.id,
+          kind: "entity",
+          rowId,
+          limit: 1,
+          cursor,
+        })
+      );
+    const cursorFor = (rowId: string) => {
+      const input = {
+        caseId: cased.id,
+        kind: "entity" as const,
+        rowId,
+        limit: 1,
+      };
+      const query = opsOf(graphHistoryList).queryOf(input);
+      return encodeListCursor(
+        listPageSpec(
+          graphHistoryList,
+          { caseId: cased.id, kind: "entity", rowId },
+          query
+        ),
+        { id: "1", value: 1 }
+      );
+    };
+    const never = testId(4041);
+    await expect(ask(never, cursorFor(never))).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+    await runDomain(
+      deleteEntityEffect(cased.id, TEST_ORGANIZATION_ID, entity.id, {
+        actorId: REVIEWER,
+      })
+    );
+    // past the oldest entry of a deleted row: an empty page, not an error
+    const page = await ask(entity.id, cursorFor(entity.id));
+    expect(page.items).toEqual([]);
   });
 
   it("answers not_found for the authors of a row this Case never had", async () => {
