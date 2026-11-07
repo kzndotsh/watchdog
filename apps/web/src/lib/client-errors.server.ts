@@ -1,5 +1,3 @@
-import "@tanstack/react-start/server-only";
-import { createReportLimiter, readCappedText } from "@/lib/csp-report.server";
 /**
  * Browser error reports (`POST /api/client-errors`). The browser never talks to the error tracker:
  * it posts a short, same-origin report here, and the server logs it as an error event, which the
@@ -8,6 +6,8 @@ import { createReportLimiter, readCappedText } from "@/lib/csp-report.server";
  * must be same-origin, the report is rate limited, every field is truncated, and every answer has an
  * empty body.
  */
+import "@tanstack/react-start/server-only";
+import { createReportLimiter, readCappedText } from "@/lib/csp-report.server";
 import {
   MAX_MESSAGE,
   MAX_PAGE,
