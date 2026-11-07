@@ -6,7 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
-import { normalizeHost } from "../whois/normalize";
+import { normalizeHost } from "../normalize";
 
 export const hackertargetLookupSnapshotSchema = z.object({
   ip: z.string().min(1),

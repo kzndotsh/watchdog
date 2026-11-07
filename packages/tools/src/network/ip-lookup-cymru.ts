@@ -1,70 +1,11 @@
 import { isIP } from "node:net";
 
+import { expandIpv6 } from "@watchdog/schemas/graph";
+
 import { validationVendorError } from "../errors/vendor-errors";
 
 export function stripTxtQuotes(s: string): string {
   return s.replaceAll(/^"|"$/g, "").trim();
-}
-
-export function expandIpv6(ip: string): string {
-  const parts = ip.split("::");
-  if (parts.length > 2) throw validationVendorError(`Invalid IPv6: ${ip}`);
-  const head =
-    parts[0] !== undefined && parts[0] !== "" ? parts[0].split(":") : [];
-  const tail =
-    parts[1] !== undefined && parts[1] !== "" ? parts[1].split(":") : [];
-  const missing = 8 - head.length - tail.length;
-  const full = [
-    ...head,
-    ...Array.from({ length: Math.max(missing, 0) }, () => "0"),
-    ...tail,
-  ];
-  if (full.length !== 8) throw validationVendorError(`Invalid IPv6: ${ip}`);
-  return full.map((h) => h.padStart(4, "0")).join(":");
-}
-
-function stripIpv6Hextets(parts: string[]): string[] {
-  return parts.map((h) => {
-    const trimmed = h.replace(/^0+/, "");
-    return trimmed === "" ? "0" : trimmed;
-  });
-}
-
-/** RFC 5952-style compressed lowercase IPv6 (input may be any valid spelling). */
-export function compressIpv6(ip: string): string {
-  const parts = stripIpv6Hextets(expandIpv6(ip).toLowerCase().split(":"));
-
-  let bestStart = 0;
-  let bestLen = 0;
-  for (let i = 0; i < parts.length; i += 1) {
-    if (parts[i] !== "0") continue;
-    let len = 0;
-    while (i + len < parts.length && parts[i + len] === "0") len += 1;
-    if (len > bestLen) {
-      bestLen = len;
-      bestStart = i;
-    }
-  }
-
-  if (bestLen < 2) {
-    return parts.join(":");
-  }
-
-  const before = parts.slice(0, bestStart);
-  const after = parts.slice(bestStart + bestLen);
-  if (before.length === 0 && after.length === 0) return "::";
-  if (before.length === 0) return `::${after.join(":")}`;
-  if (after.length === 0) return `${before.join(":")}::`;
-  return `${before.join(":")}::${after.join(":")}`;
-}
-
-/** Canonical IP literal for identifiers and vendor dedupe (v4 trimmed, v6 compressed). */
-export function canonicalIpLiteral(raw: string): string {
-  const trimmed = raw.trim();
-  const ver = isIP(trimmed);
-  if (ver === 4) return trimmed;
-  if (ver === 6) return compressIpv6(trimmed);
-  throw validationVendorError(`Invalid IP address: ${raw}`);
 }
 
 export function originLookupName(ip: string): string {

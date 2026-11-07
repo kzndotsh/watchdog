@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/dns";
 import {
   fetchHackertargetReverseIpEffect,
   hackertargetLookupSnapshotSchema,
 } from "@watchdog/tools/network";
+import { normalizeIp } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hackertarget } from "../../providers";

@@ -13,7 +13,6 @@ export {
 } from "./txt-inventory";
 export {
   fetchDnsReverseEffect,
-  normalizeIp,
   normalizeIpEffect,
   dnsReverseSnapshotSchema,
   type DnsReverseSnapshot,

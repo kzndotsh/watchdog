@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  compressIpv6,
-  expandIpv6,
   originLookupName,
   parseCymruAsName,
   parseCymruOriginTxt,
@@ -12,20 +10,6 @@ import {
 describe("ip-lookup-cymru", () => {
   it("originLookupName reverses IPv4 octets", () => {
     expect(originLookupName("8.8.8.8")).toBe("8.8.8.8.origin.asn.cymru.com");
-  });
-
-  it("expandIpv6 fills :: gaps", () => {
-    expect(expandIpv6("2001:db8::1")).toBe(
-      "2001:0db8:0000:0000:0000:0000:0000:0001"
-    );
-  });
-
-  it("compressIpv6 round-trips expanded spellings", () => {
-    expect(compressIpv6("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe(
-      "2001:db8::1"
-    );
-    expect(compressIpv6("2001:db8::1")).toBe("2001:db8::1");
-    expect(compressIpv6("::1")).toBe("::1");
   });
 
   it("parses Team Cymru origin and AS TXT rows", () => {

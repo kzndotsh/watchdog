@@ -4,7 +4,7 @@ import {
   fetchC99SubdomainsEffect,
   c99LookupSnapshotSchema,
 } from "@watchdog/tools/network";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { c99 } from "../../providers";

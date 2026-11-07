@@ -3,8 +3,9 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { normalizeIp } from "../../dns/reverse.ts";
-import { expandIpv6 } from "../../network/ip-lookup-cymru.ts";
+import { expandIpv6 } from "@watchdog/schemas/graph";
+
+import { normalizeIp } from "../../normalize/ip.ts";
 import { isRecord } from "../../parse/coerce.ts";
 import { parseTxtAnswer } from "../cymru-mhr.ts";
 import { parseDshieldBody } from "../dshield.ts";

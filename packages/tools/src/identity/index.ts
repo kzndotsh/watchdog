@@ -1,6 +1,5 @@
 export {
   fetchEmailLookupEffect,
-  normalizeEmail,
   emailLookupSnapshotSchema,
   type EmailLookupSnapshot,
 } from "./email-lookup";

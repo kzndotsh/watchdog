@@ -4,7 +4,6 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -13,8 +12,8 @@ import {
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost, normalizeIp } from "../normalize";
 import { isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 
 export const xforceLookupSnapshotSchema = z.object({
   query: z.string().min(1),

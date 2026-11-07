@@ -23,7 +23,7 @@
 import { isIP } from "node:net";
 
 import { BlockedTargetError } from "../errors/tagged-errors";
-import { normalizeHost } from "../whois/normalize";
+import { normalizeHost } from "../normalize";
 import { bareHost } from "./outbound-policy";
 
 /** A declared contact; structurally the same as `CapContact` in `@watchdog/schemas/caps`. */

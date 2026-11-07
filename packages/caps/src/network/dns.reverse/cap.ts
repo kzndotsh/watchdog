@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchDnsReverseEffect,
-  normalizeIp,
   dnsReverseSnapshotSchema,
 } from "@watchdog/tools/dns";
+import { normalizeIp } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { systemResolver } from "../../providers";

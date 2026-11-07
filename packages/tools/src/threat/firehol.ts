@@ -4,13 +4,15 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
+import { expandIpv6 } from "@watchdog/schemas/graph";
+
+import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import type { Egress } from "../http/egress";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { createServedCache } from "../http/served-cache";
 import { nowIsoStringEffect } from "../infra/clock";
-import { expandIpv6 } from "../network/ip-lookup-cymru";
+import { normalizeIp } from "../normalize";
 
 export const fireholLookupSnapshotSchema = z.object({
   ip: z.string().min(1),

@@ -942,6 +942,9 @@ importers:
       '@watchdog/env':
         specifier: workspace:*
         version: link:../env
+      '@watchdog/schemas':
+        specifier: workspace:*
+        version: link:../schemas
       effect:
         specifier: 'catalog:'
         version: 4.0.5

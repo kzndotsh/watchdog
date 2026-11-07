@@ -4,13 +4,14 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
+import { expandIpv6 } from "@watchdog/schemas/graph";
+
 import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import type { Egress } from "../http/egress";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { createServedCache } from "../http/served-cache";
 import { nowIsoStringEffect } from "../infra/clock";
-import { expandIpv6 } from "./ip-lookup-cymru";
 
 export const torExitLookupSnapshotSchema = z.object({
   ip: z.string().min(1),

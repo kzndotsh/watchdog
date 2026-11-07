@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeHost } from "../normalize.ts";
+import { normalizeHost } from "../host.ts";
 
 describe("normalizeHost", () => {
   it("strips scheme, path, and trailing dot", () => {

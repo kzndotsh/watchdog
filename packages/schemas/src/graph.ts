@@ -21,6 +21,7 @@ export {
   CONFIDENCE_GATED_RESOURCES,
 } from "./patch";
 export { normalizeIdentifierValue } from "./normalize-identifier";
+export { compressIpv6, expandIpv6 } from "./ip-canonical";
 export type { ResolveQuestionFields } from "./question-resolve";
 export type { ResolveQuestionInput } from "./question-resolve";
 export {

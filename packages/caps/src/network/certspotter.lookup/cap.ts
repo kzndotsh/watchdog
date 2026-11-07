@@ -4,7 +4,7 @@ import {
   fetchCertspotterLookupEffect,
   certspotterLookupSnapshotSchema,
 } from "@watchdog/tools/ct";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotter } from "../../providers";

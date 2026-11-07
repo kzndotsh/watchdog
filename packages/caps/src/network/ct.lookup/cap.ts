@@ -5,7 +5,7 @@ import {
   fetchCrtShLookupEffect,
   ctLookupSnapshotSchema,
 } from "@watchdog/tools/ct";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { eligiblePivotHosts } from "../../lib/collect/query-seed-batches";

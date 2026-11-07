@@ -5,8 +5,8 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
-import { normalizeEmail } from "../identity/email-lookup";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeEmail } from "../normalize";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 

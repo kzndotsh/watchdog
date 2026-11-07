@@ -1,4 +1,4 @@
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 /** Hostnames safe for pivots and domain Identifier proposals (CT, SAN, subdomains). */
 export function eligibleCtDomains(domains: readonly string[]): string[] {

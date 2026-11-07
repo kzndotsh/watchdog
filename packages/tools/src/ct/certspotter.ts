@@ -5,8 +5,8 @@ import { z } from "zod";
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost } from "../normalize";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 
 export const certspotterIssuanceSchema = z.object({
   id: z.string(),

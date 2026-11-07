@@ -4,12 +4,13 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
+import { expandIpv6 } from "@watchdog/schemas/graph";
+
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import type { Egress } from "../http/egress";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { createServedCache } from "../http/served-cache";
 import { nowIsoStringEffect } from "../infra/clock";
-import { expandIpv6 } from "../network/ip-lookup-cymru";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 

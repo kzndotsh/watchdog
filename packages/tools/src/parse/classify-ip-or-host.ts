@@ -1,8 +1,7 @@
 import { isIP } from "node:net";
 
-import { normalizeIp } from "../dns/reverse";
 import { validationVendorError } from "../errors/vendor-errors";
-import { normalizeHost } from "../whois/normalize";
+import { normalizeHost, normalizeIp } from "../normalize";
 
 const HOSTNAME_RE =
   /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
