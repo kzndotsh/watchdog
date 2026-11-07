@@ -18,8 +18,8 @@ import {
 } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
+import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/commit-identifier-field";
 import {
-  isHandleWithoutPlatform,
   PLATFORM_OPTIONS,
   STATUS_OPTIONS,
   TYPE_OPTIONS,

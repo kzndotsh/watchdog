@@ -46,6 +46,3 @@ export function graphCanvasDotStyle(_transform?: GraphTransform) {
     backgroundPosition: "0px 0px",
   } as const;
 }
-
-/** Static dots for skeleton / pre-fit placeholder. */
-export const GRAPH_CANVAS_DOT_STYLE = graphCanvasDotStyle();

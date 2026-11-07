@@ -1,4 +1,3 @@
-import "@tanstack/react-start/server-only";
 /**
  * Browser error reports (`POST /api/client-errors`). The browser never talks to the error tracker:
  * it posts a short, same-origin report here, and the server logs it as an error event, which the
@@ -7,13 +6,18 @@ import "@tanstack/react-start/server-only";
  * must be same-origin, the report is rate limited, every field is truncated, and every answer has an
  * empty body.
  */
+import "@tanstack/react-start/server-only";
 import { createReportLimiter, readCappedText } from "@/lib/csp-report.server";
+import {
+  MAX_MESSAGE,
+  MAX_NAME,
+  MAX_PAGE,
+  MAX_STACK,
+} from "@/shared/lib/client-error-reporter";
 
 export const CLIENT_ERROR_MAX_BYTES = 8 * 1024;
 const MAX_PER_WINDOW = 20;
 const WINDOW_MS = 60_000;
-const MAX_FIELD = 1000;
-const MAX_STACK = 4000;
 
 export type ClientErrorReport = {
   kind: string;
@@ -45,14 +49,14 @@ export function parseClientError(body: string): ClientErrorReport | null {
     return null;
   }
   if (typeof json !== "object" || json === null) return null;
-  const message = text(json, "message", MAX_FIELD);
+  const message = text(json, "message", MAX_MESSAGE);
   if (message === "") return null;
   return {
     kind: text(json, "kind", 32),
-    name: text(json, "name", 100) || "Error",
+    name: text(json, "name", MAX_NAME) || "Error",
     message,
     stack: text(json, "stack", MAX_STACK),
-    page: pathOf(text(json, "page", MAX_FIELD)),
+    page: pathOf(text(json, "page", MAX_PAGE)),
   };
 }
 

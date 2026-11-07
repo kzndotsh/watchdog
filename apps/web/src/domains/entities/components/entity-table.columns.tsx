@@ -20,7 +20,10 @@ import {
 import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-features";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
 import { NotesIconCell } from "@/shared/ui/identifiers/notes-icon-cell";
-import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
+import {
+  formatFullLocalDateTime,
+  formatRelativeTime,
+} from "@/shared/ui/relative-time.lib";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
@@ -108,15 +111,6 @@ function notesColumnHeader({
       className="flex w-full justify-center"
     />
   );
-}
-
-function formatFullLocalDateTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString(undefined, {
-    dateStyle: "full",
-    timeStyle: "short",
-  });
 }
 
 function renderNameCell(ctx: CellContext<ServerTableFeatures, EntityListItem>) {

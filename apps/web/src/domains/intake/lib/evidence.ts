@@ -3,10 +3,7 @@ import { isTextMime } from "@/shared/lib/text-mime";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import {
-  evidenceTitleMapFromRows,
-  type EvidenceTitleRow,
-} from "@watchdog/schemas/evidence";
+import type { EvidenceTitleRow } from "@watchdog/schemas/evidence";
 import {
   ENRICHED_MD_ARTIFACT,
   evidenceTitleMapForJobInputs,
@@ -37,13 +34,6 @@ export type EvidenceTitleSource = EvidenceTitleRow;
 
 export function evidenceTitle(row: Omit<EvidenceTitleSource, "id">): string {
   return evidencePrimaryLabel(row);
-}
-
-/** Id → display title for job-input search and collect filters. */
-export function evidenceTitleMapFromRecords(
-  rows: readonly EvidenceRecord[]
-): Map<string, string> {
-  return evidenceTitleMapFromRows(rows);
 }
 
 /** Id → display title for jobs that reference evidence in input. */

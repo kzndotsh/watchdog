@@ -32,8 +32,8 @@ import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
 import type { AppAction } from "@/shared/lib/app-action";
 import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import { DataTableAddRow, tableComposerKeyDown } from "@/shared/ui/data-table";
+import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/commit-identifier-field";
 import {
-  isHandleWithoutPlatform,
   dossierIdentifierColumns,
   IdentifierTableActionsProvider,
   type IdentifierEditTarget,

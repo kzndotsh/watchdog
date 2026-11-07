@@ -1,7 +1,7 @@
 import { playbookSeedRequirements } from "@/domains/jobs/lib/playbook-seed-requirements";
 import type { PlaybookListItem } from "@/domains/jobs/types";
 import { egressClassLabel } from "@watchdog/schemas/caps";
-import type { EgressClass, PlaybookSeedKind } from "@watchdog/schemas/shared";
+import type { EgressClass } from "@watchdog/schemas/shared";
 
 /** The egress classes' labels, for the `egress` filter ("Public lookups"). */
 export const PLAYBOOK_EGRESS_LABELS: Record<EgressClass, string> = {
@@ -22,12 +22,6 @@ export type PlaybookMatchFilters = {
   isKeyOnlyNeeded: boolean;
   isUrlDumpOnly: boolean;
 };
-
-export function playbookPrimarySeed(
-  playbook: PlaybookListItem
-): PlaybookSeedKind | undefined {
-  return playbook.seedKinds[0];
-}
 
 export function playbookRequiresKey(playbook: PlaybookListItem): boolean {
   for (const spec of playbook.requires.credentials) {

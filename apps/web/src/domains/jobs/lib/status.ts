@@ -1,15 +1,12 @@
 import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   CANCELLABLE_JOB_STATUSES,
-  LIVE_JOB_STATUSES,
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
   isOpenJobStatus,
   type JobStatus,
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
-
-export { JOB_STATUS_OPTIONS as STATUS_FACET_OPTIONS } from "@/shared/ui/vocab";
 
 /** Trim playbook run id; blank / whitespace → null. */
 export function normalizedPlaybookRunId(
@@ -28,7 +25,6 @@ export function jobActivityAt(job: JobListRecord): string {
 // ─── status meta ─────────────────────────────────────────────────────────────
 
 export const CANCELABLE = new Set<JobStatus>(CANCELLABLE_JOB_STATUSES);
-export const LIVE_STATUSES = new Set<JobStatus>(LIVE_JOB_STATUSES);
 
 // ─── display helpers ─────────────────────────────────────────────────────────
 

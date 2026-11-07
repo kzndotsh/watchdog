@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { formatFullLocalDateTime } from "@/shared/ui/relative-time.lib";
 import {
   Tooltip,
   TooltipContent,
@@ -17,18 +18,6 @@ type TimestampProps = {
   className?: string;
   side?: TooltipSide;
 };
-
-function formatFullLocalDateTime(iso: string): string {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString(undefined, {
-      dateStyle: "full",
-      timeStyle: "short",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 function isValidIso(value: string | null | undefined): value is string {
   if (!value) return false;

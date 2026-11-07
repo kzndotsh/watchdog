@@ -14,10 +14,6 @@ export function playbookSeedGroup(playbook: PlaybookListItem): string {
   return playbook.id.split("-")[0] ?? "other";
 }
 
-export function playbookSeedGroupLabel(playbook: PlaybookListItem): string {
-  return playbookSeedGroupLabelForKey(playbookSeedGroup(playbook));
-}
-
 export function groupPlaybooksBySeed(
   playbooks: readonly PlaybookListItem[]
 ): { label: string; playbooks: PlaybookListItem[] }[] {

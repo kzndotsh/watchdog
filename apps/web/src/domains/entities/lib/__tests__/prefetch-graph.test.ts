@@ -2,10 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { graphSnapshotQuery } from "@/domains/entities/edges/queries";
-import {
-  ensureGraphQueries,
-  warmGraphQueries,
-} from "@/domains/entities/lib/prefetch-graph";
+import { warmGraphQueries } from "@/domains/entities/lib/prefetch-graph";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {
@@ -23,17 +20,6 @@ function queriedKeys(query: ReturnType<typeof vi.fn>): unknown[] {
       : undefined
   );
 }
-
-describe("ensureGraphQueries", () => {
-  it("loads the Case's graph snapshot, and nothing else", async () => {
-    const client = new QueryClient();
-    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
-
-    await ensureGraphQueries(client, "case-1");
-
-    expect(queriedKeys(query)).toEqual([graphSnapshotQuery("case-1").queryKey]);
-  });
-});
 
 describe("warmGraphQueries", () => {
   it("warms the snapshot without blocking", async () => {

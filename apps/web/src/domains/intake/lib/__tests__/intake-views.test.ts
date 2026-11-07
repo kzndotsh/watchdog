@@ -19,7 +19,6 @@ import {
   evidenceHasEnrichableUrl,
   evidenceHint,
   evidenceTitle,
-  evidenceTitleMapFromRecords,
   latestEnrichOutput,
 } from "../evidence.ts";
 
@@ -87,14 +86,6 @@ describe("intake evidence helpers", () => {
       evidenceHasEnrichableUrl(evidence({ sourceUrl: ENRICHABLE_SOURCE }))
     ).toBe(true);
     expect(producingCapFromRow(null)).toBeNull();
-  });
-
-  it("evidenceTitleMapFromRecords indexes active and hidden rows", () => {
-    const active = evidence({ id: testId(41), label: "active.txt" });
-    const hidden = evidence({ id: testId(42), label: "hidden.txt" });
-    const map = evidenceTitleMapFromRecords([active, hidden]);
-    expect(map.get(active.id)).toBe("active.txt");
-    expect(map.get(hidden.id)).toBe("hidden.txt");
   });
 
   it("producingCollectJob prefers the most recently active collect cap", () => {

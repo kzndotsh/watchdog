@@ -1,6 +1,6 @@
 import { WORK_TO, type WorkScreen } from "@/config/nav";
 
-function isWorkScreen(segment: string): segment is WorkScreen {
+export function isWorkScreen(segment: string): segment is WorkScreen {
   return Object.hasOwn(WORK_TO, segment);
 }
 
