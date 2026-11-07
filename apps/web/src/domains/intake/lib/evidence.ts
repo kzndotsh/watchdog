@@ -1,4 +1,5 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { isTextMime } from "@/shared/lib/text-mime";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
@@ -13,18 +14,9 @@ import {
 } from "@watchdog/schemas/jobs";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
-const TEXT_MIME_PATTERN =
-  /^(text\/|.*json.*|.*xml.*|.*html.*|.*yaml.*|.*javascript.*)/;
-
-/** MIME types that can be shown as inline text in evidence previews. */
-export function isTextEvidenceMime(mime: string | null | undefined): boolean {
-  if (mime === null || mime === undefined || mime === "") return false;
-  return TEXT_MIME_PATTERN.test(mime);
-}
-
 /** Whether dossier/intake previews should render stored `text` inline. */
 export function evidenceShowsInlineText(evidence: EvidenceRecord): boolean {
-  return evidence.kind === "attestation" || isTextEvidenceMime(evidence.mime);
+  return evidence.kind === "attestation" || isTextMime(evidence.mime);
 }
 
 export type EvidenceJsonParseResult =

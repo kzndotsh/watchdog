@@ -1,0 +1,86 @@
+import {
+  GRAPH_NODE_HEIGHT,
+  GRAPH_NODE_WIDTH,
+} from "@/shared/ui/graph/graph-layout";
+import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
+import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
+import type {
+  ConfidenceTier,
+  EdgePredicate,
+  EntityKind,
+} from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
+
+import {
+  computeDirectedNodeRanks,
+  placeLayeredGraphNodes,
+} from "./case-graph-ranks";
+
+export type CaseGraphEntity = {
+  id: string;
+  name: string;
+  slug: string;
+  kind: EntityKind;
+};
+
+export type CaseGraphEdgeInput = {
+  id: string;
+  fromId: string;
+  toId: string;
+  predicate: EdgePredicate;
+  confidence: ConfidenceTier;
+};
+
+export function caseGraphLayout({
+  entities,
+  edges,
+}: {
+  entities: readonly CaseGraphEntity[];
+  edges: readonly CaseGraphEdgeInput[];
+}): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const entityIds = entities.map((entity) => entity.id);
+  const entityIdSet = new Set(entityIds);
+  const scopedEdges = edges.filter(
+    (edge) => entityIdSet.has(edge.fromId) && entityIdSet.has(edge.toId)
+  );
+
+  const labels = new Map(
+    entities.map((entity) => [entity.id, entityDisplayLabel(entity)])
+  );
+  const ranks = computeDirectedNodeRanks(entityIds, scopedEdges);
+  const positions = placeLayeredGraphNodes({
+    nodeIds: entityIds,
+    ranks,
+    nodeLabels: labels,
+  });
+
+  const nodes: GraphNode[] = entities.map((entity) => {
+    const position = positions.get(entity.id) ?? { x: 0, y: 0 };
+    return {
+      id: entity.id,
+      position,
+      width: GRAPH_NODE_WIDTH,
+      height: GRAPH_NODE_HEIGHT,
+      data: {
+        label: entityDisplayLabel(entity),
+        kind: entity.kind,
+        slug: entity.slug,
+        isCenter: false,
+      },
+    };
+  });
+
+  const flowEdges: GraphEdge[] = scopedEdges.map((edge) => ({
+    id: edge.id,
+    source: edge.fromId,
+    target: edge.toId,
+    data: {
+      predicate: edge.predicate,
+      confidence: edge.confidence,
+      edgeId: edge.id,
+    },
+    style: { stroke: confidenceStroke(edge.confidence) },
+  }));
+
+  return { nodes, edges: flowEdges };
+}

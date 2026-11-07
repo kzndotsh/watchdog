@@ -2,12 +2,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { RowHistory } from "@/domains/dossier/components/row-history";
+import { TargetActionsHost } from "@/domains/dossier/components/target-actions-host";
 import { connectionRowActions } from "@/domains/dossier/lib/connection-row-actions";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { EntityMention } from "@/shared/ui/entity-mention";
-import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 

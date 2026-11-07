@@ -9,17 +9,15 @@ import { ClaimComposer } from "@/domains/dossier/components/claim-composer";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
-import { useCreateClaim } from "@/domains/dossier/hooks/use-create-claim";
+import { TargetActionsHost } from "@/domains/dossier/components/target-actions-host";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import {
   useSectionListView,
   type SectionListView,
 } from "@/domains/dossier/hooks/use-section-list-view";
-import { useUpdateClaim } from "@/domains/dossier/hooks/use-update-claim";
 import {
   claimDefaultsFromRow,
   claimFormOptions,
-  type ClaimFormValues,
 } from "@/domains/dossier/lib/claim-form";
 import { claimRowActions } from "@/domains/dossier/lib/claim-row-actions";
 import type { DossierClaimsSearch } from "@/domains/dossier/lib/dossier-tabs";
@@ -27,8 +25,15 @@ import type {
   DossierEntityScope,
   DossierSectionWithEvidenceProps,
 } from "@/domains/dossier/types";
+import {
+  useCreateClaim,
+  useUpdateClaim,
+} from "@/domains/entities/claims/mutations";
 import { claimListView } from "@/domains/entities/claims/queries";
-import type { ClaimRecord } from "@/domains/entities/claims/types";
+import type {
+  ClaimFormValues,
+  ClaimRecord,
+} from "@/domains/entities/claims/types";
 import { evidencePickerPort } from "@/domains/intake/queries";
 import { cn } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
@@ -44,7 +49,6 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
-import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import {
   ClaimClassBadge,
   ConfidenceBadge,
@@ -216,11 +220,11 @@ export function ClaimsSection({
   const editor = useDossierSectionEditor();
 
   const createMutation = useCreateClaim({
-    onCreated: editor.handleStopAdding,
+    onSuccess: editor.handleStopAdding,
   });
 
   const updateMutation = useUpdateClaim({
-    onUpdated: editor.handleCloseEdit,
+    onSuccess: editor.handleCloseEdit,
     onReload: editor.handleCloseEdit,
   });
 

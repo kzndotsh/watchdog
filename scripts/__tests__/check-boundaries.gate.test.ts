@@ -523,4 +523,75 @@ describe("check-boundaries gate", () => {
       expect(res.code).toBe(0);
     });
   });
+  describe("web domains import no cycle", () => {
+    const web = (files: Record<string, string>) =>
+      workspace({}, { web: { files } }).run(GATE);
+
+    it("passes domains that import in one direction, and tests, shared and same-domain imports", () => {
+      const res = web({
+        "src/domains/jobs/run.ts":
+          'import { c } from "@/domains/cases/access";\nimport { l } from "./local";\nexport const s = [c, l];\n',
+        "src/domains/jobs/local.ts": "export const l = 1;\n",
+        "src/domains/cases/access.ts": "export const c = 1;\n",
+        "src/domains/cases/__tests__/access.test.ts":
+          'import { s } from "@/domains/jobs/run";\nexport const t = s;\n',
+        "src/shared/x.ts": 'export { c } from "@/domains/cases/access";\n',
+      });
+      expect(res.output).toContain("check:boundaries: ok");
+      expect(res.code).toBe(0);
+    });
+
+    it("sees a dynamic import with a comment before its specifier", () => {
+      const res = web({
+        "src/domains/jobs/a.ts":
+          'export const load = () => import(/* webpackChunkName: "b" */ "@/domains/cases/b");\n',
+        "src/domains/cases/b.ts":
+          'import { load } from "../jobs/a";\nexport const c = load;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("cases, jobs import each other in a cycle");
+    });
+
+    it("fails a two-domain cycle and names the domains and one import per edge", () => {
+      const res = web({
+        "src/domains/jobs/a.ts":
+          'import { c } from "@/domains/cases/b";\nexport const a = c;\n',
+        "src/domains/jobs/a2.ts":
+          'import { c } from "@/domains/cases/b";\nexport const a2 = c;\n',
+        "src/domains/cases/b.ts":
+          'import { a } from "../jobs/a";\nexport const c = a;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("cases, jobs import each other in a cycle");
+      expect(res.output).toContain(
+        'jobs -> cases (apps/web/src/domains/jobs/a.ts:1 "@/domains/cases/b")'
+      );
+      expect(res.output).toContain(
+        'cases -> jobs (apps/web/src/domains/cases/b.ts:1 "../jobs/a")'
+      );
+    });
+
+    it("fails a cycle of three domains", () => {
+      const res = web({
+        "src/domains/a/x.ts": 'export { y } from "@/domains/b/y";\n',
+        "src/domains/b/y.ts": 'export { z } from "@/domains/c/z";\n',
+        "src/domains/c/z.ts":
+          'import type { x } from "@/domains/a/x";\nexport const z = 1;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("a, b, c import each other in a cycle");
+    });
+
+    it("does not count a path through app/, which is not a domain", () => {
+      const res = web({
+        "src/domains/a/x.ts": 'export { w } from "@/app/wire";\n',
+        "src/app/wire.ts":
+          'export { y } from "@/domains/b/y";\nexport const w = 1;\n',
+        "src/domains/b/y.ts":
+          'import { w } from "@/app/wire";\nexport const y = w;\n',
+      });
+      expect(res.output).toContain("check:boundaries: ok");
+      expect(res.code).toBe(0);
+    });
+  });
 });

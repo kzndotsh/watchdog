@@ -3,9 +3,9 @@ import { Link } from "@tanstack/react-router";
 import type { SubmitEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { EgressBlockNotice } from "@/domains/cases/components/egress-block-notice";
 import type { CaseEgress } from "@/domains/cases/types";
 import { CapCapabilitySelect } from "@/domains/jobs/components/cap-capability-select";
+import { EgressBlockNotice } from "@/domains/jobs/components/egress-block-notice";
 import { useCapRunFilters } from "@/domains/jobs/hooks/use-cap-run-filters";
 import { detectPasteSeed } from "@/domains/jobs/lib/cap-match";
 import type { CapRunPrefill } from "@/domains/jobs/lib/cap-run-input";

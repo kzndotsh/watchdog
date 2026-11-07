@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
-import { isTextEvidenceMime } from "@/domains/intake/lib/evidence";
 import type { GetArtifactContentInput } from "@/domains/jobs/types";
 import { orpcFromContext } from "@/lib/orpc.server";
+import { isTextMime } from "@/shared/lib/text-mime";
 import { runApp } from "@watchdog/api";
 import { readArtifactBytesEffect } from "@watchdog/core/blob";
 
@@ -56,7 +56,7 @@ export async function fetchArtifactContent(
     return { text: await fetchEvidenceBlobText(data, context) };
   }
 
-  if (!isTextEvidenceMime(data.mime)) return { text: null };
+  if (!isTextMime(data.mime)) return { text: null };
 
   const uri = await resolveJobArtifactUri(data, context);
   if (uri === null) return { text: null };

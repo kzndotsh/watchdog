@@ -9,12 +9,12 @@ import {
   resolveArtifactHeaderAction,
   resolveArtifactTextContent,
 } from "@/domains/jobs/components/artifact-content-helpers";
+import { artifactBodyFromContent } from "@/domains/jobs/lib/artifact-body-from-content";
 import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { queryLoadError } from "@/shared/lib/query-load-error";
-import { artifactBodyFromContent } from "@/shared/ui/artifact-body-from-content";
 import { ArtifactPreview } from "@/shared/ui/artifact-preview";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdChip } from "@/shared/ui/id-chip";

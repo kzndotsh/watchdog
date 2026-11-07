@@ -5,8 +5,8 @@ import type { User } from "better-auth";
 import { User2 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
 import { cn, firstNonEmpty } from "@/lib/utils";
-import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import {
   Avatar,
   AvatarFallback,

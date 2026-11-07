@@ -82,7 +82,7 @@ vi.mock("@/domains/dossier/components/entity-evidence-section", () => ({
 vi.mock("@/domains/dossier/components/events-section", () => ({
   EventsSection: () => null,
 }));
-vi.mock("@/domains/dossier/components/evidence-preview-drawer", () => ({
+vi.mock("@/domains/intake/components/evidence-preview-drawer", () => ({
   EvidencePreviewDrawer: () => null,
 }));
 vi.mock("@/domains/dossier/components/identifiers-section", () => ({

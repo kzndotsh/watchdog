@@ -25,6 +25,10 @@
  *   6. Infra holds no domain: a non-test file of `packages/core/src/infra/` imports no core
  *      folder but `errors` (the error vocabulary, not a domain). Infra is the leaf the domain
  *      folders stand on; anything that needs a domain folder belongs in that folder.
+ *   7. Web domains form no import cycle: the folders of apps/web/src/domains (`jobs`,
+ *      `cases`, ...) depend on one another in one direction only, so a piece two domains
+ *      use lives with its owner (or in `shared/` when it is generic). Tests are not counted.
+ *      The message names the cycle with one import per edge.
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
@@ -173,6 +177,36 @@ const CORE_SRC = "packages/core/src/";
 const CORE_FOLDER_FILE =
   /^packages\/core\/src\/(?<folder>[^/]+)\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
 
+const WEB_SRC = "apps/web/src/";
+const WEB_DOMAINS = `${WEB_SRC}domains/`;
+/** A non-test file inside a web domain folder. */
+const WEB_DOMAIN_FILE =
+  /^apps\/web\/src\/domains\/(?<domain>[^/]+)\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
+/** @type {Map<string, string>} "from -> to" -> first file:line and specifier that makes it */
+const webEdges = new Map();
+
+/**
+ * @param {string} rel the importing file
+ * @param {string} spec the import specifier (`@/` alias or relative)
+ * @param {string} where file:line of the import
+ */
+function recordWebEdge(rel, spec, where) {
+  const from = WEB_DOMAIN_FILE.exec(rel)?.groups?.domain;
+  if (from === undefined) return;
+  let target = "";
+  if (spec.startsWith("@/")) target = `${WEB_SRC}${spec.slice(2)}`;
+  else if (spec.startsWith(".")) {
+    target = path.posix.normalize(
+      path.posix.join(path.posix.dirname(rel), spec)
+    );
+  }
+  if (!target.startsWith(WEB_DOMAINS)) return;
+  const to = target.slice(WEB_DOMAINS.length).split("/")[0];
+  if (to === undefined || to === "" || to === from) return;
+  const key = `${from} -> ${to}`;
+  if (!webEdges.has(key)) webEdges.set(key, `${where} "${spec}"`);
+}
+
 /** The top-level folders of core's src, from the tracked files. */
 const coreFolders = new Set();
 
@@ -261,8 +295,9 @@ const SPECIFIER_PATTERNS = [
   /\bfrom\s*["'](?<spec>[^"'\n]+)["']/g,
   // Side-effect `import "m"`.
   /\bimport\s*["'](?<spec>[^"'\n]+)["']/g,
-  /\b(?:import|require)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
-  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
+  // Dynamic `import(...)` / `require(...)`, block comments allowed before the specifier.
+  /\b(?:import|require)\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["'](?<spec>[^"'\n]+)["']/g,
+  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)*["'](?<spec>[^"'\n]+)["']/g,
 ];
 
 /**
@@ -423,6 +458,7 @@ for (const rel of listed) {
   problems.push(...capFactProblems(rel, source));
   for (const { line, spec } of importsOf(source)) {
     const where = `${rel}:${line}`;
+    recordWebEdge(rel, spec, where);
 
     if (spec.startsWith(".")) {
       if (RELATIVE_ALLOWED.has(rel)) continue;
@@ -505,10 +541,22 @@ if (listed.some((f) => f.startsWith(CORE_SRC))) {
   }
 }
 
+for (const group of importCycles([...webEdges.keys()])) {
+  const inside = [...webEdges.keys()].filter((key) => {
+    const [from = "", to = ""] = key.split(" -> ");
+    return group.includes(from) && group.includes(to);
+  });
+  problems.push(
+    `${WEB_DOMAINS}: the domains ${group.join(", ")} import each other in a cycle; move the piece both use to the domain that owns it, or to shared/ when it is generic. Edges (first import each): ${inside
+      .map((key) => `${key} (${webEdges.get(key)})`)
+      .join("; ")}`
+  );
+}
+
 if (problems.length > 0) {
   for (const p of problems) console.error(`✗ ${p}`);
   console.error(
-    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder. See docs/contributing/ci-gates.md."
+    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder; web domains import no cycle. See docs/contributing/ci-gates.md."
   );
   process.exit(1);
 }

@@ -1,6 +1,7 @@
 import { CheckIcon, GaugeIcon, XIcon } from "lucide-react";
 
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
+import { EvidenceCiteChips } from "@/domains/triage/components/evidence-cite-chips";
 import type {
   TriageAcceptForm,
   TriageRejectForm,
@@ -20,7 +21,6 @@ import { hotkeyAttrs, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
 import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";

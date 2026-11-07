@@ -1,7 +1,7 @@
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
-import { CaseOverview } from "@/domains/cases/components/case-overview";
-import { warmCaseOverviewQueries } from "@/domains/cases/lib/prefetch-case-overview";
+import { CaseOverview } from "@/domains/dashboard/components/case-overview";
+import { warmCaseOverviewQueries } from "@/domains/dashboard/lib/prefetch-case-overview";
 import { RouteError } from "@/shared/layout/route-error";
 
 const routeApi = getRouteApi("/_protected/cases/$caseSlug/");

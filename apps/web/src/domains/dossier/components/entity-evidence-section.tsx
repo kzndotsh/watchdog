@@ -1,13 +1,13 @@
 import { ClipboardPasteIcon, FileUpIcon, LinkIcon } from "lucide-react";
 import { useState } from "react";
 
-import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
 import { useSelectedEvidence } from "@/domains/dossier/hooks/use-selected-evidence";
 import type { DossierEvidenceSearch } from "@/domains/dossier/lib/dossier-tabs";
 import {
   DumpDialogs,
   type DumpModal,
 } from "@/domains/intake/components/dump-dialogs";
+import { EvidencePreviewDrawer } from "@/domains/intake/components/evidence-preview-drawer";
 import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
