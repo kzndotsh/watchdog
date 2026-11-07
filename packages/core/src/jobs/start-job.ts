@@ -25,13 +25,13 @@ import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
-import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   assertEvidenceInCaseEffect,
   requireTrimmedGraphId,
-} from "../graph/patch/guards";
+} from "../cases/access";
+import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";

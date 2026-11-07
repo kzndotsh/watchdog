@@ -4,10 +4,10 @@ import type {
   PlaybookListItem,
 } from "@/domains/jobs/types";
 import type {
-  CaseRecord,
   DeletedCaseRecord,
   RestoredCaseRecord,
-} from "@watchdog/core/cases";
+} from "@watchdog/core/case-deletion";
+import type { CaseRecord } from "@watchdog/core/cases";
 import type { EvidenceRecord } from "@watchdog/core/evidence";
 import type {
   CaseEdgeRecord,

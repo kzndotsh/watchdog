@@ -28,9 +28,11 @@
       "@watchdog/client/*": ["./packages/client/src/*"],
 
       "@watchdog/core/blob": ["./packages/core/src/infra/blob.ts"],
-      "@watchdog/core/job-display": ["./packages/core/src/jobs/job-display.ts"],
+      "@watchdog/core/job-display": [
+        "./packages/core/src/display/job-display.ts"
+      ],
       "@watchdog/core/proposal-display": [
-        "./packages/core/src/proposals/proposal-display.ts"
+        "./packages/core/src/display/proposal-display.ts"
       ],
       "@watchdog/core/worker": ["./packages/core/src/worker-entry.ts"],
       "@watchdog/core/*": ["./packages/core/src/*"],

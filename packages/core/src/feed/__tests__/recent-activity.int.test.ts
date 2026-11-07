@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listRecentActivityEffect } from "@watchdog/core/activity";
 import { NotFoundError } from "@watchdog/core/errors";
+import { listRecentActivityEffect } from "@watchdog/core/feed";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
 import { activityLogRepo, db, evidenceRepo, proposalsRepo } from "@watchdog/db";

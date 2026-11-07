@@ -28,12 +28,12 @@ import {
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
+import { setHistoryContextEffect } from "../../../activity/graph-activity";
 import { transact } from "../../../infra/postgres-tx";
 import {
   seedGraphFixture,
   type GraphFixture,
 } from "../../__tests__/graph-mutations";
-import { setHistoryContextEffect } from "../../graph-activity";
 import { runGraphMutation } from "../../mutation/run-graph-mutation";
 import { entitiesTable } from "../../mutation/tables";
 

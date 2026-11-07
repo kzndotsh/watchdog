@@ -18,11 +18,11 @@ import {
   measureCaseExportEffect,
   requireBreachCredentialOptInEffect,
   requireRawBodyOptInEffect,
-  startCaseExportJobEffect,
   writeCaseExportZipEffect,
   type CaseExportOptions,
   type ZipSink,
 } from "@watchdog/core/export";
+import { startCaseExportJobEffect } from "@watchdog/core/jobs";
 /**
  * GET /api/v1/cases/:caseId/export.zip
  *

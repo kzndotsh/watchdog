@@ -73,7 +73,7 @@ export {
   assertCaseExistsUncheckedEffect,
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-} from "./patch/guards";
+} from "../cases/access";
 export {
   getEntitiesByIdsEffect,
   listEntitiesForCaseEffect,
@@ -101,3 +101,4 @@ export {
   type GraphSnapshotEdge,
   type GraphSnapshotEntity,
 } from "./snapshot";
+export { recordOpenInEffect, type RecordOpenInOpts } from "./open-in";

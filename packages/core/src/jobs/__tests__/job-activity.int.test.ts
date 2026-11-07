@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
 import { isDomainTag } from "@watchdog/core/errors";
-import { processEvidenceEffect } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import {
   cancelJobEffect,
@@ -11,6 +10,7 @@ import {
   recordingJobQueue,
   runPlaybookEffect,
   startJobEffect,
+  processEvidenceEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, jobsRepo } from "@watchdog/db";

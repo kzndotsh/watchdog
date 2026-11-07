@@ -13,19 +13,17 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
+import { setHistoryContextEffect } from "../activity/graph-activity";
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
-import {
-  assertEvidenceIdsInCaseEffect,
-  createAttestationEffect,
-} from "../evidence/evidence";
-import { setHistoryContextEffect } from "../graph/graph-activity";
+import { assertCaseInOrgEffect } from "../cases/access";
+import { createAttestationEffect } from "../evidence/evidence";
+import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
@@ -38,8 +36,8 @@ import {
   InvalidError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { suppressAndProposeStageEffect } from "../jobs/stages/propose";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
+import { suppressAndProposeStageEffect } from "./suppress-and-propose";
 
 export type GraphWriteRecord = {
   id: string;

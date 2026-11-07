@@ -7,17 +7,17 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
-import { appendActivityEffect } from "../../activity/append";
-import { attachEvidenceIds } from "../../graph/attach-evidence";
-import type { Db } from "../../infra/db-service";
-import { transact } from "../../infra/postgres-tx";
-import { casesRepoFx, proposalsRepoFx } from "../../infra/repos-fx";
+import { appendActivityEffect } from "../activity/append";
+import { attachEvidenceIds } from "../graph/attach-evidence";
+import type { Db } from "../infra/db-service";
+import { transact } from "../infra/postgres-tx";
+import { casesRepoFx, proposalsRepoFx } from "../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
   type DomainTag,
-} from "../../infra/tagged-errors";
-import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
+} from "../infra/tagged-errors";
+import { suppressKnownFindingsEffect } from "./finding-suppress";
 
 export type ProposeResult = {
   proposalId: string | null;

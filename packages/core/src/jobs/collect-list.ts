@@ -23,10 +23,10 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
-import { loadEntityDisplayMapsForIdsEffect } from "../entities/entity-display";
+import { assertCaseInOrgEffect } from "../cases/access";
+import { loadEntityDisplayMapsForIdsEffect } from "../display/entity-display";
 import { toEvidenceRecord } from "../evidence/evidence";
 import type { EvidenceRecord } from "../evidence/evidence";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { tryDbWith } from "../infra/postgres-effect";

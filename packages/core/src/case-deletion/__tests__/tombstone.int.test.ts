@@ -3,20 +3,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { recordingBlobStore, type BlobStore } from "@watchdog/core/blob";
 import {
-  createCaseEffect,
   deleteCaseEffect,
   deleteOrganizationCasesEffect,
-  getCaseByIdEffect,
-  getCaseBySlugEffect,
   getDeletedCaseBySlugEffect,
   getDeletionPolicyEffect,
-  listCasesEffect,
   listDeletedCasesEffect,
-  listVisibleCaseIdsEffect,
   purgeCaseEffect,
   purgeExpiredCasesEffect,
   purgeTombstonedCaseEffect,
   restoreCaseEffect,
+} from "@watchdog/core/case-deletion";
+import {
+  createCaseEffect,
+  getCaseByIdEffect,
+  getCaseBySlugEffect,
+  listCasesEffect,
+  listVisibleCaseIdsEffect,
   updateCaseEffect,
 } from "@watchdog/core/cases";
 import { isDomainTag, type DomainTag } from "@watchdog/core/errors";

@@ -21,6 +21,7 @@ import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
+import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import {
   claimsRepoFxDb,
@@ -38,7 +39,6 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 
 /**
  * The read side of `graph_history`. The table is written only by the database

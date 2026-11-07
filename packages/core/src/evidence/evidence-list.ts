@@ -11,7 +11,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
+import { assertCaseInOrgEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { NotFoundError, type DomainTag } from "../infra/tagged-errors";

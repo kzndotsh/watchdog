@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { replayActivityEffect } from "@watchdog/core/activity";
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { deleteCaseEffect, purgeCaseEffect } from "@watchdog/core/cases";
+import {
+  deleteCaseEffect,
+  purgeCaseEffect,
+} from "@watchdog/core/case-deletion";
 import { isDomainTag } from "@watchdog/core/errors";
 import {
   createEntityEffect,

@@ -398,4 +398,113 @@ describe("check-boundaries gate", () => {
       expect(res.code).toBe(0);
     });
   });
+  describe("core folders import no cycle", () => {
+    /** The edge the gate allows until #617 (infra imports the export folder's settings). */
+    const allowedEdge = {
+      "src/infra/db.ts":
+        'import { s } from "../export/settings";\nexport const d = s;\n',
+      "src/export/settings.ts": "export const s = 1;\n",
+    };
+    const core = (files: Record<string, string>) =>
+      workspace({ core: { files } }, {}).run(GATE);
+
+    it("passes folders that import in one direction, and tests, root files and same-folder imports", () => {
+      const res = core({
+        ...allowedEdge,
+        "src/jobs/start.ts":
+          'import { c } from "../cases/access";\nimport { l } from "./local";\nexport const s = [c, l];\n',
+        "src/jobs/local.ts": "export const l = 1;\n",
+        "src/cases/access.ts": "export const c = 1;\n",
+        "src/cases/__tests__/access.test.ts":
+          'import { s } from "../../jobs/start";\nexport const t = s;\n',
+        "src/worker-entry.ts":
+          'export { s } from "./jobs/start";\nexport { c } from "./cases/access";\n',
+      });
+      expect(res.output).toContain("check:boundaries: ok");
+      expect(res.code).toBe(0);
+    });
+
+    it("fails a cycle of three folders and names the folders and each import", () => {
+      const res = core({
+        ...allowedEdge,
+        "src/cases/a.ts": 'export { b } from "../jobs/b";\n',
+        "src/jobs/b.ts": 'export { c } from "../graph/c";\n',
+        "src/graph/c.ts":
+          'import type { a } from "../cases/a";\nexport const c = 1;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain(
+        "cases, graph, jobs import each other in a cycle"
+      );
+      expect(res.output).toContain(
+        'cases -> jobs (packages/core/src/cases/a.ts:1 "../jobs/b")'
+      );
+      expect(res.output).toContain(
+        'graph -> cases (packages/core/src/graph/c.ts:1 "../cases/a")'
+      );
+    });
+
+    it("counts an import of a folder's index (`../jobs`) as an edge to that folder", () => {
+      const res = core({
+        ...allowedEdge,
+        "src/jobs/index.ts": 'export { a } from "../cases/a";\n',
+        "src/cases/a.ts": 'import { j } from "../jobs";\nexport const a = j;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("cases, jobs import each other in a cycle");
+    });
+
+    it("fails a two-folder cycle between folders the allowlist does not name", () => {
+      const res = core({
+        ...allowedEdge,
+        "src/cases/a.ts":
+          'import { b } from "../jobs/b";\nexport const a = b;\n',
+        "src/jobs/b.ts":
+          'import { a } from "../cases/a";\nexport const b = a;\n',
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("cases, jobs import each other in a cycle");
+    });
+
+    it("passes the named edge together with the imports that close its loop", () => {
+      const res = core({
+        ...allowedEdge,
+        "src/export/more.ts":
+          'import { d } from "../infra/db";\nexport const m = d;\n',
+        "src/infra/other.ts":
+          'import { m } from "../export/more";\nexport const o = m;\n',
+      });
+      // Only `infra -> export` is allowed; with it set aside, `export -> infra` is one direction.
+      expect(res.code).toBe(0);
+    });
+
+    it("fails an allowlist entry that no import makes any more", () => {
+      const res = core({
+        "src/jobs/start.ts":
+          'import { c } from "../cases/access";\nexport const s = c;\n',
+        "src/cases/access.ts": "export const c = 1;\n",
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain(
+        'CORE_CYCLE_ALLOWLIST names "infra -> export"'
+      );
+    });
+
+    it("does not apply outside packages/core", () => {
+      const res = workspace(
+        {
+          other: {
+            files: {
+              "src/a/x.ts":
+                'import { y } from "../b/y";\nexport const x = y;\n',
+              "src/b/y.ts":
+                'import { x } from "../a/x";\nexport const y = x;\n',
+            },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(0);
+    });
+  });
 });

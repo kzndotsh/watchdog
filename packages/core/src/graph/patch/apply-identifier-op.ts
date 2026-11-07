@@ -3,12 +3,12 @@ import { Effect } from "effect";
 import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
+import { assertEntityInCaseEffect } from "../../cases/access";
 import type { Db } from "../../infra/db-service";
 import { identifiersRepoFx } from "../../infra/repos-fx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { identifiersTable } from "../mutation/tables";
-import { assertEntityInCaseEffect } from "./guards";
 import { decodeOpData, identifierOpData } from "./op-data";
 
 export function applyIdentifierOpEffect(

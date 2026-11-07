@@ -11,8 +11,8 @@ import type {
 import { listAllActivity, listAllGraphHistory } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
+import { setHistoryContextEffect } from "../../../activity/graph-activity";
 import { transact } from "../../../infra/postgres-tx";
-import { setHistoryContextEffect } from "../../graph-activity";
 import { isRemovable, type GraphTable } from "../graph-table";
 import {
   runGraphMutation,

@@ -28,17 +28,17 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
-import { optionalActorId } from "../actors/require-actor-id";
-import { taskDueWindowEffect } from "../cases/counts";
 import {
   dossierHistory,
   setHistoryContextEffect,
-} from "../graph/graph-activity";
+} from "../activity/graph-activity";
+import { optionalActorId } from "../actors/require-actor-id";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
-} from "../graph/patch/guards";
+} from "../cases/access";
+import { taskDueWindowEffect } from "../cases/counts";
 import type { Db } from "../infra/db-service";
 import { listCappedEffect, listPageEffect } from "../infra/list-page";
 import type { CappedList } from "../infra/list-page";

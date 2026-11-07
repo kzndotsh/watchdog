@@ -28,7 +28,6 @@ vi.mock("@watchdog/core/cases", async (importOriginal) => {
     getCaseByIdEffect,
     createCaseEffect,
     updateCaseEffect,
-    deleteCaseEffect: vi.fn(),
   };
 });
 

@@ -15,10 +15,10 @@ import type {
   GraphHistoryChannel,
 } from "@watchdog/schemas/shared";
 
-import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
+import { appendActivityEffect } from "./append";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */
 export type GraphActivityKind = Extract<

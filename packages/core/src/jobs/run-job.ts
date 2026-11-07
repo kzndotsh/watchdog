@@ -11,6 +11,7 @@ import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
+import { suppressAndProposeStageEffect } from "../proposals/suppress-and-propose";
 import { caseExportBody } from "./export-job";
 import { JobFibers } from "./job-fibers";
 import type { JobLog } from "./job-log";
@@ -32,7 +33,6 @@ import {
 } from "./stages/interpret";
 import { landEvidenceEffect } from "./stages/land-evidence";
 import type { PreflightState } from "./stages/preflight";
-import { suppressAndProposeStageEffect } from "./stages/propose";
 import { CASE_EXPORT_JOB } from "./system-jobs";
 
 export type { JobRunOutcome, JobRunOutcomeName } from "./run-outcome";

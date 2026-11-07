@@ -4,7 +4,7 @@ import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import { jobStartCountersRepoFx } from "../infra/repos-fx";
 import type { DomainTag } from "../infra/tagged-errors";
-import { jobStartLimitSettings } from "./start-limits";
+import { jobStartLimitSettings } from "../organization/job-start-limits";
 
 /** Rows deleted per transaction. */
 const JOB_START_PRUNE_BATCH = 1000;

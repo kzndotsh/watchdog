@@ -8,12 +8,12 @@ import {
   type GraphActor,
 } from "@watchdog/schemas/shared";
 
+import { dossierChannel } from "../activity/graph-activity";
+import { assertEntityInCaseEffect } from "../cases/access";
 import type { Db } from "../infra/db-service";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
-import { dossierChannel } from "./graph-activity";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import { eventsTable, type EventRecord } from "./mutation/tables";
-import { assertEntityInCaseEffect } from "./patch/guards";
 
 export type { EventRecord };
 

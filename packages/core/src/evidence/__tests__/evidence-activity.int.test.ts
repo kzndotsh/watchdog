@@ -11,11 +11,11 @@ import {
   presignUploadEffect,
   dumpPasteEffect,
   dumpUrlEffect,
-  markEvidenceProcessedEffect,
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
+import { markEvidenceProcessedEffect } from "@watchdog/core/jobs";
 import { activity, db } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {

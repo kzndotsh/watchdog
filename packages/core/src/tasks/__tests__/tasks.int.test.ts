@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { FEED_ACTIONS } from "@watchdog/core/activity";
 import { isDomainTag } from "@watchdog/core/errors";
+import { FEED_ACTIONS } from "@watchdog/core/feed";
 import { listCappedEffect, runDomain } from "@watchdog/core/infra";
 import {
   createTaskEffect,

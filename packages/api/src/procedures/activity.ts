@@ -1,4 +1,4 @@
-import { listRecentActivityEffect } from "@watchdog/core/activity";
+import { listRecentActivityEffect } from "@watchdog/core/feed";
 import {
   listRecentActivityInputSchema,
   activityItemSchema,

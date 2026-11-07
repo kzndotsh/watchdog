@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
 import { isDomainTag } from "@watchdog/core/errors";
+import { confirmFileUploadEffect } from "@watchdog/core/evidence";
+import { Db, runDomainWith } from "@watchdog/core/infra";
 import {
-  confirmFileUploadEffect,
   enrichUrlEvidenceEffect,
   markEvidenceProcessedEffect,
   processEvidenceEffect,
-} from "@watchdog/core/evidence";
-import { Db, runDomainWith } from "@watchdog/core/infra";
-import { recordingJobQueue } from "@watchdog/core/jobs";
+  recordingJobQueue,
+} from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
