@@ -1,8 +1,6 @@
 import {
   CANCELABLE,
   formatDuration,
-  isLive,
-  isTerminal,
   jobActivityAt,
   normalizedPlaybookRunId,
   playbookWaitingOnNextStep,
@@ -12,6 +10,8 @@ import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
 import { summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
+  isLiveJobStatus,
+  isTerminalJobStatus,
   trimmedOrNull,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
@@ -70,7 +70,7 @@ export function buildJobDetailView(input: {
   const canCancel = CANCELABLE.has(job.status);
   // An export Job is not a Cap: there is nothing to re-run from its input.
   const isExport = job.capabilityId === CASE_EXPORT_JOB_ID;
-  const canRetry = isTerminal(job.status) && !isExport;
+  const canRetry = isTerminalJobStatus(job.status) && !isExport;
   const exportDownloadPath =
     isExport && job.status === "succeeded"
       ? caseExportDownloadPath(job.caseId, job.id)
@@ -82,7 +82,7 @@ export function buildJobDetailView(input: {
   const duration = formatDuration(job.startedAt, job.finishedAt);
 
   return {
-    isLive: isLive(job.status),
+    isLive: isLiveJobStatus(job.status),
     logs: (job.logs ?? []).join("\n").trim(),
     duration,
     inputHint: summarizeJobInput(job.input, evidenceTitleById, entityTitleById),

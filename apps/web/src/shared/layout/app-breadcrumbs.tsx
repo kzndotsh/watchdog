@@ -8,7 +8,7 @@ import type {
   TrailItem,
   TrailTo,
 } from "@/shared/layout/page-trail";
-import { usePageTrail } from "@/shared/layout/use-page-trail";
+import { useCurrentPageTrail } from "@/shared/layout/page-trail-context";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { TabCount } from "@/shared/ui/tab-count";
 import {
@@ -149,7 +149,7 @@ export function AppBreadcrumbs({
   countOn,
 }: AppBreadcrumbsProps) {
   const { items, isPendingLast, isPlaceholderLast, isErrorLast } =
-    usePageTrail();
+    useCurrentPageTrail();
   const last = items.at(-1);
   const ancestors = items.slice(0, -1);
 

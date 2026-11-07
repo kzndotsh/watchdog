@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 
-import { ensureOrganizationState } from "@/auth/ensure-organization";
+import { ensureOrganizationState } from "@/app/ensure-organization";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
 import { FirstCaseStep } from "@/domains/cases/components/first-case-step";

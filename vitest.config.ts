@@ -19,10 +19,10 @@ const webDomTestGlobs = [
   "apps/web/src/shared/lib/__tests__/display-scale-store.test.ts",
   "apps/web/src/shared/lib/__tests__/use-global-hotkeys.test.ts",
   "apps/web/src/shared/lib/__tests__/hotkeys.test.ts",
-  "apps/web/src/shared/lib/__tests__/query-client.test.ts",
-  "apps/web/src/shared/lib/__tests__/query-invalidation.test.ts",
+  "apps/web/src/app/lib/__tests__/query-client.test.ts",
+  "apps/web/src/app/lib/__tests__/query-invalidation.test.ts",
   "apps/web/src/shared/lib/__tests__/query-enabled.test.ts",
-  "apps/web/src/shared/layout/__tests__/use-page-trail.test.ts",
+  "apps/web/src/app/layout/__tests__/use-page-trail.test.ts",
   "apps/web/src/shared/hooks/**/__tests__/**/*.test.ts",
   "apps/web/src/domains/cases/lib/__tests__/active-case.test.ts",
 ] as const;

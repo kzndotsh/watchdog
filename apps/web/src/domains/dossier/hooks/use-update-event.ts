@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { TimelineEventValues } from "@/domains/dossier/hooks/use-create-event";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { updateEventFn } from "@/domains/entities/events/events.functions";
-import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { updateEventInputSchema } from "@watchdog/schemas/graph";
 

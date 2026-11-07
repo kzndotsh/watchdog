@@ -7,10 +7,9 @@ import type {
   DeletionPolicy as CoreDeletionPolicy,
   RestoredCaseRecord as CoreRestoredCaseRecord,
 } from "@watchdog/core/cases";
-import {
-  type getCaseBySlugInputSchema,
-  deleteCaseInputSchema,
-  type DeleteCaseInput,
+import type {
+  getCaseBySlugInputSchema,
+  DeleteCaseInput,
 } from "@watchdog/schemas/cases";
 import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
@@ -29,7 +28,6 @@ export type DeletedCaseRecord = CoreDeletedCaseRecord;
 /** The restore window, whether the caller may delete, restore and purge Cases, and the Jobs a delete cancels. */
 export type DeletionPolicy = CoreDeletionPolicy;
 
-export const getCaseByIdInputSchema = deleteCaseInputSchema;
 export type GetCaseByIdInput = DeleteCaseInput;
 
 export type GetCaseBySlugInput = z.output<typeof getCaseBySlugInputSchema>;

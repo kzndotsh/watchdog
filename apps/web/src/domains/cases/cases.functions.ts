@@ -6,7 +6,6 @@ import {
   writeActiveCaseId,
 } from "@/domains/cases/lib/active-case.server";
 import {
-  getCaseByIdInputSchema,
   healActiveCaseInputSchema,
   setActiveCaseIdInputSchema,
   type CaseCounts,
@@ -43,7 +42,7 @@ export const getCasesContextFn = createServerFn({ method: "GET" }).handler(
 );
 
 export const getCaseByIdFn = createServerFn({ method: "GET" })
-  .validator(getCaseByIdInputSchema)
+  .validator(deleteCaseInputSchema)
   .handler(async ({ data, context }): Promise<CaseRecord | null> =>
     orpcNullIfNotFound(
       orpcFromContext(context).cases.get({

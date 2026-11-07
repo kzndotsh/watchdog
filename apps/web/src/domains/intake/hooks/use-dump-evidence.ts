@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
+import { invalidateAfterEvidenceMutation } from "@/app/lib/query-invalidation";
 import { dumpPasteFn, dumpUrlFn } from "@/domains/intake/intake.functions";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
 import {
   TOAST_UPLOAD_FAILED,
   TOAST_UPLOAD_LOADING,

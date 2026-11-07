@@ -17,8 +17,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
+import { usePageTrail } from "@/app/layout/use-page-trail";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
-import { usePageTrail } from "@/shared/layout/use-page-trail";
 import { buildCaseRecord } from "@/testing/records";
 
 const ALPHA = buildCaseRecord();

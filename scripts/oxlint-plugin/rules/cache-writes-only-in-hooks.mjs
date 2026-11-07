@@ -9,12 +9,12 @@ import { CACHE_WRITE_MEMBERS, staticKeyName } from "../lib/react-query.mjs";
 
 /** @param {string} member */
 const message = (member) =>
-  `${member} outside a hook: do cache writes in a domain hook (\`domains/<domain>/hooks/use-*\` or \`shared/hooks/\`) or add a named contract to \`shared/lib/query-invalidation.ts\` and call it from the mutation's \`onSuccess\`, not an ad-hoc call here (conventions: mutations and invalidation only in domain hooks)`;
+  `${member} outside a hook: do cache writes in a domain hook (\`domains/<domain>/hooks/use-*\` or \`shared/hooks/\`) or add a named contract to \`app/lib/query-invalidation.ts\` and call it from the mutation's \`onSuccess\`, not an ad-hoc call here (conventions: mutations and invalidation only in domain hooks)`;
 
 /**
  * QueryClient cache writes (`invalidateQueries`, `setQueryData`, `setQueriesData`,
  * `removeQueries`, `resetQueries`, `refetchQueries`, `cancelQueries`) only in domain or
- * shared hooks and `shared/lib/query-invalidation.ts`. Matches the member itself, so a
+ * shared hooks and `app/lib/query-invalidation.ts`. Matches the member itself, so a
  * call, `.call` / `.bind` / `.apply`, an optional call, a computed `["invalidateQueries"]`
  * access and a destructured `{ invalidateQueries }` all count. The member names are
  * QueryClient specific; there is no type information to prove the receiver. The allowed

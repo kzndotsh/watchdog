@@ -2,17 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import {
-  setActiveCaseIdInputSchema,
-  type CaseRecord,
-} from "@/domains/cases/types";
-import { couldnt, errMessage } from "@/lib/utils";
-import {
   finalizeActiveCaseSwitch,
   type CaseSwitchNavigate,
   navigateAfterActiveCaseSwitch,
   optimisticActiveCaseSwitch,
   rollbackActiveCaseSwitch,
-} from "@/shared/lib/active-case-switch";
+} from "@/domains/cases/lib/active-case-switch";
+import {
+  setActiveCaseIdInputSchema,
+  type CaseRecord,
+} from "@/domains/cases/types";
+import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 

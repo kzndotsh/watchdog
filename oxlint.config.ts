@@ -246,6 +246,26 @@ const domainImportRestrictions = [
   },
 ];
 
+/**
+ * Extra patterns of `apps/web/src/shared/**`: shared depends on no domain and no app wiring
+ * (`app/` composes domains and shared, never the reverse; docs/reference/web/domains.md).
+ */
+const sharedImportRestrictions = [
+  {
+    group: [
+      "@/domains",
+      "@/domains/**",
+      "@/app",
+      "@/app/**",
+      "@/routes",
+      "@/routes/**",
+      "**/domains/**",
+    ],
+    message:
+      "shared/ imports no domain, app or route: cross-domain wiring lives in src/app/, single-domain code in its domain. See conventions.md.",
+  },
+];
+
 export default defineConfig({
   extends: [core, react, tanstack, effecttsgoRecommended],
   ignorePatterns: [...(core.ignorePatterns ?? []), ...watchdogIgnores],
@@ -533,6 +553,17 @@ export default defineConfig({
       },
     },
     {
+      // Shared depends on no domain: a domain change never forces a shared change. The two
+      // overrides below that replace this rule for shared files carry the same patterns.
+      files: ["apps/web/src/shared/**/*.{ts,tsx}"],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          webImportRestrictions(sharedImportRestrictions),
+        ],
+      },
+    },
+    {
       // Web design-system bans (ported from the retired ds-ban-check.mjs; inventory in
       // docs/reference/web/ui/rules.md). The decorative ban skips vendored primitives and
       // the Better Auth UI shells; the id-slice ban is for domain screens only.
@@ -616,7 +647,7 @@ export default defineConfig({
       },
     },
     {
-      files: ["apps/web/src/shared/lib/query-invalidation.ts"],
+      files: ["apps/web/src/app/lib/query-invalidation.ts"],
       rules: { "watchdog/cache-writes-only-in-hooks": "off" },
     },
     {
@@ -783,8 +814,6 @@ export default defineConfig({
       // the keyset, and row history is ordered by the history id itself, so neither is a
       // filterable declared list (pagination-coverage.test.ts names them too).
       files: [
-        "apps/web/src/shared/lib/list/**/*.{ts,tsx}",
-        "apps/web/src/shared/hooks/list/**/*.{ts,tsx}",
         "apps/web/src/domains/activity/queries.ts",
         "apps/web/src/domains/dashboard/components/recent-activity.tsx",
         "apps/web/src/domains/entities/history/queries.ts",
@@ -796,6 +825,22 @@ export default defineConfig({
           webImportRestrictions(domainImportRestrictions, {
             allowInfinite: true,
           }),
+        ],
+      },
+    },
+    {
+      // The list machinery is shared code: infinite queries allowed, domain imports not.
+      files: [
+        "apps/web/src/shared/lib/list/**/*.{ts,tsx}",
+        "apps/web/src/shared/hooks/list/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          webImportRestrictions(
+            [...domainImportRestrictions, ...sharedImportRestrictions],
+            { allowInfinite: true }
+          ),
         ],
       },
     },
@@ -817,6 +862,7 @@ export default defineConfig({
                 message: "UI wrappers never touch the database.",
               },
             ],
+            patterns: sharedImportRestrictions,
           },
         ],
       },
@@ -1246,7 +1292,7 @@ export default defineConfig({
         "apps/web/src/domains/**/hooks/*.{ts,tsx}",
         "apps/web/src/domains/**/*.functions.ts",
         "apps/web/src/domains/intake/lib/upload-file.ts",
-        "apps/web/src/shared/lib/active-case-switch.ts",
+        "apps/web/src/domains/cases/lib/active-case-switch.ts",
         "apps/web/src/routes/api/events.ts",
       ],
       rules: {

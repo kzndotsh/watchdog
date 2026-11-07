@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { bindActivityInvalidation } from "@/shared/lib/activity-invalidation";
+import { bindActivityInvalidation } from "@/app/lib/activity-invalidation";
 
 /**
  * Bind the organization's activity stream to the Query cache. Mount once, in

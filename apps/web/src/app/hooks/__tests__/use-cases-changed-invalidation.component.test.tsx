@@ -3,9 +3,9 @@ import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { useCasesChangedInvalidation } from "@/app/hooks/use-cases-changed-invalidation";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
-import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 
 function setup() {
   const queryClient = new QueryClient();

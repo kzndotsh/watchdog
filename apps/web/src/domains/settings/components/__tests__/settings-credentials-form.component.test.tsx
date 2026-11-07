@@ -48,7 +48,7 @@ vi.mock("@/domains/settings/settings.functions", () => ({
   deleteCredentialFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCredentialMutation: vi.fn(),
 }));
 

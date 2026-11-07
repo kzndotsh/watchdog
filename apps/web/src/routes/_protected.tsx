@@ -6,15 +6,15 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 
+import { ensureOrganizationState } from "@/app/ensure-organization";
+import { useActivityInvalidation } from "@/app/hooks/use-activity-stream";
+import { useCasesChangedInvalidation } from "@/app/hooks/use-cases-changed-invalidation";
+import { AppShell } from "@/app/layout/app-shell";
 import { authClient } from "@/auth/client";
-import { ensureOrganizationState } from "@/auth/ensure-organization";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { firstCaseGateApplies } from "@/auth/first-case-gate";
 import { casesContextQuery } from "@/domains/cases/queries";
-import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
-import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
-import { AppShell } from "@/shared/layout/app-shell";
 import { RootError } from "@/shared/layout/root-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 

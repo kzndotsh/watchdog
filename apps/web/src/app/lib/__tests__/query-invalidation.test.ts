@@ -1,6 +1,15 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  bindCasesChangedInvalidation,
+  invalidateAfterCaseSwitch,
+  invalidateAfterEntityChanged,
+  invalidateAfterGraphActivity,
+  invalidateAfterResync,
+  invalidateAfterJobMutation,
+  invalidateAfterProposalAccept,
+} from "@/app/lib/query-invalidation";
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
@@ -16,15 +25,6 @@ import { jobsKeys } from "@/domains/jobs/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
 import { LIST_REFETCH_THROTTLE_MS } from "@/shared/lib/list/list-refetch-throttle";
-import {
-  bindCasesChangedInvalidation,
-  invalidateAfterCaseSwitch,
-  invalidateAfterEntityChanged,
-  invalidateAfterGraphActivity,
-  invalidateAfterResync,
-  invalidateAfterJobMutation,
-  invalidateAfterProposalAccept,
-} from "@/shared/lib/query-invalidation";
 
 /** No declared list view is cached in the mock clients: every key refetches directly. */
 function noListViews() {

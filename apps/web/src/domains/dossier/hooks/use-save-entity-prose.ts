@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import { couldnt, errMessage } from "@/lib/utils";
-import { useStaleVersionToast } from "@/shared/hooks/use-stale-version-toast";
 import { scopeCaseSlug } from "@/shared/lib/query-ingress";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 
 export type SaveEntityProseVariables = DossierEntityScope & {
   /** The Entity's `version` when the editor opened; the save fails as stale if it moved on. */

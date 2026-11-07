@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { deleteEventFn } from "@/domains/entities/events/events.functions";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { eventScopeInputSchema } from "@watchdog/schemas/graph";
 

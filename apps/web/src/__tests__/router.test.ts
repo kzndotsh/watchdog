@@ -10,7 +10,7 @@ vi.mock("../routeTree.gen", () => ({
   routeTree: { id: "tree" },
 }));
 
-vi.mock("@/shared/lib/query-client", () => ({
+vi.mock("@/app/lib/query-client", () => ({
   createAppQueryClient: createAppQueryClientMock,
 }));
 

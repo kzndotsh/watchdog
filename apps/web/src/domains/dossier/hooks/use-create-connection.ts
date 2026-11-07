@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { ConnectionFormValues } from "@/domains/dossier/components/ego-graph/connection-dialog";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { createEdgeFn } from "@/domains/entities/edges/edges.functions";
 import { buildCreateEdgeData } from "@/domains/entities/lib/edge-write";
 import { errMessage } from "@/lib/utils";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
 export type CreateConnectionVariables = DossierEntityScope & {

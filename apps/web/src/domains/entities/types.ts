@@ -5,13 +5,11 @@ import type {
   EntityListItem as CoreEntityListItem,
   EntityRecord as CoreEntityRecord,
 } from "@watchdog/core/graph";
-import {
-  type createEntityInputSchema,
-  caseScopeInputSchema,
-  entitySlugScopeInputSchema,
-  type CaseScopeInput,
-  type EntitySlugScopeInput,
-  type UpdateEntityInput,
+import type {
+  createEntityInputSchema,
+  CaseScopeInput,
+  EntitySlugScopeInput,
+  UpdateEntityInput,
 } from "@watchdog/schemas/graph";
 
 export type EntityRecord = CoreEntityRecord;
@@ -22,10 +20,8 @@ export type EntityListItem = CoreEntityListItem;
 /** A listed Entity's Connection, seen from it (an Edge without its Evidence links). */
 export type EntityListConnection = CoreEntityListConnection;
 
-export const caseIdInputSchema = caseScopeInputSchema;
 export type CaseIdInput = CaseScopeInput;
 
-export const caseSlugInputSchema = entitySlugScopeInputSchema;
 export type CaseSlugInput = EntitySlugScopeInput;
 
 export type CreateEntityInput = z.output<typeof createEntityInputSchema>;

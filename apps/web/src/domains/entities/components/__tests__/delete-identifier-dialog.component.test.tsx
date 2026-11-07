@@ -8,7 +8,7 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   deleteIdentifierFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 

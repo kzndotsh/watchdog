@@ -2,6 +2,7 @@ import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
+import { CaseSwitcher } from "@/app/layout/case-switcher";
 import { authClient } from "@/auth/client";
 import {
   NAV_GROUPS,
@@ -14,7 +15,6 @@ import {
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { SearchButton } from "@/domains/search/components/search-button";
-import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 import { caseRouteScreen } from "@/shared/lib/case-path";
 import { WithTooltip } from "@/shared/ui/with-tooltip";

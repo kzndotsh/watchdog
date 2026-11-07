@@ -38,7 +38,7 @@ const MOCK_FAIL: Record<string, string> = {
   ),
   "mock-alias.test.ts": lines(
     HEAD,
-    'vi.mock("@/shared/lib/query-invalidation", () => ({}));'
+    'vi.mock("@/app/lib/query-invalidation", () => ({}));'
   ),
   "mock-do.test.ts": lines(
     HEAD,
@@ -249,7 +249,7 @@ describe("no-internal-module-mock", () => {
 
   it("names the module, the fix and the policy", () => {
     const [hit] = hits("mock-alias.test.ts", MOCK);
-    expect(hit?.message).toContain('"@/shared/lib/query-invalidation"');
+    expect(hit?.message).toContain('"@/app/lib/query-invalidation"');
     expect(hit?.message).toContain("fake the boundary");
     expect(hit?.message).toContain("Mock policy");
   });

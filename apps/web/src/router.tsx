@@ -2,9 +2,9 @@ import "@/lib/zod-jitless";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
+import { createAppQueryClient } from "@/app/lib/query-client";
 import { requestCspNonce } from "@/lib/csp-nonce";
 import { RouteError } from "@/shared/layout/route-error";
-import { createAppQueryClient } from "@/shared/lib/query-client";
 import { DefaultRoutePendingShell } from "@/shared/ui/default-route-pending-shell";
 
 import { routeTree } from "./routeTree.gen";

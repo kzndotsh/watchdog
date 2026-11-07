@@ -1,9 +1,5 @@
-import { getCaseByIdInputSchema } from "@/domains/cases/types";
 import {
-  caseIdInputSchema,
-  caseSlugInputSchema,
-} from "@/domains/entities/types";
-import {
+  deleteCaseInputSchema,
   getCaseBySlugInputSchema,
   searchCaseInputSchema,
 } from "@watchdog/schemas/cases";
@@ -14,6 +10,7 @@ import {
 import {
   caseScopeInputSchema,
   entityScopeInputSchema,
+  entitySlugScopeInputSchema,
   evidenceScopeInputSchema,
 } from "@watchdog/schemas/graph";
 import {
@@ -80,7 +77,7 @@ export function scopePlaybookRunEnabled(
 }
 
 export function scopeCaseId(caseId: string): string {
-  const parsed = caseIdInputSchema.safeParse({ caseId });
+  const parsed = caseScopeInputSchema.safeParse({ caseId });
   return parsed.success ? parsed.data.caseId : caseId.trim();
 }
 
@@ -146,7 +143,7 @@ export function scopeEvidenceDownload(caseId: string, evidenceId: string) {
 }
 
 export function scopeCaseSlug(caseId: string, slug: string) {
-  const parsed = caseSlugInputSchema.safeParse({ caseId, slug });
+  const parsed = entitySlugScopeInputSchema.safeParse({ caseId, slug });
   if (parsed.success) {
     return { scoped: parsed.data, enabled: true };
   }
@@ -160,7 +157,7 @@ export function scopeCaseSlug(caseId: string, slug: string) {
 }
 
 export function parseCaseByIdInput(caseId: string) {
-  return getCaseByIdInputSchema.parse({ caseId });
+  return deleteCaseInputSchema.parse({ caseId });
 }
 
 export function parseCaseBySlugInput(caseSlug: string) {
@@ -168,7 +165,7 @@ export function parseCaseBySlugInput(caseSlug: string) {
 }
 
 export function parseCaseSlugInput(caseId: string, slug: string) {
-  return caseSlugInputSchema.parse({ caseId, slug });
+  return entitySlugScopeInputSchema.parse({ caseId, slug });
 }
 
 export function parseListJobsInput(caseId: string) {

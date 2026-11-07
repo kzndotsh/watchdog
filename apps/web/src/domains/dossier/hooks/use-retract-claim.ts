@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { retractClaimFn } from "@/domains/entities/claims/claims.functions";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { retractClaimInputSchema } from "@watchdog/schemas/graph";
 import type { RetractKind } from "@watchdog/schemas/shared";

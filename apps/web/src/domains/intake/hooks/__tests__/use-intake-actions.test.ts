@@ -18,7 +18,7 @@ vi.mock("@/domains/intake/intake.functions", () => ({
   attachEvidenceEntityFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
   invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),
 }));

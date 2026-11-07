@@ -51,7 +51,7 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -67,8 +67,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const ENTITY = {

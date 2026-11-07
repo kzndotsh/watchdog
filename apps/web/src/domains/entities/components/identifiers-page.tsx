@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { LazyBulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-lazy";
@@ -14,7 +15,6 @@ import {
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DataTableAddRow } from "@/shared/ui/data-table";
 import { LazyIdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer-lazy";
 import { warmComposer } from "@/shared/ui/identifiers/identifier-composer-load";

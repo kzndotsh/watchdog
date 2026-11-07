@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
+import { invalidateAfterJobMutation } from "@/app/lib/query-invalidation";
 import {
   cancelJobFn,
   cancelPlaybookFn,
@@ -29,7 +30,6 @@ import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { playbookSeedInputSchema } from "@watchdog/schemas/caps";

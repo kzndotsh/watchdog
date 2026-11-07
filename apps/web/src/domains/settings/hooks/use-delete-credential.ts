@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterCredentialMutation } from "@/app/lib/query-invalidation";
 import { deleteCredentialFn } from "@/domains/settings/settings.functions";
-import { invalidateAfterCredentialMutation } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { deleteCredentialInputSchema } from "@watchdog/schemas/caps";
 

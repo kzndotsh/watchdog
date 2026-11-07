@@ -1,4 +1,4 @@
 {
   "apps/web/src/routes/_protected/cases/$caseSlug.tsx": 1,
-  "apps/web/src/shared/lib/active-case-switch.ts": 4
+  "apps/web/src/domains/cases/lib/active-case-switch.ts": 4
 }

@@ -11,8 +11,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createAppQueryClient } from "@/app/lib/query-client";
 import type { RouterContext } from "@/routes/__root";
-import { createAppQueryClient } from "@/shared/lib/query-client";
 import { STALE_SESSION } from "@/shared/lib/query-stale";
 
 type Session = {
@@ -48,19 +48,19 @@ vi.mock("@/domains/organization/organization.functions", () => ({
 vi.mock("@/domains/cases/cases.functions", () => ({
   getCasesContextFn: async () => casesContext.current,
 }));
-vi.mock("@/shared/hooks/use-activity-stream", () => ({
+vi.mock("@/app/hooks/use-activity-stream", () => ({
   useActivityInvalidation: () => undefined,
 }));
-vi.mock("@/shared/hooks/use-cases-changed-invalidation", () => ({
+vi.mock("@/app/hooks/use-cases-changed-invalidation", () => ({
   useCasesChangedInvalidation: () => undefined,
 }));
-vi.mock("@/shared/layout/app-shell", () => ({
+vi.mock("@/app/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock("@better-auth-ui/react", () => ({ useAuthenticate: () => undefined }));
 
+import { invalidateAfterOrganizationChange } from "@/app/lib/query-invalidation";
 import { Route as ProtectedRoute } from "@/routes/_protected";
-import { invalidateAfterOrganizationChange } from "@/shared/lib/query-invalidation";
 
 function sessionFor(
   userId: string,

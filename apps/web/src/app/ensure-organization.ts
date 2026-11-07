@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { seedOrganizationState } from "@/app/lib/query-invalidation";
 import { organizationStateQuery } from "@/domains/organization/queries";
-import { seedOrganizationState } from "@/shared/lib/query-invalidation";
 
 type SessionLike = {
   user: { id: string };

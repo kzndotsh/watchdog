@@ -17,7 +17,7 @@ vi.mock("@/domains/tasks/tasks.functions", () => ({
   reorderTasksFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
   invalidateAfterTaskMutation: vi.fn().mockResolvedValue(undefined),
 }));

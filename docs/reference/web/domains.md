@@ -29,7 +29,7 @@ domains/{noun}/
 
 Naming: `*.functions` are things you call across the network (RPC, not "client code"); `*.server` must never ship to the browser; `*.client` is wrong for server functions (they run on the server during SSR and loaders).
 
-**`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `shared/hooks/` (`use-activity-stream`, `use-global-hotkeys`), UI-kit hooks beside their atom. A hook over an external store splits in two: a framework-free store module in `shared/lib/` (private state, a small `subscribe`/`getSnapshot` plus mutators interface; `display-scale-store.ts`, `palette-commands-store.ts`) and the hook in `shared/hooks/` that calls `useSyncExternalStore` on it. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
+**`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `app/hooks/` (`use-activity-stream`, `use-cases-changed-invalidation`), domain-free ones in `shared/hooks/` (`use-global-hotkeys`), UI-kit hooks beside their atom. A hook over an external store splits in two: a framework-free store module in `shared/lib/` (private state, a small `subscribe`/`getSnapshot` plus mutators interface; `display-scale-store.ts`, `palette-commands-store.ts`) and the hook in `shared/hooks/` that calls `useSyncExternalStore` on it. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
 
 Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts` and its own `*.functions.ts`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
@@ -42,15 +42,30 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `*.server.ts` is never imported from client components, `lib/`, or `hooks/`; hooks call `*.functions` only | `guidance` (Start's import protection may fail a client build) |
 | Handlers call `orpcFromContext(context)` for domain I/O | `guidance` |
 | Domains with RPC inputs keep Zod in `types.ts`; DTO and form-value types never live in `components/` | `guidance` |
-| Domains with server lists keep `queries.ts` and invalidate through `shared/lib/query-invalidation.ts` | `guidance` |
+| Domains with server lists keep `queries.ts` and invalidate through `app/lib/query-invalidation.ts` | `guidance` |
 | Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
 | Client code imports the `@watchdog/policy` subpaths (`@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence`), never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
 | Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance`; `watchdog/no-types-from-functions` enforces only the ban: no type imports from, or re-exports of, a `*.functions` module, except in `*.functions.ts`, `queries.ts` and `*-queries.ts` under `domains/` |
 | An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
 | `shared/ui` imports no domain code | `watchdog/shared-ui-no-domain-imports` |
+| `shared/**` imports no domain, app or route | oxlint `no-restricted-imports` (`sharedImportRestrictions`) |
 | No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` |
 | A `.tsx` file exports one component; a family of parts is a folder of single-component files with an `index.ts` barrel (`shared/ui/skeletons/`) | `watchdog/one-component-per-file` |
+
+## Composition root: `src/app/`
+
+`shared/` depends on no domain; `app/` is where domains are composed, and it may import domains and `shared/`. A domain may import `app/` for the named contracts it calls after a mutation (`@/app/lib/query-invalidation`). Nothing in `shared/` imports `app/`.
+
+| File | Owns |
+| --- | --- |
+| `app/lib/query-invalidation.ts`, `activity-invalidation.ts`, `activity-stream.ts` | Named Query invalidation contracts over every domain's keys; the SSE entry mapped onto them; the one `EventSource` |
+| `app/lib/query-client.ts` | `createAppQueryClient` |
+| `app/hooks/` | `use-activity-stream`, `use-cases-changed-invalidation` (bound once in `_protected`), `use-stale-version-toast` |
+| `app/layout/` | `AppShell`, `AppSidebar`, the Case switcher parts, `use-page-trail` and `PageTrailProvider` (the breadcrumbs in `shared/layout` read the trail through `page-trail-context`) |
+| `app/ensure-organization.ts` | The organization bootstrap read by `_protected` and `/onboarding` |
+
+The Active Case switch (`switchActiveCase`) belongs to its one user, `domains/cases/lib/active-case-switch.ts`.
 
 ## Map
 

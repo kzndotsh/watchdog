@@ -29,7 +29,7 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 

@@ -37,7 +37,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
+vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCaseSwitch: vi.fn(),
 }));
 
@@ -96,7 +96,7 @@ vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   ),
 }));
 
-import { CaseSwitcher } from "@/shared/layout/case-switcher";
+import { CaseSwitcher } from "@/app/layout/case-switcher";
 
 const ALPHA = {
   id: testId(10),

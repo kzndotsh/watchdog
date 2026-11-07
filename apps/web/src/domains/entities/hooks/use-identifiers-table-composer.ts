@@ -3,11 +3,11 @@ import { useMutation } from "@tanstack/react-query";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildCreateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import { errMessage } from "@/lib/utils";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
 import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/identifier-cells";
 import {

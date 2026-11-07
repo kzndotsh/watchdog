@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
+import { invalidateAfterOrganizationChange } from "@/app/lib/query-invalidation";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
-import { invalidateAfterOrganizationChange } from "@/shared/lib/query-invalidation";
 
 /**
  * What every flow that changes the signed-in user's organization (create, switch, accept an

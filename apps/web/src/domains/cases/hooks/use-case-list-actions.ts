@@ -2,12 +2,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 
+import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
 import { useCaseDeletedToast } from "@/domains/cases/hooks/use-case-deleted-toast";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { couldnt, errMessage } from "@/lib/utils";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
 async function navigateToCase(

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_ADDED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 import { createIdentifierInputSchema } from "@watchdog/schemas/graph";

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -15,7 +16,7 @@ vi.mock("@/domains/search/components/app-inset-context-menu", () => ({
   ),
 }));
 
-vi.mock("@/shared/layout/app-sidebar", () => ({
+vi.mock("@/app/layout/app-sidebar", () => ({
   AppSidebar: () => <div data-testid="app-sidebar">Sidebar</div>,
 }));
 
@@ -28,14 +29,19 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   ),
 }));
 
-import { AppShell } from "@/shared/layout/app-shell";
+import { AppShell } from "@/app/layout/app-shell";
+import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
 
 describe("AppShell", () => {
   it("wraps page content with search chrome, sidebar, and skip link", () => {
+    const Router = testRouterWrapper(createTestRouter());
     render(
-      <AppShell>
-        <div>Main content</div>
-      </AppShell>
+      <QueryClientProvider client={new QueryClient()}>
+        <AppShell>
+          <div>Main content</div>
+        </AppShell>
+      </QueryClientProvider>,
+      { wrapper: Router }
     );
 
     expect(screen.getByTestId("search-chrome")).toBeInTheDocument();

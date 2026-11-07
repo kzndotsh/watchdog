@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { ClaimFormValues } from "@/domains/dossier/lib/claim-form";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { createClaimFn } from "@/domains/entities/claims/claims.functions";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { createClaimInputSchema } from "@watchdog/schemas/graph";
 
