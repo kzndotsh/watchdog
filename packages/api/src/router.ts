@@ -101,6 +101,7 @@ export const router = {
   },
   history: {
     list: history.list,
+    attribution: history.attribution,
   },
   organization: {
     getSettings: organization.getSettings,

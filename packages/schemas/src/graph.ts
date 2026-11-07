@@ -152,19 +152,15 @@ export { fingerprintPatchOp, edgePatchFingerprintKey } from "./fingerprint";
 export type {
   GraphHistoryAttribution,
   GraphHistoryEntry,
-  GraphHistoryPage,
+  GraphHistoryRowInput,
   GraphHistorySnapshot,
-  ListGraphHistoryInput,
 } from "./graph-history";
 export {
-  GRAPH_HISTORY_PAGE_DEFAULT,
-  GRAPH_HISTORY_PAGE_MAX,
   graphHistoryAttributionSchema,
   graphHistoryEntrySchema,
-  graphHistoryPageSchema,
+  graphHistoryList,
+  graphHistoryRowInputSchema,
   graphHistorySnapshotSchema,
-  listGraphHistoryInputSchema,
-  parseGraphHistoryCursor,
 } from "./graph-history";
 export { getIdentifiersInputSchema, identifierList } from "./identifier-list";
 export {

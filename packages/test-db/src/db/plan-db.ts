@@ -48,6 +48,10 @@ export type PlanDb = {
   ) => Promise<Readonly<Record<string, readonly string[]>>>;
   /** The id of a Case by slug, or null. */
   readonly caseIdBySlug: (slug: string) => Promise<string | null>;
+  /** The Graph row of a Case with the longest history (`kind`, `rowId`), or null when it has none. */
+  readonly longestHistoryRow: (
+    caseId: string
+  ) => Promise<{ kind: string; rowId: string } | null>;
   readonly end: () => Promise<void>;
 };
 
@@ -165,6 +169,14 @@ export function openPlanDb(url: string): PlanDb {
         [slug]
       );
       return rows[0]?.id ?? null;
+    },
+    async longestHistoryRow(caseId) {
+      const rows = await client.unsafe<{ kind: string; rowId: string }[]>(
+        `SELECT kind, row_id AS "rowId" FROM graph_history WHERE case_id = $1
+         GROUP BY kind, row_id ORDER BY count(*) DESC, row_id LIMIT 1`,
+        [caseId]
+      );
+      return rows[0] ?? null;
     },
     async end() {
       await client.end({ timeout: 5 });

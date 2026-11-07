@@ -187,7 +187,7 @@ const CLIENT_TABLE_NAMES = [
 
 /**
  * `no-restricted-imports` options for web code; `extra` adds patterns for narrower trees.
- * `allowInfinite` is for the list machinery and the named legacy feed (see the overrides).
+ * `allowInfinite` is for the list machinery (see the overrides).
  */
 const webImportRestrictions = (
   extra: { group: string[]; message: string }[],
@@ -206,7 +206,7 @@ const webImportRestrictions = (
             name: "@tanstack/react-query",
             importNames: INFINITE_QUERY_NAMES,
             message:
-              "A list reads a page at a time through the list standard (listView + useList, useListFeed or useListFirstPage), never a hand-built infinite query. Only shared/lib/list, shared/hooks/list and the named legacy feed (row history) may; see conventions.md.",
+              "A list reads a page at a time through the list standard (listView + useList, useListFeed or useListFirstPage), never a hand-built infinite query. Only shared/lib/list and shared/hooks/list may; see conventions.md.",
           },
         ]),
     ...["@tanstack/react-table", "@tanstack/table-core"].map((name) => ({
@@ -773,23 +773,6 @@ export default defineConfig({
         "eslint/no-restricted-imports": [
           "error",
           webImportRestrictions(domainImportRestrictions),
-        ],
-      },
-    },
-    {
-      // Infinite queries: the list machinery builds them, and one legacy feed keeps its own
-      // (conventions.md): row history is ordered by the history id itself, so it is not a
-      // filterable declared list (pagination-coverage.test.ts names it too).
-      files: [
-        "apps/web/src/domains/entities/history/queries.ts",
-        "apps/web/src/domains/dossier/components/row-history-popup.tsx",
-      ],
-      rules: {
-        "eslint/no-restricted-imports": [
-          "error",
-          webImportRestrictions(domainImportRestrictions, {
-            allowInfinite: true,
-          }),
         ],
       },
     },

@@ -85,7 +85,11 @@ export {
   type CreateEntityInput,
   type UpdateEntityFieldsInput,
 } from "./entities";
-export { changedFields, listGraphHistoryEffect } from "./graph-history";
+export {
+  changedFields,
+  graphRowAttributionEffect,
+  listGraphHistoryEffect,
+} from "./graph-history";
 export {
   getGraphEgoEffect,
   type GraphEgo,

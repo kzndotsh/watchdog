@@ -1,19 +1,23 @@
 import { Effect } from "effect";
 
+import { graphHistoryListRepo } from "@watchdog/db";
 import type { GraphHistoryRow } from "@watchdog/db";
 import type {
+  GraphHistoryAttribution,
   GraphHistoryEntry,
-  GraphHistoryPage,
+  GraphHistoryRowInput,
   GraphHistorySnapshot,
-  ListGraphHistoryInput,
 } from "@watchdog/schemas/graph";
 import {
+  graphHistoryList,
   graphHistorySnapshotSchema,
-  parseGraphHistoryCursor,
 } from "@watchdog/schemas/graph";
+import { opsOf } from "@watchdog/schemas/shared";
 import type {
   CaseId,
   GraphHistoryKind,
+  ListInput,
+  ListPage,
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
@@ -23,18 +27,17 @@ import {
 } from "../actors/resolve-actor-labels";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import {
-  InvalidError,
   type NotFoundEntity,
   NotFoundError,
   type DomainTag,
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { listCappedEffect, listPageEffect } from "../infra/list-page";
 import {
   claimsRepoFxDb,
   edgesRepoFxDb,
   entitiesRepoFxDb,
   eventsRepoFxDb,
-  graphHistoryRepoFxDb,
   identifiersRepoFxDb,
   questionsRepoFxDb,
   tasksRepoFxDb,
@@ -192,91 +195,117 @@ function toEntry(
   };
 }
 
+/** Whether the row has any history entry in the Case: one row read, no count. */
+function hasEntryEffect(
+  caseId: CaseId,
+  kind: GraphHistoryKind,
+  rowId: string
+): Effect.Effect<boolean, DomainTag, Db> {
+  return listCappedEffect({
+    def: graphHistoryList,
+    repo: graphHistoryListRepo,
+    scope: { caseId, kind, rowId },
+    query: opsOf(graphHistoryList).queryOf({}),
+    cap: 1,
+    toItems: (rows) => Effect.succeed(rows),
+  }).pipe(Effect.map((found) => found.items.length > 0));
+}
+
+function entriesOfRowsEffect(
+  rows: readonly GraphHistoryRow[]
+): Effect.Effect<readonly GraphHistoryEntry[], DomainTag, Db> {
+  return Effect.gen(function* entriesOfRowsGen() {
+    const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
+    return rows.map((row) =>
+      toEntry(
+        row,
+        row.actorId === null
+          ? null
+          : labelForActor(row.actorId, users, row.actorLabel)
+      )
+    );
+  });
+}
+
 /**
- * One Graph row's history, newest first, paginated by cursor. Case-scoped and
- * organization-scoped like every Case child read: a foreign or missing Case is
- * `not_found`. The history of a deleted row stays readable by its id.
+ * One Graph row's history (`graphHistoryList`, ADR-0007): a page of its entries, newest first.
+ * Case-scoped and organization-scoped like every Case child read: a foreign or missing Case is
+ * `not_found`, and so is a row with no live row and no entry in this Case. The history of a
+ * deleted row stays readable by its id.
  */
 export function listGraphHistoryEffect(
   organizationId: OrganizationId,
-  input: ListGraphHistoryInput
-): Effect.Effect<GraphHistoryPage, DomainTag, Db> {
+  input: ListInput<typeof graphHistoryList>
+): Effect.Effect<ListPage<GraphHistoryEntry>, DomainTag, Db> {
   return Effect.gen(function* listGraphHistoryGen() {
     const caseId = yield* assertCaseInOrgEffect(input.caseId, organizationId);
     const rowId = yield* requireTrimmedGraphId(
       input.rowId,
       NOT_FOUND_ENTITY[input.kind]
     );
-    let beforeId: number | undefined;
-    if (input.cursor !== undefined) {
-      const parsed = parseGraphHistoryCursor(input.cursor);
-      if (parsed === null) {
-        return yield* new InvalidError({ reason: "Invalid history cursor" });
-      }
-      beforeId = parsed;
-    }
-    const rows = yield* graphHistoryRepoFxDb.listForRow({
-      caseId,
-      kind: input.kind,
-      rowId,
-      beforeId,
-      limit: input.limit + 1,
+    const page = yield* listPageEffect({
+      def: graphHistoryList,
+      repo: graphHistoryListRepo,
+      scope: { caseId, kind: input.kind, rowId },
+      input,
+      toItems: entriesOfRowsEffect,
     });
-    // The live row, read through the Case: another Case's row of the same id
-    // is never read, whatever the cursor.
-    const live = yield* liveRowInCase(caseId, input.kind, rowId);
-    if (rows.length === 0 && live === null) {
-      // No entries here and no live row: a row that never had history in this
-      // Case is not found, like any foreign child id. A cursor past the end of
-      // a deleted row's history is an empty page, so look for any entry.
-      const anyEntry =
-        beforeId === undefined
-          ? []
-          : yield* graphHistoryRepoFxDb.listForRow({
-              caseId,
-              kind: input.kind,
-              rowId,
-              limit: 1,
-            });
-      if (anyEntry.length === 0) {
+    // An empty page is fine past the end of a deleted row's history; a row this Case never had
+    // (no live row, no entry) is not found, with a cursor or without.
+    if (page.items.length === 0) {
+      const live = yield* liveRowInCase(caseId, input.kind, rowId);
+      if (
+        live === null &&
+        !(yield* hasEntryEffect(caseId, input.kind, rowId))
+      ) {
         return yield* new NotFoundError({
           entity: NOT_FOUND_ENTITY[input.kind],
           id: rowId,
         });
       }
     }
-    const page = rows.slice(0, input.limit);
-    const authors = authorsOf(live);
+    return page;
+  });
+}
+
+/**
+ * Who created and last changed one Graph row as it stands now, as display names; `null` once the
+ * row is deleted (its history stays). Case-scoped like the history: a row this Case never had is
+ * `not_found`.
+ */
+export function graphRowAttributionEffect(
+  organizationId: OrganizationId,
+  input: GraphHistoryRowInput
+): Effect.Effect<GraphHistoryAttribution | null, DomainTag, Db> {
+  return Effect.gen(function* graphRowAttributionGen() {
+    const caseId = yield* assertCaseInOrgEffect(input.caseId, organizationId);
+    const rowId = yield* requireTrimmedGraphId(
+      input.rowId,
+      NOT_FOUND_ENTITY[input.kind]
+    );
+    const authors = authorsOf(yield* liveRowInCase(caseId, input.kind, rowId));
+    if (authors === null) {
+      // Gone: its history stays, so a row with an entry here is `null`, and a row this Case never
+      // had is not found, like any foreign child id.
+      if (!(yield* hasEntryEffect(caseId, input.kind, rowId))) {
+        return yield* new NotFoundError({
+          entity: NOT_FOUND_ENTITY[input.kind],
+          id: rowId,
+        });
+      }
+      return null;
+    }
     const users = yield* loadActorUsersEffect([
-      ...page.map((row) => row.actorId),
-      authors?.createdBy,
-      authors?.updatedBy,
+      authors.createdBy,
+      authors.updatedBy,
     ]);
-    const last = page.at(-1);
     const nameOf = (id: string | null) =>
       id === null ? null : labelForActor(id, users);
     return {
-      attribution:
-        authors === null
-          ? null
-          : {
-              createdBy: nameOf(authors.createdBy),
-              createdAt: authors.createdAt,
-              updatedBy: nameOf(authors.updatedBy),
-              updatedAt: authors.updatedAt,
-            },
-      items: page.map((row) =>
-        toEntry(
-          row,
-          row.actorId === null
-            ? null
-            : labelForActor(row.actorId, users, row.actorLabel)
-        )
-      ),
-      nextCursor:
-        rows.length > input.limit && last !== undefined
-          ? String(last.id)
-          : null,
+      createdBy: nameOf(authors.createdBy),
+      createdAt: authors.createdAt,
+      updatedBy: nameOf(authors.updatedBy),
+      updatedAt: authors.updatedAt,
     };
   });
 }

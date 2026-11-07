@@ -7,6 +7,7 @@ import { edgeConformance } from "./edges.ts";
 import { entityConformance } from "./entities.ts";
 import { eventConformance } from "./events.ts";
 import { evidenceConformance } from "./evidence.ts";
+import { graphHistoryConformance } from "./graph-history.ts";
 import { graphWriteConformance } from "./graph-writes.ts";
 import { identifierConformance } from "./identifiers.ts";
 import { jobConformance } from "./jobs.ts";
@@ -35,6 +36,7 @@ export const LIST_CONFORMANCE: Readonly<Record<string, ListConformance>> = {
   [jobConformance.list]: jobConformance,
   [graphWriteConformance.list]: graphWriteConformance,
   [activityConformance.list]: activityConformance,
+  [graphHistoryConformance.list]: graphHistoryConformance,
 };
 
 export type {

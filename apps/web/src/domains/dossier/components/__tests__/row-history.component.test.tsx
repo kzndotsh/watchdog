@@ -1,22 +1,27 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
+  GraphHistoryAttribution,
   GraphHistoryEntry,
-  GraphHistoryPage,
 } from "@watchdog/schemas/graph";
+import type { ListPage } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit";
 
 // Only the network boundary is faked: the popover reads through the real
-// `graphHistoryQuery` under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
+// `graphHistoryListView` under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
 vi.mock("@/domains/entities/history/history.functions", () => ({
   listGraphHistoryFn: vi.fn(),
+  graphRowAttributionFn: vi.fn(),
 }));
 
 import { RowHistory } from "@/domains/dossier/components/row-history";
-import { listGraphHistoryFn } from "@/domains/entities/history/history.functions";
+import {
+  graphRowAttributionFn,
+  listGraphHistoryFn,
+} from "@/domains/entities/history/history.functions";
 import { historyKeys } from "@/domains/entities/history/queries";
 
 const CASE_ID = testId(10);
@@ -42,20 +47,17 @@ function entry(
   };
 }
 
-const ATTRIBUTION = {
+const ATTRIBUTION: GraphHistoryAttribution = {
   createdBy: "ada",
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedBy: "grace",
   updatedAt: "2026-01-02T00:00:00.000Z",
 };
 
-function page(partial: Partial<GraphHistoryPage>): GraphHistoryPage {
-  return {
-    attribution: ATTRIBUTION,
-    items: [],
-    nextCursor: null,
-    ...partial,
-  };
+function page(
+  partial: Partial<ListPage<GraphHistoryEntry>>
+): ListPage<GraphHistoryEntry> {
+  return { items: [], nextCursor: null, total: null, ...partial };
 }
 
 function renderHistory() {
@@ -69,6 +71,10 @@ function renderHistory() {
   );
   return client;
 }
+
+beforeEach(() => {
+  vi.mocked(graphRowAttributionFn).mockResolvedValue(ATTRIBUTION);
+});
 
 describe("RowHistory", () => {
   it("fetches nothing until it is opened", () => {
@@ -169,11 +175,12 @@ describe("RowHistory", () => {
   });
 
   it("says so when a row has no recorded changes, and names an unknown author", async () => {
-    vi.mocked(listGraphHistoryFn).mockResolvedValue(
-      page({
-        attribution: { ...ATTRIBUTION, createdBy: null, updatedBy: null },
-      })
-    );
+    vi.mocked(listGraphHistoryFn).mockResolvedValue(page({}));
+    vi.mocked(graphRowAttributionFn).mockResolvedValue({
+      ...ATTRIBUTION,
+      createdBy: null,
+      updatedBy: null,
+    });
     const user = userEvent.setup();
     renderHistory();
     await user.click(
@@ -195,5 +202,17 @@ describe("RowHistory", () => {
     );
 
     expect(await screen.findByRole("alert")).toHaveTextContent("boom");
+  });
+
+  it("shows the failure when the authorship cannot be loaded", async () => {
+    vi.mocked(listGraphHistoryFn).mockResolvedValue(page({}));
+    vi.mocked(graphRowAttributionFn).mockRejectedValue(new Error("no authors"));
+    const user = userEvent.setup();
+    renderHistory();
+    await user.click(
+      screen.getByRole("button", { name: "History of this claim" })
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("no authors");
   });
 });

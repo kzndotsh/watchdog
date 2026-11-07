@@ -1,13 +1,20 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { RowHistoryEntry } from "@/domains/dossier/components/row-history-entry";
-import { graphHistoryQuery } from "@/domains/entities/history/queries";
+import {
+  graphHistoryListView,
+  graphRowAttributionQuery,
+} from "@/domains/entities/history/queries";
 import { couldnt, errMessage } from "@/lib/utils";
+import { useListFeed } from "@/shared/hooks/list/use-list-feed";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { InlineLoading } from "@/shared/ui/inline-loading";
 import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import type { GraphHistoryAttribution } from "@watchdog/schemas/graph";
+import {
+  graphHistoryList,
+  type GraphHistoryAttribution,
+} from "@watchdog/schemas/graph";
 import type { GraphHistoryKind } from "@watchdog/schemas/shared";
 
 type AuthorLineProps = {
@@ -62,15 +69,26 @@ type RowHistoryPopupProps = {
  * open, so a row that is never asked for its history reads nothing.
  */
 export function RowHistoryPopup({ caseId, kind, rowId }: RowHistoryPopupProps) {
-  const history = useInfiniteQuery(graphHistoryQuery(caseId, kind, rowId));
-  const attribution = history.data?.pages[0]?.attribution ?? null;
-  const entries = history.data?.pages.flatMap((page) => page.items) ?? [];
+  const scope = { caseId, kind, rowId };
+  const history = useListFeed(
+    graphHistoryListView,
+    scope,
+    graphHistoryList.queryOf({})
+  );
+  const attributionQuery = useQuery(graphRowAttributionQuery(scope));
+  const attribution = attributionQuery.data ?? null;
+  const entries = history.data ?? [];
 
   return (
     <>
       {history.isError ? (
         <p role="alert" className="text-destructive text-xs">
           {errMessage(history.error, couldnt("load", "history"))}
+        </p>
+      ) : null}
+      {attributionQuery.isError ? (
+        <p role="alert" className="text-destructive text-xs">
+          {errMessage(attributionQuery.error, couldnt("load", "authorship"))}
         </p>
       ) : null}
       {history.isPending ? <InlineLoading label="Loading…" /> : null}

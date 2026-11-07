@@ -926,6 +926,23 @@
           ]
         }
       }
+    },
+    "attribution": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/history/attribution",
+          "summary": "Who created and last changed one Graph row",
+          "description": "The live row's authorship as display names; null once the row is deleted (its history stays).",
+          "tags": [
+            "history"
+          ]
+        }
+      }
     }
   },
   "organization": {
