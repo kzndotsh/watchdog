@@ -21,7 +21,23 @@ describe("listKnownCredentials", () => {
     }
   });
 
+  it("lists Settings slots in label order, a stable order that adding a Cap does not shuffle", () => {
+    const labels = listKnownCredentials().map((k) => k.label);
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+  });
+
   it("lists the AI provider slots the model Cap declares", () => {
+    const extractAi = CAPABILITIES.find((c) => c.id === "evidence.extract.ai");
+    const declared = (extractAi?.credentials ?? []).flatMap((spec) =>
+      credentialSpecSlots(spec).map((slot) => slot.name)
+    );
+    expect(declared).toEqual(
+      expect.arrayContaining([
+        "ANTHROPIC_API_KEY",
+        "AI_COMPAT_API_KEY",
+        "AI_COMPAT_BASE_URL",
+      ])
+    );
     const names = listKnownCredentials().map((k) => k.name);
     expect(names).toEqual(
       expect.arrayContaining([

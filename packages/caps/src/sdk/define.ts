@@ -290,6 +290,9 @@ export function defineCapability<TSchema extends z.ZodType>(
       if (slot.label.trim() === "") {
         throw new Error(`Credential ${slot.name} needs a Settings label`);
       }
+      if (slot.description.trim() === "") {
+        throw new Error(`Credential ${slot.name} needs a Settings description`);
+      }
     }
   }
   return def;
