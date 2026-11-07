@@ -35,100 +35,124 @@ type Key = readonly unknown[];
 const CASE = "case-1";
 const ID = "id-1";
 
-/** One factory: its `all` and one call of every other member (sample args). */
+/** One factory: its `all`, one call of every other member (sample args), and the members never called. */
 type Factory = {
   readonly name: string;
   readonly all: Key;
   readonly keys: readonly Key[];
-  /** Members besides `all`: a new one fails the count check until it is listed in `keys`. */
-  readonly members: number;
+  /** Members besides `all` the samples never called: a new member fails until it is sampled. */
+  readonly uncovered: readonly string[];
 };
 
-function factory(name: string, all: Key, members: object, keys: Key[]) {
+function factory<T extends object>(
+  name: string,
+  all: Key,
+  members: T,
+  sample: (keys: T) => Key[]
+): Factory {
+  const called = new Set<string>();
+  const recording = new Proxy(members, {
+    get(target, member, receiver) {
+      const value: unknown = Reflect.get(target, member, receiver);
+      if (typeof value !== "function" || typeof member !== "string") {
+        return value;
+      }
+      return (...args: unknown[]): unknown => {
+        called.add(member);
+        // oxlint-disable-next-line anti-slop/no-reflect-apply -- a test-only recording proxy forwards any factory member unchanged; the member set is what is under test
+        return Reflect.apply(value, target, args);
+      };
+    },
+  });
   return {
     name,
     all,
-    keys,
-    members: Object.keys(members).filter((member) => member !== "all").length,
-  } satisfies Factory;
+    keys: sample(recording),
+    uncovered: Object.keys(members).filter(
+      (member) => member !== "all" && !called.has(member)
+    ),
+  };
 }
 
 const factories: readonly Factory[] = [
-  factory("activityKeys", activityKeys.all, activityKeys, [
-    activityKeys.recent(),
-    activityKeys.recent({}),
+  factory("activityKeys", activityKeys.all, activityKeys, (k) => [
+    k.recent(),
+    k.recent({}),
   ]),
-  factory("casesKeys", casesKeys.all, casesKeys, [
-    casesKeys.context(),
-    casesKeys.detail(CASE),
-    casesKeys.bySlug("alpha"),
-    casesKeys.deletedBySlug("alpha"),
-    casesKeys.counts(),
-    casesKeys.casesCounts(CASE, "2026-01-01"),
-    casesKeys.deletionPolicy(),
-    casesKeys.deletionPolicy(CASE),
+  factory("casesKeys", casesKeys.all, casesKeys, (k) => [
+    k.context(),
+    k.detail(CASE),
+    k.bySlug("alpha"),
+    k.deletedBySlug("alpha"),
+    k.counts(),
+    k.casesCounts(CASE, "2026-01-01"),
+    k.deletionPolicy(),
+    k.deletionPolicy(CASE),
   ]),
-  factory("collectKeys", collectKeys.all(CASE), collectKeys, [
-    collectKeys.item(CASE, ID, true),
-    collectKeys.item(CASE, ID, false),
+  factory("collectKeys", collectKeys.all(CASE), collectKeys, (k) => [
+    k.item(CASE, ID, true),
+    k.item(CASE, ID, false),
   ]),
-  factory("claimsKeys", claimsKeys.all(CASE), claimsKeys, []),
-  factory("edgesKeys", edgesKeys.all(CASE), edgesKeys, [
-    edgesKeys.graphSnapshot(CASE),
-    edgesKeys.graphEgo(CASE, ID),
-    edgesKeys.byId(CASE, ID),
+  factory("claimsKeys", claimsKeys.all(CASE), claimsKeys, () => []),
+  factory("edgesKeys", edgesKeys.all(CASE), edgesKeys, (k) => [
+    k.graphSnapshot(CASE),
+    k.graphEgo(CASE, ID),
+    k.byId(CASE, ID),
   ]),
-  factory("entitiesKeys", entitiesKeys.all(CASE), entitiesKeys, [
-    entitiesKeys.detail(CASE, "alpha"),
+  factory("entitiesKeys", entitiesKeys.all(CASE), entitiesKeys, (k) => [
+    k.detail(CASE, "alpha"),
   ]),
-  factory("eventsKeys", eventsKeys.all(CASE), eventsKeys, []),
-  factory("historyKeys", historyKeys.all(CASE), historyKeys, [
-    historyKeys.row(CASE, "claim", ID),
+  factory("eventsKeys", eventsKeys.all(CASE), eventsKeys, () => []),
+  factory("historyKeys", historyKeys.all(CASE), historyKeys, (k) => [
+    k.row(CASE, "claim", ID),
   ]),
-  factory("identifiersKeys", identifiersKeys.all(CASE), identifiersKeys, []),
-  factory("questionsKeys", questionsKeys.all(CASE), questionsKeys, []),
-  factory("evidenceKeys", evidenceKeys.all(CASE), evidenceKeys, [
-    evidenceKeys.urlDumps(CASE),
-    evidenceKeys.recent(CASE),
-    evidenceKeys.byId(CASE, ID),
-    evidenceKeys.download(CASE, ID),
-    evidenceKeys.providerCalls(CASE, ID),
+  factory(
+    "identifiersKeys",
+    identifiersKeys.all(CASE),
+    identifiersKeys,
+    () => []
+  ),
+  factory("questionsKeys", questionsKeys.all(CASE), questionsKeys, () => []),
+  factory("evidenceKeys", evidenceKeys.all(CASE), evidenceKeys, (k) => [
+    k.urlDumps(CASE),
+    k.recent(CASE),
+    k.byId(CASE, ID),
+    k.download(CASE, ID),
+    k.providerCalls(CASE, ID),
   ]),
-  factory("jobsKeys", jobsKeys.all(CASE), jobsKeys, [
-    jobsKeys.recent(CASE),
-    jobsKeys.detail(CASE, ID),
-    jobsKeys.playbookRun(CASE, ID),
-    jobsKeys.providerCalls(CASE, ID),
+  factory("jobsKeys", jobsKeys.all(CASE), jobsKeys, (k) => [
+    k.recent(CASE),
+    k.detail(CASE, ID),
+    k.playbookRun(CASE, ID),
+    k.providerCalls(CASE, ID),
   ]),
-  factory("artifactKeys", artifactKeys.all, artifactKeys, [
-    artifactKeys.job(CASE, ID, "sha", "text/plain"),
-    artifactKeys.evidence(CASE, ID, "text/plain"),
+  factory("artifactKeys", artifactKeys.all, artifactKeys, (k) => [
+    k.job(CASE, ID, "sha", "text/plain"),
+    k.evidence(CASE, ID, "text/plain"),
   ]),
-  factory("organizationKeys", organizationKeys.all, organizationKeys, [
-    organizationKeys.stateAll(),
-    organizationKeys.state("user-1"),
-    organizationKeys.settings(),
-    organizationKeys.team(),
-    organizationKeys.userInvitations(),
-    organizationKeys.memberRole("org-1"),
-    organizationKeys.memberRole(undefined),
-    organizationKeys.slugAvailability("alpha"),
-    organizationKeys.invitationPreview(ID),
+  factory("organizationKeys", organizationKeys.all, organizationKeys, (k) => [
+    k.stateAll(),
+    k.state("user-1"),
+    k.settings(),
+    k.team(),
+    k.userInvitations(),
+    k.memberRole("org-1"),
+    k.memberRole(undefined),
+    k.slugAvailability("alpha"),
+    k.invitationPreview(ID),
   ]),
-  factory("searchKeys", searchKeys.all, searchKeys, [
-    searchKeys.case(CASE, "q"),
+  factory("searchKeys", searchKeys.all, searchKeys, (k) => [k.case(CASE, "q")]),
+  factory("credentialsKeys", credentialsKeys.all, credentialsKeys, () => []),
+  factory("usersKeys", usersKeys.all, usersKeys, () => []),
+  factory("tasksKeys", tasksKeys.all(CASE), tasksKeys, (k) => [
+    k.boards(CASE),
+    k.board(CASE, {}),
+    k.byId(CASE, ID),
+    k.due(CASE, "2026-01-01"),
   ]),
-  factory("credentialsKeys", credentialsKeys.all, credentialsKeys, []),
-  factory("usersKeys", usersKeys.all, usersKeys, []),
-  factory("tasksKeys", tasksKeys.all(CASE), tasksKeys, [
-    tasksKeys.boards(CASE),
-    tasksKeys.board(CASE, {}),
-    tasksKeys.byId(CASE, ID),
-    tasksKeys.due(CASE, "2026-01-01"),
-  ]),
-  factory("proposalsKeys", proposalsKeys.all(CASE), proposalsKeys, [
-    proposalsKeys.byId(CASE, ID),
-    proposalsKeys.pendingSummary(CASE),
+  factory("proposalsKeys", proposalsKeys.all(CASE), proposalsKeys, (k) => [
+    k.byId(CASE, ID),
+    k.pendingSummary(CASE),
   ]),
 ];
 
@@ -190,7 +214,7 @@ describe("Query key nesting", () => {
   it.each(factories.map((f) => [f.name, f] as const))(
     "%s: every key starts with its all",
     (_name, f) => {
-      expect(f.keys.length).toBeGreaterThanOrEqual(f.members);
+      expect(f.uncovered, "members never sampled").toEqual([]);
       for (const key of f.keys) {
         expect(startsWith(key, f.all), JSON.stringify(key)).toBe(true);
       }
