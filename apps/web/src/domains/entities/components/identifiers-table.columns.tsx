@@ -22,6 +22,10 @@ import {
 } from "@/shared/ui/identifiers/commit-identifier-field";
 import {
   IdentifierValueCopyControl,
+  platformColumnHeader,
+  statusColumnHeader,
+  typeColumnHeader,
+  valueColumnHeader,
   PLATFORM_OPTIONS,
   STATUS_OPTIONS,
   TYPE_OPTIONS,
@@ -78,30 +82,6 @@ function entityColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Entity" />;
-}
-
-function valueColumnHeader({
-  column,
-}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
-  return <DataTableColumnHeader column={column} title="Value" />;
-}
-
-function typeColumnHeader({
-  column,
-}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
-  return <DataTableColumnHeader column={column} title="Type" />;
-}
-
-function platformColumnHeader({
-  column,
-}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
-  return <DataTableColumnHeader column={column} title="Platform" />;
-}
-
-function statusColumnHeader({
-  column,
-}: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
-  return <DataTableColumnHeader column={column} title="Status" />;
 }
 
 function confidenceColumnHeader({

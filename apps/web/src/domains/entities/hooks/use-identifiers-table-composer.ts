@@ -9,7 +9,7 @@ import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-op
 import { buildCreateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import { errMessage } from "@/lib/utils";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
-import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/identifier-cells";
+import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/commit-identifier-field";
 import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,

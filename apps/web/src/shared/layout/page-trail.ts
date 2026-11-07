@@ -4,6 +4,7 @@ import {
   categoryLabel,
   PLAYBOOK_CATEGORY,
 } from "@/shared/lib/cap-category";
+import { isWorkScreen } from "@/shared/lib/case-path";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 import type { PageTrailInput, TrailItem } from "./page-trail.types";
@@ -35,10 +36,6 @@ const SCREEN_LABEL: Record<WorkScreen, string> = {
   triage: "Triage",
   tasks: "Tasks",
 };
-
-function isWorkScreen(segment: string): segment is WorkScreen {
-  return Object.hasOwn(WORK_TO, segment);
-}
 
 function buildDashboardTrail(): TrailItem[] {
   return [current("dashboard", "Dashboard")];

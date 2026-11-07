@@ -99,7 +99,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | **Table** (`/cases/$caseSlug/entities`, `/cases/$caseSlug/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable isPending={listPending(...)}` ([`tables.md`](ui/tables.md)) |
 | **Board** (`/cases/$caseSlug/tasks`) | identity + `warmTasksQueries` (the URL view's `tasks.board` and the first page of Done and Dropped) | `PendingRegion` + `BoardSkeleton`; Done and Dropped `ListBody` |
 | **Card grid** (`/cases`) | identity only | `PendingRegion` + `CardGridSkeleton` |
-| **Graph** (`/cases/$caseSlug/graph`) | identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` |
+| **Graph** (`/cases/$caseSlug/graph`) | identity + `warmGraphQueries` (not blocking) | `GraphCanvasLoadingRegion` |
 | **Stack** (Dossier, Case Overview) | identity + `warmDossierQueries` / `warmCaseOverviewQueries` | `ActiveTabBody` + `stackPendingFallback()`; Case Overview uses `CaseOverviewPending` |
 | **Dashboard** (`/`) | identity + `warmDashboardQueries` | `Page density="split"`; `PendingRegion` + hand skeletons (not `stackPendingFallback`) |
 | **Settings** | route owns `<Page>` + `PageHeader` | `SettingsShell` tab panels; credentials tab uses `stackPendingFallback(1)` |

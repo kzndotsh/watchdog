@@ -1,3 +1,12 @@
+export function formatFullLocalDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+}
+
 export function formatRelativeTime(input: Date | string): string {
   const d = typeof input === "string" ? new Date(input) : input;
   if (Number.isNaN(d.getTime())) return "—";

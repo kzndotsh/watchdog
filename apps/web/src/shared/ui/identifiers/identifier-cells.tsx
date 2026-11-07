@@ -55,8 +55,6 @@ import {
   type IdentifierType,
 } from "@watchdog/schemas/shared";
 
-export { isHandleWithoutPlatform } from "@/shared/ui/identifiers/commit-identifier-field";
-
 export function IdentifierValueCopyControl({ value }: { value: string }) {
   return (
     <Button
@@ -125,25 +123,25 @@ export const {
   useActions: useIdentifierTableActions,
 } = createTableActionsContext<IdentifierTableActions>("IdentifierTableActions");
 
-function valueColumnHeader({
+export function valueColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
-function typeColumnHeader({
+export function typeColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Type" />;
 }
 
-function platformColumnHeader({
+export function platformColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Platform" />;
 }
 
-function statusColumnHeader({
+export function statusColumnHeader({
   column,
 }: HeaderContext<ServerTableFeatures, CaseIdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Status" />;

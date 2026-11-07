@@ -13,11 +13,11 @@ const MAX_REPORTS_PER_WINDOW = 5;
 /** A sliding window, not per page load: a long-lived tab keeps reporting new failures. */
 const REPORT_WINDOW_MS = 5 * 60_000;
 
-/** Field caps (the server truncates to the same numbers) and the body budget under its 8 KiB cap. */
+/** Field caps (the server imports these) and the body budget under its 8 KiB cap. */
 const MAX_NAME = 100;
-const MAX_MESSAGE = 1000;
-const MAX_STACK = 4000;
-const MAX_PAGE = 1000;
+export const MAX_MESSAGE = 1000;
+export const MAX_STACK = 4000;
+export const MAX_PAGE = 1000;
 const MAX_BODY_BYTES = 7000;
 
 export type ClientErrorKind = "error" | "unhandledrejection" | "render";
