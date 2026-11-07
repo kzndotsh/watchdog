@@ -1,124 +1,131 @@
+// @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
+import {
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type Mock,
+} from "vitest";
 
+import type {
+  DossierSearch,
+  DossierTab,
+} from "@/domains/dossier/lib/dossier-tabs";
 import type { EntityRecord } from "@/domains/entities/types";
+import {
+  matchesChoice,
+  matchesQ,
+  memoryListPage,
+  type ListPageData,
+} from "@/testing/memory-list";
+import {
+  buildCaseIdentifierRecord,
+  buildEntityRecord,
+} from "@/testing/records";
+import { RouteCaseProvider } from "@/testing/route-case";
+import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
 import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
-
-vi.mock("@/shared/layout/app-breadcrumbs", () => ({
-  AppBreadcrumbs: () => null,
-}));
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
-    <a href={to}>{children}</a>
+// The trail reads the router's matches, which a test router does not have: keep only the
+// `current` slot, where the Dossier puts the Entity's name.
+vi.mock("@/shared/layout/app-breadcrumbs", () => ({
+  AppBreadcrumbs: ({ current }: { current?: React.ReactNode }) => (
+    <nav aria-label="Breadcrumb">{current}</nav>
   ),
-  useNavigate: () => vi.fn(),
-  notFound: () => {
-    throw new Error("not found");
-  },
 }));
 
-vi.mock("@/domains/entities/components/delete-entity-dialog", () => ({
-  DeleteEntityDialog: () => null,
+// The Plate editor installs a global store at import and is not what a Dossier test is about.
+vi.mock("@/shared/ui/rich-text", () => ({
+  RichTextEditor: ({
+    value,
+    ariaLabel,
+  }: {
+    value: string;
+    ariaLabel?: string;
+  }) => (
+    <textarea
+      aria-label={ariaLabel ?? "Rich text editor"}
+      value={value}
+      readOnly
+    />
+  ),
 }));
 
-const EMPTY_COUNT = vi.hoisted(() => ({
-  loaded: 0,
-  total: null,
-  hasMore: false,
-  isAtCeiling: false,
-  isSettled: false,
-}));
-
-vi.mock("@/domains/dossier/hooks/use-dossier-shell", () => ({
-  useDossierShell: () => ({
-    evidenceAll: [],
-    previewEvidence: null,
-    setPreviewEvidence: vi.fn(),
-    isEditOpen: false,
-    setEditOpen: vi.fn(),
-    editError: null,
-    setEditError: vi.fn(),
-    renameError: null,
-    setRenameError: vi.fn(),
-    handleEvidenceClick: vi.fn(),
-    claimCount: EMPTY_COUNT,
-    connectionCount: EMPTY_COUNT,
-    eventCount: EMPTY_COUNT,
-    questionCount: EMPTY_COUNT,
-    identifierCount: EMPTY_COUNT,
-    evidenceCount: EMPTY_COUNT,
-    taskCount: EMPTY_COUNT,
-    renameMutation: { mutate: vi.fn(), isPending: false },
-    editMutation: { mutateAsync: vi.fn(), isPending: false },
-  }),
-}));
-
-vi.mock("@/domains/dossier/components/claims-section", () => ({
-  ClaimsSection: () => null,
-}));
-vi.mock("@/domains/dossier/components/connections-section", () => ({
-  ConnectionsSection: () => null,
-}));
-vi.mock("@/domains/dossier/components/disprove-section", () => ({
-  DisproveSection: () => null,
-}));
-vi.mock("@/domains/dossier/components/dossier-edit-dialog", () => ({
-  DossierEditDialog: () => null,
-}));
-vi.mock("@/domains/dossier/components/dossier-export-menu", () => ({
-  DossierExportMenu: () => <div>Export menu</div>,
-}));
-vi.mock("@/domains/dossier/components/entity-evidence-section", () => ({
-  EntityEvidenceSection: () => null,
-}));
-vi.mock("@/domains/dossier/components/events-section", () => ({
-  EventsSection: () => null,
-}));
-vi.mock("@/domains/intake/components/evidence-preview-drawer", () => ({
-  EvidencePreviewDrawer: () => null,
-}));
-vi.mock("@/domains/dossier/components/identifiers-section", () => ({
-  IdentifiersSection: () => null,
-}));
-vi.mock("@/domains/dossier/components/questions-section", () => ({
-  QuestionsSection: () => null,
-}));
-vi.mock("@/domains/dossier/components/summary-section", () => ({
-  SummarySection: () => null,
-}));
-vi.mock("@/domains/dossier/components/notes-section", () => ({
-  NotesSection: () => null,
-}));
-vi.mock("@/domains/tasks/components/dossier-tasks-section", () => ({
-  DossierTasksSection: () => null,
-}));
-
-const useCasesContextMock = vi.hoisted(() => vi.fn());
-const resolveQueryMock = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
-  useCasesContext: () => useCasesContextMock(),
-}));
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQuery: (...args: unknown[]) => resolveQueryMock(...args),
-    useQueryClient: actual.useQueryClient,
+// The server functions are the network boundary: every module the Dossier reads or writes
+// through is faked at its edge (one spy per export), and the tests set what each answers.
+const serverFn = vi.hoisted(() => {
+  const spies = new Map<
+    string,
+    Mock<(request: { data: ListPageData }) => Promise<unknown>>
+  >();
+  return (name: string) => {
+    const spy = spies.get(name) ?? vi.fn();
+    spies.set(name, spy);
+    return spy;
   };
 });
+const stubFns = vi.hoisted(
+  () => (names: string) =>
+    Object.fromEntries(names.split(" ").map((name) => [name, serverFn(name)]))
+);
+
+vi.mock("@/domains/entities/entities.functions", () =>
+  stubFns(
+    "listEntitiesPageFn listEntitiesPickerPageFn matchEntityNamesFn getEntitiesFn getEntityBySlugFn createEntityFn updateEntityFieldsFn recordOpenInFn deleteEntityFn"
+  )
+);
+vi.mock("@/domains/entities/claims/claims.functions", () =>
+  stubFns("listClaimsPageFn createClaimFn retractClaimFn updateClaimFn")
+);
+vi.mock("@/domains/entities/edges/edges.functions", () =>
+  stubFns(
+    "listEdgesPageFn getEdgesFn getGraphEgoFn getGraphSnapshotFn createEdgeFn updateEdgeFn deleteEdgeFn"
+  )
+);
+vi.mock("@/domains/entities/events/events.functions", () =>
+  stubFns("listEventsPageFn createEventFn deleteEventFn updateEventFn")
+);
+vi.mock("@/domains/entities/identifiers/identifiers.functions", () =>
+  stubFns(
+    "listIdentifiersPageFn createIdentifierFn updateIdentifierFn deleteIdentifierFn"
+  )
+);
+vi.mock("@/domains/entities/questions/questions.functions", () =>
+  stubFns(
+    "listQuestionsPageFn createQuestionFn resolveQuestionFn updateQuestionFn reopenQuestionFn deleteQuestionFn"
+  )
+);
+vi.mock("@/domains/entities/history/history.functions", () =>
+  stubFns("listGraphHistoryFn graphRowAttributionFn")
+);
+vi.mock("@/domains/intake/intake.functions", () =>
+  stubFns(
+    "getEvidenceDownloadUrlFn listEvidencePageFn listEvidencePickerPageFn getEvidenceFn getEvidenceManyFn processEvidenceFn enrichUrlEvidenceFn dumpPasteFn dumpUrlFn softDeleteEvidenceFn restoreEvidenceFn attachEvidenceEntityFn presignUploadFn confirmFileUploadFn listEvidenceProviderCallsFn"
+  )
+);
+vi.mock("@/domains/tasks/tasks.functions", () =>
+  stubFns(
+    "listTasksPageFn getTaskBoardFn getDueTasksFn getTaskFn createTaskFn updateTaskFn deleteTaskFn reorderTasksFn"
+  )
+);
+vi.mock("@/domains/organization/organization-settings.functions", () =>
+  stubFns("getOrganizationSettingsFn updateOrganizationSettingsFn")
+);
 
 import { Dossier } from "@/domains/dossier/components/dossier";
-import { renderIn } from "@/testing/render-in-case";
 
 const CASE = {
   id: testCaseId(10),
@@ -128,79 +135,162 @@ const CASE = {
   allowedEgress: [...DEFAULT_ALLOWED_EGRESS],
 };
 
-const render = renderIn(CASE);
-
-const ENTITY: EntityRecord = {
-  version: 1,
+const ENTITY: EntityRecord = buildEntityRecord({
   id: testId(1),
   caseId: CASE.id,
   slug: "alpha",
   name: "Alpha Entity",
   kind: "person",
-  summary: null,
-  notes: null,
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
-};
+});
 
-function renderDossier(active: typeof CASE | null) {
-  useCasesContextMock.mockReturnValue({
-    casesCtx: active
-      ? { cases: [active], active }
-      : { cases: [], active: null },
-    cases: active ? [active] : [],
-    active,
-    pending: false,
-    loadError: null,
-    retry: vi.fn(),
-    placeholder: false,
-  });
-  resolveQueryMock.mockReset();
-  resolveQueryMock.mockReturnValue({
-    data: ENTITY,
-    isFetched: true,
-    isLoading: false,
-    isError: false,
-    isPlaceholderData: false,
-    refetch: vi.fn(),
-  });
+const IDENTIFIERS = [
+  buildCaseIdentifierRecord({
+    id: testId(31),
+    entityId: ENTITY.id,
+    type: "email",
+    value: "alpha@example.com",
+  }),
+  buildCaseIdentifierRecord({
+    id: testId(32),
+    entityId: ENTITY.id,
+    type: "phone",
+    value: "+15551212",
+  }),
+];
 
-  const client = new QueryClient();
+const getEntityBySlugFn = serverFn("getEntityBySlugFn");
+const listIdentifiersPageFn = serverFn("listIdentifiersPageFn");
+const getTaskBoardFn = serverFn("getTaskBoardFn");
+
+const emptyPage = memoryListPage<unknown>([], { matches: () => false });
+
+beforeAll(preloadSharedLazyChunks);
+
+beforeEach(() => {
+  getEntityBySlugFn.mockReset().mockResolvedValue(ENTITY);
+  for (const name of [
+    "listClaimsPageFn",
+    "listEdgesPageFn",
+    "listEventsPageFn",
+    "listQuestionsPageFn",
+    "listEvidencePageFn",
+  ]) {
+    serverFn(name).mockReset().mockImplementation(emptyPage);
+  }
+  listIdentifiersPageFn.mockReset().mockImplementation(
+    memoryListPage(IDENTIFIERS, {
+      matches: (row, data) =>
+        matchesChoice(row.type, data.type) &&
+        matchesQ(data, [row.value, row.platform, row.notes]),
+    })
+  );
+  getTaskBoardFn
+    .mockReset()
+    .mockResolvedValue({ items: [], isTruncated: false });
+});
+
+/** The route's part: the tab in "the URL" (state here). */
+function Route({ initial }: { initial: DossierSearch }) {
+  const [search, setSearch] = useState(initial);
+  return (
+    <Dossier
+      entitySlug="alpha"
+      search={search}
+      onSearchChange={() => undefined}
+      onTabChange={(tab: DossierTab) => {
+        setSearch({ tab });
+      }}
+    />
+  );
+}
+
+function renderDossier(initial: DossierSearch = {}) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const Router = testRouterWrapper(createTestRouter());
   return render(
-    <QueryClientProvider client={client}>
-      <Dossier
-        entitySlug="alpha"
-        search={{}}
-        onSearchChange={vi.fn()}
-        onTabChange={vi.fn()}
-      />
-    </QueryClientProvider>
+    <Router>
+      <RouteCaseProvider routeCase={CASE}>
+        <QueryClientProvider client={client}>
+          <Route initial={initial} />
+        </QueryClientProvider>
+      </RouteCaseProvider>
+    </Router>
   );
 }
 
 describe("Dossier", () => {
-  it("renders the entity dossier chrome when a case is active", () => {
-    renderDossier(CASE);
+  it("shows the Entity's name, its actions and every tab", async () => {
+    renderDossier();
+
+    expect(await screen.findByLabelText("Entity name")).toHaveValue(
+      "Alpha Entity"
+    );
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Delete entity" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Export menu")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Overview/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Notes/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Claims/i })).toBeInTheDocument();
+    const tabs = within(screen.getByRole("tablist")).getAllByRole("tab");
     expect(
-      screen.getByRole("tab", { name: /Identifiers/i })
+      tabs.map((tab) => tab.textContent?.replace(/\d+$/, "").trim())
+    ).toEqual([
+      "Overview",
+      "Notes",
+      "Claims",
+      "Identifiers",
+      "Connections",
+      "Evidence",
+      "Events",
+      "Questions",
+      "Tasks",
+    ]);
+    expect(screen.getByRole("tab", { name: /Overview/ })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+  });
+
+  it("counts the Identifiers tab from the list's total and lists them in the Overview", async () => {
+    renderDossier();
+
+    expect(
+      await screen.findByRole("tab", { name: /Identifiers\s*2/ })
+    ).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("alpha@example.com")).toBeVisible();
+    expect(screen.getByDisplayValue("+15551212")).toBeVisible();
+  });
+
+  it("opens the Identifiers tab on a click and shows its rows", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderDossier();
+    await user.click(await screen.findByRole("tab", { name: /Identifiers/ }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /Identifiers/ })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
+    });
+    expect(
+      await screen.findByRole("searchbox", { name: "Search identifiers" })
+    ).toBeInTheDocument();
+    expect(screen.getByDisplayValue("alpha@example.com")).toBeVisible();
+  });
+
+  it("asks before deleting the Entity", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderDossier();
+    await user.click(
+      await screen.findByRole("button", { name: "Delete entity" })
+    );
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByRole("heading", { name: "Delete entity" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("tab", { name: /Connections/i })
+      within(dialog).getByRole("button", { name: "Cancel" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Evidence/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Events/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Questions/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Tasks/i })).toBeInTheDocument();
-    expect(screen.getByRole("tablist")).toBeInTheDocument();
-    expect(useCasesContextMock).toHaveBeenCalled();
-    expect(resolveQueryMock).toHaveBeenCalled();
   });
 });

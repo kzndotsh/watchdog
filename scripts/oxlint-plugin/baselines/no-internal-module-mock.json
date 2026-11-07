@@ -34,7 +34,7 @@
   "apps/web/src/domains/dashboard/components/__tests__/recent-activity.component.test.tsx": 1,
   "apps/web/src/domains/dossier/components/__tests__/connections-section.component.test.tsx": 4,
   "apps/web/src/domains/dossier/components/__tests__/dossier-edit-dialog.component.test.tsx": 1,
-  "apps/web/src/domains/dossier/components/__tests__/dossier.component.test.tsx": 17,
+  "apps/web/src/domains/dossier/components/__tests__/dossier.component.test.tsx": 2,
   "apps/web/src/domains/dossier/components/__tests__/entity-evidence-section.component.test.tsx": 3,
   "apps/web/src/domains/dossier/components/__tests__/events-section.component.test.tsx": 1,
   "apps/web/src/domains/dossier/components/__tests__/questions-section.component.test.tsx": 1,
