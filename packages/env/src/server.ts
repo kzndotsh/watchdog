@@ -24,7 +24,9 @@ export const env =
 
 /**
  * The values of every field marked `sensitive`, for scrubbing: error reports remove each of them
- * verbatim from any string before it leaves the process.
+ * verbatim from any string before it leaves the process. The configured value is listed as well
+ * as the parsed one, so a secret the schema refused (readable as unset under skipped
+ * validation) is still scrubbed.
  */
 export function sensitiveEnvValues(): string[] {
   const values: string[] = [];
@@ -32,8 +34,15 @@ export function sensitiveEnvValues(): string[] {
     if (readFieldMeta(z.globalRegistry.get(schema))?.sensitive !== true) {
       continue;
     }
-    const value: unknown = Reflect.get(env, name);
-    if (typeof value === "string" && value !== "") values.push(value);
+    for (const value of [Reflect.get(env, name), process.env[name]]) {
+      if (
+        typeof value === "string" &&
+        value !== "" &&
+        !values.includes(value)
+      ) {
+        values.push(value);
+      }
+    }
   }
   return values;
 }
