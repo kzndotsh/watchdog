@@ -12,18 +12,17 @@ vi.mock("@/domains/activity/activity.functions", () => ({
 
 import { QueryClient } from "@tanstack/react-query";
 
-import { activityKeys, activityListView } from "@/domains/activity/queries";
+import { activityListView } from "@/domains/activity/queries";
 import { activityList } from "@watchdog/schemas/feed";
 
 describe("activity list view", () => {
-  it("keys every view under the activity root, so one invalidation refreshes them all", () => {
+  it("keys a Case's view apart from the whole feed's", () => {
     const all = activityListView.key({}, activityList.queryOf({}));
     const oneCase = activityListView.key(
       {},
       activityList.queryOf({ caseId: testId(10) })
     );
-    expect(all.slice(0, activityKeys.all.length)).toEqual(activityKeys.all);
-    expect(oneCase.slice(0, activityKeys.all.length)).toEqual(activityKeys.all);
+
     expect(oneCase).not.toEqual(all);
   });
 

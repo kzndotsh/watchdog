@@ -1,85 +1,74 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const credentialsApi = {
-  list: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn(),
-};
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ credentials: credentialsApi }),
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import {
   deleteCredentialFn,
-  listCredentialsFn,
   putCredentialFn,
 } from "@/domains/settings/settings.functions";
+import { callServerFn, orpc } from "@/testing/server-fn";
 
-type ServerContext = {
-  context: Record<string, never>;
-};
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+beforeEach(() => orpc.reset());
 
-describe("settings.functions", () => {
-  it("lists credentials through oRPC", async () => {
-    const slots = [{ name: "SHODAN_API_KEY", label: "Shodan" }];
-    credentialsApi.list.mockResolvedValue(slots);
+describe("putCredentialFn", () => {
+  it("sends the name, secret and label and nothing else", async () => {
+    orpc.reply("credentials.put", {
+      name: "SHODAN_API_KEY",
+      label: "Shodan",
+      description: "",
+      configured: true,
+      updatedAt: null,
+      breachDisabled: false,
+    });
 
-    await expect(
-      (
-        listCredentialsFn as unknown as (
-          input: ServerContext
-        ) => Promise<unknown>
-      )({ context: {} })
-    ).resolves.toEqual(slots);
+    await callServerFn(putCredentialFn, {
+      name: "SHODAN_API_KEY",
+      secret: "abc",
+      label: "Shodan",
+      organizationId: "org-evil",
+    });
+
+    expect(orpc.calls("credentials.put")).toEqual([
+      { name: "SHODAN_API_KEY", secret: "abc", label: "Shodan" },
+    ]);
   });
 
-  it("puts and deletes credentials through oRPC", async () => {
-    const slot = { name: "SHODAN_API_KEY", label: "Shodan" };
-    credentialsApi.put.mockResolvedValue(slot);
-    credentialsApi.delete.mockResolvedValue(undefined);
-
+  it("refuses an empty secret", async () => {
     await expect(
-      (
-        putCredentialFn as unknown as (
-          input: ServerDataContext<{
-            name: string;
-            secret: string;
-            label: string;
-          }>
-        ) => Promise<unknown>
-      )({
-        data: {
-          name: "SHODAN_API_KEY",
-          secret: "abc",
-          label: "Shodan",
-        },
-        context: {},
+      callServerFn(putCredentialFn, {
+        name: "SHODAN_API_KEY",
+        secret: "",
+        label: "Shodan",
       })
-    ).resolves.toEqual(slot);
+    ).rejects.toThrow();
+
+    expect(orpc.calls("credentials.put")).toEqual([]);
+  });
+});
+
+describe("deleteCredentialFn", () => {
+  it("answers ok once the API has deleted the credential", async () => {
+    orpc.reply("credentials.delete", { ok: true });
 
     await expect(
-      (
-        deleteCredentialFn as unknown as (
-          input: ServerDataContext<{ name: string }>
-        ) => Promise<{ ok: true }>
-      )({ data: { name: "SHODAN_API_KEY" }, context: {} })
+      callServerFn(deleteCredentialFn, { name: "SHODAN_API_KEY" })
     ).resolves.toEqual({ ok: true });
-    expect(credentialsApi.delete).toHaveBeenCalledWith({
-      name: "SHODAN_API_KEY",
-    });
+
+    expect(orpc.calls("credentials.delete")).toEqual([
+      { name: "SHODAN_API_KEY" },
+    ]);
+  });
+
+  it("does not answer ok when the API fails", async () => {
+    orpc.fail("credentials.delete", new Error("vault down"));
+
+    await expect(
+      callServerFn(deleteCredentialFn, { name: "SHODAN_API_KEY" })
+    ).rejects.toThrow("vault down");
   });
 });

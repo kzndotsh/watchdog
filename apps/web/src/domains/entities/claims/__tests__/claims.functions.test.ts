@@ -1,44 +1,52 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const handlers = vi.hoisted(
-  () => [] as ((input: unknown) => Promise<unknown>)[]
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
 );
-const claimsApi = vi.hoisted(() => ({ list: vi.fn() }));
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (handler: (input: unknown) => Promise<unknown>) => {
-        handlers.push(handler);
-        return `fn-${handlers.length}`;
-      },
-    }),
-  }),
-}));
+import {
+  createClaimFn,
+  listClaimsPageFn,
+  retractClaimFn,
+  updateClaimFn,
+} from "@/domains/entities/claims/claims.functions";
+import { callServerFn, orpc } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: vi.fn(() => ({ claims: claimsApi })),
-}));
+beforeEach(() => orpc.reset());
 
-import { listClaimsPageFn } from "@/domains/entities/claims/claims.functions";
+describe("claims server functions", () => {
+  it.each([
+    ["listClaimsPageFn", listClaimsPageFn, { caseId: "not-a-uuid" }],
+    ["createClaimFn", createClaimFn, { caseId: testId(10) }],
+    ["retractClaimFn", retractClaimFn, { caseId: testId(10), claimId: "x" }],
+    ["updateClaimFn", updateClaimFn, { caseId: testId(10), claimId: "x" }],
+  ] as const)(
+    "%s refuses a malformed input before the API is called",
+    async (_name, fn, input) => {
+      await expect(callServerFn(fn, input)).rejects.toThrow();
 
-describe("listClaimsPageFn", () => {
-  it("passes one page of the Claim list through whole", async () => {
-    const page = {
-      items: [{ id: "claim-1" }],
-      nextCursor: null,
-      total: { count: 1, isCapped: false },
-    };
-    claimsApi.list.mockResolvedValue(page);
-    expect(listClaimsPageFn).toBe("fn-1");
-    const data = {
-      caseId: "550e8400-e29b-41d4-a716-446655440000",
-      entityId: "660e8400-e29b-41d4-a716-446655440001",
-      retracted: true,
+      expect(orpc.calls("claims.list")).toMatchObject([]);
+      expect(orpc.calls("claims.create")).toEqual([]);
+      expect(orpc.calls("claims.retract")).toEqual([]);
+      expect(orpc.calls("claims.update")).toEqual([]);
+    }
+  );
+
+  it("trims padded ids and forwards the list's declared filters", async () => {
+    orpc.reply("claims.list", { items: [], nextCursor: null, total: null });
+
+    await callServerFn(listClaimsPageFn, {
+      caseId: `  ${testId(10)}  `,
+      entityId: testId(20),
       q: "domain",
-    };
-    const result = await handlers[0]?.({ data, context: {} });
-    expect(result).toEqual(page);
-    expect(claimsApi.list).toHaveBeenCalledWith(data);
+    });
+
+    expect(orpc.calls("claims.list")).toMatchObject([
+      { caseId: testId(10), entityId: testId(20), q: "domain" },
+    ]);
   });
 });

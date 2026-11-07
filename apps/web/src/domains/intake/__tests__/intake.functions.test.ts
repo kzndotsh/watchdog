@@ -1,42 +1,83 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const handlers = vi.hoisted(
-  () => [] as ((input: unknown) => Promise<unknown>)[]
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
 );
 
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (handler: (input: unknown) => Promise<unknown>) => {
-        handlers.push(handler);
-        return `fn-${handlers.length}`;
-      },
-    }),
-  }),
-}));
+import {
+  getEvidenceFn,
+  listEvidencePickerPageFn,
+  processEvidenceFn,
+} from "@/domains/intake/intake.functions";
+import { buildJobRecord } from "@/testing/records";
+import { callServerFn, orpc, orpcNotFound } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-const evidenceApi = vi.hoisted(() => ({
-  list: vi.fn(),
-  pickerPage: vi.fn(),
-}));
+const CASE_ID = testId(10);
+const EVIDENCE_ID = testId(1);
 
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: vi.fn(() => ({ evidence: evidenceApi })),
-}));
+beforeEach(() => orpc.reset());
 
-import { listEvidencePickerPageFn } from "@/domains/intake/intake.functions";
+describe("getEvidenceFn", () => {
+  it("answers null when the Evidence is gone", async () => {
+    orpc.fail("evidence.get", orpcNotFound());
 
-describe("listEvidencePickerPageFn", () => {
-  it("passes the list's input whole to evidence.pickerPage", async () => {
-    const page = { items: [], nextCursor: null, total: null };
-    evidenceApi.pickerPage.mockResolvedValue(page);
-    expect(listEvidencePickerPageFn).toBe("fn-3");
-    const input = {
-      caseId: "550e8400-e29b-41d4-a716-446655440000",
-      limit: 20,
+    await expect(
+      callServerFn(getEvidenceFn, { caseId: CASE_ID, evidenceId: EVIDENCE_ID })
+    ).resolves.toBeNull();
+  });
+
+  it("rethrows any other API failure", async () => {
+    orpc.fail("evidence.get", new Error("db down"));
+
+    await expect(
+      callServerFn(getEvidenceFn, { caseId: CASE_ID, evidenceId: EVIDENCE_ID })
+    ).rejects.toThrow("db down");
+  });
+});
+
+describe("processEvidenceFn", () => {
+  it("sends only the ids and the AI flag", async () => {
+    orpc.reply("evidence.process", buildJobRecord());
+
+    await callServerFn(processEvidenceFn, {
+      caseId: CASE_ID,
+      evidenceId: EVIDENCE_ID,
+      ai: true,
+    });
+
+    expect(orpc.calls("evidence.process")).toEqual([
+      { caseId: CASE_ID, evidenceId: EVIDENCE_ID, ai: true },
+    ]);
+  });
+});
+
+describe("input validation", () => {
+  it("refuses an Evidence id that is not a uuid", async () => {
+    await expect(
+      callServerFn(getEvidenceFn, { caseId: CASE_ID, evidenceId: "x" })
+    ).rejects.toThrow();
+
+    expect(orpc.calls("evidence.get")).toEqual([]);
+  });
+
+  it("trims a padded Case id on the picker page read", async () => {
+    orpc.reply("evidence.pickerPage", {
+      items: [],
+      nextCursor: null,
+      total: null,
+    });
+
+    await callServerFn(listEvidencePickerPageFn, {
+      caseId: `  ${CASE_ID}  `,
       q: "memo",
-    };
-    expect(await handlers[2]?.({ data: input, context: {} })).toBe(page);
-    expect(evidenceApi.pickerPage).toHaveBeenCalledWith(input);
+    });
+
+    expect(orpc.calls("evidence.pickerPage")).toMatchObject([
+      { caseId: CASE_ID, q: "memo" },
+    ]);
   });
 });
