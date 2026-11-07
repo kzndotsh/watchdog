@@ -85,6 +85,43 @@ const integrationEnv = {
  * leaves a global, spy, `process.env` key or fake timer changed, so a leak is blamed on its
  * author instead of on whichever file runs next.
  */
+const LIST_PLAN_GATE =
+  "packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts";
+
+/**
+ * A database project: one file at a time (several tests see the whole Postgres cluster: the
+ * activity drain, advisory locks), with `@` so web route-handler tests can import the routes.
+ */
+function integrationProject(
+  name: string,
+  files: { include: string[]; exclude?: string[] }
+) {
+  return {
+    resolve: {
+      alias: {
+        "@": webSrc,
+      },
+    },
+    test: {
+      name,
+      ...files,
+      environment: "node" as const,
+      fileParallelism: false,
+      maxWorkers: 1,
+      isolate: false,
+      unstubGlobals: true,
+      unstubEnvs: true,
+      // Settle detached Export writes after each test, before the canary snapshot (#379).
+      setupFiles: [
+        ...sharedWorkerSetup.slice(0, -1),
+        "scripts/vitest/settle-export-writes.ts",
+        ...sharedWorkerSetup.slice(-1),
+      ],
+      env: integrationEnv,
+    },
+  };
+}
+
 export default defineConfig({
   test: {
     // Mock history is cleared before every test in each project below that sets
@@ -270,35 +307,16 @@ export default defineConfig({
           testTimeout: 30_000,
         },
       },
-      {
-        // `@` so web route-handler integration tests can import the routes.
-        resolve: {
-          alias: {
-            "@": webSrc,
-          },
-        },
-        test: {
-          name: "integration",
-          include: [
-            "packages/*/src/**/__tests__/**/*.int.test.ts",
-            "apps/*/src/**/__tests__/**/*.int.test.ts",
-          ],
-          exclude: ["**/node_modules/**"],
-          environment: "node",
-          fileParallelism: false,
-          maxWorkers: 1,
-          isolate: false,
-          unstubGlobals: true,
-          unstubEnvs: true,
-          // Settle detached Export writes after each test, before the canary snapshot (#379).
-          setupFiles: [
-            ...sharedWorkerSetup.slice(0, -1),
-            "scripts/vitest/settle-export-writes.ts",
-            ...sharedWorkerSetup.slice(-1),
-          ],
-          env: integrationEnv,
-        },
-      },
+      integrationProject("integration", {
+        include: [
+          "packages/*/src/**/__tests__/**/*.int.test.ts",
+          "apps/*/src/**/__tests__/**/*.int.test.ts",
+        ],
+        exclude: ["**/node_modules/**", LIST_PLAN_GATE],
+      }),
+      // The list plan gate (ADR-0007) alone: it reads the perf-seeded database, so CI seeds one
+      // only for this project, and the `integration` shards skip the seed.
+      integrationProject("plans", { include: [LIST_PLAN_GATE] }),
     ],
   },
 });
