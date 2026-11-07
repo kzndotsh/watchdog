@@ -5,7 +5,6 @@ import { mapToolsCatch } from "../errors/map-tools-catch";
 import {
   ParseVendorError,
   ValidationVendorError,
-  type RateLimitedError,
   type ToolsTag,
 } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
@@ -24,9 +23,6 @@ const SERVICE = "Wayback CDX";
 
 /** Captures counted for `totalCaptures` before the count is reported as a lower bound. */
 const CDX_COUNT_CEILING = 5000;
-/** The longest `Retry-After` worth waiting out inside one Job; a longer one fails the run. */
-const CDX_MAX_BACKOFF_MS = 5000;
-const CDX_DEFAULT_BACKOFF_MS = 2000;
 
 export type WaybackStatusFilter = "200" | "ok" | "any";
 
@@ -67,9 +63,8 @@ function nonJsonBody(subject: string): ParseVendorError {
 }
 
 /**
- * One CDX call. The shared 429 retry waits as long as `Retry-After` says, which can outlast a
- * Job, so it is off here: one retry after a short wait, and a longer wait fails as rate-limited.
- * A body that is not JSON (an HTML error page) is a failure, never an empty result.
+ * One CDX call; a 429 follows the shared bounded retry of `fetchJsonUnknownEffect`. A body that
+ * is not JSON (an HTML error page) is a failure, never an empty result.
  */
 function cdxJsonEffect(
   params: URLSearchParams,
@@ -77,23 +72,16 @@ function cdxJsonEffect(
   subject: string,
   userAgent: string
 ): Effect.Effect<unknown, ToolsTag, HttpClient.HttpClient> {
-  const call = fetchJsonUnknownEffect({
+  return fetchJsonUnknownEffect({
     url: `${CDX}?${params.toString()}`,
     signal,
     service: SERVICE,
     subject,
-    retry: false,
     init: { headers: { "User-Agent": userAgent } },
   }).pipe(
     Effect.map((res) => res.body),
     Effect.catchTag("ParseVendorError", () => Effect.fail(nonJsonBody(subject)))
   );
-  const waitThenRetry = (error: RateLimitedError) => {
-    const waitMs = error.retryAfterMs ?? CDX_DEFAULT_BACKOFF_MS;
-    if (waitMs > CDX_MAX_BACKOFF_MS) return Effect.fail(error);
-    return Effect.sleep(waitMs).pipe(Effect.andThen(call));
-  };
-  return call.pipe(Effect.catchTag("RateLimitedError", waitThenRetry));
 }
 
 function baseParams(
