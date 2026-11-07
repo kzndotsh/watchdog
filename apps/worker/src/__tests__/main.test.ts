@@ -7,17 +7,16 @@ const workerMocks = vi.hoisted(() => ({
   runActivityConsumerEffect: vi.fn(),
   findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
-  // Set by a test to pretend the lane slots do not fit the pool.
-  slotsOverride: null as null | { fits: boolean; total: number; limit: number },
 }));
 
+// The database boundary. Boot reaches Postgres in four places (running a Cap Job, the cancel
+// poll, the activity LISTEN stream, the maintenance runs), none of which a unit test can serve
+// from a Db double, so each is stubbed at its core export and nothing else in core is.
 vi.mock("@watchdog/core/jobs", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
   return {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
-    laneSlotsFit: (...args: Parameters<typeof actual.laneSlotsFit>) =>
-      workerMocks.slotsOverride ?? actual.laneSlotsFit(...args),
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
   };
 });
@@ -62,16 +61,62 @@ vi.mock("@watchdog/core/maintenance", async (importOriginal) => {
   };
 });
 
-const workerLog = vi.hoisted(() => ({ emitOnce: vi.fn() }));
+// The logger is the boundary of what boot reports: every `createLogger({ scope })` records
+// the fields set on it, so a test reads what the worker said under a scope.
+const logged = vi.hoisted(() => ({
+  entries: [] as { scope: string; fields: Record<string, unknown> }[],
+}));
 
-vi.mock("../worker-log", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../worker-log")>();
-  return { ...actual, emitOnce: workerLog.emitOnce };
+vi.mock("@watchdog/log", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/log")>();
+  return {
+    ...actual,
+    createLogger: (init: { scope?: string }) => ({
+      set: (fields: Record<string, unknown>) => {
+        logged.entries.push({ scope: init.scope ?? "", fields });
+      },
+      error: () => {},
+      warn: () => {},
+      info: () => {},
+      emit: () => {},
+    }),
+  };
 });
+
+// Lane settings are configuration, and the unit project does not validate env: give the worker
+// real values (`laneSlotsFit` then runs for real against the pool size).
+const laneEnv = vi.hoisted(() => ({
+  WD_WORKER_QUICK_CONCURRENCY: 2,
+  WD_WORKER_HEAVY_CONCURRENCY: 1,
+  WD_WORKER_ACT_CONCURRENCY: 1,
+  /** The lane setting named `key`, or `undefined` for any other env key. */
+  read(key: string | symbol): number | undefined {
+    switch (key) {
+      case "WD_WORKER_QUICK_CONCURRENCY": {
+        return this.WD_WORKER_QUICK_CONCURRENCY;
+      }
+      case "WD_WORKER_HEAVY_CONCURRENCY": {
+        return this.WD_WORKER_HEAVY_CONCURRENCY;
+      }
+      case "WD_WORKER_ACT_CONCURRENCY": {
+        return this.WD_WORKER_ACT_CONCURRENCY;
+      }
+      default: {
+        return undefined;
+      }
+    }
+  },
+}));
 
 vi.mock("@watchdog/env/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/env/server")>();
-  return { ...actual };
+  return {
+    ...actual,
+    env: new Proxy(actual.env, {
+      get: (target, key, receiver) =>
+        laneEnv.read(key) ?? Reflect.get(target, key, receiver),
+    }),
+  };
 });
 
 import { Db } from "@watchdog/core/infra";
@@ -176,9 +221,9 @@ workerMocks.runActivityConsumerEffect.mockReturnValue(Effect.never);
 
 /** The `message` of every `worker.shutdown` log so far. */
 function shutdownLogs(): string[] {
-  return workerLog.emitOnce.mock.calls
-    .filter(([scope]) => scope === "worker.shutdown")
-    .map(([, fields]) => (fields as { message: string }).message);
+  return logged.entries
+    .filter(({ scope }) => scope === "worker.shutdown")
+    .map(({ fields }) => String(fields.message));
 }
 
 describe("bootWorkerEffect", () => {
@@ -188,9 +233,8 @@ describe("bootWorkerEffect", () => {
   };
 
   beforeEach(() => {
-    // The unit project does not validate env, so lane settings are unset: pretend they fit.
-    workerMocks.slotsOverride = { fits: true, total: 8, limit: 8 };
-    workerLog.emitOnce.mockClear();
+    logged.entries.length = 0;
+    laneEnv.WD_WORKER_QUICK_CONCURRENCY = 2;
     workerMocks.runActivityConsumerEffect.mockClear();
     workerMocks.reconcileJobsEffect.mockClear();
     // Every test may emit real signals: a stale handler must never reach the
@@ -387,7 +431,7 @@ describe("bootWorkerEffect", () => {
     "refuses to boot when the lane slots leave too few pool connections free",
     () =>
       Effect.gen(function* bootWorkerLaneSlotsTestGen() {
-        workerMocks.slotsOverride = { fits: false, total: 12, limit: 8 };
+        laneEnv.WD_WORKER_QUICK_CONCURRENCY = 10;
         const fake = fakeDriver();
         const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
         bootFibers.push(fiber);
