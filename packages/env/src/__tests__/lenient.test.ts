@@ -23,8 +23,9 @@ describe("lenientEnv (validation skipped)", () => {
     expect(lenientEnv(fields, { LIMIT: "7" }).LIMIT).toBe(7);
   });
 
-  it("passes an invalid value through untouched instead of throwing", () => {
-    expect(lenientEnv(fields, { STRICT: "3" }).STRICT).toBe("3");
+  it("treats a refused value as unset instead of throwing", () => {
+    expect(lenientEnv(fields, { LIMIT: "0" }).LIMIT).toBe(100);
+    expect(lenientEnv(fields, { STRICT: "3" }).STRICT).toBeUndefined();
   });
 
   it("reads the source on every access, so a later change is seen", () => {
@@ -35,11 +36,19 @@ describe("lenientEnv (validation skipped)", () => {
     expect(env.NAME).toBe("set later");
   });
 
-  it("gives every defaulted platform field its default with an empty environment", () => {
-    const env = lenientEnv(allEnvFields, {});
-    expect(env.WD_EXPORT_INLINE_MAX_MB).toBe(100);
-    expect(env.WD_JOB_START_WINDOW_SECONDS).toBeTypeOf("number");
-    expect(env.WD_JOB_LOG_MAX_LINES).toBeTypeOf("number");
-    expect(env.WD_CASE_RETENTION_DAYS).toBeTypeOf("number");
+  it("gives every defaulted platform field its schema default with an empty environment", () => {
+    const env: Record<string, unknown> = lenientEnv(allEnvFields, {});
+    const defaulted = Object.entries<z.ZodType>(allEnvFields).flatMap(
+      ([name, schema]) => {
+        const unset = schema.safeParse(undefined);
+        return unset.success && unset.data !== undefined
+          ? [[name, unset.data] as const]
+          : [];
+      }
+    );
+    expect(defaulted.length).toBeGreaterThan(10);
+    for (const [name, value] of defaulted) {
+      expect(env[name], name).toStrictEqual(value);
+    }
   });
 });

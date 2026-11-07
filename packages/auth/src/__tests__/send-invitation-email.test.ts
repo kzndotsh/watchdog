@@ -12,7 +12,7 @@ vi.mock("@watchdog/log", () => ({
 const mockEnv = vi.hoisted(() => ({
   BETTER_AUTH_URL: "http://127.0.0.1:3000",
   SMTP_HOST: undefined as string | undefined,
-  SMTP_PORT: undefined as number | undefined,
+  SMTP_PORT: 587,
   SMTP_USER: undefined as string | undefined,
   SMTP_PASS: undefined as string | undefined,
   SMTP_FROM: undefined as string | undefined,
