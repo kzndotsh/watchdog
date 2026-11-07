@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { presignUploadInputSchema } from "@watchdog/schemas/evidence";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { HttpResponse, http, mockServer } from "@watchdog/test-kit/http";
 
@@ -24,11 +25,9 @@ function serveUpload(putStatus = 200): {
 } {
   const put: { headers: Headers; body: string }[] = [];
   standIn.json("post", `/cases/${CASE_ID}/evidence/presign`, (request) => {
-    const input = request.body as {
-      sha256: string;
-      mime: string;
-      byteLength: number;
-    };
+    const input = presignUploadInputSchema
+      .omit({ caseId: true })
+      .parse(request.body);
     return {
       url: PUT_URL,
       uri: `${CASE_ID}/${input.sha256}`,
