@@ -24,16 +24,16 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../cases/access";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { createPresignedGetEffect, uploadArtifactEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import { evidenceRepoFxDb, evidenceRepoFx } from "../infra/repos-fx";
-import {
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import {
   appendEvidenceActivityEffect,
   createCapturedEvidenceEffect,

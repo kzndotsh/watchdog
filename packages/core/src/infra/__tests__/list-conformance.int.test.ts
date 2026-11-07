@@ -20,10 +20,10 @@ import {
   type ListConformance,
 } from "@watchdog/test-db";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import { Db } from "../db-service";
 import { listByIdsEffect, listPageEffect } from "../list-page";
 import { runDomainWith } from "../run-domain";
-import type { DomainTag } from "../tagged-errors";
 
 /*
  * The list standard's database gate (ADR-0007), BEHAVIOUR half: one fixture per declared list

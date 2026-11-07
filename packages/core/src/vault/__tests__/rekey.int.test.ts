@@ -7,8 +7,8 @@ import {
   openSecret,
   openSecretWithMaster,
   sealSecretWithMaster,
-} from "../vault-crypto";
-import { rekeyVault } from "../vault-rekey";
+} from "../../infra/vault-crypto";
+import { rekeyVault } from "../rekey";
 
 /** What an old install has: a placeholder key that the new secrets check would refuse. */
 const OLD_KEY = "change-me-to-a-long-random-string-at-least-32";

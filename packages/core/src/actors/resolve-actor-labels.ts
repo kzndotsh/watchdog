@@ -3,9 +3,9 @@ import { Effect } from "effect";
 import type { UserDisplayRow } from "@watchdog/db";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { usersRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { formatActorLabel, type ActorUser } from "./format-actor-label";
 
 export function loadActorUsersEffect(

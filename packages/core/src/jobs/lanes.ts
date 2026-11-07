@@ -5,7 +5,7 @@ import { capLane, JOB_LANES, type JobLane } from "@watchdog/caps/sdk";
 import { POOL_MAX } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
-import type { InternalError } from "../infra/tagged-errors";
+import type { InternalError } from "../errors/tagged-errors";
 import { JobQueueWorker, type QueueWorkHandler } from "./job-queue-worker";
 import { isSystemJobId, SYSTEM_JOB_LANE } from "./system-jobs";
 

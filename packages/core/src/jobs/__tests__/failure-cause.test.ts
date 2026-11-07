@@ -8,7 +8,7 @@ import {
   ConflictError,
   InternalError,
   InvalidError,
-} from "../../infra/tagged-errors";
+} from "../../errors/tagged-errors";
 import { logJobFailureCause } from "../failure-cause";
 
 describe("logJobFailureCause", () => {

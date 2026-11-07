@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import { deleteObjectKeysEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
@@ -9,7 +10,6 @@ import {
   evidenceUploadsRepoFxDb,
   evidenceUploadsRepoFx,
 } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /**
  * How long a presigned upload may stay unconfirmed before its object is deleted. The presigned

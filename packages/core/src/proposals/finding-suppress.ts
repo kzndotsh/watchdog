@@ -21,6 +21,7 @@ import {
   type CaseId,
 } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { onExec } from "../infra/repo-fx";
 import {
@@ -32,7 +33,6 @@ import {
   findingSuppressionsRepoFx,
   proposalsRepoFx,
 } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 function markExistingInGraphEffect(
   exec: DbExec | undefined,

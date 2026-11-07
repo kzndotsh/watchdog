@@ -5,11 +5,11 @@ import { Cause, Data, Effect, Exit, Fiber, FiberMap, Ref } from "effect";
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import type { OutboundClient } from "@watchdog/tools/http";
 
+import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
-import { InternalError, type DomainTag } from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
 import { suppressAndProposeStageEffect } from "../proposals/suppress-and-propose";
 import { caseExportBody } from "./export-job";

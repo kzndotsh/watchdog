@@ -2,9 +2,9 @@ import { Cause, Context, Effect } from "effect";
 
 import type { DbTx } from "@watchdog/db";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import { Db } from "./db-service";
 import { mapPostgresCatch, type MapPostgresCatchOpts } from "./postgres-effect";
-import type { DomainTag } from "./tagged-errors";
 
 /**
  * Rejection thrown from the driver's promise-based `db.transaction` callback

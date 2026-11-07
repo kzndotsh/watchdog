@@ -5,9 +5,9 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import type { CaseId, EvidenceKind } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
+import type { DomainTag } from "../errors/tagged-errors";
 import { requireWritten } from "../infra/postgres-effect";
 import { evidenceRepoFx } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 type EvidenceActivityAction =
   | "captured"

@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { parseCapJobInput } from "@watchdog/schemas/jobs";
 import type { JsonObject } from "@watchdog/schemas/shared";
 
-import { InvalidError, type DomainTag } from "../infra/tagged-errors";
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 
 export type CapInputParser = {
   input: z.ZodType;

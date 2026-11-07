@@ -15,12 +15,12 @@ import {
   type CaseId,
 } from "@watchdog/schemas/shared";
 
+import { NotFoundError, type DomainTag } from "../errors/tagged-errors";
 import { readArtifactBytesEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { jobsRepoFxDb, evidenceRepoFxDb } from "../infra/repos-fx";
-import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
 
 export const MAX_SNAPSHOT_CHARS = 80_000;
 

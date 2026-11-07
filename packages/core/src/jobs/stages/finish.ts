@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import type { JobPivots } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import type { DomainTag } from "../../infra/tagged-errors";
 import type { JobLog } from "../job-log";
 import { settleJobEffect } from "../lifecycle/settle";
 import { markEvidenceProcessedEffect } from "../process-evidence";

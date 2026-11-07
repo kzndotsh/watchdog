@@ -3,9 +3,9 @@ import { Effect } from "effect";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
 
-import { errorMessage } from "../infra/error-utils";
-import type { InternalError } from "../infra/tagged-errors";
-import { InvalidError } from "../infra/tagged-errors";
+import { errorMessage } from "../errors/error-utils";
+import type { InternalError } from "../errors/tagged-errors";
+import { InvalidError } from "../errors/tagged-errors";
 
 type ArtifactRef = {
   name: string;

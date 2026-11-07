@@ -9,6 +9,7 @@ import {
 } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
 import {
@@ -16,7 +17,6 @@ import {
   activityLogRepoFxDb,
   casesRepoFxDb,
 } from "../infra/repos-fx";
-import { InternalError, type DomainTag } from "../infra/tagged-errors";
 import {
   activityLogCeiling,
   isUnservableActivityCursor,

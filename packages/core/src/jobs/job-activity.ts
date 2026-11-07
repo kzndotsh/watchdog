@@ -5,7 +5,7 @@ import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
 import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
-import type { DomainTag } from "../infra/tagged-errors";
+import type { DomainTag } from "../errors/tagged-errors";
 
 /** The Job fields an activity entry is derived from. */
 export type JobActivitySubject = {

@@ -5,10 +5,10 @@ const { client } = vi.hoisted(() => ({ client: { marker: "global-db" } }));
 
 vi.mock("@watchdog/db", () => ({ acquirePool: () => ({ db: client }) }));
 
+import { ConflictError, InvalidError } from "../../errors/tagged-errors";
 import { Db } from "../db-service";
 import { tryDbWith } from "../postgres-effect";
 import { runDomain } from "../run-domain";
-import { ConflictError, InvalidError } from "../tagged-errors";
 
 describe("tryDbWith", () => {
   it("hands the live Layer's client to the callback", async () => {

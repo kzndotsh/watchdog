@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import type { DbExec, PlaybookRunRow } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
+import { ConflictError, type DomainTag } from "../errors/tagged-errors";
 import { jobsRepoFx, playbookRunsRepoFx } from "../infra/repos-fx";
-import { ConflictError, type DomainTag } from "../infra/tagged-errors";
 
 /** Where a retried Job goes: the Playbook run, step and fan index of the Job it repeats. */
 export type PlaybookSlot = {

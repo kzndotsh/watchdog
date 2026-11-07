@@ -3,7 +3,7 @@ import type { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { GraphActivityKind } from "../../activity/graph-activity";
-import type { VersionedEntity } from "../../infra/tagged-errors";
+import type { VersionedEntity } from "../../errors/tagged-errors";
 
 type ActivityVerb = (typeof ACTIVITY_ENTRY_ACTIONS)[GraphActivityKind][number];
 

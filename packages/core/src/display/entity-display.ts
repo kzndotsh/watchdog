@@ -8,9 +8,9 @@ import {
 import { proposalEntityName } from "@watchdog/schemas/jobs";
 import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { entitiesRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /** entityId → display label and Dossier slug, for proposal/triage chrome. */
 export type EntityDisplayMaps = {

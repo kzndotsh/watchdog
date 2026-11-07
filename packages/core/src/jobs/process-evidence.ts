@@ -25,16 +25,16 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../cases/access";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { appendEvidenceActivityEffect } from "../evidence/evidence-activity";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, evidenceRepoFx, jobsRepoFx } from "../infra/repos-fx";
-import {
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import type { Vault } from "../infra/vault";
 import { assertCapAvailabilityEffect } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";

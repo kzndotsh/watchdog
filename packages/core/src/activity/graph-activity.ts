@@ -16,8 +16,8 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
+import type { DomainTag } from "../errors/tagged-errors";
 import { tryDb } from "../infra/postgres-effect";
-import type { DomainTag } from "../infra/tagged-errors";
 import { appendActivityEffect } from "./append";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */

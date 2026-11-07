@@ -465,7 +465,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "case.update",
-    sites: ["cases/cases.ts#updateCaseEffect"],
+    sites: ["cases/cases.ts#updateCaseWithPreviousSlugEffect"],
     kind: "case",
     action: "updated",
     historyRows: 0,

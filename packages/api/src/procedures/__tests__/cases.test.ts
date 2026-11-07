@@ -12,12 +12,12 @@ const {
   listCasesEffect,
   getCaseByIdEffect,
   createCaseEffect,
-  updateCaseEffect,
+  updateCaseAndSyncExportEffect,
 } = vi.hoisted(() => ({
   listCasesEffect: vi.fn(),
   getCaseByIdEffect: vi.fn(),
   createCaseEffect: vi.fn(),
-  updateCaseEffect: vi.fn(),
+  updateCaseAndSyncExportEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core/cases", async (importOriginal) => {
@@ -27,8 +27,12 @@ vi.mock("@watchdog/core/cases", async (importOriginal) => {
     listCasesEffect,
     getCaseByIdEffect,
     createCaseEffect,
-    updateCaseEffect,
   };
+});
+
+vi.mock("@watchdog/core/export", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/export")>();
+  return { ...actual, updateCaseAndSyncExportEffect };
 });
 
 import { testActor } from "@watchdog/schemas/testing";
@@ -196,7 +200,7 @@ describe("cases procedures", () => {
   });
 
   it("allows description-only null updates to clear the description", async () => {
-    updateCaseEffect.mockReturnValueOnce(
+    updateCaseAndSyncExportEffect.mockReturnValueOnce(
       Effect.succeed({
         ...sampleCase,
         description: null,

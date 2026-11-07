@@ -9,10 +9,10 @@ import {
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
+import { ForbiddenError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import { organizationSettingsRepoFx } from "../infra/repos-fx";
-import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 import { getEntityByCaseSlugEffect } from "./entities";
 
 export type RecordOpenInOpts = {

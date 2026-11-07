@@ -16,9 +16,9 @@ import {
   type IdentifierType,
 } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { identifiersRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 export type IdentifierCollision = {
   opId: string;

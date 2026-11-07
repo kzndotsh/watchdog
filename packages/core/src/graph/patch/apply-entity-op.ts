@@ -2,13 +2,13 @@ import { Effect } from "effect";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
 
-import type { Db } from "../../infra/db-service";
-import { entitiesRepoFx } from "../../infra/repos-fx";
 import {
   ConflictError,
   InvalidError,
   type DomainTag,
-} from "../../infra/tagged-errors";
+} from "../../errors/tagged-errors";
+import type { Db } from "../../infra/db-service";
+import { entitiesRepoFx } from "../../infra/repos-fx";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { entitiesTable } from "../mutation/tables";

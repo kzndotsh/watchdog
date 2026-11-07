@@ -13,13 +13,13 @@ import { readFileSync } from "node:fs";
 import { withPool } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
-import { rekeyVault } from "./infra/vault-rekey";
+import { rekeyVault } from "./vault/rekey";
 import {
   OLD_KEY_ENV,
   parseRekeyArgs,
   resolveOldKey,
   VAULT_REKEY_USAGE,
-} from "./infra/vault-rekey-args";
+} from "./vault/rekey-args";
 
 const out = (text: string) => process.stdout.write(`${text}\n`);
 const err = (text: string) => process.stderr.write(`${text}\n`);

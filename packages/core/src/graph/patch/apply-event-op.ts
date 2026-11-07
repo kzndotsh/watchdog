@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import type { PatchOp } from "@watchdog/schemas/graph";
 
 import { assertEntityInCaseEffect } from "../../cases/access";
+import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { eventsTable } from "../mutation/tables";
 import { decodeOpData, eventOpData } from "./op-data";

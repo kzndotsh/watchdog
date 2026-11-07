@@ -7,10 +7,10 @@ import {
   type UpdateOrganizationSettingsInput,
 } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { organizationSettingsRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "./roles";
 
 /** The organization's settings; the defaults when it never changed one. */

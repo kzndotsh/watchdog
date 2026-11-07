@@ -2,15 +2,15 @@ import { Effect } from "effect";
 
 import { listKnownCredentials } from "@watchdog/caps";
 
-import { breachCapsEnabled } from "../caps/breach-caps";
-import { breachOnlyCredentialNames } from "../caps/catalog";
-import type { DomainTag } from "./tagged-errors";
+import type { DomainTag } from "../errors/tagged-errors";
 import {
   listCredentialMetaEffect,
   putCredentialEffect,
   type CredentialMeta,
   type Vault,
-} from "./vault";
+} from "../infra/vault";
+import { breachCapsEnabled } from "./breach-caps";
+import { breachOnlyCredentialNames } from "./catalog";
 
 /** Metadata slot for Settings / credentials API — never plaintext. */
 export type CredentialSlot = {

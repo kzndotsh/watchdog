@@ -5,11 +5,11 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import type { JobPivots } from "@watchdog/schemas/shared";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
+import { errorMessage } from "../../errors/error-utils";
+import { InvalidError, isDomainTag } from "../../errors/tagged-errors";
 import { tryParsePatch } from "../../graph/patch/patch";
 import { readArtifactBytesEffect } from "../../infra/blob";
 import type { BlobStore } from "../../infra/blob-store";
-import { errorMessage } from "../../infra/error-utils";
-import { InvalidError, isDomainTag } from "../../infra/tagged-errors";
 import type { JobLog } from "../job-log";
 import { loadCapReportEffect } from "../load-cap-report";
 import type { CollectRuntime } from "./collect";

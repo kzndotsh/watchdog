@@ -501,7 +501,7 @@ export default defineConfig({
     },
     {
       files: [
-        "packages/core/src/infra/tagged-errors.ts",
+        "packages/core/src/errors/tagged-errors.ts",
         "packages/core/src/infra/repo-layers.ts",
         "packages/tools/src/errors/tagged-errors.ts",
         "packages/ai/src/structured-extract.ts",

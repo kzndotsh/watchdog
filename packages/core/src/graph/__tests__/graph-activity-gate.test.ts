@@ -363,7 +363,9 @@ describe("Case and Task repo write gate (ADR-0005 S4)", () => {
     const files = coreFiles();
     const writers = caseTaskWriters(files);
     expect(writers).toContain("tasks/tasks.ts#createTaskEffect");
-    expect(writers).toContain("cases/cases.ts#updateCaseEffect");
+    expect(writers).toContain(
+      "cases/cases.ts#updateCaseWithPreviousSlugEffect"
+    );
     expect(
       unregisteredCaseTaskWriters(files, registered),
       "Register the mutation in graph/__tests__/graph-mutations.ts (`sites`, so it is run and its entry counted) and append to the activity log in its transaction, or add an exemption with a reason"

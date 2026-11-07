@@ -12,14 +12,14 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { assertEntityInCaseEffect } from "../cases/access";
-import type { Db } from "../infra/db-service";
-import { onExec } from "../infra/repo-fx";
-import { entitiesRepoFx, edgesRepoFx } from "../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { onExec } from "../infra/repo-fx";
+import { entitiesRepoFx, edgesRepoFx } from "../infra/repos-fx";
 import type { UpdateEdgeInput } from "./edges";
 import { assertConfidenceEvidenceEffect } from "./graph-evidence";
 

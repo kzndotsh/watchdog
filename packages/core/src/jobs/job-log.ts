@@ -3,11 +3,11 @@ import { Cause, Effect, Fiber } from "effect";
 import type { JobRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import { logSwallowed } from "../infra/process-log";
 import { jobsRepoFx } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { appendJobLogActivityEffect } from "./job-activity";
 
 const BYTES_PER_KB = 1024;

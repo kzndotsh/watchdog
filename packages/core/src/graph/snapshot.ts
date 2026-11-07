@@ -17,9 +17,9 @@ import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "../cases/access";
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { graphSnapshotRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 export type GraphSnapshotEntity = {
   readonly id: string;

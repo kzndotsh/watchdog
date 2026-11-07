@@ -9,9 +9,9 @@ import {
 } from "@watchdog/db";
 import type { ActivityEntry } from "@watchdog/schemas/feed";
 
+import { InternalError } from "../errors/tagged-errors";
 import { Db } from "../infra/db-service";
 import { logProcess, logSwallowed } from "../infra/process-log";
-import { InternalError } from "../infra/tagged-errors";
 import { toActivityEntry } from "./append";
 
 /** What a process reads from the activity log tail. */

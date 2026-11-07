@@ -1,9 +1,9 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { InternalError } from "../../errors/tagged-errors";
 import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";
-import { InternalError } from "../../infra/tagged-errors";
 import { JobQueue, recordingJobQueue } from "../job-queue";
 import { reconcileOrphanedQueuedJobsEffect } from "../lifecycle/reconcile";
 

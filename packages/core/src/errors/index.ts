@@ -1,4 +1,4 @@
-export { errorMessage, isUniqueViolation } from "../infra/error-utils";
+export { errorMessage, isUniqueViolation } from "./error-utils";
 export {
   NotFoundError,
   ConflictError,
@@ -18,5 +18,5 @@ export {
   type DomainTag,
   type NotFoundEntity,
   type DomainTagCode,
-} from "../infra/tagged-errors";
-export { toDomainTag } from "../infra/vendor-errors";
+} from "./tagged-errors";
+export { toDomainTag } from "./vendor-errors";

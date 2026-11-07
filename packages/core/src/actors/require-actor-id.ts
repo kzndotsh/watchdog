@@ -2,7 +2,7 @@ import { Effect } from "effect";
 
 import { parseActorId } from "@watchdog/schemas/shared";
 
-import { InvalidError, type DomainTag } from "../infra/tagged-errors";
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 
 /** Trim an optional actor id; absent/blank → undefined. */
 export function optionalActorId(

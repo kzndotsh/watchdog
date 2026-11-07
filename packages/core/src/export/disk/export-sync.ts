@@ -20,18 +20,18 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import { caseExportDir } from "../export/settings";
-import { readArtifactBytesEffect } from "./blob";
+import { errorMessage } from "../../errors/error-utils";
+import { readArtifactBytesEffect } from "../../infra/blob";
 import {
   blobStoreLayer,
   recordingBlobStore,
   type BlobStore,
-} from "./blob-store";
-import { Db } from "./db-service";
-import { errorMessage } from "./error-utils";
+} from "../../infra/blob-store";
+import { Db } from "../../infra/db-service";
+import { outsideTransaction } from "../../infra/postgres-tx";
+import { logProcess, logSwallowed } from "../../infra/process-log";
+import { caseExportDir } from "../settings";
 import { renderCaseExportEffect } from "./export";
-import { outsideTransaction } from "./postgres-tx";
-import { logProcess, logSwallowed } from "./process-log";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
   readonly reason: string;

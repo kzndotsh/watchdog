@@ -17,8 +17,12 @@ import {
   type CaseId,
 } from "@watchdog/schemas/shared";
 
+import {
+  InternalError,
+  InvalidError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { BlobStore, type BlobStoreApi } from "./blob-store";
-import { InternalError, InvalidError, type DomainTag } from "./tagged-errors";
 
 const PRESIGN_EXPIRES_IN = 900;
 

@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import type { DbExec } from "@watchdog/db";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import { Db } from "./db-service";
 import { tryDb } from "./postgres-effect";
-import type { DomainTag } from "./tagged-errors";
 
 /** A repo module: async methods taking the `exec` handle first (the `packages/db` rules). */
 type RepoModule = Record<

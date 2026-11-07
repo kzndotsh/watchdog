@@ -6,11 +6,17 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import { setHistoryContextEffect } from "../activity/graph-activity";
 import { optionalActorId } from "../actors/require-actor-id";
 import { requireTrimmedCaseIdEffect } from "../cases/access";
+import {
+  ConflictError,
+  InternalError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
+import { removeCaseExportDirEffect } from "../export/disk/export-sync";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { removeCaseExportDirEffect } from "../infra/export-sync";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
@@ -19,12 +25,6 @@ import {
   casesRepoFxDb,
   caseDeletionRecordsRepoFx,
 } from "../infra/repos-fx";
-import {
-  ConflictError,
-  InternalError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "../organization/roles";
 import { recordDeletionEventEffect } from "./deletion-event";
 import {

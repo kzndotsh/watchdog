@@ -4,10 +4,10 @@ import { requireCapability } from "@watchdog/caps";
 import type { JobRow } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import { errorMessage } from "../../errors/error-utils";
+import { InvalidError } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
-import { errorMessage } from "../../infra/error-utils";
 import { logSwallowed } from "../../infra/process-log";
-import { InvalidError } from "../../infra/tagged-errors";
 import { capCacheKey, type CapCacheKey } from "../cap-cache";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { createJobLog } from "../job-log";

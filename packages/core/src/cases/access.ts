@@ -8,15 +8,15 @@ import {
   type OrganizationId,
 } from "@watchdog/schemas/shared";
 
-import type { Db } from "../infra/db-service";
-import { onExec } from "../infra/repo-fx";
-import { casesRepoFx, entitiesRepoFx, evidenceRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
   NotFoundError,
   type DomainTag,
   type NotFoundEntity,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { onExec } from "../infra/repo-fx";
+import { casesRepoFx, entitiesRepoFx, evidenceRepoFx } from "../infra/repos-fx";
 
 /** Trim a graph id or fail not_found — use before repo queries that key on the id. */
 export function requireTrimmedGraphId(

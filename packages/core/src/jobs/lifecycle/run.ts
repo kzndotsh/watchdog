@@ -3,10 +3,10 @@ import { Cause, Effect, Exit, Ref, Result } from "effect";
 import type { JobRow } from "@watchdog/db";
 import type { JobPivots } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect, nowMillisEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { jobsRepoFxDb } from "../../infra/repos-fx";
-import type { DomainTag } from "../../infra/tagged-errors";
 import type { Vault } from "../../infra/vault";
 import { capCacheKey } from "../cap-cache";
 import { logJobFailureCause } from "../failure-cause";

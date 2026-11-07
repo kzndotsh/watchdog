@@ -8,9 +8,10 @@ import {
 } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
+import { errorMessage } from "../../errors/error-utils";
+import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { errorMessage } from "../../infra/error-utils";
 import { tryDb, tryDbWith } from "../../infra/postgres-effect";
 import { outsideTransaction, transact } from "../../infra/postgres-tx";
 import { logProcessWarning, logSwallowed } from "../../infra/process-log";
@@ -19,7 +20,6 @@ import {
   jobsRepoFxDb,
   playbookRunsRepoFxDb,
 } from "../../infra/repos-fx";
-import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { jobAccessLostReasonEffect } from "../job-access";
 import type { JobQueue } from "../job-queue";

@@ -16,13 +16,13 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
-import type { Db } from "../infra/db-service";
-import { jobsRepoFxDb, playbookRunsRepoFxDb } from "../infra/repos-fx";
 import {
   InternalError,
   NotFoundError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { jobsRepoFxDb, playbookRunsRepoFxDb } from "../infra/repos-fx";
 
 /** The run's recipe, or the 500 for a run whose Playbook left the catalog (not caller input). */
 function playbookOfRun(

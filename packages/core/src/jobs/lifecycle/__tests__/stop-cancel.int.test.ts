@@ -26,10 +26,10 @@ import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { deleteCaseEffect } from "../../../case-deletion/tombstone.ts";
+import { InternalError } from "../../../errors/tagged-errors.ts";
 import { recordingBlobStore } from "../../../infra/blob-store.ts";
 import { Db } from "../../../infra/db-service.ts";
 import { transact } from "../../../infra/postgres-tx.ts";
-import { InternalError } from "../../../infra/tagged-errors.ts";
 import { vaultLayer } from "../../../infra/vault.ts";
 import { cancelJobEffect } from "../../cancel-jobs.ts";
 import { JobFibers } from "../../job-fibers.ts";

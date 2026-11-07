@@ -4,10 +4,10 @@ import type { DbTx, JobRow, JobSettlePatch } from "@watchdog/db";
 import { parseTrimmedCaseId, parseTrimmedUuid } from "@watchdog/schemas/shared";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
 import { jobsRepoFx } from "../../infra/repos-fx";
-import type { DomainTag } from "../../infra/tagged-errors";
 import { appendJobActivityEffect } from "../job-activity";
 import { allowedFromStatuses, decideJob, type JobEvent } from "./table";
 

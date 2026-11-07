@@ -20,13 +20,6 @@ import {
   requireTrimmedCaseIdEffect,
   requireTrimmedGraphId,
 } from "../../cases/access";
-import type { Db } from "../../infra/db-service";
-import {
-  requireWritten,
-  tryDb,
-  type MapPostgresCatchOpts,
-} from "../../infra/postgres-effect";
-import { transact } from "../../infra/postgres-tx";
 import {
   ConflictError,
   InternalError,
@@ -36,7 +29,14 @@ import {
   type DomainTag,
   type NotFoundEntity,
   type VersionedEntity,
-} from "../../infra/tagged-errors";
+} from "../../errors/tagged-errors";
+import type { Db } from "../../infra/db-service";
+import {
+  requireWritten,
+  tryDb,
+  type MapPostgresCatchOpts,
+} from "../../infra/postgres-effect";
+import { transact } from "../../infra/postgres-tx";
 import {
   assertEvidenceIdsInCaseEffect,
   parseGraphEvidenceIdsEffect,

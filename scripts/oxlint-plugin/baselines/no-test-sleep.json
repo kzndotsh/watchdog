@@ -6,7 +6,7 @@
   "packages/core/src/activity/__tests__/activity-consumer.int.test.ts": 5,
   "packages/core/src/activity/__tests__/activity-log.int.test.ts": 2,
   "packages/core/src/activity/__tests__/activity-retention.int.test.ts": 3,
-  "packages/core/src/infra/__tests__/export-sync.test.ts": 1,
+  "packages/core/src/export/disk/__tests__/export-sync.test.ts": 1,
   "packages/core/src/jobs/__tests__/job-activity-tx.int.test.ts": 1,
   "packages/db/src/__tests__/activity-tailer.int.test.ts": 7,
   "packages/db/src/__tests__/events.test.ts": 1,

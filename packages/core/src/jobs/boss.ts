@@ -2,8 +2,8 @@ import { Effect } from "effect";
 
 import { parseTrimmedUuid } from "@watchdog/schemas/shared";
 
-import type { InternalError } from "../infra/tagged-errors";
-import { InvalidError } from "../infra/tagged-errors";
+import type { InternalError } from "../errors/tagged-errors";
+import { InvalidError } from "../errors/tagged-errors";
 import { JobQueue, type CapJobPayload } from "./job-queue";
 import { jobLane } from "./lanes";
 import { capExpireSeconds } from "./timeouts";

@@ -14,8 +14,8 @@ import {
   getCaseBySlugEffect,
   getCaseCountsEffect,
   listCasesEffect,
-  updateCaseEffect,
 } from "@watchdog/core/cases";
+import { updateCaseAndSyncExportEffect } from "@watchdog/core/export";
 import {
   caseCountsInputSchema,
   createCaseInputSchema,
@@ -146,7 +146,7 @@ export const update = authed
       assertSessionCredential(context.credential);
     }
     return runApp(
-      updateCaseEffect({
+      updateCaseAndSyncExportEffect({
         id: input.caseId,
         organizationId: context.actor.organizationId,
         ...graphActorFromContext(context),

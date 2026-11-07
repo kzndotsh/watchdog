@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  OLD_KEY_ENV,
-  parseRekeyArgs,
-  resolveOldKey,
-} from "../vault-rekey-args";
+import { OLD_KEY_ENV, parseRekeyArgs, resolveOldKey } from "../rekey-args";
 
 const never = () => {
   throw new Error("stdin must not be read");

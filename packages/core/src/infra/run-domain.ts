@@ -1,8 +1,8 @@
 import { Effect, Layer } from "effect";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import { blobStoreLayer, type BlobStore } from "./blob-store";
 import { Db } from "./db-service";
-import type { DomainTag } from "./tagged-errors";
 import { vaultLayer, type Vault } from "./vault";
 
 /**
@@ -24,7 +24,7 @@ export function runDomainWith<ROut>(layer: Layer.Layer<ROut>) {
  * call returns, so a fiber the effect forks that outlives the call must not use
  * them. The one such fiber, the export write forked by Case update via
  * `forkDetach`, provides its own `Db` / `BlobStore` (`ExportWriteServices` in
- * `export-sync.ts`), so it is independent of this call.
+ * `export/disk/export-sync.ts`), so it is independent of this call.
  *
  * `vaultLayer` captures the `Db` it is built over, so under
  * `runDomainWith(Db.layerOf(tx))` a live vault still uses the pool: tests compose

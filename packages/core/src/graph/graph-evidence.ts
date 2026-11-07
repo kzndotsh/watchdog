@@ -8,15 +8,15 @@ import {
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
-import type { Db } from "../infra/db-service";
-import { onExec } from "../infra/repo-fx";
-import { evidenceRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
   InvalidError,
   NotFoundError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { onExec } from "../infra/repo-fx";
+import { evidenceRepoFx } from "../infra/repos-fx";
 
 const INVALID_GRAPH_EVIDENCE_IDS = "One or more Evidence ids are invalid";
 const EVIDENCE_NOT_IN_CASE =
