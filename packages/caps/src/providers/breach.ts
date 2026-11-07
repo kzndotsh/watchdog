@@ -11,6 +11,12 @@ export const hibp = defineProvider({
     text: "Data from Have I Been Pwned",
     url: "https://haveibeenpwned.com",
   },
+  hosts: {
+    // The API page licenses breach data CC BY 4.0, but the terms of use bar "transmitting,
+    // distributing ... HIBP Data" and use "for the benefit of a third party (including for use by a
+    // related entity ...)"; neither says which wins.
+    "haveibeenpwned.com": "unknown",
+  },
 });
 
 /** Only the endpoint documentation was readable; no commercial terms were found. */
@@ -20,6 +26,9 @@ export const hudsonRock = defineProvider({
   termsUrl: "https://docs.hudsonrock.com/reference/search-by-domains",
   tier: "paid",
   commercialUse: "unknown",
+  hosts: {
+    "api.hudsonrock.com": "unknown",
+  },
 });
 
 /** dehashed.com/terms and the docs host were unreachable (403) during research; no terms text was read. */
@@ -29,6 +38,10 @@ export const dehashed = defineProvider({
   termsUrl: "https://dehashed.com",
   tier: "paid",
   commercialUse: "unknown",
+  hosts: {
+    // dehashed.com/legal bars only FCRA screening, spam and unlawful use; silent on sharing.
+    "api.dehashed.com": "unknown",
+  },
 });
 
 /**
@@ -43,6 +56,12 @@ export const leakradar = defineProvider({
   termsUrl: "https://leakradar.io/en/terms",
   tier: "paid",
   commercialUse: "restricted",
+  hosts: {
+    // leakradar.io/en/terms: reports for your own organisation or "a client you are authorised to
+    // assess" (client work needs Platinum, Unlimited or Enterprise); bars re-selling, mirroring,
+    // bulk exports and complete credentials. A breach Cap's body is never stored or exported.
+    "api.leakradar.io": "allowed",
+  },
 });
 
 /** The terms bar bots and scrapers without permission and are silent on the API. */
@@ -52,4 +71,9 @@ export const snusbase = defineProvider({
   termsUrl: "https://docs.snusbase.com/terms-of-service",
   tier: "paid",
   commercialUse: "unknown",
+  hosts: {
+    // docs.snusbase.com/terms-of-service §2(b): no "sharing ... personal or sensitive information
+    // obtained from our Services without the explicit consent of the affected individuals".
+    "api.snusbase.com": "forbidden",
+  },
 });

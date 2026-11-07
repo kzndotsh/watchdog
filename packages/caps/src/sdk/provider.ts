@@ -1,3 +1,5 @@
+import { fixedContactHost } from "@watchdog/schemas/caps";
+
 /**
  * Who a Cap gets its data from, and on what terms. Required on every Cap
  * (`CapabilityDef.provider`), so a new Cap cannot ship without it. Values come from the
@@ -6,6 +8,19 @@
  * `src/providers/`. The register (`docs/reference/platform/cap-register.md`) is generated
  * from these.
  */
+
+/**
+ * Whether a provider's terms let a private Case Export carry its raw response bodies: an owner
+ * or admin hands the zip to their own team, or to a client or lawyer they act for on that
+ * matter. It is not about publishing the data, reselling it or feeding another lookup service
+ * (the middleman case). The Export cannot tell who receives it, so a verdict is judged for the
+ * stricter recipient, a client: terms that let your own employees, contractors or counsel see
+ * the data but not a client (Censys, HoneyDB, WhoisXML) are not `allowed`. `allowed` only where the provider's own text permits that redistribution,
+ * `forbidden` where it bars disclosure to any third party (not only resale), `unknown` when it
+ * is silent, contradicts itself or could not be read. Only `allowed` releases a body; `unknown`
+ * withholds it exactly as `forbidden` does, so a host nobody reviewed never leaks by default.
+ */
+export type RedistributionVerdict = "allowed" | "forbidden" | "unknown";
 
 /** What the plan the Cap needs costs: `self` calls no third party. */
 export type CapProviderTier = "free" | "freemium" | "paid" | "self";
@@ -36,7 +51,24 @@ export type CapProvider = {
   commercialUse: CapCommercialUse;
   /** Set only when the terms require credit; shown beside the Cap's Job output. */
   attribution?: CapProviderAttribution;
+  /**
+   * The redistribution verdict of each fixed contact host this provider answers on (the host of
+   * a `provider` or `download` contact, the zone of a `dns` contact), in canonical form. Reviewed
+   * by hand with `commercialUse`: a value changes only after someone reads the provider's terms,
+   * never from a guess. A comment on the entry quotes the deciding text; an unannotated
+   * `unknown` is silent or unreadable terms. A host belongs to one provider, so two Caps that
+   * call one host share its verdict (and the credit line comes from `attribution`).
+   * `redistribution.test.ts` fails when a Cap declares a host no provider lists, or a provider
+   * lists a host no Cap declares, so a new vendor cannot ship unreviewed.
+   *
+   * Reviewed 2026-10-25 (#513) from each provider's terms, AUP, API docs, licence and FAQ pages.
+   */
+  hosts?: Readonly<Record<string, RedistributionVerdict>>;
 };
+
+function providerHostContact(host: string) {
+  return { kind: "provider", host, access: "anonymous" } as const;
+}
 
 /** An absolute https URL with a dotted host and no whitespace. Parsed, not matched by a regex. */
 function isHttpsUrl(value: string): boolean {
@@ -73,6 +105,13 @@ export function assertCapProvider(provider: CapProvider): void {
     throw new Error(
       `Provider ${provider.name}: attribution.text must not be empty`
     );
+  }
+  for (const host of Object.keys(provider.hosts ?? {})) {
+    if (fixedContactHost(providerHostContact(host)) !== host) {
+      throw new Error(
+        `Provider ${provider.name}: host ${host} is not in canonical form`
+      );
+    }
   }
   if (provider.tier === "self" && provider.commercialUse !== "allowed") {
     throw new Error(

@@ -35,6 +35,7 @@ export {
   defineProvider,
   type CapCommercialUse,
   type CapProvider,
+  type RedistributionVerdict,
   type CapProviderAttribution,
   type CapProviderTier,
 } from "./provider";

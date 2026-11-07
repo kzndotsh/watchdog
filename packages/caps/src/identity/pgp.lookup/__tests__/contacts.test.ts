@@ -3,8 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveEgressClasses } from "@watchdog/schemas/caps";
 import { PGP_KEYSERVERS } from "@watchdog/tools/identity";
 
-import { pgpKeyserverProviders } from "../../../providers";
-import { HOST_REDISTRIBUTION } from "../../../redistribution";
+import { redistributionVerdictFor } from "../../../redistribution";
 import { pgpLookup } from "../cap.ts";
 
 const HOSTS = [
@@ -27,10 +26,11 @@ describe("identity.pgp.lookup contacts", () => {
     expect(deriveEgressClasses(pgpLookup.contacts)).toEqual(["public_lookup"]);
   });
 
-  it("has a provider entry and an unreviewed redistribution verdict per host", () => {
+  it("derives the provider's hosts and an unreviewed verdict from the keyserver list", () => {
+    expect(pgpLookup.provider.commercialUse).toBe("unknown");
+    expect(Object.keys(pgpLookup.provider.hosts ?? {})).toEqual(HOSTS);
     for (const host of HOSTS) {
-      expect(pgpKeyserverProviders[host]?.commercialUse).toBe("unknown");
-      expect(HOST_REDISTRIBUTION[host]).toBe("unknown");
+      expect(redistributionVerdictFor(host)).toBe("unknown");
     }
   });
 
