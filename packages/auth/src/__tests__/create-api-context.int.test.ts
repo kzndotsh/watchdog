@@ -98,6 +98,8 @@ async function setKeyColumn(
 }
 
 afterEach(async () => {
+  // An API key references its user without a cascade: remove the keys first.
+  await client`delete from auth.apikey where reference_id in (select id from auth."user" where email like ${`%@${EMAIL_DOMAIN}`})`;
   await client`delete from auth."user" where email like ${`%@${EMAIL_DOMAIN}`}`;
   await client`delete from auth.organization where slug like ${`${SLUG_PREFIX}%`}`;
 });
