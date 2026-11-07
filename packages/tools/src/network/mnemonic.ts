@@ -4,15 +4,15 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { expandIpv6 } from "@watchdog/schemas/ip";
+
 import type { ToolsTag } from "../errors/tagged-errors";
 import { httpVendorError, parseVendorError } from "../errors/vendor-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost, normalizeIp } from "../normalize";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asNumber, asStringEmpty as asString, isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
-import { canonicalIpLiteral, expandIpv6 } from "./ip-lookup-cymru";
 
 export const mnemonicRecordSchema = z.object({
   query: z.string(),
@@ -136,7 +136,7 @@ export function parseMnemonicPdnsBody(
       const ipKey = mnemonicIpDedupeKey(answer);
       if (ipKey !== null && !seenIp.has(ipKey)) {
         seenIp.add(ipKey);
-        ips.push(canonicalIpLiteral(answer));
+        ips.push(normalizeIp(answer));
       }
     } else if (rrtype === "cname" || rrtype === "ns" || rrtype === "mx") {
       try {

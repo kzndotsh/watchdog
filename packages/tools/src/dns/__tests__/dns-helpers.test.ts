@@ -1,11 +1,7 @@
 import { Effect, Result } from "effect";
 import { describe, it, expect } from "vitest";
 
-import {
-  normalizeIp,
-  normalizeIpEffect,
-  dedupeResolvedIps,
-} from "../reverse.ts";
+import { normalizeIpEffect, dedupeResolvedIps } from "../reverse.ts";
 import { classifyTxtRecord } from "../txt-inventory.ts";
 
 describe("dns-helpers", () => {
@@ -15,18 +11,6 @@ describe("dns-helpers", () => {
     );
     expect(classifyTxtRecord("v=spf1 -all").kind).toBe("spf");
     expect(classifyTxtRecord("random-txt").kind).toBe("other");
-  });
-
-  it("normalizeIp accepts IPv4 and rejects junk", () => {
-    expect(normalizeIp(" 8.8.8.8 ")).toBe("8.8.8.8");
-    expect(() => normalizeIp("not-an-ip")).toThrow(/Invalid IP/);
-  });
-
-  it("normalizeIp canonicalizes equivalent IPv6 spellings", () => {
-    expect(normalizeIp("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe(
-      "2001:db8::1"
-    );
-    expect(normalizeIp("2001:db8::1")).toBe("2001:db8::1");
   });
 
   it("normalizeIpEffect maps invalid input to ToolsTag", async () => {

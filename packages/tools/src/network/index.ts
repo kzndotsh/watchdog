@@ -1,9 +1,4 @@
 export {
-  canonicalIpLiteral,
-  compressIpv6,
-  expandIpv6,
-} from "./ip-lookup-cymru";
-export {
   fetchIpLookupEffect,
   ipLookupSnapshotSchema,
   type IpLookupSnapshot,

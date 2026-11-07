@@ -3,11 +3,12 @@ import { isIP } from "node:net";
 import { Effect } from "effect";
 import { z } from "zod";
 
+import { expandIpv6 } from "@watchdog/schemas/ip";
+
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationVendorError } from "../errors/vendor-errors";
 import { Egress } from "../http/egress";
-import { canonicalIpLiteral, expandIpv6 } from "../network/ip-lookup-cymru";
+import { normalizeIp } from "../normalize";
 
 export const dnsReverseSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -16,18 +17,6 @@ export const dnsReverseSnapshotSchema = z.object({
 });
 
 export type DnsReverseSnapshot = z.infer<typeof dnsReverseSnapshotSchema>;
-
-/** Normalize and validate an IPv4/IPv6 address string. */
-export function normalizeIp(raw: string): string {
-  const trimmed = raw.trim();
-  if (!isIP(trimmed)) {
-    throw validationVendorError(`Invalid IP address: ${raw}`);
-  }
-  if (isIP(trimmed) === 6) {
-    return canonicalIpLiteral(trimmed);
-  }
-  return trimmed;
-}
 
 /** Effect wrapper — invalid IP → tagged `ToolsTag`, not a defect. */
 export function normalizeIpEffect(
@@ -52,9 +41,7 @@ export function dedupeResolvedIps(ips: readonly string[]): string[] {
           : normalized;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push(
-        isIP(normalized) === 6 ? canonicalIpLiteral(normalized) : normalized
-      );
+      out.push(isIP(normalized) === 6 ? normalizeIp(normalized) : normalized);
     } catch {
       /* skip malformed DNS answers */
     }

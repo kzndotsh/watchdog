@@ -5,8 +5,8 @@ import { z } from "zod";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost } from "../normalize";
 import { isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 
 export const whoxyLookupSnapshotSchema = z.object({
   host: z.string().min(1),

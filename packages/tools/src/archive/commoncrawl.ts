@@ -8,8 +8,8 @@ import { validationVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost } from "../normalize";
 import { isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 
 export const commoncrawlHitSchema = z.object({
   url: z.string(),

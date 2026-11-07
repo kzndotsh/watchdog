@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
+import { normalizeHost } from "@watchdog/tools/normalize";
 import {
   fetchWhoisXmlEffect,
-  normalizeHost,
   whoisSnapshotSchema,
 } from "@watchdog/tools/whois";
 

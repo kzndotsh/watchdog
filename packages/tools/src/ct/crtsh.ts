@@ -6,8 +6,8 @@ import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { parseVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeHost } from "../normalize";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
-import { normalizeHost } from "../whois/normalize";
 import {
   ctCertEntrySchema,
   ctLookupSnapshotSchema,

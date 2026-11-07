@@ -4,7 +4,7 @@ import {
   fetchWhoxyWhoisEffect,
   whoxyLookupSnapshotSchema,
 } from "@watchdog/tools/network";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoxy } from "../../providers";

@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 
-import { expandIpv6 } from "../network/ip-lookup-cymru";
+import { expandIpv6 } from "@watchdog/schemas/ip";
+
 import { asString, isRecord } from "../parse/coerce";
 
 export type FeodoEntry = {

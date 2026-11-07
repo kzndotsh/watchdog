@@ -8,8 +8,8 @@ import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
+import { normalizeEmail } from "../normalize";
 import { asString, isRecord, recordRows } from "../parse/coerce";
-import { normalizeEmail } from "./email-lookup";
 
 export const gravatarAccountSchema = z.object({
   shortname: z.string().nullable(),

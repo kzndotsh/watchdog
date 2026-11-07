@@ -4,7 +4,7 @@ import {
   fetchCommoncrawlLookupEffect,
   commoncrawlLookupSnapshotSchema,
 } from "@watchdog/tools/archive";
-import { normalizeHost } from "@watchdog/tools/whois";
+import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commonCrawl } from "../../providers";

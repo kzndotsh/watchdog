@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/dns";
+import { normalizeIp } from "@watchdog/tools/normalize";
 import {
   fetchAbuseIpdbCheckEffect,
   abuseIpdbLookupSnapshotSchema,
