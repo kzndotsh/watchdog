@@ -388,7 +388,19 @@ export default defineConfig({
     "typescript/no-unsafe-return": "error",
     "typescript/no-unsafe-type-assertion": "error",
     "typescript/no-unused-vars": "error",
-    "typescript/only-throw-error": "error",
+    // TanStack Router's `redirect()` and `notFound()` are thrown by design; every other non-Error throw still fails.
+    "typescript/only-throw-error": [
+      "error",
+      {
+        allow: [
+          {
+            from: "package",
+            package: "@tanstack/router-core",
+            name: ["Redirect", "NotFoundError"],
+          },
+        ],
+      },
+    ],
     "typescript/prefer-nullish-coalescing": "error",
     "typescript/promise-function-async": "error",
     "typescript/restrict-template-expressions": "error",
@@ -1239,7 +1251,7 @@ export default defineConfig({
         "apps/web/src/domains/**/*.functions.ts",
         "apps/web/src/domains/intake/lib/upload-file.ts",
         "apps/web/src/domains/cases/lib/active-case-switch.ts",
-        "apps/web/src/routes/api/events.ts",
+        "apps/web/src/lib/activity-stream.server.ts",
       ],
       rules: {
         "eslint/no-empty-function": "off",
@@ -1252,6 +1264,11 @@ export default defineConfig({
         "unicorn/no-useless-promise-resolve-reject": "off",
         "eslint/prefer-const": "off",
       },
+    },
+    {
+      // The SSE stream's closures refer to each other (heartbeat, access check, close).
+      files: ["apps/web/src/lib/activity-stream.server.ts"],
+      rules: { "eslint/no-use-before-define": "off" },
     },
     {
       // TanStack table meta + identifier cells: narrow meta casts and handler prop names.

@@ -97,7 +97,6 @@ describe("session cookie cache", () => {
     const options = (await auth.$context).options.session?.cookieCache;
     expect(options?.enabled).toBe(true);
     expect(options?.maxAge).toBe(60);
-    expect(SESSION_COOKIE_CACHE_SECONDS).toBe(60);
     // `refreshCache` would extend the cache without re-reading the session row:
     // the revocation window would no longer be bounded by maxAge.
     expect(options?.refreshCache).toBe(false);

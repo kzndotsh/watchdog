@@ -54,12 +54,8 @@ function EntityNotFound({ data }: { data?: unknown }) {
 }
 
 function DossierPage() {
-  const { entitySlug: rawEntitySlug } = routeApi.useParams();
-  const entitySlug = normalizeEntitySlug(rawEntitySlug);
-  if (entitySlug === undefined) {
-    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
-    throw notFound();
-  }
+  // The loader parsed the slug once (a slug that does not parse never gets here).
+  const { entitySlug } = routeApi.useLoaderData();
   const search = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
   const onSearchChange = usePatchSearch();
@@ -86,7 +82,6 @@ export const Route = createFileRoute(
   loader: async ({ context: { queryClient, workCase }, params }) => {
     const entitySlug = normalizeEntitySlug(params.entitySlug);
     if (entitySlug === undefined) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
       throw notFound();
     }
 
@@ -96,12 +91,12 @@ export const Route = createFileRoute(
       entityBySlugQuery(workCase.id, entitySlug)
     );
     if (!entity) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
       throw notFound({ data: { caseName: workCase.name } });
     }
 
     // Intent preload / navigation: warm tab data without delaying paint.
     warmDossierQueries(queryClient, workCase.id, entity.id);
+    return { entitySlug };
   },
   // No pendingComponent — keep previous page until entity is ready; dossier sections load inline.
   errorComponent: RouteError,

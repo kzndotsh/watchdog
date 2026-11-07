@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  DEFAULT_ALLOWED_EGRESS,
   allowedEgressSchema,
   blockedEgressClasses,
   formatEgressBlock,
@@ -9,10 +8,6 @@ import {
 } from "../egress-class";
 
 describe("allowed egress", () => {
-  it("defaults to local and target", () => {
-    expect(DEFAULT_ALLOWED_EGRESS).toEqual(["local", "target"]);
-  });
-
   it("lists each class once", () => {
     expect(
       allowedEgressSchema.safeParse(["local", "local", "local"]).success

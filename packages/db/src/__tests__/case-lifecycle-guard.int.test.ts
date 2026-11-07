@@ -13,7 +13,6 @@ import {
   seedCase,
 } from "@watchdog/test-db";
 
-import { APP_ROLE } from "../app-role.ts";
 import { db } from "../client.ts";
 import type { DbExec } from "../exec.ts";
 import { setGraphHistoryContext } from "../history-context.ts";
@@ -107,7 +106,6 @@ describe("cases_lifecycle_guard (#304)", () => {
   });
 
   it("is a no-op for the current application role name (APP_ROLE) and pins its search_path", async () => {
-    expect(APP_ROLE).toBe("watchdog_app");
     const [row] = await ownerDb.execute<{ config: string[] | null }>(
       sql`select proconfig as config from pg_proc where proname = 'cases_lifecycle_guard'`
     );

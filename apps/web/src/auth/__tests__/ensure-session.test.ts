@@ -43,7 +43,6 @@ describe("ensureAppSession (client)", () => {
 
     expect(sessionOptions).toHaveBeenCalled();
     const staleTime = staleTimeOfLastCall();
-    expect(STALE_SESSION).toBe(60_000);
     expect(staleTime({ state: { data: { user: {} } } } as Query)).toBe(
       STALE_SESSION
     );

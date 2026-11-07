@@ -40,7 +40,6 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -472,12 +471,7 @@ function DossierWithActiveCase({
   onSearchChange,
   onTabChange,
 }: DossierWithActiveCaseProps) {
-  const scopedEntitySlug = normalizeEntitySlug(entitySlug);
-  if (scopedEntitySlug === undefined) {
-    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
-    throw notFound({ data: { caseName: active.name } });
-  }
-  const entityQuery = useQuery(entityBySlugQuery(active.id, scopedEntitySlug));
+  const entityQuery = useQuery(entityBySlugQuery(active.id, entitySlug));
   const entityPending = listPending(entityQuery);
   const entityLoadError = queryLoadError(
     entityQuery,
@@ -511,7 +505,6 @@ function DossierWithActiveCase({
   }
 
   if (entity === null || entity === undefined) {
-    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
     throw notFound({ data: { caseName: active.name, entitySlug } });
   }
 
@@ -528,6 +521,7 @@ function DossierWithActiveCase({
 }
 
 type DossierProps = {
+  /** The Entity's normalized slug: the route's loader parsed it and 404s one that does not. */
   entitySlug: string;
   /** The route's validated search: the tab, and the list view of the Identifiers or Evidence tab. */
   search: DossierSearch;

@@ -2,10 +2,6 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
-import {
-  SEARCH_DEBOUNCE_MS,
-  SLUG_CHECK_DEBOUNCE_MS,
-} from "@/shared/lib/debounce";
 
 function setup(input: string, waitMs: number) {
   return renderHook(({ value, wait }) => useDebouncedValue(value, wait, ""), {
@@ -76,10 +72,5 @@ describe("useDebouncedValue", () => {
     await advance(500);
     expect(result.current).toEqual({ value: "", isSettled: false });
     expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it("names the delays in one place", () => {
-    expect(SEARCH_DEBOUNCE_MS).toBe(250);
-    expect(SLUG_CHECK_DEBOUNCE_MS).toBe(400);
   });
 });

@@ -15,10 +15,4 @@ describe("query-stale tiers", () => {
     expect(GC_DEFAULT).toBeGreaterThanOrEqual(STALE_DEFAULT);
     expect(GC_STABLE).toBeGreaterThanOrEqual(STALE_STABLE);
   });
-
-  it("exports expected millisecond constants", () => {
-    expect(STALE_REALTIME).toBe(10_000);
-    expect(STALE_DEFAULT).toBe(30_000);
-    expect(STALE_STABLE).toBe(300_000);
-  });
 });

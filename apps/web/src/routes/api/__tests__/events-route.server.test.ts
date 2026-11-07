@@ -42,7 +42,12 @@ const logErrorMock = vi.hoisted(() => vi.fn());
 const logSetMock = vi.hoisted(() => vi.fn());
 const logEmitMock = vi.hoisted(() => vi.fn());
 const createLoggerMock = vi.hoisted(() =>
-  vi.fn(() => ({ error: logErrorMock, set: logSetMock, emit: logEmitMock }))
+  vi.fn(() => ({
+    error: logErrorMock,
+    warn: vi.fn(),
+    set: logSetMock,
+    emit: logEmitMock,
+  }))
 );
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {

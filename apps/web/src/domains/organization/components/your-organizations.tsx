@@ -55,14 +55,7 @@ export function YourOrganizations() {
   });
   const activeId = session?.session.activeOrganizationId ?? null;
 
-  const accept = useAcceptUserInvitation({
-    onAccepted: (organizationId) => {
-      setActive.mutate(
-        { organizationId },
-        { onSuccess: reloadIntoOrganization }
-      );
-    },
-  });
+  const accept = useAcceptUserInvitation();
 
   const reject = useDeclineInvitation();
 

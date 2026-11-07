@@ -9,7 +9,6 @@ import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
 import { OrganizationAiSettings } from "@/domains/organization/components/organization-ai-settings";
 import { useDeleteOrganization } from "@/domains/organization/hooks/use-delete-organization";
 import { useLeaveOrganization } from "@/domains/organization/hooks/use-leave-organization";
-import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 import { useUpdateOrganization } from "@/domains/organization/hooks/use-update-organization";
 import { organizationKeys } from "@/domains/organization/queries";
@@ -48,7 +47,6 @@ function roleSentence(role: string): string {
 
 /** The active organization: rename it (owner / admin) or leave it (anyone but the last owner). */
 export function OrganizationProfile() {
-  const reloadIntoOrganization = useReloadIntoOrganization();
   const { data: sessionData } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);
   const activeId = sessionData?.session.activeOrganizationId ?? null;
@@ -205,7 +203,6 @@ export function OrganizationProfile() {
                   loading={leave.isPending}
                   onClick={() => {
                     leave.mutate(organization.id, {
-                      onSuccess: reloadIntoOrganization,
                       onError: (mutationError) => {
                         setError(
                           errMessage(
@@ -271,7 +268,6 @@ export function OrganizationProfile() {
                     loading={remove.isPending}
                     onClick={() => {
                       remove.mutate(organization.id, {
-                        onSuccess: reloadIntoOrganization,
                         onError: (mutationError) => {
                           setError(
                             errMessage(

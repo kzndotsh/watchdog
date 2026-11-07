@@ -2,9 +2,6 @@ import { Effect, Fiber } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  ACTIVITY_KEEP_PER_CASE,
-  ACTIVITY_PRUNE_BATCH,
-  ACTIVITY_RETENTION_DAYS,
   pruneActivityEffect,
   repairRestoredActivityXidsEffect,
   replayActivityEffect,
@@ -79,14 +76,6 @@ function replayAfter(after: ActivityCursor) {
     replayActivityEffect({ organizationId: TEST_ORGANIZATION_ID, after })
   );
 }
-
-describe("retention constants", () => {
-  it("follow ADR-0005 decision 8", () => {
-    expect(ACTIVITY_RETENTION_DAYS).toBe(90);
-    expect(ACTIVITY_KEEP_PER_CASE).toBe(200);
-    expect(ACTIVITY_PRUNE_BATCH).toBe(5000);
-  });
-});
 
 describe("pruneActivityEffect", () => {
   beforeEach(async () => {

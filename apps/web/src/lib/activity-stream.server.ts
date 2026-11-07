@@ -1,0 +1,300 @@
+/**
+ * The /api/events handler: the activity stream behind GET /api/events.
+ *
+ * Server-Sent Events endpoint: the organization-wide activity stream
+ * (ADR-0005). It streams the per-process `ActivityTailer` to the browser and
+ * opens no LISTEN connection of its own, so any number of clients and Cases
+ * cost the database one connection (the one held by the tailer). Case
+ * visibility is decided by core, never by repos.
+ *
+ * Every log entry is sent as one `activity` event with `id: <cursor>`.
+ * `EventSource` resends the last id as `Last-Event-ID` after a reconnect and
+ * the missed entries are replayed once; a client too far behind (or holding a
+ * cursor the database does not know) gets one `resync` event and refetches.
+ *
+ * Query params:
+ *   caseId  - filter entries to this Case (optional; the web client omits it)
+ *   after   - resume cursor for a first connect (optional; `Last-Event-ID` wins)
+ *
+ * Auth: session cookie, Bearer token, or x-api-key (same as OpenAPI routes); a key needs
+ * `cases:read`.
+ */
+import { Effect } from "effect";
+
+import { createApiContext } from "@/auth/api-context.server";
+import { runApp } from "@watchdog/api";
+import { ActivityTailer, replayActivityEffect } from "@watchdog/core/activity";
+import {
+  assertCaseInOrgEffect,
+  listVisibleCaseIdsEffect,
+} from "@watchdog/core/cases";
+import { createLogger } from "@watchdog/log";
+import {
+  createActivityGate,
+  parseActivityCursor,
+  parseSseCaseIdParam,
+  type ActivityEntry,
+} from "@watchdog/schemas/feed";
+import { requireScope } from "@watchdog/schemas/shared";
+
+/** Process log for a failed stream step; carries the error only, never Case or Evidence data. */
+function logStreamFailure(scope: string, error: unknown): void {
+  const log = createLogger({ scope });
+  log.error(error instanceof Error ? error : new Error(String(error)));
+  void log.emit();
+}
+
+/** Process log for a stream the client already left (a write to a closed body); a warning, not a fault. */
+function logClientGone(scope: string, error: unknown): void {
+  const log = createLogger({ scope });
+  log.warn(
+    `${scope}: ${error instanceof Error ? error.message : String(error)}`
+  );
+  void log.emit();
+}
+
+/** Process log for a dropped live event; carries the error only, never Case or Evidence data. */
+function logVisibilityRefreshFailure(error: unknown): void {
+  logStreamFailure("sse.visibility_refresh", error);
+}
+
+/**
+ * The cursor a reconnecting client sent: `Last-Event-ID` (set by `EventSource`)
+ * wins over `?after=`. `malformed` when one was sent but cannot be read, which
+ * is answered with a `resync`, never a guess.
+ */
+function resumeCursor(request: Request, url: URL) {
+  const raw =
+    request.headers.get("last-event-id") ?? url.searchParams.get("after");
+  if (raw === null || raw.trim() === "") {
+    return { after: null, malformed: false } as const;
+  }
+  const after = parseActivityCursor(raw);
+  return { after, malformed: after === null } as const;
+}
+
+/** The stream, or the 4xx that refuses it. CORS headers are added by the route handler. */
+export async function openActivityStream(request: Request): Promise<Response> {
+  const ctx = await createApiContext(request);
+  if (!ctx.actor) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const organizationId = ctx.actor.organizationId;
+  if (!organizationId) {
+    return new Response("Forbidden", { status: 403 });
+  }
+  const denied = requireScope(ctx.credential, "cases:read");
+  if (denied) return denied;
+
+  const url = new URL(request.url);
+  const caseIdParsed = parseSseCaseIdParam(url.searchParams.get("caseId"));
+  if (!caseIdParsed.ok) {
+    return new Response("Bad Request", { status: 400 });
+  }
+  const caseId = caseIdParsed.value.caseId;
+  if (caseId !== null) {
+    const visible = await runApp(
+      assertCaseInOrgEffect(caseId, organizationId).pipe(
+        Effect.as(true),
+        Effect.catchTag("NotFoundError", () => Effect.succeed(false))
+      )
+    );
+    if (!visible) {
+      return new Response("Not Found", { status: 404 });
+    }
+  }
+
+  const scopeOrganizationId = organizationId;
+  const resume = resumeCursor(request, url);
+  let allowed = new Set<string>();
+  // Every Case this stream has seen visible: a `deleted` entry is for those only (the Case is no
+  // longer in anyone's visible set by then, so the set cannot say whose it was).
+  const known = new Set<string>();
+
+  async function refreshVisible(): Promise<void> {
+    allowed = new Set(
+      await runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
+    );
+    for (const id of allowed) known.add(id);
+  }
+  await refreshVisible();
+
+  async function isVisible(eventCaseId: string): Promise<boolean> {
+    if (allowed.has(eventCaseId)) return true;
+    await refreshVisible();
+    return allowed.has(eventCaseId);
+  }
+
+  let closeOnCancel: (() => void) | undefined;
+  const stream = new ReadableStream({
+    // A consumer that cancels the body (not only an aborted request) must release
+    // its tailer subscription and LISTEN connection.
+    cancel() {
+      closeOnCancel?.();
+    },
+    start(controller) {
+      const enc = new TextEncoder();
+      let isClosed = false;
+      let unsubscribe: (() => void) | undefined;
+      // Entries go out one at a time so a visibility refresh cannot reorder them.
+      let entryChain: Promise<void> = Promise.resolve();
+
+      // Membership is re-checked on every beat: a user removed from the organization (or a
+      // revoked key) must not keep receiving its events until they reconnect.
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(enc.encode(": heartbeat\n\n"));
+        } catch (error) {
+          clearInterval(heartbeat);
+          logClientGone("sse.heartbeat", error);
+          return;
+        }
+        void recheckAccess();
+      }, 25_000);
+
+      async function recheckAccess(): Promise<void> {
+        try {
+          const current = await createApiContext(request);
+          if (
+            current.actor?.organizationId !== organizationId ||
+            current.credential === undefined ||
+            requireScope(current.credential, "cases:read") !== null
+          ) {
+            closeStream("Access revoked");
+            return;
+          }
+          // A Case deleted since the last look leaves the visible set here at the latest, so
+          // its entries stop reaching this stream (a tombstoned Case is invisible, #304).
+          await refreshVisible();
+        } catch (error) {
+          // fail closed: without a successful check the stream must not keep delivering
+          logStreamFailure("sse.access_check", error);
+          closeStream("Access could not be verified");
+        }
+      }
+
+      function send(eventType: string, data: string, id?: string) {
+        try {
+          const idLine = id === undefined ? "" : `id: ${id}\n`;
+          controller.enqueue(
+            enc.encode(`${idLine}event: ${eventType}\ndata: ${data}\n\n`)
+          );
+        } catch (error) {
+          // client disconnected
+          logClientGone("sse.send", error);
+        }
+      }
+
+      function closeStream(errorMessage?: string) {
+        if (isClosed) return;
+        isClosed = true;
+        clearInterval(heartbeat);
+        unsubscribe?.();
+        if (errorMessage !== undefined) {
+          send("error", JSON.stringify({ message: errorMessage }));
+        }
+        try {
+          controller.close();
+        } catch (error) {
+          // already closed
+          logClientGone("sse.close", error);
+        }
+      }
+
+      function sendEntry(entry: ActivityEntry) {
+        send("activity", JSON.stringify(entry), entry.cursor);
+      }
+
+      function deliverEntry(entry: ActivityEntry) {
+        if (caseId !== null && entry.caseId !== caseId) return;
+        entryChain = entryChain
+          .then(async () => deliverVisibleEntry(entry))
+          .catch(logVisibilityRefreshFailure);
+      }
+
+      async function deliverVisibleEntry(entry: ActivityEntry): Promise<void> {
+        if (isClosed) return;
+        if (entry.kind === "case" && entry.action === "deleted") {
+          // The Case just left the visible set: tell this client once (other sessions refresh
+          // their lists from it), then stop delivering its entries at once instead of at the
+          // next heartbeat. A `restored` entry finds the Case missing and refreshes the set.
+          if (known.has(entry.caseId)) {
+            allowed.delete(entry.caseId);
+            sendEntry(entry);
+          }
+          return;
+        }
+        if (!(await isVisible(entry.caseId))) return;
+        sendEntry(entry);
+      }
+
+      /** Subscribe to the tailer, then replay what the client missed (in that order). */
+      async function attachActivity() {
+        const gate = createActivityGate(resume.after, deliverEntry);
+        try {
+          unsubscribe = await runApp(
+            Effect.flatMap(Effect.service(ActivityTailer), (tailer) =>
+              tailer.subscribe(gate.live)
+            )
+          );
+        } catch (error) {
+          logStreamFailure("sse.activity_subscribe", error);
+          closeStream("Live updates unavailable");
+          return;
+        }
+        if (isClosed) {
+          unsubscribe();
+          return;
+        }
+        send("connected", JSON.stringify({ ok: true }));
+        if (resume.malformed) {
+          send("resync", "{}");
+          gate.open([]);
+          return;
+        }
+        if (resume.after === null) {
+          gate.open([]);
+          return;
+        }
+        try {
+          const replay = await runApp(
+            replayActivityEffect({
+              organizationId: scopeOrganizationId,
+              caseId: caseId ?? undefined,
+              after: resume.after,
+            })
+          );
+          if (replay.kind === "resync") {
+            send("resync", "{}");
+            gate.open([]);
+          } else {
+            gate.open(replay.entries);
+          }
+        } catch (error) {
+          // Without a replay the safe answer is a full refetch.
+          logStreamFailure("sse.activity_replay", error);
+          send("resync", "{}");
+          gate.open([]);
+        }
+      }
+
+      closeOnCancel = () => {
+        closeStream();
+      };
+      void attachActivity();
+
+      request.signal.addEventListener("abort", () => {
+        closeStream();
+      });
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
