@@ -30,7 +30,7 @@
     "@watchdog/env": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "effect": "catalog:",
-    "postal-mime": "^4.1.4",
+    "postal-mime": "^4.2.0",
     "undici": "catalog:",
     "zod": "catalog:"
   },
