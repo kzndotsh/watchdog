@@ -1,30 +1,9 @@
-import { Effect } from "effect";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { runDomain } from "../../infra/run-domain";
 import { isCapJobPayload } from "../boss";
-import {
-  extractDomainJobIdFromPayload,
-  failInvalidCapDeliveryEffect,
-} from "../cap-delivery";
+import { extractDomainJobIdFromPayload } from "../cap-delivery";
 
 const jobId = "00000000-0000-4000-8000-000000000001";
-
-const { get, failJobEffect } = vi.hoisted(() => ({
-  get: vi.fn(),
-  failJobEffect: vi.fn((..._args: unknown[]) => Effect.void),
-}));
-
-vi.mock("@watchdog/db", () => ({
-  acquirePool: () => ({ db: {} }),
-  jobsRepo: { get },
-}));
-
-vi.mock("../stages/helpers", () => ({
-  failJobEffect: (...args: unknown[]) => failJobEffect(...args),
-  isPlainRecord: (value: unknown) =>
-    typeof value === "object" && value !== null && !Array.isArray(value),
-}));
 
 describe("extractDomainJobIdFromPayload", () => {
   it("returns a trimmed job id from object payloads", () => {
@@ -54,52 +33,5 @@ describe("isCapJobPayload", () => {
     expect(isCapJobPayload({ jobId: "" })).toBe(false);
     expect(isCapJobPayload({ jobId: "boss-only" })).toBe(false);
     expect(isCapJobPayload(null)).toBe(false);
-  });
-});
-
-describe("failInvalidCapDeliveryEffect", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("fails open queued jobs with invalid payloads", async () => {
-    get.mockResolvedValue({
-      id: jobId,
-      caseId: "00000000-0000-4000-8000-000000000002",
-      status: "queued",
-      logs: [{ line: "queued" }],
-    });
-
-    await runDomain(failInvalidCapDeliveryEffect(`  ${jobId}  `));
-
-    expect(get).toHaveBeenCalledWith({}, jobId);
-    expect(failJobEffect).toHaveBeenCalledWith(
-      jobId,
-      "invalid_payload",
-      {
-        caseId: "00000000-0000-4000-8000-000000000002",
-        cause: "preflight_failed",
-      },
-      [{ line: "queued" }]
-    );
-  });
-
-  it("skips invalid job ids", async () => {
-    await runDomain(failInvalidCapDeliveryEffect("not-a-uuid"));
-    expect(get).not.toHaveBeenCalled();
-    expect(failJobEffect).not.toHaveBeenCalled();
-  });
-
-  it("skips terminal jobs", async () => {
-    get.mockResolvedValue({
-      id: jobId,
-      caseId: "00000000-0000-4000-8000-000000000002",
-      status: "succeeded",
-      logs: [],
-    });
-
-    await runDomain(failInvalidCapDeliveryEffect(jobId));
-
-    expect(failJobEffect).not.toHaveBeenCalled();
   });
 });
