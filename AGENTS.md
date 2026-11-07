@@ -105,6 +105,8 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one), and what the screen asked it for last | `apps/web/src/testing/memory-list.ts` | `memoryListPage`, `lastListRequest` |
 | A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list) | `apps/web/src/shared/hooks/use-picker-source.ts` | `usePickerSource`, `useRecordsByIds` |
 | A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`) | `apps/web/src/testing/memory-picker-port.tsx` | `memoryPickerPort` |
+| Route guard: signed-out redirect to sign-in with `redirectTo`, plus the organization state (`redirectIfSignedIn` for the sign-in side) | `apps/web/src/app/require-session.ts` | `requireSession`, `redirectIfSignedIn` |
+| Hard navigation into the new organization after an organization change (invalidates the organization state first; the organization hooks call it themselves) | `apps/web/src/domains/organization/hooks/use-reload-into-organization.ts` | `useReloadIntoOrganization` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |

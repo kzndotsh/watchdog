@@ -1,6 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const leave = vi.hoisted(() => vi.fn());
+
+const assign = vi.hoisted(() => vi.fn());
+
+beforeEach(() => {
+  assign.mockClear();
+  vi.stubGlobal("location", { assign });
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 vi.mock("@/auth/client", () => ({
   authClient: { organization: { leave } },
@@ -14,10 +24,10 @@ import { useLeaveOrganization } from "@/domains/organization/hooks/use-leave-org
 import { organizationKeys } from "@/domains/organization/queries";
 import { runAuthMutation } from "@/shared/lib/__tests__/helpers/auth-mutation-harness";
 
-const SEED = [organizationKeys.team()];
+const SEED = [organizationKeys.state("u1")];
 
 describe("useLeaveOrganization", () => {
-  it("leaves the organization in the variables and settles no cache (the caller reloads)", async () => {
+  it("leaves the organization in the variables, invalidates the organization state and hard-navigates home", async () => {
     const run = await runAuthMutation({
       useVerb: () => useLeaveOrganization(),
       authCall: leave,
@@ -27,8 +37,8 @@ describe("useLeaveOrganization", () => {
     });
 
     expect(leave).toHaveBeenCalledWith({ organizationId: "org-1" });
-    expect(run.events).toEqual([]);
-    expect(run.invalidated(organizationKeys.team())).toBe(false);
+    expect(run.invalidated(organizationKeys.state("u1"))).toBe(true);
+    expect(assign).toHaveBeenCalledWith("/");
   });
 
   it("surfaces the refusal on the mutation", async () => {
@@ -40,7 +50,7 @@ describe("useLeaveOrganization", () => {
     });
 
     expect(run.result.current.error).toEqual(new Error("Last owner"));
-    expect(run.events).toEqual([]);
+    expect(assign).not.toHaveBeenCalled();
   });
 
   it("surfaces a rejected call on the mutation", async () => {

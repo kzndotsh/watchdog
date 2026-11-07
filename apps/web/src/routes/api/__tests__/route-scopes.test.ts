@@ -6,11 +6,20 @@ import { describe, expect, it } from "vitest";
 /**
  * Every route file under `routes/api` and how it treats an API key (#367). A route that accepts a
  * key outside the oRPC router must call the shared `requireScope` with the scope it needs; a new
- * route file fails this test until it is listed here.
+ * route file fails this test until it is listed here. A route that is only wiring names the
+ * `lib/*.server.ts` module that holds its handler in `logic`; the guard is checked there.
  */
 const ROUTES = {
-  "events.ts": { kind: "scoped", scope: "cases:read" },
-  "v1/cases.$caseId.export[.]zip.ts": { kind: "scoped", scope: "cases:read" },
+  "events.ts": {
+    kind: "scoped",
+    scope: "cases:read",
+    logic: "lib/activity-stream.server.ts",
+  },
+  "v1/cases.$caseId.export[.]zip.ts": {
+    kind: "scoped",
+    scope: "cases:read",
+    logic: "lib/case-export.server.ts",
+  },
   "v1/cases.$caseId.exports.$jobId.ts": {
     kind: "scoped",
     scope: "cases:read",
@@ -32,6 +41,7 @@ const ROUTES = {
 } as const;
 
 const root = path.join(import.meta.dirname, "..");
+const webSrc = path.join(import.meta.dirname, "..", "..", "..");
 
 function routeFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -50,8 +60,11 @@ describe("routes under routes/api that accept an API key", () => {
 
   for (const [file, route] of Object.entries(ROUTES)) {
     it(`${file}: ${route.kind}`, () => {
-      const source = read(file);
       if (route.kind === "scoped") {
+        const source =
+          "logic" in route
+            ? readFileSync(path.join(webSrc, route.logic), "utf-8")
+            : read(file);
         expect(source).toContain("createApiContext");
         expect(source).toMatch(
           new RegExp(
@@ -59,9 +72,11 @@ describe("routes under routes/api that accept an API key", () => {
           )
         );
       } else if (route.kind === "router") {
+        const source = read(file);
         // Procedures declare their scope in `.meta`; the router test enumerates them.
         expect(source).toContain("handleOpenApiRequest");
       } else {
+        const source = read(file);
         expect(source).not.toContain("createApiContext");
       }
     });

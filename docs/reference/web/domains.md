@@ -37,7 +37,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 
 | Rule | Enforced by |
 | --- | --- |
-| Never import `@watchdog/db` from web (auth's db access lives in `@watchdog/auth`; `routes/api/events.ts` goes through `@watchdog/core`) | oxlint `no-restricted-imports` |
+| Never import `@watchdog/db` from web (auth's db access lives in `@watchdog/auth`; `lib/activity-stream.server.ts` goes through `@watchdog/core`) | oxlint `no-restricted-imports` |
 | No `createServerFn` in `components/`, `hooks/`, `lib/`, or `queries.ts` | `guidance` |
 | `*.server.ts` is never imported from client components, `lib/`, or `hooks/`; hooks call `*.functions` only | `guidance` (Start's import protection may fail a client build) |
 | Handlers call `orpcFromContext(context)` for domain I/O | `guidance` |

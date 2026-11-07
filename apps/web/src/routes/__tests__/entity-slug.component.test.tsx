@@ -16,6 +16,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     getRouteApi: () => ({
       useParams: useParamsMock,
+      useLoaderData: () => ({ entitySlug: useParamsMock().entitySlug }),
       useSearch: () => ({ tab: "overview" }),
       useNavigate: () => useNavigateMock,
     }),
@@ -91,6 +92,20 @@ const notFoundProps = {
   data: { caseName: "Alpha Case" },
 };
 
+/** Run the route's loader with a Query client answering `query` and the given slug param. */
+async function runLoader(
+  query: ReturnType<typeof vi.fn>,
+  entitySlug: string,
+  search: Record<string, unknown> = {}
+): Promise<unknown> {
+  const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+  return loader({
+    context: { queryClient: { query }, workCase: ACTIVE },
+    params: { entitySlug },
+    location: { search },
+  } as never);
+}
+
 describe("entity slug route", () => {
   it("renders a not-found page with the Case name", () => {
     useParamsMock.mockReturnValue({ caseSlug: "alpha", entitySlug: "missing" });
@@ -108,15 +123,7 @@ describe("entity slug route", () => {
   it("throws notFound when the entity slug does not exist", async () => {
     const query = vi.fn().mockResolvedValueOnce(null);
 
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-
-    await expect(
-      loader({
-        context: { queryClient: { query }, workCase: ACTIVE },
-        params: { entitySlug: "missing" },
-        location: { search: {} },
-      } as never)
-    ).rejects.toEqual(
+    await expect(runLoader(query, "missing")).rejects.toEqual(
       expect.objectContaining({
         data: { caseName: "Alpha Case" },
       })
@@ -205,17 +212,25 @@ describe("entity slug route", () => {
     const warmMock = vi.mocked(warmDossierQueries);
     warmMock.mockClear();
 
-    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-    await loader({
-      context: { queryClient: { query }, workCase: ACTIVE },
-      params: { entitySlug: "target" },
-      location: { search: { tab: "  claims  " } },
-    } as never);
+    await runLoader(query, "target", { tab: "  claims  " });
 
     expect(warmMock).toHaveBeenCalledWith(
       expect.anything(),
       ACTIVE.id,
       entity.id
     );
+  });
+
+  it("normalizes the slug once in the loader and hands it on as loader data", async () => {
+    const query = vi.fn().mockResolvedValueOnce({ id: testId(20) });
+    await expect(runLoader(query, "  Target ")).resolves.toEqual({
+      entitySlug: "target",
+    });
+  });
+
+  it("throws notFound for a slug that does not parse, before any read", async () => {
+    const query = vi.fn();
+    await expect(runLoader(query, "!!!")).rejects.toBeUndefined();
+    expect(query).not.toHaveBeenCalled();
   });
 });

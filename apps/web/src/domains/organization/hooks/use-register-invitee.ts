@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { inviteSignUp } from "@/auth/invitation-api";
+import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 
 export type RegisterInviteeVariables = {
   invitationId: string;
@@ -9,17 +10,13 @@ export type RegisterInviteeVariables = {
 };
 
 /**
- * Create an account from an invitation. The caller shows the error from the returned
- * mutation and navigates in `onRegistered`.
+ * Create an account from an invitation. On success the hook hard-navigates into the joined
+ * organization; the caller shows the error from the returned mutation.
  */
-export function useRegisterInvitee({
-  onRegistered,
-}: { onRegistered?: () => void } = {}) {
-  // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation -- the caller hard-navigates to "/" on success, which discards every cache; there is no mounted screen left to go stale
+export function useRegisterInvitee() {
+  const reloadIntoOrganization = useReloadIntoOrganization();
   return useMutation({
     mutationFn: async (input: RegisterInviteeVariables) => inviteSignUp(input),
-    onSuccess: () => {
-      onRegistered?.();
-    },
+    onSuccess: reloadIntoOrganization,
   });
 }

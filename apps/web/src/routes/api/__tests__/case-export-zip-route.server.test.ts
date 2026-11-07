@@ -19,6 +19,7 @@ const writeZipMock = vi.hoisted(() => vi.fn());
 const linkMock = vi.hoisted(() => vi.fn());
 const optInMock = vi.hoisted(() => vi.fn());
 const breachOptInMock = vi.hoisted(() => vi.fn());
+const logErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -70,6 +71,14 @@ vi.mock("@watchdog/core/export", () => ({
   requireBreachCredentialOptInEffect: breachOptInMock,
   measureCaseExportEffect: measureMock,
   writeCaseExportZipEffect: writeZipMock,
+}));
+
+vi.mock("@watchdog/log", () => ({
+  createLogger: () => ({
+    error: logErrorMock,
+    warn: vi.fn(),
+    emit: vi.fn(),
+  }),
 }));
 
 vi.mock("@watchdog/core/jobs", () => ({
@@ -338,6 +347,7 @@ describe("case export zip route", () => {
 
     expect(response.status).toBe(200);
     await expect(response.arrayBuffer()).rejects.toThrow();
+    expect(logErrorMock).toHaveBeenCalledWith(new Error("read failed halfway"));
   });
 
   it("answers 202 with the Job when the Case is over the inline limit, and does not stream", async () => {
