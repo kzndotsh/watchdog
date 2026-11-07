@@ -1,5 +1,5 @@
-import { Deferred, Effect, Exit, Fiber } from "effect";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Effect, Exit, Fiber } from "effect";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   runActivityConsumerEffect,
@@ -21,23 +21,16 @@ import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 const CONSUMER = "test-consumer";
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
 async function untilAsync(
   check: () => Promise<boolean>,
   timeoutMs = 4000
 ): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  // oxlint-disable-next-line eslint/no-await-in-loop
-  while (!(await check())) {
-    if (Date.now() > deadline) throw new Error("condition not met in time");
-    // oxlint-disable-next-line eslint/no-await-in-loop
-    await sleep(15);
-  }
+  await vi.waitFor(
+    async () => {
+      if (!(await check())) throw new Error("condition not met in time");
+    },
+    { timeout: timeoutMs, interval: 15 }
+  );
 }
 
 async function until(check: () => boolean, timeoutMs = 4000): Promise<void> {
@@ -117,10 +110,9 @@ describe("runActivityConsumerEffect", () => {
     const last = await append(cased.id, "before the first boot");
     start();
     expect(await untilStoredAtHead()).toEqual(cursorOf(last));
-    await sleep(100);
-    expect(handled).toEqual([]);
+    // Entries are handled in log order: a replayed "before the first boot" would precede this one.
     await append(cased.id, "live after boot");
-    await until(() => handled.length === 1);
+    await until(() => handled.length >= 1);
     expect(handled).toEqual(["live after boot"]);
     expect(resyncs).toEqual([]);
   });
@@ -175,9 +167,11 @@ describe("runActivityConsumerEffect", () => {
     await append(cased.id, "while down");
     handled.length = 0;
     start();
-    await until(() => handled.length === 1);
-    await sleep(150);
-    expect(handled).toEqual(["while down"]);
+    await until(() => handled.length >= 1);
+    // A sentinel after it: a replayed "first run" would have been handled before either.
+    await append(cased.id, "sentinel");
+    await until(() => handled.includes("sentinel"));
+    expect(handled).toEqual(["while down", "sentinel"]);
     await untilStoredAtHead();
   });
 
@@ -186,22 +180,27 @@ describe("runActivityConsumerEffect", () => {
     const before = await append(cased.id, "before");
     await activityCursorsRepo.set(db, CONSUMER, cursorOf(before));
     const pending = await append(cased.id, "slow handler");
-    const entered = Deferred.makeUnsafe<undefined>();
-    const release = Deferred.makeUnsafe<undefined>();
+    // The handler is the rendezvous: it reads the stored cursor itself, over several round
+    // trips, while the entry is in flight. No clock is involved.
+    const seenInFlight: (ActivityCursor | null)[] = [];
     start({
       handle: () =>
-        Deferred.succeed(entered, undefined).pipe(
-          Effect.andThen(Deferred.await(release))
-        ),
+        Effect.promise(async () => {
+          for (let read = 0; read < 3; read += 1) {
+            // oxlint-disable-next-line eslint/no-await-in-loop -- reads are sequential on purpose
+            seenInFlight.push(await stored());
+          }
+        }),
     });
-    await Effect.runPromise(Deferred.await(entered));
-    await sleep(150);
-    expect(await stored()).toEqual(cursorOf(before));
-    await Effect.runPromise(Deferred.succeed(release, undefined));
     await untilAsync(
       async () =>
         JSON.stringify(await stored()) === JSON.stringify(cursorOf(pending))
     );
+    expect(seenInFlight).toEqual([
+      cursorOf(before),
+      cursorOf(before),
+      cursorOf(before),
+    ]);
   });
 
   it("does not advance past an entry whose handler died", async () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { activityList } from "@watchdog/schemas/feed";
 import { opsOf, type OrganizationId } from "@watchdog/schemas/shared";
@@ -28,18 +28,13 @@ import { activityLogRepo } from "../activity-log.repo.ts";
 
 const START = { xid: "0", id: 0 } as const;
 
-async function untilTrue(
-  check: () => boolean,
-  timeoutMs = 3000
-): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (!check()) {
-    if (Date.now() > deadline) throw new Error("condition not met in time");
-    // oxlint-disable-next-line eslint/no-await-in-loop
-    await new Promise((resolve) => {
-      setTimeout(resolve, 10);
-    });
-  }
+function untilTrue(check: () => boolean, timeoutMs = 3000) {
+  return vi.waitFor(
+    () => {
+      if (!check()) throw new Error("condition not met in time");
+    },
+    { timeout: timeoutMs, interval: 10 }
+  );
 }
 
 describe("activityLogRepo", () => {
@@ -447,11 +442,14 @@ describe("activity_notify trigger", () => {
         action: "created",
         label: "committed",
       });
-      await untilTrue(() => payloads.length > 0);
-      // Settle: a leaked rollback NOTIFY would have arrived before the commit's.
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100);
-      });
+      // Notifications arrive in order: once the commit's has, a leaked rollback NOTIFY (sent
+      // first) would already be in `payloads`. No clock.
+      await untilTrue(() =>
+        payloads.some(
+          (payload) =>
+            (JSON.parse(payload) as { id?: number }).id === committed?.id
+        )
+      );
 
       expect(payloads).toHaveLength(1);
       const parsed: unknown = JSON.parse(payloads[0] ?? "null");
