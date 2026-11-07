@@ -66,9 +66,6 @@ const integrationEnv = {
   S3_BUCKET: "watchdog-evidence",
   S3_REGION: "us-east-1",
   WD_MASTER_VAULT_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  // Export writes land in a throwaway directory, never the worktree's `export/`; the setup file
-  // `scripts/vitest/settle-export-writes.ts` removes it after each file.
-  WD_EXPORT_DIR: path.join(os.tmpdir(), `watchdog-int-export-${process.pid}`),
 } as const;
 
 /*
@@ -120,7 +117,16 @@ function integrationProject(
         "scripts/vitest/settle-export-writes.ts",
         ...sharedWorkerSetup.slice(-1),
       ],
-      env: integrationEnv,
+      env: {
+        ...integrationEnv,
+        // Export writes land in a throwaway directory, never the worktree's `export/`; the setup
+        // file `scripts/vitest/settle-export-writes.ts` removes it after each file. One per
+        // project, so a project finishing never removes a directory another is writing to.
+        WD_EXPORT_DIR: path.join(
+          os.tmpdir(),
+          `watchdog-${name}-export-${process.pid}`
+        ),
+      },
     },
   };
 }

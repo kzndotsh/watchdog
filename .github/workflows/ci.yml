@@ -645,6 +645,16 @@ jobs:
       - name: Install psql
         run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
 
+      # A throwaway CI cluster needs no crash safety: skip the flushes the suite's commits wait on.
+      # (A service container takes no server flags; these settings apply on reload.)
+      - name: Postgres without durability
+        run: |
+          psql postgresql://postgres:postgres@127.0.0.1:5432/watchdog -v ON_ERROR_STOP=1 \
+            -c "ALTER SYSTEM SET fsync = off" \
+            -c "ALTER SYSTEM SET synchronous_commit = off" \
+            -c "ALTER SYSTEM SET full_page_writes = off" \
+            -c "SELECT pg_reload_conf()"
+
       - name: Test databases + migrate
         env:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
