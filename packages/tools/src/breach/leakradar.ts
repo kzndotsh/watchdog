@@ -8,7 +8,6 @@ import {
   MissingCredentialError,
   ParseVendorError,
   ValidationVendorError,
-  type RateLimitedError,
   type ToolsTag,
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
@@ -38,10 +37,6 @@ export const LEAKRADAR_DEFAULT_PAGE_SIZE = 25;
 export const LEAKRADAR_MAX_PAGE_SIZE = 100;
 export const LEAKRADAR_MAX_PAGE = 10;
 
-/** The longest `Retry-After` waited out once inside a Job; a longer one fails the run. */
-const MAX_RETRY_AFTER_MS = 5000;
-/** The wait when a 429 carries no usable `Retry-After`. */
-const DEFAULT_RETRY_AFTER_MS = 1000;
 const HOST_MAX = 253;
 const USERNAME_MAX = 128;
 
@@ -297,28 +292,14 @@ type Call = {
   subject: string;
 };
 
-/**
- * One call. The shared 429 retry waits as long as `Retry-After` says, which can outlast a Job, so
- * it is off: one retry after a short wait, and a longer wait or a second 429 fails as
- * rate-limited.
- */
+/** One call; a 429 follows the shared bounded retry of `fetchJsonObjectEffect`. */
 function callEffect(
   input: Call
 ): Effect.Effect<Record<string, unknown>, ToolsTag, HttpClient.HttpClient> {
-  const once = fetchJsonObjectEffect({
-    ...input,
-    service: SERVICE,
-    retry: false,
-  }).pipe(
+  return fetchJsonObjectEffect({ ...input, service: SERVICE }).pipe(
     Effect.map((res) => res.body),
     Effect.catchTag("HttpVendorError", failMapped)
   );
-  const waitThenRetry = (error: RateLimitedError) => {
-    const waitMs = error.retryAfterMs ?? DEFAULT_RETRY_AFTER_MS;
-    if (waitMs > MAX_RETRY_AFTER_MS) return Effect.fail(error);
-    return Effect.sleep(waitMs).pipe(Effect.andThen(once));
-  };
-  return once.pipe(Effect.catchTag("RateLimitedError", waitThenRetry));
 }
 
 function clampInt(

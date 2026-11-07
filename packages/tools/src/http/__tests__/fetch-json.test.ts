@@ -6,7 +6,7 @@ import {
   RateLimitedError,
   ValidationVendorError,
 } from "../../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../fetch-json";
+import { fetchJsonObjectEffect, RATE_LIMIT_RETRIES } from "../fetch-json";
 import { toolsHttpClientLayer } from "../http-client-layer";
 
 describe("fetchJsonObjectEffect", () => {
@@ -26,7 +26,6 @@ describe("fetchJsonObjectEffect", () => {
         signal: AbortSignal.timeout(5000),
         service: "Example",
         subject: "test",
-        retry: false,
       });
 
       expect(result.body).toEqual({ ok: true });
@@ -37,31 +36,38 @@ describe("fetchJsonObjectEffect", () => {
     )
   );
 
-  it.effect("maps HTTP 429 to RateLimitedError", () =>
-    Effect.gen(function* fetchJsonObjectRateLimitedGen() {
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockResolvedValue(new Response(null, { status: 429 }))
-      );
+  it.effect(
+    "fails a 429 whose Retry-After is past the cap at once, without waiting",
+    () =>
+      Effect.gen(function* fetchJsonObjectRateLimitedGen() {
+        const fetch = vi.fn().mockResolvedValue(
+          new Response(null, {
+            status: 429,
+            headers: { "retry-after": "60" },
+          })
+        );
+        vi.stubGlobal("fetch", fetch);
+        const started = Date.now();
 
-      const outcome = yield* Effect.result(
-        fetchJsonObjectEffect({
-          url: "https://example.com/api",
-          signal: AbortSignal.timeout(5000),
-          service: "Example",
-          subject: "test",
-          retry: false,
-        })
-      );
+        const outcome = yield* Effect.result(
+          fetchJsonObjectEffect({
+            url: "https://example.com/api",
+            signal: AbortSignal.timeout(5000),
+            service: "Example",
+            subject: "test",
+          })
+        );
 
-      expect(Result.isFailure(outcome)).toBe(true);
-      if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(RateLimitedError);
-      }
-    }).pipe(
-      Effect.provide(toolsHttpClientLayer),
-      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
-    )
+        expect(Result.isFailure(outcome)).toBe(true);
+        if (Result.isFailure(outcome)) {
+          expect(outcome.failure).toBeInstanceOf(RateLimitedError);
+        }
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(Date.now() - started).toBeLessThan(1000);
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
   );
 
   it.effect("retries 429 responses after Retry-After", () =>
@@ -101,6 +107,37 @@ describe("fetchJsonObjectEffect", () => {
     )
   );
 
+  it.effect("stops retrying a repeated 429 and fails as rate-limited", () =>
+    Effect.gen(function* fetchJsonObjectRepeatedRateLimitGen() {
+      const fetch = vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(
+            new Response(null, { status: 429, headers: { "retry-after": "0" } })
+          )
+        );
+      vi.stubGlobal("fetch", fetch);
+
+      const outcome = yield* Effect.result(
+        fetchJsonObjectEffect({
+          url: "https://example.com/api",
+          signal: AbortSignal.timeout(5000),
+          service: "Example",
+          subject: "test",
+        })
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(RateLimitedError);
+      }
+      expect(fetch).toHaveBeenCalledTimes(1 + RATE_LIMIT_RETRIES);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
+
   it.effect("rejects unsupported HTTP methods", () =>
     Effect.gen(function* fetchJsonInvalidMethodGen() {
       const outcome = yield* Effect.result(
@@ -110,7 +147,6 @@ describe("fetchJsonObjectEffect", () => {
           signal: AbortSignal.timeout(5000),
           service: "Example",
           subject: "test",
-          retry: false,
         })
       );
 
@@ -131,7 +167,6 @@ describe("fetchJsonObjectEffect", () => {
             signal: AbortSignal.timeout(5000),
             service: "Example",
             subject: "test",
-            retry: false,
           })
         );
 

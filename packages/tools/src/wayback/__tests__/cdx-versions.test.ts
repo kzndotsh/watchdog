@@ -15,6 +15,7 @@ import {
   RateLimitedError,
   ValidationVendorError,
 } from "../../errors/tagged-errors";
+import { RATE_LIMIT_RETRIES } from "../../http/fetch-json";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchWaybackCaptureEffect, waybackArchiveUrl } from "../capture";
 import { parseCdxPayload } from "../cdx-parse";
@@ -264,7 +265,7 @@ describe("fetchWaybackLookupEffect: failing honestly", () => {
         if (Result.isFailure(outcome)) {
           expect(outcome.failure).toBeInstanceOf(RateLimitedError);
         }
-        expect(calls).toBe(2);
+        expect(calls).toBe(1 + RATE_LIMIT_RETRIES);
       }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 

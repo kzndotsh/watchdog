@@ -25,8 +25,6 @@ export type FetchJsonObjectInput = {
   subject: string;
   /** Default: HTTP 2xx. Override when a vendor treats other statuses as success. */
   acceptStatus?: (status: number) => boolean;
-  /** Retry 429s. Default true; tests that stub fetch should pass false. */
-  retry?: boolean;
   /** Per-call byte limit, timeout or redirect count; defaults live in `DEFAULT_OUTBOUND_LIMITS`. */
   limits?: OutboundLimits;
 };
@@ -42,27 +40,37 @@ function parseRetryAfterMs(header: string | undefined): number | undefined {
   return Math.max(0, dateMs - Date.now());
 }
 
-const MAX_RATE_LIMIT_RETRIES = 5;
+/** How many times a 429 is retried before the call fails as rate-limited. */
+export const RATE_LIMIT_RETRIES = 3;
 
+/**
+ * The longest single wait for a 429 inside a Job. A `Retry-After` past it fails the call as
+ * rate-limited at once: waiting it out could outlast the Job and holds a worker slot meanwhile.
+ */
+export const RATE_LIMIT_MAX_WAIT_MS = 5000;
+
+/** The wait before retry `attempt` (0-based): the vendor's `Retry-After`, else exponential from 200 ms. */
+function rateLimitWaitMs(error: RateLimitedError, attempt: number): number {
+  return (
+    error.retryAfterMs ?? Math.min(200 * 2 ** attempt, RATE_LIMIT_MAX_WAIT_MS)
+  );
+}
+
+/** Retry a 429 at most `RATE_LIMIT_RETRIES` times, each wait at most `RATE_LIMIT_MAX_WAIT_MS`. */
 function retryAfterRateLimit<A, R>(
   effect: Effect.Effect<A, ToolsTag, R>
 ): Effect.Effect<A, ToolsTag, R> {
   return Effect.gen(function* retryAfterRateLimitGen() {
-    let attempt = 0;
-    while (true) {
+    for (let attempt = 0; ; attempt += 1) {
       const result = yield* Effect.result(effect);
       if (Result.isSuccess(result)) return result.success;
       const error = result.failure;
-      if (
-        error._tag !== "RateLimitedError" ||
-        attempt >= MAX_RATE_LIMIT_RETRIES
-      ) {
+      if (error._tag !== "RateLimitedError" || attempt >= RATE_LIMIT_RETRIES) {
         return yield* error;
       }
-      const fallbackMs = Math.min(200 * 2 ** attempt, 10_000);
-      const delayMs = error.retryAfterMs ?? fallbackMs;
-      yield* Effect.sleep(delayMs);
-      attempt += 1;
+      const waitMs = rateLimitWaitMs(error, attempt);
+      if (waitMs > RATE_LIMIT_MAX_WAIT_MS) return yield* error;
+      yield* Effect.sleep(waitMs);
     }
   });
 }
@@ -257,10 +265,9 @@ export function fetchJsonUnknownEffect(
     input.limits === undefined
       ? request
       : withOutboundLimits(request, input.limits);
-  const retried =
-    input.retry === false ? bounded : retryAfterRateLimit(bounded);
-
-  return retried.pipe(Effect.raceFirst(abortWhen(input.signal)));
+  return retryAfterRateLimit(bounded).pipe(
+    Effect.raceFirst(abortWhen(input.signal))
+  );
 }
 
 export function fetchJsonObjectEffect(

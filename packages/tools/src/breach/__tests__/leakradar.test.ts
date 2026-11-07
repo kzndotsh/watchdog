@@ -15,6 +15,7 @@ import {
   RateLimitedError,
   ValidationVendorError,
 } from "../../errors/tagged-errors";
+import { RATE_LIMIT_RETRIES } from "../../http/fetch-json";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   classifyLeakradarQuery,
@@ -573,19 +574,21 @@ describe("fetchLeakradarLookupEffect", () => {
         }).pipe(Effect.provide(toolsHttpClientLayer))
     );
 
-    it.effect("fails a second 429 as rate limited after one retry", () =>
-      Effect.gen(function* persistentGen() {
-        const seen = serve(
-          () =>
-            new HttpResponse("slow down", {
-              status: 429,
-              headers: HEADERS("0"),
-            })
-        );
-        const error = failure(yield* Effect.result(lookup("a@example.com")));
-        expect(error).toBeInstanceOf(RateLimitedError);
-        expect(seen).toHaveLength(2);
-      }).pipe(Effect.provide(toolsHttpClientLayer))
+    it.effect(
+      "fails a repeated 429 as rate limited once the shared retries run out",
+      () =>
+        Effect.gen(function* persistentGen() {
+          const seen = serve(
+            () =>
+              new HttpResponse("slow down", {
+                status: 429,
+                headers: HEADERS("0"),
+              })
+          );
+          const error = failure(yield* Effect.result(lookup("a@example.com")));
+          expect(error).toBeInstanceOf(RateLimitedError);
+          expect(seen).toHaveLength(1 + RATE_LIMIT_RETRIES);
+        }).pipe(Effect.provide(toolsHttpClientLayer))
     );
 
     it.effect("does not wait out a long Retry-After inside the Job", () =>
