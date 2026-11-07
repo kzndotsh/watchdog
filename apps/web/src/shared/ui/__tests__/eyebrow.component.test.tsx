@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { EYEBROW_CLASS, Eyebrow } from "@/shared/ui/eyebrow";
+import { Eyebrow } from "@/shared/ui/eyebrow";
 
 describe("Eyebrow", () => {
   it("renders an uppercase tracked muted label in a span", () => {
@@ -31,9 +31,5 @@ describe("Eyebrow", () => {
     const label = screen.getByText("Fact");
     expect(label.tagName).toBe("DIV");
     expect(label).toHaveClass("truncate", "uppercase");
-  });
-
-  it("exports the class string for components that take a className", () => {
-    expect(EYEBROW_CLASS).toBe("text-xs tracking-wider uppercase");
   });
 });

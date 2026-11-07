@@ -129,12 +129,10 @@
   "apps/web/src/shared/ui/rich-text/__tests__/load-rich-text-editor.test.ts": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/rich-text-editor.component.test.tsx": 2,
   "apps/worker/src/__tests__/main.test.ts": 1,
-  "packages/api/scripts/__tests__/export-contract.test.ts": 1,
   "packages/api/src/__tests__/export-contract.test.ts": 2,
   "packages/api/src/procedures/__tests__/credentials.test.ts": 1,
   "packages/auth/src/__tests__/api-context.test.ts": 1,
   "packages/auth/src/__tests__/send-invitation-email.test.ts": 1,
-  "packages/caps/scripts/__tests__/generate-capabilities.test.ts": 1,
   "packages/caps/src/lib/collect/__tests__/define-collect-cap.test.ts": 1,
   "packages/core/src/jobs/__tests__/cap-delivery.test.ts": 1,
   "packages/core/src/jobs/__tests__/failure-cause.test.ts": 1,
@@ -143,6 +141,5 @@
   "packages/core/src/jobs/stages/__tests__/interpret.test.ts": 1,
   "packages/core/src/jobs/stages/__tests__/suppress.test.ts": 1,
   "packages/core/src/proposals/__tests__/agent-ingress-readback.test.ts": 4,
-  "packages/core/src/tasks/__tests__/reorder-tasks.test.ts": 2,
-  "packages/test-kit/src/__tests__/msw-setup.test.ts": 1
+  "packages/core/src/tasks/__tests__/reorder-tasks.test.ts": 2
 }

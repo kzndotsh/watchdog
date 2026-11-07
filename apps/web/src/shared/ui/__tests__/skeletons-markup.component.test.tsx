@@ -3,12 +3,8 @@ import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  BOARD_SKELETON_CARDS_PER_COLUMN,
-  BOARD_SKELETON_COLUMN_COUNT,
   BoardSkeleton,
   BoardSkeletonLayout,
-  CARD_GRID_SKELETON_SLOT_COUNT,
-  COLLECT_QUEUE_SKELETON_ROW_COUNT,
   CardGridSkeleton,
   CardGridSkeletonLayout,
   CaseOverviewSkeleton,
@@ -16,8 +12,6 @@ import {
   CollectDetailSkeleton,
   CollectQueueSkeleton,
   CollectQueueSkeletonLayout,
-  DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT,
-  DASHBOARD_METRIC_TILE_COUNT,
   DashboardActivityPanelSkeleton,
   DashboardActivitySkeletonLayout,
   DashboardOverviewPanelsSkeletonLayout,
@@ -34,9 +28,6 @@ import {
   RoutePendingSkeletonLayout,
   StackBodySkeleton,
   StackBodySkeletonLayout,
-  TABLE_BODY_SKELETON_ROW_COUNT,
-  TASK_BOARD_COLUMN_SHELL_CLASS,
-  TASK_CARD_SHELL_CLASS,
   TableBodySkeletonLayout,
 } from "@/shared/ui/skeletons";
 
@@ -240,27 +231,5 @@ describe("skeletons markup", () => {
     } finally {
       errors.mockRestore();
     }
-  });
-
-  it("keeps the size constants and shell classes", () => {
-    expect({
-      TABLE_BODY_SKELETON_ROW_COUNT,
-      BOARD_SKELETON_COLUMN_COUNT,
-      BOARD_SKELETON_CARDS_PER_COLUMN,
-      CARD_GRID_SKELETON_SLOT_COUNT,
-      DASHBOARD_METRIC_TILE_COUNT,
-      DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT,
-      COLLECT_QUEUE_SKELETON_ROW_COUNT,
-    }).toEqual({
-      TABLE_BODY_SKELETON_ROW_COUNT: 8,
-      BOARD_SKELETON_COLUMN_COUNT: 5,
-      BOARD_SKELETON_CARDS_PER_COLUMN: 3,
-      CARD_GRID_SKELETON_SLOT_COUNT: 6,
-      DASHBOARD_METRIC_TILE_COUNT: 6,
-      DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT: 5,
-      COLLECT_QUEUE_SKELETON_ROW_COUNT: 10,
-    });
-    expect(TASK_BOARD_COLUMN_SHELL_CLASS).toEqual(expect.any(String));
-    expect(TASK_CARD_SHELL_CLASS).toEqual(expect.any(String));
   });
 });

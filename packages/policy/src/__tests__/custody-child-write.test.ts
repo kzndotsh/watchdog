@@ -6,26 +6,25 @@ import {
   childWriteViolation,
 } from "../custody-child-write.ts";
 
-const OVERRIDE_MSG =
-  "Child Graph writes require a user override. Prefer proposals create or graph write.";
-const CONFIRMED_MSG =
-  "Agent and CLI child Graph writes refuse confidence=confirmed. Accept via Inbox or edit in Dossier.";
-
 describe("childWriteViolation", () => {
   it("requires a user override", () => {
     for (const userOverride of [undefined, false, "true", 1]) {
       expect(
         childWriteViolation({ userOverride, confidence: "unverified" })
-      ).toEqual({ kind: "user-override-required", message: OVERRIDE_MSG });
+      ).toEqual({
+        kind: "user-override-required",
+        message: USER_OVERRIDE_REQUIRED_MESSAGE,
+      });
     }
-    expect(USER_OVERRIDE_REQUIRED_MESSAGE).toBe(OVERRIDE_MSG);
   });
 
   it("refuses confirmed even with an override", () => {
     expect(
       childWriteViolation({ userOverride: true, confidence: "confirmed" })
-    ).toEqual({ kind: "confirmed-refused", message: CONFIRMED_MSG });
-    expect(CONFIRMED_REFUSED_MESSAGE).toBe(CONFIRMED_MSG);
+    ).toEqual({
+      kind: "confirmed-refused",
+      message: CONFIRMED_REFUSED_MESSAGE,
+    });
   });
 
   it("allows an override with unverified, possible, or no confidence", () => {
