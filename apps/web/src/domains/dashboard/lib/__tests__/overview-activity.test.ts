@@ -10,7 +10,7 @@ import {
   buildCaseOverviewActivity,
   jobEntityLabelsForActivity,
   jobEvidenceLabelsForActivity,
-} from "../overview-activity.ts";
+} from "../overview-activity";
 
 describe("buildCaseOverviewActivity", () => {
   it("labels evidence without user label using kind label", () => {

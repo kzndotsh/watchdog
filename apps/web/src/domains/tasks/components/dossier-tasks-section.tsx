@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
-import { dossierTasksFallback } from "@/domains/dossier/components/dossier-tab-pending";
-import type { DossierSectionProps } from "@/domains/dossier/types";
+import { dossierTasksFallback } from "@/domains/tasks/components/dossier-tasks-fallback";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import { TaskBoardNotice } from "@/domains/tasks/components/task-board-notice";
 import { taskColumnLists } from "@/domains/tasks/components/task-column-lists";
@@ -14,7 +13,8 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FieldError } from "@watchdog/ui/components/field";
 
-type DossierTasksSectionProps = Pick<DossierSectionProps, "caseId"> & {
+type DossierTasksSectionProps = {
+  caseId: string;
   /** The Dossier's Entity: the board is the Case's with `entityId` fixed. */
   entityId: string;
 };

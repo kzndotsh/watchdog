@@ -3,13 +3,13 @@ import { useMemo } from "react";
 
 import { workHref } from "@/config/nav";
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
-import { useCaseOverviewData } from "@/domains/cases/hooks/use-case-overview-data";
 import { tileCount } from "@/domains/cases/lib/case-counts";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   MetricsSection,
   type MetricTile,
 } from "@/domains/dashboard/components/metrics-section";
+import { useCaseOverviewData } from "@/domains/dashboard/hooks/use-case-overview-data";
 import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EmptyState } from "@/shared/ui/empty-state";

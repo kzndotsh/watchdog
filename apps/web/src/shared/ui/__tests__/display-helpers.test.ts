@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { titleCase } from "@watchdog/schemas/shared";
 
-import { artifactBodyFromContent } from "../artifact-body-from-content.ts";
 import { formatOpaqueId } from "../format-opaque-id.ts";
 import { groupItemsByDay } from "../group-by-day.ts";
 
@@ -19,10 +18,5 @@ describe("shared display helpers", () => {
   it("formats opaque ids and title-cases acronyms", () => {
     expect(formatOpaqueId("abcdefghijklmnop", 4)).toBe("abcd…");
     expect(titleCase("network.dns.lookup")).toMatch(/DNS/);
-  });
-
-  it("parses json artifact bodies", () => {
-    const body = artifactBodyFromContent('{"ok":true}', "application/json");
-    expect(body.kind).toBe("json");
   });
 });

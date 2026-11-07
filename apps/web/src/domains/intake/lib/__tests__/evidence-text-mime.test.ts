@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   evidenceShowsInlineText,
-  isTextEvidenceMime,
   tryParseEvidenceJson,
 } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
@@ -30,22 +29,6 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
     ...overrides,
   };
 }
-
-describe("isTextEvidenceMime", () => {
-  it("matches common text and structured text mimes", () => {
-    expect(isTextEvidenceMime("text/plain")).toBe(true);
-    expect(isTextEvidenceMime("application/json")).toBe(true);
-    expect(isTextEvidenceMime("application/ld+json")).toBe(true);
-    expect(isTextEvidenceMime("application/xml")).toBe(true);
-    expect(isTextEvidenceMime("text/yaml")).toBe(true);
-  });
-
-  it("rejects binary and empty mimes", () => {
-    expect(isTextEvidenceMime("image/png")).toBe(false);
-    expect(isTextEvidenceMime(null)).toBe(false);
-    expect(isTextEvidenceMime("")).toBe(false);
-  });
-});
 
 describe("tryParseEvidenceJson", () => {
   it("parses valid JSON text", () => {

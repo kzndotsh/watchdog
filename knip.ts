@@ -26,7 +26,7 @@ const config: KnipConfig = {
     "apps/web/src/shared/ui/graph/types.ts": ["types"],
     "apps/web/src/shared/ui/vocab/index.ts": ["exports"],
     "apps/web/src/shared/ui/vocab/status.lib.ts": ["exports"],
-    "apps/web/src/domains/cases/components/case-graph/case-graph-ranks.ts": [
+    "apps/web/src/domains/entities/components/case-graph/case-graph-ranks.ts": [
       "exports",
     ],
     "apps/web/src/domains/jobs/lib/playbook-match.ts": ["exports"],

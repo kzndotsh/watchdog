@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
-import { caseGraphLayout } from "@/domains/cases/components/case-graph/case-graph-layout";
+import { caseGraphLayout } from "@/domains/entities/components/case-graph/case-graph-layout";
 import type { GraphSnapshot } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
 import { useWorkCase } from "@/shared/hooks/use-route-case";

@@ -9,9 +9,9 @@ import {
 } from "react";
 
 import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
+import { useDataHotkeys } from "@/domains/search/hooks/use-data-hotkeys";
+import { useGlobalHotkeys } from "@/domains/search/hooks/use-global-hotkeys";
 import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
-import { useDataHotkeys } from "@/shared/hooks/use-data-hotkeys";
-import { useGlobalHotkeys } from "@/shared/hooks/use-global-hotkeys";
 import type { AppAction } from "@/shared/lib/app-action";
 import { hotkeyBindings, hotkeyDef, type HotkeyId } from "@/shared/lib/hotkeys";
 import { useSidebar } from "@watchdog/ui/components/sidebar";

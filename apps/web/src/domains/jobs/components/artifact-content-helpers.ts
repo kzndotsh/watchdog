@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
+import { ARTIFACT_LOADING } from "@/domains/jobs/lib/artifact-body-from-content";
 import type { GetArtifactContentInput } from "@/domains/jobs/types";
-import { ARTIFACT_LOADING } from "@/shared/ui/artifact-body-from-content";
 
 type ArtifactSourceProps =
   | {

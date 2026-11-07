@@ -14,7 +14,7 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-vi.mock("@/domains/cases/components/case-overview-tab", () => ({
+vi.mock("@/domains/dashboard/components/case-overview-tab", () => ({
   CaseOverviewTab: () => <div>Overview tab body</div>,
 }));
 
@@ -66,7 +66,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
-import { CaseOverview } from "@/domains/cases/components/case-overview";
+import { CaseOverview } from "@/domains/dashboard/components/case-overview";
 
 const CASE: CaseRecord = {
   id: testCaseId(1),

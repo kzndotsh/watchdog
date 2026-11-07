@@ -9,7 +9,7 @@ import {
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CaseNavLinks } from "@/shared/layout/case-nav-links";
+import { CaseNavLinks } from "@/app/layout/case-nav-links";
 import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 /** A real router with the Case routes the nav links to, opened at `href`. */

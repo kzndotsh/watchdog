@@ -13,7 +13,6 @@ import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-m
 import { dossierOverviewFallback } from "@/domains/dossier/components/dossier-tab-pending";
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { EventsSection } from "@/domains/dossier/components/events-section";
-import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
 import { NotesSection } from "@/domains/dossier/components/notes-section";
 import { QuestionsSection } from "@/domains/dossier/components/questions-section";
@@ -33,6 +32,7 @@ import {
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
+import { EvidencePreviewDrawer } from "@/domains/intake/components/evidence-preview-drawer";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Page } from "@/shared/layout/page";

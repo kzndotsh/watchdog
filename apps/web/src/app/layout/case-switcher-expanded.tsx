@@ -1,7 +1,7 @@
 import { ChevronsUpDownIcon, FolderIcon } from "lucide-react";
 
+import { CaseNavLinks } from "@/app/layout/case-nav-links";
 import type { CaseRecord } from "@/domains/cases/types";
-import { CaseNavLinks } from "@/shared/layout/case-nav-links";
 import {
   DropdownMenu,
   DropdownMenuContent,

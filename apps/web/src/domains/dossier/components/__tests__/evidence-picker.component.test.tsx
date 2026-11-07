@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
+import { EvidenceCiteChips } from "@/domains/triage/components/evidence-cite-chips";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testId } from "@watchdog/test-kit";

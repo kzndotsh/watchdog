@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isStaleVersionError,
   staleVersionMessage,
-} from "@/shared/lib/stale-version";
+} from "@/app/lib/stale-version";
 
 describe("isStaleVersionError", () => {
   it("recognises the API's stale_version data", () => {

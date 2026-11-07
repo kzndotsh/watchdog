@@ -3,8 +3,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
-import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
-import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseDeletedToast } from "@/domains/cases/hooks/use-case-deleted-toast";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
@@ -15,6 +13,8 @@ import {
   casesContextQuery,
   deletionPolicyQuery,
 } from "@/domains/cases/queries";
+import { CaseOverviewPending } from "@/domains/dashboard/components/case-overview-pending";
+import { CaseOverviewTab } from "@/domains/dashboard/components/case-overview-tab";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";

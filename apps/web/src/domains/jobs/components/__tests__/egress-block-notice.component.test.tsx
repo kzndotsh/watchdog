@@ -25,7 +25,7 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-import { EgressBlockNotice } from "@/domains/cases/components/egress-block-notice";
+import { EgressBlockNotice } from "@/domains/jobs/components/egress-block-notice";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
 
 const router = createTestRouter();

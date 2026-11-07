@@ -5,6 +5,7 @@ import { useState } from "react";
 import { TRIAGE_PENDING_SEARCH, WORK_TO, workSearch } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
+import { useRegisteredPaletteCommands } from "@/domains/search/hooks/use-registered-palette-commands";
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
 import {
   searchEvidenceHitLabel,
@@ -15,7 +16,6 @@ import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
 import { couldnt } from "@/lib/utils";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
-import { useRegisteredPaletteCommands } from "@/shared/hooks/use-registered-palette-commands";
 import { actionChord, type AppAction } from "@/shared/lib/app-action";
 import { SEARCH_DEBOUNCE_MS } from "@/shared/lib/debounce";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";

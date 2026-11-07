@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
 import { SKELETON_DELAY_CLASS } from "@/shared/lib/skeleton-delay";
-import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 
 describe("skeleton show-delay structure", () => {

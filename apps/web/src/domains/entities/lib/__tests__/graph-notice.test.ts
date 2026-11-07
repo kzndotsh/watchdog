@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   egoTruncationNotice,
   graphTruncationNotice,
-} from "@/domains/cases/lib/graph-notice";
+} from "@/domains/entities/lib/graph-notice";
 
 const HINT = "Open an Entity's Connections to see the rest.";
 

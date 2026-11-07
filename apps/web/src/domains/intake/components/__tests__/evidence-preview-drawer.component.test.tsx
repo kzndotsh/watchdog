@@ -14,7 +14,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
-import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
+import { EvidencePreviewDrawer } from "@/domains/intake/components/evidence-preview-drawer";
 import type { EvidenceRecord } from "@/domains/intake/types";
 
 function fetchedQuery<T>(data: T) {

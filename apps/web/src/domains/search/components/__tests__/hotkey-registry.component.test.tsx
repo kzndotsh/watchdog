@@ -18,7 +18,7 @@ vi.mock("@/domains/search/components/command-palette", () => ({
   CommandPalette: () => null,
 }));
 
-vi.mock("@/shared/hooks/use-global-hotkeys", () => ({
+vi.mock("@/domains/search/hooks/use-global-hotkeys", () => ({
   useGlobalHotkeys: (bindings: HotkeyBinding[]) => {
     captured.bindings = bindings;
   },

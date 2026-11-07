@@ -14,7 +14,7 @@ import { entityDisplayLabel } from "@watchdog/schemas/shared";
 import {
   computeDirectedNodeRanks,
   placeLayeredGraphNodes,
-} from "./case-graph-ranks.ts";
+} from "./case-graph-ranks";
 
 export type CaseGraphEntity = {
   id: string;

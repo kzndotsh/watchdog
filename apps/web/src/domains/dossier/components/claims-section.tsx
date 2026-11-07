@@ -9,6 +9,7 @@ import { ClaimComposer } from "@/domains/dossier/components/claim-composer";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
+import { TargetActionsHost } from "@/domains/dossier/components/target-actions-host";
 import { useCreateClaim } from "@/domains/dossier/hooks/use-create-claim";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import {
@@ -44,7 +45,6 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
-import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import {
   ClaimClassBadge,
   ConfidenceBadge,

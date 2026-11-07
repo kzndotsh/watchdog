@@ -5,7 +5,7 @@ import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import {
   isStaleVersionError,
   staleVersionMessage,
-} from "@/shared/lib/stale-version";
+} from "@/app/lib/stale-version";
 import { toast } from "@/shared/ui/toast";
 
 export type StaleVersionTarget = {
