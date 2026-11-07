@@ -11,11 +11,12 @@ import {
 } from "./disk/export-sync";
 
 /**
- * `updateCaseEffect` plus the disk Export's follow-up: a slug change best-effort renames the
- * Case's directory, then schedules a rewrite. The API calls this; the Case update alone lives in
- * `cases/` (which sits below the Export).
+ * Update a Case (name, slug, description, egress), then the disk Export's follow-up: a slug
+ * change best-effort renames the Case's directory, then schedules a rewrite. This is the one
+ * Case update callers use; the row update alone (`updateCaseWithPreviousSlugEffect` in `cases/`,
+ * which sits below the Export) never syncs the Export.
  */
-export function updateCaseAndSyncExportEffect(
+export function updateCaseEffect(
   input: Parameters<typeof updateCaseWithPreviousSlugEffect>[0]
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* updateCaseAndSyncExportGen() {

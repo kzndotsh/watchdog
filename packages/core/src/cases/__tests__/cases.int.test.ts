@@ -10,13 +10,13 @@ import {
   createCaseEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
-  updateCaseEffect,
 } from "@watchdog/core/cases";
 import {
   MAX_ECHOED_ID_CHARS,
   NotFoundError,
   isDomainTag,
 } from "@watchdog/core/errors";
+import { updateCaseEffect } from "@watchdog/core/export";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, entitiesRepo } from "@watchdog/db";

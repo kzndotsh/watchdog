@@ -19,10 +19,10 @@ import {
   getCaseBySlugEffect,
   listCasesEffect,
   listVisibleCaseIdsEffect,
-  updateCaseEffect,
   assertCaseInOrgEffect,
 } from "@watchdog/core/cases";
 import { isDomainTag, type DomainTag } from "@watchdog/core/errors";
+import { updateCaseEffect } from "@watchdog/core/export";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import {

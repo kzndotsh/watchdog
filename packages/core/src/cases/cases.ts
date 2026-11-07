@@ -291,11 +291,3 @@ export function updateCaseWithPreviousSlugEffect(
     };
   });
 }
-
-export function updateCaseEffect(
-  input: Parameters<typeof updateCaseWithPreviousSlugEffect>[0]
-): Effect.Effect<CaseRecord, DomainTag, Db> {
-  return updateCaseWithPreviousSlugEffect(input).pipe(
-    Effect.map(({ record }) => record)
-  );
-}

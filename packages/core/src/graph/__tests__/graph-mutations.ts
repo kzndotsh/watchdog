@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import { updateCaseEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
+import { updateCaseEffect } from "@watchdog/core/export";
 import {
   applyPatchEffect,
   createClaimEffect,

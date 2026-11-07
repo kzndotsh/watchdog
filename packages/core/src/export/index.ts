@@ -13,7 +13,7 @@ export {
   removeCaseExportDirEffect,
   renameCaseExportDirEffect,
 } from "./disk/export-sync";
-export { updateCaseAndSyncExportEffect } from "./case-update";
+export { updateCaseEffect } from "./case-update";
 export {
   measureCaseExportEffect,
   writeCaseExportZipEffect,
