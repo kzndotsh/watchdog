@@ -1,36 +1,30 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const searchCaseMock = vi.fn();
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({
-    search: { case: searchCaseMock },
-  }),
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import { searchCaseFn } from "@/domains/search/search.functions";
+import { callServerFn, orpc } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+beforeEach(() => orpc.reset());
 
-describe("search.functions", () => {
-  it("delegates case search to the ORPC search endpoint", async () => {
-    const payload = {
-      caseId: "550e8400-e29b-41d4-a716-446655440000",
+describe("searchCaseFn", () => {
+  it("refuses a Case id that is not a uuid", async () => {
+    await expect(
+      callServerFn(searchCaseFn, { caseId: "x", q: "alpha" })
+    ).rejects.toThrow();
+
+    expect(orpc.calls("search.case")).toEqual([]);
+  });
+
+  it("trims a padded Case id before the API sees it", async () => {
+    orpc.reply("search.case", {
       q: "alpha",
-    };
-    const hits = {
       entities: [],
       identifiers: [],
       evidence: [],
@@ -40,19 +34,15 @@ describe("search.functions", () => {
       cases: [],
       evidenceLabels: {},
       entityLabels: {},
-    };
-    searchCaseMock.mockResolvedValue(hits);
-
-    const result = await (
-      searchCaseFn as unknown as (
-        input: ServerDataContext<typeof payload>
-      ) => Promise<typeof hits>
-    )({
-      data: payload,
-      context: {},
     });
 
-    expect(searchCaseMock).toHaveBeenCalledWith(payload);
-    expect(result).toEqual(hits);
+    await callServerFn(searchCaseFn, {
+      caseId: `  ${testId(10)}  `,
+      q: "alpha",
+    });
+
+    expect(orpc.calls("search.case")).toMatchObject([
+      { caseId: testId(10), q: "alpha" },
+    ]);
   });
 });

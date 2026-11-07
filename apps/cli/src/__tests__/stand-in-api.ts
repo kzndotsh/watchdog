@@ -37,7 +37,7 @@ export function queryOf(url: URL): Record<string, string | string[]> {
     const indexed = /^(.*)\[\d+\]$/.exec(key);
     const name = indexed?.[1];
     if (name === undefined) {
-      out[name ?? key] = value;
+      out[key] = value;
       continue;
     }
     const current = out[name];

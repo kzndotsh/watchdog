@@ -1,28 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const tasksApi = {
-  list: vi.fn(),
-  board: vi.fn(),
-  get: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-  remove: vi.fn(),
-  reorder: vi.fn(),
-};
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ tasks: tasksApi }),
-  orpcNullIfNotFound: (value: unknown) => value,
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import {
   createTaskFn,
@@ -32,105 +15,63 @@ import {
   listTasksPageFn,
   reorderTasksFn,
 } from "@/domains/tasks/tasks.functions";
+import { callServerFn, orpc, orpcNotFound } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+const CASE_ID = testId(10);
+const TASK_ID = testId(1);
 
-const TASK = {
-  id: "550e8400-e29b-41d4-a716-446655440000",
-  caseId: "660e8400-e29b-41d4-a716-446655440001",
-  entityId: null,
-  title: "Follow up",
-  description: null,
-  status: "backlog" as const,
-  priority: null,
-  dueDate: null,
-  position: 0,
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
-};
+beforeEach(() => orpc.reset());
 
-describe("tasks.functions", () => {
-  it("reads one page of the Task list, the board and one Task through oRPC", async () => {
-    const page = {
-      items: [{ ...TASK, entity: null }],
-      nextCursor: null,
-      total: { count: 1, isCapped: false },
-    };
-    tasksApi.list.mockResolvedValue(page);
-    tasksApi.board.mockResolvedValue({ items: page.items, isTruncated: false });
-    tasksApi.get.mockResolvedValue(TASK);
-    const call = (fn: unknown, data: Record<string, unknown>) =>
-      (fn as (input: ServerDataContext<typeof data>) => Promise<unknown>)({
-        data,
-        context: {},
-      });
+describe("getTaskFn", () => {
+  it("answers null when the Task is gone", async () => {
+    orpc.fail("tasks.get", orpcNotFound());
 
     await expect(
-      call(listTasksPageFn, { caseId: TASK.caseId, status: ["done"] })
-    ).resolves.toEqual(page);
-    expect(tasksApi.list).toHaveBeenCalledWith({
-      caseId: TASK.caseId,
-      status: ["done"],
-    });
-    await expect(
-      call(getTaskBoardFn, { caseId: TASK.caseId, q: "follow" })
-    ).resolves.toEqual({ items: page.items, isTruncated: false });
-    expect(tasksApi.board).toHaveBeenCalledWith({
-      caseId: TASK.caseId,
-      q: "follow",
-    });
-    await expect(
-      call(getTaskFn, { caseId: TASK.caseId, taskId: TASK.id })
-    ).resolves.toEqual(TASK);
+      callServerFn(getTaskFn, { caseId: CASE_ID, taskId: TASK_ID })
+    ).resolves.toBeNull();
   });
 
-  it("creates, reorders, and deletes tasks through oRPC", async () => {
-    tasksApi.create.mockResolvedValue(TASK);
-    tasksApi.reorder.mockResolvedValue([TASK]);
-    tasksApi.remove.mockResolvedValue({ ok: true });
+  it("rethrows any other API failure", async () => {
+    orpc.fail("tasks.get", new Error("db down"));
 
     await expect(
-      (
-        createTaskFn as unknown as (
-          input: ServerDataContext<{ caseId: string; title: string }>
-        ) => Promise<unknown>
-      )({
-        data: { caseId: TASK.caseId, title: "Follow up" },
-        context: {},
-      })
-    ).resolves.toEqual(TASK);
+      callServerFn(getTaskFn, { caseId: CASE_ID, taskId: TASK_ID })
+    ).rejects.toThrow("db down");
+  });
+});
 
-    await expect(
-      (
-        reorderTasksFn as unknown as (
-          input: ServerDataContext<{
-            caseId: string;
-            status: typeof TASK.status;
-            orderedIds: string[];
-          }>
-        ) => Promise<unknown>
-      )({
-        data: {
-          caseId: TASK.caseId,
-          status: "backlog",
-          orderedIds: [TASK.id],
-        },
-        context: {},
-      })
-    ).resolves.toEqual([TASK]);
+describe("input validation", () => {
+  it.each([
+    ["listTasksPageFn", listTasksPageFn, { caseId: "not-a-uuid" }],
+    ["getTaskBoardFn", getTaskBoardFn, { caseId: "not-a-uuid" }],
+    ["getTaskFn", getTaskFn, { caseId: CASE_ID, taskId: "not-a-uuid" }],
+    ["createTaskFn", createTaskFn, { caseId: CASE_ID, title: "" }],
+    [
+      "reorderTasksFn",
+      reorderTasksFn,
+      { caseId: CASE_ID, status: "nonsense", orderedIds: [TASK_ID] },
+    ],
+    ["deleteTaskFn", deleteTaskFn, { caseId: CASE_ID }],
+  ] as const)(
+    "%s refuses a malformed input before the API is called",
+    async (_name, fn, input) => {
+      await expect(callServerFn(fn, input)).rejects.toThrow();
 
-    await expect(
-      (
-        deleteTaskFn as unknown as (
-          input: ServerDataContext<{ caseId: string; taskId: string }>
-        ) => Promise<{ ok: true }>
-      )({
-        data: { caseId: TASK.caseId, taskId: TASK.id },
-        context: {},
-      })
-    ).resolves.toEqual({ ok: true });
+      expect(orpc.calls("tasks.list")).toEqual([]);
+      expect(orpc.calls("tasks.board")).toEqual([]);
+      expect(orpc.calls("tasks.get")).toEqual([]);
+      expect(orpc.calls("tasks.create")).toEqual([]);
+      expect(orpc.calls("tasks.reorder")).toEqual([]);
+      expect(orpc.calls("tasks.remove")).toEqual([]);
+    }
+  );
+
+  it("trims a padded Case id before the API sees it", async () => {
+    orpc.reply("tasks.board", { items: [], isTruncated: false });
+
+    await callServerFn(getTaskBoardFn, { caseId: `  ${CASE_ID}  ` });
+
+    expect(orpc.calls("tasks.board")).toEqual([{ caseId: CASE_ID }]);
   });
 });

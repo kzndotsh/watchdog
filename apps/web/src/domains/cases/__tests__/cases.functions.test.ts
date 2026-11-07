@@ -1,407 +1,286 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: (schema: { parse: (value: unknown) => unknown }) => ({
-      handler:
-        (fn: (input: { data: unknown; context: unknown }) => unknown) =>
-        (input: { data: unknown; context: unknown }) =>
-          fn({ ...input, data: schema.parse(input.data) }),
-    }),
-    handler:
-      (fn: (input: { context: unknown }) => unknown) =>
-      (input?: { context?: unknown }) =>
-        fn({ context: {}, ...input }),
-  }),
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
+
+// The request cookie jar: the framework seam `active-case.server` writes through.
+const jar = vi.hoisted(() => new Map<string, string>());
+vi.mock("@tanstack/react-start/server", () => ({
+  getCookie: (name: string) => jar.get(name),
+  setCookie: (name: string, value: string) => void jar.set(name, value),
+  deleteCookie: (name: string) => void jar.delete(name),
 }));
 
-const casesApi = {
-  list: vi.fn(),
-  get: vi.fn(),
-  getBySlug: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-  delete: vi.fn(),
-  restore: vi.fn(),
-  purge: vi.fn(),
-  listDeleted: vi.fn(),
-  getDeletedBySlug: vi.fn(),
-  deletionPolicy: vi.fn(),
-  counts: vi.fn(),
-};
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ cases: casesApi }),
-  orpcNullIfNotFound: (value: unknown) => value,
-}));
-
-const resolveActiveCase = vi.hoisted(() => vi.fn());
-vi.mock("@/domains/cases/cases-active.server", () => ({ resolveActiveCase }));
-
-vi.mock("@/domains/cases/lib/active-case.server", () => ({
-  readActiveCaseId: vi.fn(),
-  writeActiveCaseId: vi.fn(),
-}));
+// `resolveActiveCase` runs core's healing rule on the database through `runApp`.
+const runApp = vi.hoisted(() => vi.fn());
+vi.mock("@watchdog/api", () => ({ runApp }));
 
 import {
+  createCaseFn,
   deleteCaseFn,
   getCaseBySlugFn,
-  getCaseCountsFn,
   getCasesContextFn,
-  getDeletedCaseBySlugFn,
-  getDeletionPolicyFn,
   healActiveCaseFn,
-  listDeletedCasesPageFn,
-  purgeCaseFn,
   restoreCaseFn,
   setActiveCaseIdFn,
 } from "@/domains/cases/cases.functions";
-import {
-  readActiveCaseId,
-  writeActiveCaseId,
-} from "@/domains/cases/lib/active-case.server";
-import type { CaseRecord } from "@/domains/cases/types";
-import { asCaseId } from "@watchdog/schemas/shared";
+import { ACTIVE_CASE_COOKIE } from "@/domains/cases/lib/active-case";
+import { buildCaseRecord } from "@/testing/records";
+import { callServerFn, orpc, orpcNotFound } from "@/testing/server-fn";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
-type ServerContext = {
-  context: Record<string, never>;
-};
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+const ORG_CONTEXT = { organizationId: testId(900) };
+const CASE_A = buildCaseRecord({ id: testCaseId(1), slug: "alpha" });
+const CASE_B = buildCaseRecord({ id: testCaseId(2), slug: "beta" });
+const CASE_C = testCaseId(3);
 
-const CASE_A: CaseRecord = {
-  id: asCaseId("550e8400-e29b-41d4-a716-446655440000"),
-  slug: "alpha",
-  name: "Alpha",
-  description: null,
-  allowedEgress: ["local", "target"],
-};
+const cookie = () => jar.get(ACTIVE_CASE_COOKIE);
 
-const CASE_B: CaseRecord = {
-  id: asCaseId("660e8400-e29b-41d4-a716-446655440001"),
-  slug: "beta",
-  name: "Beta",
-  description: null,
-  allowedEgress: [
-    "local",
-    "target",
-    "public_lookup",
-    "account_lookup",
-    "model",
-  ],
-};
+beforeEach(() => {
+  orpc.reset();
+  jar.clear();
+  runApp.mockReset();
+});
 
-const getCaseBySlug = getCaseBySlugFn as unknown as (
-  input: ServerDataContext<{ caseSlug: string }>
-) => Promise<CaseRecord | null>;
+describe("getCasesContextFn", () => {
+  it("heals the cookie to the resolved Case when the stored id is stale", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, testCaseId(9));
+    runApp.mockResolvedValue({ cases: [CASE_A, CASE_B], active: CASE_A });
 
-describe("cases.functions", () => {
-  it("heals the active case cookie when the stored id is missing", async () => {
-    const stale = asCaseId("770e8400-e29b-41d4-a716-446655440009");
-    resolveActiveCase.mockResolvedValue({
-      cases: [CASE_A, CASE_B],
-      active: CASE_A,
-    });
-    vi.mocked(readActiveCaseId).mockReturnValue(stale);
-
-    const ctx = await (
-      getCasesContextFn as unknown as (
-        input: ServerContext
-      ) => Promise<{ cases: CaseRecord[]; active: CaseRecord | null }>
-    )({
-      context: {},
-    });
+    const ctx = await callServerFn(getCasesContextFn, undefined, ORG_CONTEXT);
 
     expect(ctx.active).toEqual(CASE_A);
-    expect(resolveActiveCase).toHaveBeenCalledWith({}, stale);
-    expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_A.id);
+    expect(cookie()).toBe(CASE_A.id);
   });
 
-  it("leaves the cookie alone when the stored id is already the resolved Active Case", async () => {
-    vi.mocked(writeActiveCaseId).mockClear();
-    resolveActiveCase.mockResolvedValue({
-      cases: [CASE_A, CASE_B],
-      active: CASE_B,
-    });
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_B.id);
+  it("leaves the cookie alone when it already names the resolved Case", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_B.id);
+    runApp.mockResolvedValue({ cases: [CASE_A, CASE_B], active: CASE_B });
 
-    const ctx = await (
-      getCasesContextFn as unknown as (
-        input: ServerContext
-      ) => Promise<{ cases: CaseRecord[]; active: CaseRecord | null }>
-    )({ context: {} });
+    await callServerFn(getCasesContextFn, undefined, ORG_CONTEXT);
 
-    expect(ctx.active).toEqual(CASE_B);
-    expect(writeActiveCaseId).not.toHaveBeenCalled();
+    expect(cookie()).toBe(CASE_B.id);
   });
 
   it("clears the cookie when the organization has no Cases", async () => {
-    vi.mocked(writeActiveCaseId).mockClear();
-    resolveActiveCase.mockResolvedValue({ cases: [], active: null });
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_A.id);
+    jar.set(ACTIVE_CASE_COOKIE, CASE_A.id);
+    runApp.mockResolvedValue({ cases: [], active: null });
 
-    await (
-      getCasesContextFn as unknown as (input: ServerContext) => Promise<unknown>
-    )({ context: {} });
+    await callServerFn(getCasesContextFn, undefined, ORG_CONTEXT);
 
-    expect(writeActiveCaseId).toHaveBeenCalledWith(null);
+    expect(cookie()).toBeUndefined();
   });
 
-  it("resolves a case by slug through the org-scoped procedure", async () => {
-    casesApi.getBySlug.mockResolvedValue(CASE_B);
+  it("refuses a session that has no organization", async () => {
+    await expect(
+      callServerFn(getCasesContextFn, undefined, { organizationId: null })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
 
-    const row = await getCaseBySlug({
-      data: { caseSlug: "beta" },
-      context: {},
-    });
-
-    expect(row).toEqual(CASE_B);
-    expect(casesApi.getBySlug).toHaveBeenCalledWith({ caseSlug: "beta" });
+    expect(runApp).not.toHaveBeenCalled();
   });
+});
 
-  it("answers null for a slug the caller's organization cannot see (not found, whoever owns it)", async () => {
-    casesApi.getBySlug.mockResolvedValue(null);
-
-    const row = await getCaseBySlug({
-      data: { caseSlug: "their-case" },
-      context: {},
-    });
-
-    expect(row).toBeNull();
-  });
-
-  it("trims padded case slug before lookup", async () => {
-    casesApi.getBySlug.mockResolvedValue(CASE_B);
-
-    await getCaseBySlug({ data: { caseSlug: "  beta  " }, context: {} });
-
-    expect(casesApi.getBySlug).toHaveBeenLastCalledWith({ caseSlug: "beta" });
-  });
-
-  it("rejects setting an active case id that does not exist", async () => {
-    casesApi.get.mockResolvedValue(null);
+describe("getCaseBySlugFn", () => {
+  it("looks the Case up by its trimmed slug", async () => {
+    orpc.reply("cases.getBySlug", CASE_B);
 
     await expect(
-      (
-        setActiveCaseIdFn as unknown as (
-          input: ServerDataContext<{ caseId: string }>
-        ) => Promise<string | null>
-      )({
-        data: { caseId: CASE_A.id },
-        context: {},
-      })
+      callServerFn(getCaseBySlugFn, { caseSlug: "  beta  " })
+    ).resolves.toEqual(CASE_B);
+
+    expect(orpc.calls("cases.getBySlug")).toEqual([{ caseSlug: "beta" }]);
+  });
+
+  it("answers null for a slug the caller's organization cannot see", async () => {
+    orpc.fail("cases.getBySlug", orpcNotFound());
+
+    await expect(
+      callServerFn(getCaseBySlugFn, { caseSlug: "their-case" })
+    ).resolves.toBeNull();
+  });
+
+  it("rethrows any other API failure", async () => {
+    orpc.fail("cases.getBySlug", new Error("db down"));
+
+    await expect(
+      callServerFn(getCaseBySlugFn, { caseSlug: "beta" })
+    ).rejects.toThrow("db down");
+  });
+});
+
+describe("setActiveCaseIdFn", () => {
+  it("writes the cookie once the Case is visible to the caller", async () => {
+    orpc.reply("cases.get", CASE_A);
+
+    await expect(
+      callServerFn(setActiveCaseIdFn, { caseId: CASE_A.id }, ORG_CONTEXT)
+    ).resolves.toBe(CASE_A.id);
+
+    expect(cookie()).toBe(CASE_A.id);
+  });
+
+  it("refuses a Case the caller cannot see and writes no cookie", async () => {
+    orpc.fail("cases.get", orpcNotFound());
+
+    await expect(
+      callServerFn(setActiveCaseIdFn, { caseId: CASE_A.id }, ORG_CONTEXT)
     ).rejects.toThrow("Case not found");
+
+    expect(cookie()).toBeUndefined();
   });
 
-  const heal = healActiveCaseFn as unknown as (
-    input: ServerDataContext<{
-      caseId: string;
-      expectedActiveCaseId: string | null;
-    }>
-  ) => Promise<{ changed: boolean }>;
+  it("clears the cookie for an empty id without asking the API", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_A.id);
 
-  it("heals the cookie to the route's Case when it still holds the expected value", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_B.id));
-    vi.mocked(writeActiveCaseId).mockClear();
-    casesApi.get.mockResolvedValue(CASE_A);
+    await expect(
+      callServerFn(setActiveCaseIdFn, { caseId: "" }, ORG_CONTEXT)
+    ).resolves.toBeNull();
 
-    const result = await heal({
-      data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
-      context: {},
-    });
+    expect(cookie()).toBeUndefined();
+    expect(orpc.calls("cases.get")).toEqual([]);
+  });
+});
 
-    expect(result).toEqual({ changed: true });
-    expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_A.id);
+describe("healActiveCaseFn", () => {
+  it("moves the cookie to the route's Case while it still holds the expected value", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_B.id);
+    orpc.reply("cases.get", CASE_A);
+
+    await expect(
+      callServerFn(
+        healActiveCaseFn,
+        { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
+        ORG_CONTEXT
+      )
+    ).resolves.toEqual({ changed: true });
+
+    expect(cookie()).toBe(CASE_A.id);
   });
 
-  it("heals an unset cookie when the client observed none", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(null);
-    vi.mocked(writeActiveCaseId).mockClear();
-    casesApi.get.mockResolvedValue(CASE_A);
+  it("sets an unset cookie when the client observed none", async () => {
+    orpc.reply("cases.get", CASE_A);
 
-    const result = await heal({
-      data: { caseId: CASE_A.id, expectedActiveCaseId: null },
-      context: {},
-    });
+    await expect(
+      callServerFn(
+        healActiveCaseFn,
+        { caseId: CASE_A.id, expectedActiveCaseId: null },
+        ORG_CONTEXT
+      )
+    ).resolves.toEqual({ changed: true });
 
-    expect(result).toEqual({ changed: true });
-    expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_A.id);
+    expect(cookie()).toBe(CASE_A.id);
   });
 
   it("does not overwrite a cookie a newer switch changed after the loader read it", async () => {
-    // The loader observed B; the user switched to C before heal(A) reached the server.
-    const CASE_C = "770e8400-e29b-41d4-a716-446655440002";
-    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_C));
-    vi.mocked(writeActiveCaseId).mockClear();
-    casesApi.get.mockResolvedValue(CASE_A);
-
-    const result = await heal({
-      data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
-      context: {},
-    });
-
-    expect(result).toEqual({ changed: false });
-    expect(writeActiveCaseId).not.toHaveBeenCalled();
-  });
-
-  it("leaves the cookie alone when the route's Case is already Active", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_A.id));
-    vi.mocked(writeActiveCaseId).mockClear();
-
-    const result = await heal({
-      data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_A.id },
-      context: {},
-    });
-
-    expect(result).toEqual({ changed: false });
-    expect(writeActiveCaseId).not.toHaveBeenCalled();
-  });
-
-  it("refuses to heal to a Case outside the caller's org and writes no cookie", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_B.id));
-    vi.mocked(writeActiveCaseId).mockClear();
-    casesApi.get.mockResolvedValue(null);
+    jar.set(ACTIVE_CASE_COOKIE, CASE_C);
+    orpc.reply("cases.get", CASE_A);
 
     await expect(
-      heal({
-        data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
-        context: {},
-      })
-    ).rejects.toThrow("Case not found");
-    expect(writeActiveCaseId).not.toHaveBeenCalled();
+      callServerFn(
+        healActiveCaseFn,
+        { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
+        ORG_CONTEXT
+      )
+    ).resolves.toEqual({ changed: false });
+
+    expect(cookie()).toBe(CASE_C);
   });
 
-  it("does not write the cookie when setting a Case that is not found", async () => {
-    vi.mocked(writeActiveCaseId).mockClear();
-    casesApi.get.mockResolvedValue(null);
+  it("changes nothing when the route's Case is already Active", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_A.id);
 
     await expect(
-      (
-        setActiveCaseIdFn as unknown as (
-          input: ServerDataContext<{ caseId: string }>
-        ) => Promise<string | null>
-      )({ data: { caseId: CASE_A.id }, context: {} })
+      callServerFn(
+        healActiveCaseFn,
+        { caseId: CASE_A.id, expectedActiveCaseId: CASE_A.id },
+        ORG_CONTEXT
+      )
+    ).resolves.toEqual({ changed: false });
+
+    expect(orpc.calls("cases.get")).toEqual([]);
+  });
+
+  it("refuses a Case outside the caller's organization and keeps the cookie", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_B.id);
+    orpc.fail("cases.get", orpcNotFound());
+
+    await expect(
+      callServerFn(
+        healActiveCaseFn,
+        { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
+        ORG_CONTEXT
+      )
     ).rejects.toThrow("Case not found");
-    expect(writeActiveCaseId).not.toHaveBeenCalled();
+
+    expect(cookie()).toBe(CASE_B.id);
+  });
+});
+
+describe("createCaseFn", () => {
+  it("makes the new Case Active", async () => {
+    orpc.reply("cases.create", CASE_A);
+
+    await expect(
+      callServerFn(createCaseFn, { name: "Alpha" }, ORG_CONTEXT)
+    ).resolves.toEqual(CASE_A);
+
+    expect(orpc.calls("cases.create")).toMatchObject([{ name: "Alpha" }]);
+    expect(cookie()).toBe(CASE_A.id);
+  });
+});
+
+describe("deleteCaseFn", () => {
+  it("moves the cookie to the Case the organization falls back to when the Active Case is deleted", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_A.id);
+    orpc.reply("cases.delete", { ok: true });
+    runApp.mockResolvedValue({ cases: [CASE_B], active: CASE_B });
+
+    await callServerFn(deleteCaseFn, { caseId: CASE_A.id }, ORG_CONTEXT);
+
+    expect(orpc.calls("cases.delete")).toEqual([{ caseId: CASE_A.id }]);
+    expect(cookie()).toBe(CASE_B.id);
   });
 
-  it("clears or advances the active case cookie after delete", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_A.id));
-    casesApi.delete.mockResolvedValue(undefined);
-    resolveActiveCase.mockResolvedValue({ cases: [CASE_B], active: CASE_B });
+  it("clears the cookie when no Case is left", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_A.id);
+    orpc.reply("cases.delete", { ok: true });
+    runApp.mockResolvedValue({ cases: [], active: null });
 
-    await (
-      deleteCaseFn as unknown as (
-        input: ServerDataContext<{ caseId: string }>
-      ) => Promise<void>
-    )({ data: { caseId: CASE_A.id }, context: {} });
+    await callServerFn(deleteCaseFn, { caseId: CASE_A.id }, ORG_CONTEXT);
 
-    expect(casesApi.delete).toHaveBeenCalledWith({ caseId: CASE_A.id });
-    expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_B.id);
+    expect(cookie()).toBeUndefined();
   });
 
-  it("restores a deleted Case through the API", async () => {
-    casesApi.restore.mockResolvedValue({ ...CASE_A, previousSlug: "old" });
+  it("keeps the cookie when another Case is deleted", async () => {
+    jar.set(ACTIVE_CASE_COOKIE, CASE_B.id);
+    orpc.reply("cases.delete", { ok: true });
 
-    const restored = await restoreCaseFn({ data: { caseId: CASE_A.id } });
+    await callServerFn(deleteCaseFn, { caseId: CASE_A.id }, ORG_CONTEXT);
 
-    expect(casesApi.restore).toHaveBeenCalledWith({ caseId: CASE_A.id });
-    expect(restored).toEqual({ ...CASE_A, previousSlug: "old" });
+    expect(cookie()).toBe(CASE_B.id);
+    expect(runApp).not.toHaveBeenCalled();
   });
+});
 
-  it("purges a deleted Case through the API (the API itself refuses an API key)", async () => {
-    casesApi.purge.mockResolvedValue({ ok: true });
-
-    await purgeCaseFn({ data: { caseId: CASE_A.id } });
-
-    expect(casesApi.purge).toHaveBeenCalledWith({ caseId: CASE_A.id });
-  });
-
-  it("rejects a Case id that is not a Case id before calling the API", async () => {
-    casesApi.restore.mockClear();
-
-    await expect(async () =>
-      restoreCaseFn({ data: { caseId: "nope" } })
+describe("input validation", () => {
+  it("refuses a Case id that is not a uuid before the API is called", async () => {
+    await expect(
+      callServerFn(restoreCaseFn, { caseId: "nope" })
     ).rejects.toThrow();
 
-    expect(casesApi.restore).not.toHaveBeenCalled();
+    expect(orpc.calls("cases.restore")).toEqual([]);
   });
 
-  it("lists deleted Cases a page at a time, with the cursor", async () => {
-    casesApi.listDeleted.mockResolvedValue({
-      items: [],
-      nextCursor: null,
-      total: null,
-    });
+  it("refuses a blank Case slug before the API is called", async () => {
+    await expect(
+      callServerFn(getCaseBySlugFn, { caseSlug: "   " })
+    ).rejects.toThrow();
 
-    await listDeletedCasesPageFn({
-      data: { q: "alpha", sort: "name.asc", cursor: "cur", limit: 25 },
-    });
-
-    expect(casesApi.listDeleted).toHaveBeenCalledWith({
-      q: "alpha",
-      sort: "name.asc",
-      cursor: "cur",
-      limit: 25,
-    });
-  });
-
-  it("asks for the deleted Case a slug names, and passes the null of a miss through", async () => {
-    casesApi.getDeletedBySlug.mockResolvedValue(null);
-
-    const result = await getDeletedCaseBySlugFn({
-      data: { caseSlug: "alpha" },
-    });
-
-    expect(casesApi.getDeletedBySlug).toHaveBeenCalledWith({
-      caseSlug: "alpha",
-    });
-    expect(result).toBeNull();
-  });
-
-  it("reads the deletion policy", async () => {
-    casesApi.deletionPolicy.mockResolvedValue({
-      restoreWindowDays: 30,
-      canIncludeBreachCredentials: false,
-      canManage: true,
-      cancellableJobs: 2,
-    });
-
-    expect(await getDeletionPolicyFn({ data: { caseId: CASE_A.id } })).toEqual({
-      restoreWindowDays: 30,
-      canIncludeBreachCredentials: false,
-      canManage: true,
-      cancellableJobs: 2,
-    });
-    expect(casesApi.deletionPolicy).toHaveBeenCalledWith({
-      caseId: CASE_A.id,
-    });
-  });
-
-  it("asks for a Case's tile counts in one call, with the caller's day start", async () => {
-    const total = { count: 3, isCapped: false };
-    const counts = {
-      entities: total,
-      identifiers: total,
-      connections: total,
-      evidence: total,
-      liveJobs: total,
-      tasksOverdue: total,
-      tasksDueSoon: total,
-    };
-    casesApi.counts.mockResolvedValue(counts);
-
-    const result = await getCaseCountsFn({
-      data: { caseId: CASE_A.id, dayStart: "2026-03-10T00:00:00.000Z" },
-    });
-
-    expect(result).toEqual(counts);
-    expect(casesApi.counts).toHaveBeenCalledTimes(1);
-    expect(casesApi.counts).toHaveBeenCalledWith({
-      caseId: CASE_A.id,
-      dayStart: "2026-03-10T00:00:00.000Z",
-    });
+    expect(orpc.calls("cases.getBySlug")).toEqual([]);
   });
 });

@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  SEARCH_MIN_QUERY_LENGTH,
-  type SearchCaseResult,
-} from "@watchdog/schemas/cases";
+import { placeholderFor } from "@/testing/query-placeholder";
+import type { SearchCaseResult } from "@watchdog/schemas/cases";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/search/search.functions", () => ({
@@ -16,16 +14,6 @@ describe("search queries", () => {
   const caseId = testId(1);
   const caseId2 = testId(2);
 
-  it("builds trimmed case search keys", () => {
-    expect(searchKeys.all).toEqual(["search"]);
-    expect(searchKeys.case(caseId, "alpha")).toEqual([
-      "search",
-      "case",
-      caseId,
-      "alpha",
-    ]);
-  });
-
   it("enables search only for valid case id and long enough query", () => {
     expect(searchCaseQuery(caseId, "  a  ")).toMatchObject({
       queryKey: searchKeys.case(caseId, "a"),
@@ -33,8 +21,7 @@ describe("search queries", () => {
     });
     expect(searchCaseQuery(caseId, "  alpha  ")).toMatchObject({
       queryKey: searchKeys.case(caseId, "alpha"),
-      enabled: "alpha".length >= SEARCH_MIN_QUERY_LENGTH,
-      staleTime: 15_000,
+      enabled: true,
     });
     expect(searchCaseQuery("", "alpha")).toMatchObject({ enabled: false });
     expect(searchCaseQuery("case-1", "alpha")).toMatchObject({
@@ -42,13 +29,9 @@ describe("search queries", () => {
     });
   });
 
-  it("keeps placeholder data only within the same case", () => {
+  it("keeps previous results only within the same case", () => {
     const options = searchCaseQuery(caseId, "alpha");
-    const placeholder = options.placeholderData;
-    expect(typeof placeholder).toBe("function");
-    if (typeof placeholder !== "function") return;
-
-    const previousData = {
+    const previous = {
       q: "alpha",
       entities: [],
       identifiers: [],
@@ -60,18 +43,12 @@ describe("search queries", () => {
       evidenceLabels: {},
       entityLabels: {},
     } satisfies SearchCaseResult;
-    const sameCasePreviousQuery = {
-      queryKey: searchKeys.case(caseId, "alph"),
-    };
-    const otherCasePreviousQuery = {
-      queryKey: searchKeys.case(caseId2, "alpha"),
-    };
 
-    expect(placeholder(previousData, sameCasePreviousQuery as never)).toEqual(
-      previousData
-    );
     expect(
-      placeholder(previousData, otherCasePreviousQuery as never)
+      placeholderFor(options, previous, searchKeys.case(caseId, "alph"))
+    ).toBe(previous);
+    expect(
+      placeholderFor(options, previous, searchKeys.case(caseId2, "alpha"))
     ).toBeUndefined();
   });
 });

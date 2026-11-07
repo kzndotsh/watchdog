@@ -43,6 +43,8 @@ vi.mock("@tanstack/react-router", () => ({
 const listCollectPageFn = vi.hoisted(() => vi.fn());
 const getCollectItemFn = vi.hoisted(() => vi.fn());
 const getJobFn = vi.hoisted(() => vi.fn());
+const listCapabilitiesFn = vi.hoisted(() => vi.fn());
+const listPlaybooksFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/collect/collect.functions", () => ({
   listCollectPageFn,
@@ -50,8 +52,8 @@ vi.mock("@/domains/collect/collect.functions", () => ({
 }));
 
 vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listCapabilitiesFn: async () => [],
-  listPlaybooksFn: async () => [],
+  listCapabilitiesFn,
+  listPlaybooksFn,
   getJobFn,
   getPlaybookRunFn: async () => null,
   startJobFn: vi.fn(),
@@ -226,6 +228,10 @@ class ResizeObserverDouble {
 beforeAll(preloadSharedLazyChunks);
 
 beforeEach(() => {
+  listCapabilitiesFn.mockReset();
+  listCapabilitiesFn.mockResolvedValue([]);
+  listPlaybooksFn.mockReset();
+  listPlaybooksFn.mockResolvedValue([]);
   // The resizable split view measures its panes; jsdom has neither (the config unstubs after each test).
   vi.stubGlobal("ResizeObserver", ResizeObserverDouble);
   vi.stubGlobal("matchMedia", (query: string) => ({
@@ -419,5 +425,27 @@ describe("Collect screen", () => {
       expect(onPatch).toHaveBeenCalledWith({ id: undefined });
     });
     expect(toast.info).toHaveBeenCalledWith(TOAST_COLLECT_SELECTION_GONE);
+  });
+
+  it("shows the run form as loading, not as an error, while the playbooks are still pending", async () => {
+    const user = userEvent.setup();
+    listCapabilitiesFn.mockRejectedValue(new Error("Caps unavailable"));
+    listPlaybooksFn.mockReturnValue(
+      new Promise(() => {
+        // never settles: the playbooks stay pending
+      })
+    );
+    renderCollect(rows(2));
+    await screen.findByText("Showing 2");
+    await waitFor(() => {
+      expect(listCapabilitiesFn).toHaveBeenCalled();
+    });
+
+    await user.click(screen.getAllByRole("button", { name: "Run" })[0]);
+
+    expect(
+      await screen.findByText("Loading caps and playbooks…")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Caps unavailable")).not.toBeInTheDocument();
   });
 });

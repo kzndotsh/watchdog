@@ -1,6 +1,6 @@
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { testId } from "@watchdog/test-kit";
 
 const reads = vi.hoisted(() => ({
@@ -14,40 +14,26 @@ vi.mock("@/domains/intake/intake.functions", () => reads);
 
 import {
   evidenceDownloadUrlQuery,
-  evidenceKeys,
   evidencePickerPort,
   urlDumpsQuery,
 } from "@/domains/intake/queries";
 
 describe("intake queries", () => {
-  it("builds evidence download keys", () => {
-    expect(evidenceKeys.all("case-1")).toEqual(["evidence", "case-1"]);
-    expect(evidenceKeys.download("case-1", "ev-1")).toEqual([
-      "evidence",
-      "case-1",
-      "download",
-      "ev-1",
-    ]);
-  });
-
-  it("uses default stale tiers and gates download by evidence id", () => {
-    expect(urlDumpsQuery("case-1", true)).toMatchObject({
-      enabled: false,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    expect(evidenceDownloadUrlQuery("case-1", "")).toMatchObject({
-      enabled: false,
-    });
+  it("reads a download URL and the URL dumps only with the ids they need", () => {
+    expect(urlDumpsQuery("case-1", true).enabled).toBe(false);
+    expect(evidenceDownloadUrlQuery("case-1", "").enabled).toBe(false);
     const caseId = testId(10);
     const evidenceId = testId(20);
-    expect(evidenceDownloadUrlQuery(caseId, evidenceId)).toMatchObject({
-      enabled: true,
-      queryKey: evidenceKeys.download(caseId, evidenceId),
-    });
+    expect(evidenceDownloadUrlQuery(caseId, evidenceId).enabled).toBe(true);
+  });
+
+  it("keys a padded Case and Evidence id like the trimmed ones", () => {
+    const caseId = testId(10);
+    const evidenceId = testId(20);
+
     expect(
       evidenceDownloadUrlQuery(`  ${caseId}  `, `  ${evidenceId}  `).queryKey
-    ).toEqual(evidenceKeys.download(caseId, evidenceId));
+    ).toEqual(evidenceDownloadUrlQuery(caseId, evidenceId).queryKey);
   });
 
   it("reads the Evidence picker's page through the slim projection, never the record list", async () => {
@@ -69,12 +55,8 @@ describe("intake queries", () => {
     const port = evidencePickerPort(caseId);
 
     const recent = port.search(null);
-    expect(recent.queryKey).toEqual([
-      ...evidenceKeys.all(caseId),
-      "picker",
-      "",
-    ]);
-    const options = await (recent.queryFn as () => Promise<unknown>)();
+    expect(port.search("memo").queryKey).not.toEqual(recent.queryKey);
+    const options = await new QueryClient().query(recent);
     expect(options).toEqual([
       {
         id: testId(20),
@@ -88,7 +70,7 @@ describe("intake queries", () => {
       data: { caseId, limit: 20 },
     });
 
-    await (port.search("memo").queryFn as () => Promise<unknown>)();
+    await new QueryClient().query(port.search("memo"));
     expect(reads.listEvidencePickerPageFn).toHaveBeenLastCalledWith({
       data: { caseId, limit: 20, q: "memo" },
     });

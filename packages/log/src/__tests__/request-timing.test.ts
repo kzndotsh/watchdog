@@ -1,7 +1,7 @@
 import { performance } from "node:perf_hooks";
 
 import { createLogger } from "evlog";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   serverTimingHeader,
@@ -12,24 +12,36 @@ import {
 } from "../request-timing";
 import { runWithRequestLogger } from "../storage";
 
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
+/** A clock the test drives: `performance.now()` answers `clock.ms` until restored. */
+const clock = { ms: 0 };
+function useFakeClock() {
+  clock.ms = 0;
+  vi.spyOn(performance, "now").mockImplementation(() => clock.ms);
+}
+
+/** A database call that takes `ms` on the fake clock. */
+const takes = (ms: number) => async () => {
+  clock.ms += ms;
+};
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("timedDbCall", () => {
   it("counts calls and sums their time for the current request", async () => {
+    useFakeClock();
     const logger = createLogger();
     const timing = await runWithRequestLogger(logger, async () => {
       const snapshot = startRequestTiming(logger);
-      await timedDbCall(() => sleep(15));
-      await timedDbCall(() => sleep(15));
-      await timedDbCall(() => Promise.resolve(1));
+      await timedDbCall(takes(15));
+      // Time spent outside the database.
+      clock.ms += 5;
+      await timedDbCall(takes(15.04));
+      await timedDbCall(async () => 1);
       return snapshot();
     });
-    expect(timing.db.queries).toBe(3);
-    expect(timing.db.ms).toBeGreaterThanOrEqual(25);
-    expect(timing.durationMs).toBeGreaterThanOrEqual(timing.db.ms);
+    expect(timing).toEqual({ durationMs: 35, db: { queries: 3, ms: 30 } });
   });
 
   it("returns the call's value and rethrows its error, still counting it", async () => {
@@ -53,7 +65,7 @@ describe("timedDbCall", () => {
       runWithRequestLogger(logger, async () => {
         const snapshot = startRequestTiming(logger);
         await Promise.all(
-          Array.from({ length: calls }, () => timedDbCall(() => sleep(1)))
+          Array.from({ length: calls }, () => timedDbCall(async () => {}))
         );
         return snapshot().db.queries;
       });

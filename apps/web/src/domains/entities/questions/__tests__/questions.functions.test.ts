@@ -1,28 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const questionsApi = {
-  list: vi.fn(),
-  create: vi.fn(),
-  resolve: vi.fn(),
-  update: vi.fn(),
-  reopen: vi.fn(),
-  delete: vi.fn(),
-};
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ questions: questionsApi }),
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import {
   createQuestionFn,
@@ -32,104 +15,120 @@ import {
   resolveQuestionFn,
   updateQuestionFn,
 } from "@/domains/entities/questions/questions.functions";
+import { buildQuestionRecord } from "@/testing/records";
+import { callServerFn, orpc } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+const CASE_ID = testId(10);
 
-describe("questions.functions", () => {
-  it("routes question list and lifecycle ServerFns through oRPC", async () => {
-    const question = {
-      id: testId(1),
+beforeEach(() => orpc.reset());
+
+describe("deleteQuestionFn", () => {
+  it("sends only the Case and Question ids and answers nothing", async () => {
+    orpc.reply("questions.delete", { ok: true });
+
+    await expect(
+      callServerFn(deleteQuestionFn, { caseId: CASE_ID, questionId: testId(1) })
+    ).resolves.toBeUndefined();
+
+    expect(orpc.calls("questions.delete")).toEqual([
+      { caseId: CASE_ID, questionId: testId(1) },
+    ]);
+  });
+});
+
+describe("question lifecycle server functions", () => {
+  const question = buildQuestionRecord({ id: testId(1) });
+  const scope = { caseId: CASE_ID, questionId: testId(1) };
+
+  it.each([
+    [
+      "createQuestionFn",
+      createQuestionFn,
+      "questions.create",
+      { caseId: CASE_ID, entityId: testId(20), text: "Who owns it?" },
+    ],
+    [
+      "resolveQuestionFn",
+      resolveQuestionFn,
+      "questions.resolve",
+      { ...scope, resolvedNote: "Found in WHOIS" },
+    ],
+    [
+      "updateQuestionFn",
+      updateQuestionFn,
+      "questions.update",
+      { ...scope, text: "Updated", expectedVersion: 1 },
+    ],
+    ["reopenQuestionFn", reopenQuestionFn, "questions.reopen", scope],
+  ] as const)(
+    "%s sends its input to its procedure and answers the record",
+    async (_name, fn, path, input) => {
+      orpc.reply(path, question);
+
+      await expect(callServerFn(fn, input)).resolves.toEqual(question);
+
+      expect(orpc.calls(path)).toMatchObject([input]);
+    }
+  );
+});
+
+describe("input validation", () => {
+  it.each([
+    ["listQuestionsPageFn", listQuestionsPageFn, { caseId: "not-a-uuid" }],
+    [
+      "createQuestionFn",
+      createQuestionFn,
+      { caseId: CASE_ID, entityId: testId(20), text: "" },
+    ],
+    [
+      "resolveQuestionFn",
+      resolveQuestionFn,
+      { caseId: CASE_ID, questionId: "x" },
+    ],
+    [
+      "updateQuestionFn",
+      updateQuestionFn,
+      { caseId: CASE_ID, questionId: "x" },
+    ],
+    [
+      "reopenQuestionFn",
+      reopenQuestionFn,
+      { caseId: CASE_ID, questionId: "x" },
+    ],
+    [
+      "deleteQuestionFn",
+      deleteQuestionFn,
+      { caseId: CASE_ID, questionId: "x" },
+    ],
+  ] as const)(
+    "%s refuses a malformed input before the API is called",
+    async (_name, fn, input) => {
+      await expect(callServerFn(fn, input)).rejects.toThrow();
+
+      for (const path of [
+        "questions.list",
+        "questions.create",
+        "questions.resolve",
+        "questions.update",
+        "questions.reopen",
+        "questions.delete",
+      ] as const) {
+        expect(orpc.calls(path)).toEqual([]);
+      }
+    }
+  );
+
+  it("trims padded ids on the list read", async () => {
+    orpc.reply("questions.list", { items: [], nextCursor: null, total: null });
+
+    await callServerFn(listQuestionsPageFn, {
+      caseId: `  ${CASE_ID}  `,
       entityId: testId(20),
-      text: "Who owns the domain?",
-      status: "open" as const,
-      resolvedNote: null,
-    };
-    questionsApi.list.mockResolvedValue({
-      items: [question],
-      nextCursor: null,
-    });
-    questionsApi.create.mockResolvedValue(question);
-    questionsApi.resolve.mockResolvedValue({
-      ...question,
-      status: "resolved" as const,
-    });
-    questionsApi.update.mockResolvedValue(question);
-    questionsApi.reopen.mockResolvedValue(question);
-    questionsApi.delete.mockResolvedValue({ ok: true });
-
-    await (
-      listQuestionsPageFn as unknown as (
-        input: ServerDataContext<{ caseId: string; entityId: string }>
-      ) => Promise<unknown[]>
-    )({
-      data: { caseId: testId(10), entityId: testId(20) },
-      context: {},
-    });
-    await (
-      createQuestionFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
-        entityId: testId(20),
-        text: "Who owns the domain?",
-      },
-      context: {},
-    });
-    await (
-      resolveQuestionFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
-        questionId: testId(1),
-        resolvedNote: "Found in WHOIS",
-      },
-      context: {},
-    });
-    await (
-      updateQuestionFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
-        questionId: testId(1),
-        text: "Updated question",
-      },
-      context: {},
-    });
-    await (
-      reopenQuestionFn as unknown as (
-        input: ServerDataContext<{ caseId: string; questionId: string }>
-      ) => Promise<unknown>
-    )({
-      data: { caseId: testId(10), questionId: testId(1) },
-      context: {},
-    });
-    await (
-      deleteQuestionFn as unknown as (
-        input: ServerDataContext<{ caseId: string; questionId: string }>
-      ) => Promise<void>
-    )({
-      data: { caseId: testId(10), questionId: testId(1) },
-      context: {},
     });
 
-    // A list page passes its view through whole: one Entity's rows are `entityId` set.
-    expect(questionsApi.list).toHaveBeenCalledWith({
-      caseId: testId(10),
-      entityId: testId(20),
-    });
-    expect(questionsApi.create).toHaveBeenCalled();
-    expect(questionsApi.resolve).toHaveBeenCalled();
-    expect(questionsApi.update).toHaveBeenCalled();
-    expect(questionsApi.reopen).toHaveBeenCalled();
-    expect(questionsApi.delete).toHaveBeenCalled();
+    expect(orpc.calls("questions.list")).toMatchObject([
+      { caseId: CASE_ID, entityId: testId(20) },
+    ]);
   });
 });

@@ -6,34 +6,34 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  lastListRequest,
+  matchesChoice,
+  matchesQ,
+  memoryListPage,
+} from "@/testing/memory-list";
 import { buildCaseIdentifierRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
+const createIdentifierFn = vi.hoisted(() => vi.fn());
+const deleteIdentifierFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   listIdentifiersPageFn,
-  createIdentifierFn: vi.fn(),
+  createIdentifierFn,
   updateIdentifierFn: vi.fn(),
-  deleteIdentifierFn: vi.fn(),
+  deleteIdentifierFn,
 }));
 
-const bulkDialog = vi.hoisted(() => ({
-  onImported: undefined as
-    | ((entityIds: string[], caseId: string) => Promise<void>)
-    | undefined,
+const entityReads = vi.hoisted(() => ({
+  matchEntityNamesFn: vi.fn(),
+  listEntitiesPageFn: vi.fn(),
+  listEntitiesPickerPageFn: vi.fn(),
+  getEntitiesFn: vi.fn(),
 }));
-
-vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
-  BulkAddIdentifiersDialog: (props: {
-    onImported?: (entityIds: string[], caseId: string) => Promise<void>;
-  }) => {
-    bulkDialog.onImported = props.onImported;
-    return null;
-  },
-}));
+vi.mock("@/domains/entities/entities.functions", () => entityReads);
 
 // The Evidence cell titles links and picks through `evidence.getMany` / one list page (#559).
 vi.mock("@/domains/intake/intake.functions", () => ({
@@ -42,33 +42,13 @@ vi.mock("@/domains/intake/intake.functions", () => ({
   listEvidencePickerPageFn: vi.fn(),
 }));
 
-vi.mock("@/domains/entities/components/delete-identifier-dialog", () => ({
-  DeleteIdentifierDialog: () => null,
-}));
-
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
 });
 
-vi.mock("@/app/lib/query-invalidation", () => ({
-  invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useMutation: () => ({
-      mutate: vi.fn(),
-      mutateAsync: vi.fn(),
-      isPending: false,
-    }),
-  };
-});
-
-import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
+import { toast } from "@/shared/ui/toast";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const ENTITY = {
@@ -114,13 +94,7 @@ function serve(rows: readonly CaseIdentifierRecord[]) {
 }
 
 function lastRequest(): Record<string, unknown> {
-  const call: unknown = listIdentifiersPageFn.mock.lastCall?.[0];
-  if (typeof call !== "object" || call === null || !("data" in call)) {
-    throw new Error("no list request yet");
-  }
-  const { data } = call;
-  if (typeof data !== "object" || data === null) throw new Error("no data");
-  return { ...data };
+  return lastListRequest(listIdentifiersPageFn);
 }
 
 /** The Identifiers tab: the view in "the URL" (state here), as the Dossier route keeps it. */
@@ -157,7 +131,11 @@ function renderTab(
   serve(rows);
   const onPatch = vi.fn();
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
       <TabSection initial={initial} onPatch={onPatch} />
     </QueryClientProvider>
   );
@@ -200,8 +178,15 @@ describe("IdentifiersSection", () => {
     expect(lastRequest()).toEqual({ caseId: CASE_ID, entityId: ENTITY.id });
   });
 
-  it("settles the Entity the bulk import wrote to after the screen moves to another Entity", async () => {
+  it("refreshes the list after a bulk import that finishes once the screen moved to another Entity", async () => {
     serve([]);
+    let finishImport: () => void = () => undefined;
+    createIdentifierFn.mockReset();
+    createIdentifierFn.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishImport = resolve;
+      })
+    );
     const client = new QueryClient();
     const section = (entity: typeof ENTITY) => (
       <QueryClientProvider client={client}>
@@ -213,29 +198,73 @@ describe("IdentifiersSection", () => {
         />
       </QueryClientProvider>
     );
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { rerender } = render(section(ENTITY));
-    // The dialog is a lazy chunk: it mounts on the first open.
     await user.click(await screen.findByRole("button", { name: "Bulk add" }));
+    await user.click(await screen.findByLabelText("Paste"));
+    await user.paste("new@example.com");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Import 1 identifier" })
+    );
     await waitFor(() => {
-      expect(bulkDialog.onImported).toBeDefined();
+      expect(createIdentifierFn).toHaveBeenCalledTimes(1);
     });
     rerender(section(OTHER_ENTITY));
-
-    await bulkDialog.onImported?.([ENTITY.id], CASE_ID);
-
-    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(client, CASE_ID, {
-      entityId: ENTITY.id,
+    await waitFor(() => {
+      expect(lastRequest()).toMatchObject({ entityId: OTHER_ENTITY.id });
     });
-    expect(invalidateAfterEntityChanged).not.toHaveBeenCalledWith(
-      client,
-      CASE_ID,
-      expect.objectContaining({ entityId: OTHER_ENTITY.id })
+    const requestsBefore = listIdentifiersPageFn.mock.calls.length;
+
+    finishImport();
+
+    await waitFor(() => {
+      expect(listIdentifiersPageFn.mock.calls.length).toBeGreaterThan(
+        requestsBefore
+      );
+    });
+    expect(createIdentifierFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        caseId: CASE_ID,
+        entityId: ENTITY.id,
+        value: "new@example.com",
+      }),
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "Bulk add identifiers" })
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("deletes an Identifier from its row menu: the list refetches without it", async () => {
+    const user = userEvent.setup({ delay: null });
+    const rows = entityIdentifiers(2);
+    renderTab(rows);
+    deleteIdentifierFn.mockReset();
+    deleteIdentifierFn.mockImplementation(async () => {
+      serve(rows.slice(1));
+    });
+    const doomed = (await screen.findByDisplayValue(rows[0].value)).closest(
+      "tr"
     );
+    if (doomed === null) throw new Error("the Identifier has no row");
+    await user.pointer({ keys: "[MouseRight]", target: doomed });
+    await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    await user.click(await screen.findByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(screen.queryByDisplayValue(rows[0].value)).not.toBeInTheDocument();
+    });
+    expect(screen.getByDisplayValue(rows[1].value)).toBeInTheDocument();
+    expect(deleteIdentifierFn).toHaveBeenCalledWith({
+      data: { caseId: CASE_ID, identifierId: rows[0].id },
+    });
+    expect(toast.success).toHaveBeenCalledWith("Identifier deleted");
   });
 
   it("pages this Entity's Identifiers, the Entity fixed on every request", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderTab([
       ...entityIdentifiers(8),
       buildCaseIdentifierRecord({ id: testId(3999), entityId: testId(99) }),
@@ -249,7 +278,7 @@ describe("IdentifiersSection", () => {
   });
 
   it("searches on the server, never writing the Entity to the URL", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { onPatch } = renderTab(entityIdentifiers(20));
     await screen.findByText("Showing 5 of 20");
 
@@ -271,8 +300,8 @@ describe("IdentifiersSection", () => {
     }
   });
 
-  it("filters and sorts on the server, never offering or writing the Entity", async () => {
-    const user = userEvent.setup();
+  it("filters on the server, never offering or writing the Entity", async () => {
+    const user = userEvent.setup({ delay: null });
     const { onPatch } = renderTab(entityIdentifiers(20), { q: "ha01" });
     await screen.findByText("Showing 5 of 10");
 
@@ -293,11 +322,22 @@ describe("IdentifiersSection", () => {
       });
     });
     expect(await screen.findByText("Showing 5")).toBeInTheDocument();
-    await user.keyboard("{Escape}");
+    for (const [patch] of onPatch.mock.calls) {
+      expect(patch).not.toHaveProperty("entityId");
+    }
+  });
+
+  it("sorts on the server, never writing the Entity to the URL", async () => {
+    const user = userEvent.setup({ delay: null });
+    const { onPatch } = renderTab(entityIdentifiers(20), { q: "ha01" });
+    await screen.findByText("Showing 5 of 10");
 
     await user.click(screen.getByRole("button", { name: /^Value/ }));
     await waitFor(() => {
-      expect(lastRequest()).toMatchObject({ sort: "value.desc" });
+      expect(lastRequest()).toMatchObject({
+        sort: "value.desc",
+        entityId: ENTITY.id,
+      });
     });
     for (const [patch] of onPatch.mock.calls) {
       expect(patch).not.toHaveProperty("entityId");

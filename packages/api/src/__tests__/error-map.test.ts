@@ -27,8 +27,8 @@ describe("input validation errors", () => {
       },
     });
     const failure = await client.cases
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- deliberately malformed input
-      .create({ name: 5 } as unknown as { name: string })
+      // `JSON.parse` is the wire: its untyped result stands in for a malformed request body.
+      .create(JSON.parse('{"name":5}'))
       .then(
         () => undefined,
         (error: unknown) => error

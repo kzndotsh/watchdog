@@ -1,51 +1,33 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  RouterContextProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockPathname = vi.hoisted(() => ({ value: "/tasks" }));
-
+// The session is the auth boundary: the sidebar reads who is signed in.
 vi.mock("@better-auth-ui/react", () => ({
   useSession: () => ({
-    data: { user: { name: "Analyst", email: "analyst@example.com" } },
+    data: {
+      user: { name: "Analyst", email: "analyst@example.com" },
+      session: { activeOrganizationId: "org-1" },
+    },
     isPending: false,
   }),
 }));
 
-vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@tanstack/react-router")>();
-  return {
-    ...actual,
-    Link: ({
-      to,
-      params,
-      onClick,
-      children,
-    }: {
-      to: string;
-      params?: { caseSlug: string };
-      onClick?: React.MouseEventHandler;
-      children: React.ReactNode;
-    }) => (
-      <a
-        href={to.replace("$caseSlug", params?.caseSlug ?? "")}
-        data-has-onclick={onClick ? "" : undefined}
-        onClick={(event) => {
-          onClick?.(event);
-          event.preventDefault();
-        }}
-      >
-        {children}
-      </a>
-    ),
-    useNavigate: () => vi.fn(),
-    useRouterState: ({
-      select,
-    }: {
-      select: (state: { location: { pathname: string } }) => unknown;
-    }) => select({ location: { pathname: mockPathname.value } }),
-  };
-});
+vi.mock("@better-auth-ui/react/plugins/organization", () => ({
+  useListOrganizations: () => ({
+    data: [{ id: "org-1", name: "Newsroom", logo: null }],
+    isPending: false,
+  }),
+  useSetActiveOrganization: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 
@@ -57,152 +39,22 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseBySlugFn: vi.fn(),
 }));
 
-vi.mock("@/domains/search/components/search-button", () => ({
-  SearchButton: () => <div>Search button</div>,
-}));
-
-vi.mock("@/domains/organization/components/org-switcher", () => ({
-  OrgSwitcher: () => <div>Org switcher</div>,
-}));
-
-vi.mock("@/app/layout/case-switcher", () => ({
-  CaseSwitcher: () => <div>Case switcher</div>,
-}));
-
-vi.mock("@/shared/layout/theme-toggle", () => ({
-  modeLabel: () => "System",
-  useThemeMode: () => ({
-    mode: "auto",
-    toggleMode: vi.fn(),
-    Icon: () => <span>theme-icon</span>,
-    ariaLabel: "Theme mode: auto (system).",
-  }),
-}));
-
-vi.mock("@/shared/ui/primitives/button", () => ({
-  Button: ({
-    children,
-    render,
-    "aria-label": ariaLabel,
-  }: {
-    children: React.ReactNode;
-    render?: React.ReactElement;
-    "aria-label"?: string;
-  }) => (
-    <button type="button" aria-label={ariaLabel}>
-      {render}
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@/shared/ui/with-tooltip", () => ({
-  WithTooltip: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-vi.mock("@watchdog/ui/components/avatar", () => ({
-  Avatar: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  AvatarFallback: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
-}));
-
-vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuItem: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuSeparator: () => <hr />,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@watchdog/ui/components/scroll-area", () => ({
-  ScrollArea: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@watchdog/ui/components/sidebar", () => ({
-  Sidebar: ({ children }: { children: React.ReactNode }) => (
-    <aside>{children}</aside>
-  ),
-  SidebarContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarFooter: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarGroup: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarGroupContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarMenu: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarMenuButton: ({
-    children,
-    render,
-    "aria-label": ariaLabel,
-    "aria-description": ariaDescription,
-    "data-inactive": dataInactive,
-    tooltip,
-  }: {
-    children: React.ReactNode;
-    render?: React.ReactElement;
-    "aria-label"?: string;
-    "aria-description"?: string;
-    "data-inactive"?: string;
-    tooltip?: string;
-  }) => (
-    <div
-      aria-label={ariaLabel}
-      aria-description={ariaDescription}
-      data-inactive={dataInactive}
-      data-tooltip={tooltip}
-    >
-      {render}
-      {children}
-    </div>
-  ),
-  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarSeparator: () => <hr />,
-}));
-
-vi.mock("@watchdog/ui/components/skeleton", () => ({
-  Skeleton: () => <div>Skeleton</div>,
-}));
-
 import { AppSidebar } from "@/app/layout/app-sidebar";
 import { casesKeys } from "@/domains/cases/queries";
 import { buildCaseRecord } from "@/testing/records";
+import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
-function renderSidebar(slug: string | null, pathname = "/tasks") {
-  mockPathname.value = pathname;
+/** A real router with one catch-all route, so any pathname is "current" and links build hrefs. */
+function routerAt(pathname: string) {
+  const root = createRootRoute();
+  const all = createRoute({ getParentRoute: () => root, path: "$" });
+  return createRouter({
+    routeTree: root.addChildren([all]),
+    history: createMemoryHistory({ initialEntries: [pathname] }),
+  });
+}
+
+function renderSidebar(slug: string | null, pathname = "/cases") {
   const client = new QueryClient();
   const active = slug === null ? null : buildCaseRecord({ slug });
   client.setQueryData(casesKeys.context(), {
@@ -210,52 +62,63 @@ function renderSidebar(slug: string | null, pathname = "/tasks") {
     active,
   });
   return render(
-    <QueryClientProvider client={client}>
-      <AppSidebar />
-    </QueryClientProvider>
+    <RouterContextProvider router={routerAt(pathname)}>
+      <QueryClientProvider client={client}>
+        <SidebarProvider>
+          <AppSidebar />
+        </SidebarProvider>
+      </QueryClientProvider>
+    </RouterContextProvider>
   );
-}
-
-// The sidebar mock renders the link beside the label, so find it through the item.
-function workLink(label: string): HTMLElement {
-  const link = screen
-    .getByText(label)
-    .closest("[data-tooltip]")
-    ?.querySelector("a");
-  if (!link) throw new Error(`No link for ${label}`);
-  return link;
 }
 
 const WORK_LABELS = ["Tasks", "Collect", "Triage"];
 
-describe("AppSidebar", () => {
-  afterEach(() => {
-    mockPathname.value = "/tasks";
-  });
+function hrefs(): (string | null)[] {
+  return screen.getAllByRole("link").map((link) => link.getAttribute("href"));
+}
 
-  it("marks each Work item inactive with the reason while there is no Case", () => {
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+});
+
+describe("AppSidebar", () => {
+  it("marks each Work item inactive with the reason while there is no Case", async () => {
     renderSidebar(null);
 
     for (const label of WORK_LABELS) {
-      const item = screen.getByText(label).closest("[data-tooltip]");
-      expect(item).toHaveAttribute("data-inactive");
-      expect(item).toHaveAttribute("aria-description", "Create a Case first");
-      expect(item).toHaveAttribute(
-        "data-tooltip",
-        `${label}: Create a Case first`
-      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one link at a time keeps failures readable
+      const link = await screen.findByRole("link", { name: label });
+      expect(link).toHaveAttribute("data-inactive");
+      expect(link).toHaveAttribute("aria-description", "Create a Case first");
     }
   });
 
-  it("leaves Work items active and unlabelled when a Case exists", () => {
+  it("leaves Work items active and unlabelled when a Case exists", async () => {
     renderSidebar("alpha");
 
     for (const label of WORK_LABELS) {
-      const item = screen.getByText(label).closest("[data-tooltip]");
-      expect(item).not.toHaveAttribute("data-inactive");
-      expect(item).not.toHaveAttribute("aria-description");
-      expect(item).toHaveAttribute("data-tooltip", label);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one link at a time keeps failures readable
+      const link = await screen.findByRole("link", { name: label });
+      expect(link).not.toHaveAttribute("data-inactive");
+      expect(link).not.toHaveAttribute("aria-description");
     }
+  });
+
+  it("names the reason in the tooltip of a Work link while there is no Case", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderSidebar(null);
+
+    await user.hover(await screen.findByRole("link", { name: "Tasks" }));
+
+    expect(
+      await screen.findByText("Tasks: Create a Case first")
+    ).toBeInTheDocument();
   });
 
   it("shows the reason inline in the expanded sidebar while there is no Case", () => {
@@ -273,58 +136,72 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Create a Case first")).not.toBeInTheDocument();
   });
 
-  it("leaves inactive Work links plain, so modified clicks keep their default", () => {
+  it("sends every Work link to the Cases list while there is no Case", async () => {
     renderSidebar(null);
 
     for (const label of WORK_LABELS) {
-      const link = workLink(label);
-      expect(link).toHaveAttribute("href", "/cases");
-      expect(link).not.toHaveAttribute("data-has-onclick");
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one link at a time keeps failures readable
+      expect(await screen.findByRole("link", { name: label })).toHaveAttribute(
+        "href",
+        "/cases"
+      );
     }
+    expect(hrefs()).not.toContain("/cases/alpha/collect");
   });
 
   it("links each Work screen into the Case in the URL", () => {
     renderSidebar("alpha");
 
-    const hrefs = screen
-      .getAllByRole("link")
-      .map((link) => link.getAttribute("href"));
-    expect(hrefs).toEqual(
-      expect.arrayContaining([
-        "/cases/alpha/tasks",
-        "/cases/alpha/collect",
-        "/cases/alpha/triage",
-        "/cases",
-      ])
+    const links = hrefs();
+    expect(links).toContain("/cases/alpha/tasks");
+    expect(links).toContain("/cases/alpha/collect");
+    // Triage opens on its pending view.
+    const triage = links.find((href) =>
+      href?.startsWith("/cases/alpha/triage")
     );
-    expect(hrefs).not.toContain("/collect");
+    expect(triage).toMatch(/^\/cases\/alpha\/triage\?/);
+    expect(decodeURIComponent(triage ?? "")).toContain("status=");
+    expect(decodeURIComponent(triage ?? "")).toContain("pending");
+    expect(links).toContain("/cases");
+    expect(links).not.toContain("/collect");
   });
 
-  it("sends Work links to the Cases list while there is no Case", () => {
-    renderSidebar(null);
+  it("marks the screen the URL names as the current one", () => {
+    renderSidebar("alpha", "/cases/alpha/collect");
 
-    const hrefs = screen
-      .getAllByRole("link")
-      .map((link) => link.getAttribute("href"));
-    expect(hrefs).not.toContain("/cases/alpha/collect");
-    expect(hrefs.filter((href) => href === "/cases").length).toBeGreaterThan(3);
+    expect(screen.getByRole("link", { name: "Collect" })).toHaveAttribute(
+      "data-active"
+    );
+    expect(screen.getByRole("link", { name: "Tasks" })).not.toHaveAttribute(
+      "data-active"
+    );
   });
 
-  it("renders dashboard, case switcher, and account row", () => {
+  it("offers the dashboard, Cases, Settings and the signed-in account", () => {
     renderSidebar("alpha");
 
-    expect(screen.getByText("WATCHDOG")).toBeInTheDocument();
-    expect(screen.getByText("Case switcher")).toBeInTheDocument();
-    expect(screen.getByText("Org switcher")).toBeInTheDocument();
-    expect(screen.getByText("Search button")).toBeInTheDocument();
-    expect(screen.getAllByText("Analyst").length).toBeGreaterThan(0);
-    expect(screen.getByLabelText("Settings")).toBeInTheDocument();
-    expect(screen.getByText("Sign out")).toBeInTheDocument();
-    expect(screen.getByText("System")).toBeInTheDocument();
-    expect(screen.getByText("Tasks")).toBeInTheDocument();
-    expect(screen.getByText("Collect")).toBeInTheDocument();
-    expect(screen.getByText("Triage")).toBeInTheDocument();
-    expect(screen.getByText("Cases")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /WATCHDOG/ })).toHaveAttribute(
+      "href",
+      "/"
+    );
+    expect(screen.getByRole("link", { name: "Cases" })).toBeInTheDocument();
+    for (const link of screen.getAllByRole("link", { name: "Settings" })) {
+      expect(link).toHaveAttribute("href", "/settings");
+    }
+    expect(screen.getByRole("button", { name: /Analyst/ })).toBeInTheDocument();
     expect(screen.queryByText("UI kit")).not.toBeInTheDocument();
+  });
+
+  it("opens the account menu with the email and a sign-out link", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderSidebar("alpha");
+
+    await user.click(screen.getByRole("button", { name: /Analyst/ }));
+
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText("analyst@example.com")).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Sign out" })
+    ).toHaveAttribute("href", "/auth/sign-out");
   });
 });

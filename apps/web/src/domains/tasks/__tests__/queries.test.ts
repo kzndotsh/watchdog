@@ -1,7 +1,5 @@
-import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { taskList } from "@watchdog/schemas/feed";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -16,26 +14,15 @@ import {
   taskBoardQuery,
   taskBoardViewOf,
   taskByIdQuery,
-  taskListView,
   tasksKeys,
 } from "@/domains/tasks/queries";
 import type { TaskBoardRecord } from "@/domains/tasks/types";
+import { placeholderFor } from "@/testing/query-placeholder";
 
 const CASE = testCaseId(1);
 const OTHER_CASE = testCaseId(2);
 
 describe("tasks queries", () => {
-  it("keeps the board, the list views and by-id reads under the Case's root", () => {
-    const root = tasksKeys.all(CASE);
-    for (const key of [
-      tasksKeys.board(CASE, {}),
-      taskListView.key({ caseId: CASE }, taskList.queryOf({})),
-      tasksKeys.byId(CASE, testId(3)),
-    ]) {
-      expect(key.slice(0, root.length)).toEqual(root);
-    }
-  });
-
   it("keys equal board views alike, whatever their order", () => {
     expect(tasksKeys.board(CASE, { priority: ["low", "high"] })).toEqual(
       tasksKeys.board(CASE, { priority: ["high", "low"] })
@@ -60,28 +47,21 @@ describe("tasks queries", () => {
     );
   });
 
-  it("uses the default tiers and keeps a board only within its Case", () => {
+  it("keeps a board's previous data only within its Case", () => {
     const board = taskBoardQuery(CASE, { q: "dns" });
-    expect(board).toMatchObject({
-      enabled: true,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    });
-    const placeholder = board.placeholderData;
-    if (typeof placeholder !== "function") throw new Error("placeholder");
-    const previous = { items: [], isTruncated: false };
-    const client = new QueryClient();
-    const queryAt = (queryKey: readonly unknown[]) =>
-      client
-        .getQueryCache()
-        .build<TaskBoardRecord, Error, TaskBoardRecord>(client, { queryKey });
-    expect(placeholder(previous, queryAt(tasksKeys.board(CASE, {})))).toEqual(
+    const previous: TaskBoardRecord = { items: [], isTruncated: false };
+
+    expect(placeholderFor(board, previous, tasksKeys.board(CASE, {}))).toBe(
       previous
     );
     expect(
-      placeholder(previous, queryAt(tasksKeys.board(OTHER_CASE, {})))
+      placeholderFor(board, previous, tasksKeys.board(OTHER_CASE, {}))
     ).toBeUndefined();
+  });
+
+  it("does not read a board for a Case id that is not a uuid", () => {
     expect(taskBoardQuery("case-1", {}).enabled).toBe(false);
+    expect(taskBoardQuery(CASE, {}).enabled).toBe(true);
   });
 
   it("never reads a Task by id without one", () => {

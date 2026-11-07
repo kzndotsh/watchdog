@@ -1,44 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 
-const handlers = vi.hoisted(
-  () => [] as ((input: unknown) => Promise<unknown>)[]
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
 );
-const validators = vi.hoisted(() => [] as unknown[]);
+
 const createScopedApiKey = vi.hoisted(() => vi.fn());
-
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: (schema: unknown) => {
-      validators.push(schema);
-      return {
-        handler: (handler: (input: unknown) => Promise<unknown>) => {
-          handlers.push(handler);
-          return `fn-${handlers.length}`;
-        },
-      };
-    },
-  }),
-}));
-
 vi.mock("@watchdog/auth/server", () => ({ createScopedApiKey }));
 
 import { createApiKeyFn } from "@/auth/api-key.functions";
+import { callServerFn } from "@/testing/server-fn";
+
+const SESSION_CONTEXT = {
+  session: { user: { id: "user-1" }, session: {} },
+  organizationId: "org-from-server",
+};
 
 describe("createApiKeyFn", () => {
   it("creates the key as the session user in the server-resolved organization", async () => {
     createScopedApiKey.mockResolvedValue({ id: "k1", name: "ci", key: "wd_x" });
-    expect(createApiKeyFn).toBe("fn-1");
 
-    const result = await handlers[0]?.({
-      data: { name: "ci", scopes: ["proposals:write"], expiresIn: 86_400 },
-      context: {
-        session: { user: { id: "user-1" }, session: {} },
-        organizationId: "org-from-server",
-      },
-    });
+    const result = await callServerFn(
+      createApiKeyFn,
+      { name: "ci", scopes: ["proposals:write"], expiresIn: 86_400 },
+      SESSION_CONTEXT
+    );
 
     expect(result).toEqual({ id: "k1", name: "ci", key: "wd_x" });
-    expect(createScopedApiKey).toHaveBeenCalledWith(expect.anything(), {
+    expect(createScopedApiKey).toHaveBeenLastCalledWith(expect.anything(), {
       userId: "user-1",
       organizationId: "org-from-server",
       name: "ci",
@@ -47,19 +35,40 @@ describe("createApiKeyFn", () => {
     });
   });
 
-  it("accepts no organization or user from the client", () => {
-    const [schema] = validators as {
-      safeParse: (v: unknown) => { success: boolean; data?: object };
-    }[];
-    const parsed = schema?.safeParse({
-      scopes: ["cases:read"],
-      organizationId: "org-evil",
-      userId: "victim",
-      metadata: { organizationId: "org-evil" },
-    });
-    expect(parsed?.success).toBe(true);
-    expect(parsed?.data).toEqual({ scopes: ["cases:read"] });
-    expect(schema?.safeParse({ scopes: ["admin:write"] }).success).toBe(false);
-    expect(schema?.safeParse({ scopes: [] }).success).toBe(false);
+  it("takes no organization or user from the client", async () => {
+    createScopedApiKey.mockResolvedValue({ id: "k2", name: "ci", key: "wd_y" });
+
+    await callServerFn(
+      createApiKeyFn,
+      {
+        scopes: ["cases:read"],
+        organizationId: "org-evil",
+        userId: "victim",
+        metadata: { organizationId: "org-evil" },
+      },
+      SESSION_CONTEXT
+    );
+
+    expect(createScopedApiKey).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        userId: "user-1",
+        organizationId: "org-from-server",
+        scopes: ["cases:read"],
+      })
+    );
+  });
+
+  it.each([
+    ["a scope outside the allowed set", { scopes: ["admin:write"] }],
+    ["no scopes", { scopes: [] }],
+  ])("refuses %s", async (_label, input) => {
+    createScopedApiKey.mockClear();
+
+    await expect(
+      callServerFn(createApiKeyFn, input, SESSION_CONTEXT)
+    ).rejects.toThrow();
+
+    expect(createScopedApiKey).not.toHaveBeenCalled();
   });
 });

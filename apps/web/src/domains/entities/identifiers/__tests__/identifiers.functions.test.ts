@@ -1,107 +1,92 @@
-import { describe, expect, it, vi } from "vitest";
-import type { z } from "zod";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { identifierList } from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
-
-vi.mock("@tanstack/react-start", () => ({
-  createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
-    }),
-    handler: (fn: unknown) => fn,
-  }),
-}));
-
-const identifiersApi = {
-  list: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-};
-
-vi.mock("@/lib/orpc.server", () => ({
-  orpcFromContext: () => ({ identifiers: identifiersApi }),
-}));
+vi.mock("@tanstack/react-start", async () =>
+  (await import("@/testing/server-fn")).serverFnModuleDouble()
+);
+vi.mock("@/lib/orpc.server", async () =>
+  (await import("@/testing/server-fn")).orpcServerModuleDouble()
+);
 
 import {
   createIdentifierFn,
+  deleteIdentifierFn,
   listIdentifiersPageFn,
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
+import { callServerFn, orpc } from "@/testing/server-fn";
+import { testId } from "@watchdog/test-kit";
 
-type ServerDataContext<T> = {
-  data: T;
-  context: Record<string, never>;
-};
+const CASE_ID = testId(10);
 
-describe("identifiers.functions", () => {
-  it("routes identifier list and write ServerFns through oRPC", async () => {
-    const identifier = {
-      id: testId(1),
-      entityId: testId(20),
-      type: "email" as const,
-      platform: "",
-      value: "user@example.com",
-      confidence: "possible" as const,
-      status: "unknown" as const,
-      notes: null,
-      evidenceIds: [],
-    };
-    identifiersApi.list.mockResolvedValue({
-      items: [
-        {
-          ...identifier,
-          entityName: "Alpha",
-          entitySlug: "alpha",
-          entityKind: "person" as const,
-        },
-      ],
-      nextCursor: null,
-      total: { count: 1, isCapped: false },
-    });
-    identifiersApi.create.mockResolvedValue(identifier);
-    identifiersApi.update.mockResolvedValue(identifier);
+beforeEach(() => orpc.reset());
 
-    await (
-      listIdentifiersPageFn as unknown as (
-        input: ServerDataContext<z.input<typeof identifierList.input>>
-      ) => Promise<unknown>
-    )({
-      data: { caseId: testId(10), entityId: testId(20), q: "acme" },
-      context: {},
-    });
-    await (
-      createIdentifierFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
-        entityId: testId(20),
-        type: "email",
-        value: "user@example.com",
-        confidence: "possible",
-      },
-      context: {},
-    });
-    await (
-      updateIdentifierFn as unknown as (
-        input: ServerDataContext<Record<string, unknown>>
-      ) => Promise<unknown>
-    )({
-      data: {
-        caseId: testId(10),
+describe("deleteIdentifierFn", () => {
+  it("sends only the Case and Identifier ids and answers nothing", async () => {
+    orpc.reply("identifiers.delete", { ok: true });
+
+    await expect(
+      callServerFn(deleteIdentifierFn, {
+        caseId: CASE_ID,
         identifierId: testId(1),
-        value: "next@example.com",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(orpc.calls("identifiers.delete")).toEqual([
+      { caseId: CASE_ID, identifierId: testId(1) },
+    ]);
+  });
+});
+
+describe("input validation", () => {
+  it.each([
+    ["listIdentifiersPageFn", listIdentifiersPageFn, { caseId: "not-a-uuid" }],
+    [
+      "createIdentifierFn",
+      createIdentifierFn,
+      {
+        caseId: CASE_ID,
+        entityId: testId(20),
+        type: "carrier-pigeon",
+        value: "x",
       },
-      context: {},
+    ],
+    [
+      "updateIdentifierFn",
+      updateIdentifierFn,
+      { caseId: CASE_ID, identifierId: "x" },
+    ],
+    [
+      "deleteIdentifierFn",
+      deleteIdentifierFn,
+      { caseId: CASE_ID, identifierId: "x" },
+    ],
+  ] as const)(
+    "%s refuses a malformed input before the API is called",
+    async (_name, fn, input) => {
+      await expect(callServerFn(fn, input)).rejects.toThrow();
+
+      expect(orpc.calls("identifiers.list")).toEqual([]);
+      expect(orpc.calls("identifiers.create")).toEqual([]);
+      expect(orpc.calls("identifiers.update")).toEqual([]);
+      expect(orpc.calls("identifiers.delete")).toEqual([]);
+    }
+  );
+
+  it("trims padded ids and keeps the search text on the list read", async () => {
+    orpc.reply("identifiers.list", {
+      items: [],
+      nextCursor: null,
+      total: null,
     });
 
-    // A list page passes its view through whole.
-    expect(identifiersApi.list.mock.calls.map(([input]) => input)).toEqual([
-      { caseId: testId(10), entityId: testId(20), q: "acme" },
+    await callServerFn(listIdentifiersPageFn, {
+      caseId: `  ${CASE_ID}  `,
+      entityId: testId(20),
+      q: "acme",
+    });
+
+    expect(orpc.calls("identifiers.list")).toMatchObject([
+      { caseId: CASE_ID, entityId: testId(20), q: "acme" },
     ]);
-    expect(identifiersApi.create).toHaveBeenCalled();
-    expect(identifiersApi.update).toHaveBeenCalled();
   });
 });

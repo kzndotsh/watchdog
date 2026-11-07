@@ -227,12 +227,15 @@ describe("the Job ledger", () => {
     let seen = 0;
     const origin = await serve((_req, res) => {
       seen += 1;
-      res.writeHead(seen < 3 ? 503 : 200);
+      // Each send gets its own connection: a reused keep-alive socket can be reset under
+      // load, and the client counts that reset as an attempt of its own.
+      res.writeHead(seen < 3 ? 503 : 200, { connection: "close" });
       res.end("later");
     });
     const { egress, ledger } = job();
 
     expect(await (await egress.fetch(`${origin}/r`)).text()).toBe("later");
+    expect(seen).toBe(3);
 
     const [call] = ledger.drain();
     expect(call?.hops).toEqual([

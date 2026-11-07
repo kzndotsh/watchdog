@@ -154,7 +154,7 @@ describe("CaseOverview", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         `/api/v1/cases/${CASE.id}/export.zip?rawBodies=1`,
-        expect.anything()
+        { signal: expect.any(AbortSignal) }
       );
     });
     cleanup();
@@ -186,7 +186,7 @@ describe("CaseOverview", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         `/api/v1/cases/${CASE.id}/export.zip?breachCredentials=1`,
-        expect.anything()
+        { signal: expect.any(AbortSignal) }
       );
     });
     cleanup();
