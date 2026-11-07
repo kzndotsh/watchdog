@@ -1,54 +1,97 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  RouterContextProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/domains/search/components/search-chrome", () => ({
-  SearchChrome: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="search-chrome">{children}</div>
-  ),
+// The session is the auth boundary: the sidebar reads who is signed in.
+vi.mock("@better-auth-ui/react", () => ({
+  useSession: () => ({
+    data: {
+      user: { name: "Analyst", email: "analyst@example.com" },
+      session: { activeOrganizationId: "org-1" },
+    },
+    isPending: false,
+  }),
 }));
 
-vi.mock("@/domains/search/components/app-inset-context-menu", () => ({
-  AppInsetContextMenu: ({ children }: { children: React.ReactNode }) => (
-    <div id="app-main" data-testid="app-inset-context-menu">
-      {children}
-    </div>
-  ),
+vi.mock("@better-auth-ui/react/plugins/organization", () => ({
+  useListOrganizations: () => ({
+    data: [{ id: "org-1", name: "Newsroom", logo: null }],
+    isPending: false,
+  }),
+  useSetActiveOrganization: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-vi.mock("@/app/layout/app-sidebar", () => ({
-  AppSidebar: () => <div data-testid="app-sidebar">Sidebar</div>,
-}));
+vi.mock("@/auth/client", () => ({ authClient: {} }));
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
-  SidebarProvider: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  SidebarInset: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+// Only the network boundary is faked: the shell's sidebar reads the Case through the real
+// cases-context query, seeded in the cache below.
+vi.mock("@/domains/cases/cases.functions", () => ({
+  getCasesContextFn: vi.fn(),
+  getCaseByIdFn: vi.fn(),
+  getCaseBySlugFn: vi.fn(),
 }));
 
 import { AppShell } from "@/app/layout/app-shell";
-import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+import { casesKeys } from "@/domains/cases/queries";
+import { buildCaseRecord } from "@/testing/records";
+
+/** A real router with one catch-all route, so the sidebar's links build hrefs. */
+function routerAt(pathname: string) {
+  const root = createRootRoute();
+  const all = createRoute({ getParentRoute: () => root, path: "$" });
+  return createRouter({
+    routeTree: root.addChildren([all]),
+    history: createMemoryHistory({ initialEntries: [pathname] }),
+  });
+}
+
+function renderShell() {
+  const client = new QueryClient();
+  const active = buildCaseRecord({ slug: "alpha" });
+  client.setQueryData(casesKeys.context(), { cases: [active], active });
+  return render(
+    <RouterContextProvider router={routerAt("/cases/alpha")}>
+      <QueryClientProvider client={client}>
+        <AppShell>
+          <p>Main content</p>
+        </AppShell>
+      </QueryClientProvider>
+    </RouterContextProvider>
+  );
+}
+
+beforeEach(() => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+});
 
 describe("AppShell", () => {
-  it("wraps page content with search chrome, sidebar, and skip link", () => {
-    const Router = testRouterWrapper(createTestRouter());
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <AppShell>
-          <div>Main content</div>
-        </AppShell>
-      </QueryClientProvider>,
-      { wrapper: Router }
-    );
+  it("renders the page content and the sidebar's navigation", async () => {
+    renderShell();
 
-    expect(screen.getByTestId("search-chrome")).toBeInTheDocument();
-    expect(screen.getByTestId("app-sidebar")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Skip to main content" })
-    ).toHaveAttribute("href", "#app-main");
     expect(screen.getByText("Main content")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: "Collect" })
+    ).toHaveAttribute("href", "/cases/alpha/collect");
+  });
+
+  it("offers a skip link that targets an element of the page", () => {
+    const { container } = renderShell();
+
+    const skip = screen.getByRole("link", { name: "Skip to main content" });
+    const target = skip.getAttribute("href");
+    expect(target).toBe("#app-main");
+    expect(container.ownerDocument.querySelector("#app-main")).not.toBeNull();
   });
 });
