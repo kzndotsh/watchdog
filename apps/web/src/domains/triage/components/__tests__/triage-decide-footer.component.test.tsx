@@ -39,7 +39,7 @@ vi.mock("@/shared/ui/intake/searched-evidence-picker", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/intake/evidence-cite-chips", () => ({
+vi.mock("@/domains/triage/components/evidence-cite-chips", () => ({
   EvidenceCiteChips: () => <div>Evidence cites</div>,
 }));
 

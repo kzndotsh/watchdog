@@ -3,8 +3,8 @@ import { Link } from "@tanstack/react-router";
 import type { SubmitEvent } from "react";
 import { useEffect } from "react";
 
-import { EgressBlockNotice } from "@/domains/cases/components/egress-block-notice";
 import type { CaseEgress } from "@/domains/cases/types";
+import { EgressBlockNotice } from "@/domains/jobs/components/egress-block-notice";
 import {
   PlaybookSeedFields,
   type PlaybookRunFormValues,

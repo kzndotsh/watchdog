@@ -39,7 +39,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
 }));
 
 // React Flow needs a laid-out DOM; the canvas has its own tests. This one shows what it was given.
-vi.mock("@/domains/cases/components/case-graph/case-graph-canvas", () => ({
+vi.mock("@/domains/entities/components/case-graph/case-graph-canvas", () => ({
   CaseGraphCanvas: ({
     entities,
     edges,
@@ -53,8 +53,8 @@ vi.mock("@/domains/cases/components/case-graph/case-graph-canvas", () => ({
   ),
 }));
 
-import { GraphPage } from "@/domains/cases/components/graph-page";
 import type { CaseCounts, CaseRecord } from "@/domains/cases/types";
+import { GraphPage } from "@/domains/entities/components/graph-page";
 import type { GraphSnapshot } from "@/domains/entities/edges/types";
 import { renderIn } from "@/testing/render-in-case";
 

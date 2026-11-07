@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { graphTruncationNotice } from "@/domains/cases/lib/graph-notice";
 import { caseCountsQuery } from "@/domains/cases/queries";
 import type { GraphSnapshot } from "@/domains/entities/edges/types";
+import { graphTruncationNotice } from "@/domains/entities/lib/graph-notice";
 
 type GraphTruncationNoticeProps = {
   readonly caseId: string;

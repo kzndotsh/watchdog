@@ -2,8 +2,8 @@
 
 import { useAuth, useListSessions, useSession } from "@better-auth-ui/react";
 
+import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
 import { cn } from "@/lib/utils";
-import { DelayedSkeleton } from "@/shared/ui/delayed-skeleton";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { Card, CardContent } from "@watchdog/ui/components/card";
 import { Separator } from "@watchdog/ui/components/separator";

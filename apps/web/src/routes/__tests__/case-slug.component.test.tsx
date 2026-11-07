@@ -43,14 +43,14 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   restoreCaseFn: vi.fn(),
 }));
 
-vi.mock("@/domains/cases/components/case-overview", () => ({
+vi.mock("@/domains/dashboard/components/case-overview", () => ({
   CaseOverview: ({ caseId }: { caseId: string }) => (
     <div>Case overview {caseId}</div>
   ),
 }));
 
 const warmCaseOverviewQueries = vi.hoisted(() => vi.fn());
-vi.mock("@/domains/cases/lib/prefetch-case-overview", () => ({
+vi.mock("@/domains/dashboard/lib/prefetch-case-overview", () => ({
   warmCaseOverviewQueries,
 }));
 

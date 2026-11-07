@@ -62,7 +62,7 @@ vi.mock("@/domains/entities/edges/edges.functions", () => ({
   listEdgesForCaseFn: fns.listEdgesForCaseFn,
 }));
 
-import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
+import { CaseOverviewTab } from "@/domains/dashboard/components/case-overview-tab";
 
 const CASE: CaseRecord = {
   id: testCaseId(1),

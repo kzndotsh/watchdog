@@ -1,8 +1,8 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { warmCaseOverviewQueries } from "@/domains/cases/lib/prefetch-case-overview";
 import { caseCountsQuery } from "@/domains/cases/queries";
+import { warmCaseOverviewQueries } from "@/domains/dashboard/lib/prefetch-case-overview";
 import { recentEvidenceQuery } from "@/domains/intake/queries";
 import { jobsRecentQuery } from "@/domains/jobs/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";

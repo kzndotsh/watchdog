@@ -15,7 +15,7 @@ import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/domains/dossier/components/evidence-preview-drawer", () => ({
+vi.mock("@/domains/intake/components/evidence-preview-drawer", () => ({
   EvidencePreviewDrawer: () => null,
 }));
 

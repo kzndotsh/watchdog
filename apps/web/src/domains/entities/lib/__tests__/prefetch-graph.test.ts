@@ -1,11 +1,11 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { graphSnapshotQuery } from "@/domains/entities/edges/queries";
 import {
   ensureGraphQueries,
   warmGraphQueries,
-} from "@/domains/cases/lib/prefetch-graph";
-import { graphSnapshotQuery } from "@/domains/entities/edges/queries";
+} from "@/domains/entities/lib/prefetch-graph";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {

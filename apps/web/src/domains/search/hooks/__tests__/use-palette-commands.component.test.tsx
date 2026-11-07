@@ -1,8 +1,8 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { useRegisteredPaletteCommands } from "@/domains/search/hooks/use-registered-palette-commands";
 import { usePaletteCommands } from "@/shared/hooks/use-palette-commands";
-import { useRegisteredPaletteCommands } from "@/shared/hooks/use-registered-palette-commands";
 import type { AppAction } from "@/shared/lib/app-action";
 import { resetPaletteCommands } from "@/shared/lib/palette-commands-store";
 

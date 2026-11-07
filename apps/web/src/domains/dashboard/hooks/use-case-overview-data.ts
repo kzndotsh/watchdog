@@ -1,12 +1,12 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import { caseCountsQuery } from "@/domains/cases/queries";
 import {
   buildCaseOverviewActivity,
   CASE_OVERVIEW_ACTIVITY_LIMIT,
   type ActivityItem,
-} from "@/domains/cases/lib/overview-activity";
-import { caseCountsQuery } from "@/domains/cases/queries";
+} from "@/domains/dashboard/lib/overview-activity";
 import { entityPickerPort } from "@/domains/entities/queries";
 import {
   evidencePickerPort,

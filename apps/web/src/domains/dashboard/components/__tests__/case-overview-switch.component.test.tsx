@@ -14,7 +14,7 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-vi.mock("@/domains/cases/components/case-overview-tab", () => ({
+vi.mock("@/domains/dashboard/components/case-overview-tab", () => ({
   CaseOverviewTab: () => <div>Overview tab body</div>,
 }));
 
@@ -54,7 +54,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   updateCaseFn: vi.fn(),
 }));
 
-import { CaseOverview } from "@/domains/cases/components/case-overview";
+import { CaseOverview } from "@/domains/dashboard/components/case-overview";
 
 function renderOverview() {
   const client = new QueryClient({

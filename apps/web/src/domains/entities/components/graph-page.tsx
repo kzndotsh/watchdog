@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 
-import { CaseGraphCanvas } from "@/domains/cases/components/case-graph/case-graph-canvas";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { CaseGraphCanvas } from "@/domains/entities/components/case-graph/case-graph-canvas";
 import { graphSnapshotQuery } from "@/domains/entities/edges/queries";
 import { cn } from "@/lib/utils";
 import { Page } from "@/shared/layout/page";
@@ -17,7 +17,7 @@ import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-loading
 // Only a cut snapshot shows it: its chunk (and the counts read) loads then, not with the route.
 const LazyGraphTruncationNotice = lazy(async () => {
   const { GraphTruncationNotice } =
-    await import("@/domains/cases/components/graph-truncation-notice");
+    await import("@/domains/entities/components/graph-truncation-notice");
   return { default: GraphTruncationNotice };
 });
 

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { findHotkeyTarget } from "@/shared/lib/data-hotkey";
+import { findHotkeyTarget } from "@/domains/search/lib/data-hotkey";
 import { isEditableTarget } from "@/shared/lib/hotkeys";
 
 /**

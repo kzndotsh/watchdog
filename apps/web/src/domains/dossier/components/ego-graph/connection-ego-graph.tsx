@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { egoTruncationNotice } from "@/domains/cases/lib/graph-notice";
 import type {
   EgoEdge,
   EgoEntityRef,
 } from "@/domains/dossier/components/ego-graph/edges-to-flow";
 import { EgoNeighborhoodCanvas } from "@/domains/dossier/components/ego-graph/ego-neighborhood-canvas";
 import { edgeListView, graphEgoQuery } from "@/domains/entities/edges/queries";
+import { egoTruncationNotice } from "@/domains/entities/lib/graph-notice";
 import { couldnt } from "@/lib/utils";
 import { useListCount } from "@/shared/hooks/list/use-list-count";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";

@@ -13,7 +13,7 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-import { CaseGraphCanvas } from "@/domains/cases/components/case-graph/case-graph-canvas";
+import { CaseGraphCanvas } from "@/domains/entities/components/case-graph/case-graph-canvas";
 import type { GraphSnapshot } from "@/domains/entities/edges/types";
 
 const ENTITY: GraphSnapshot["entities"][number] = {
