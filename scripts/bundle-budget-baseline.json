@@ -4,7 +4,7 @@
   "routes": {
     "/_protected/": 46839,
     "/_protected/cases/": 21843,
-    "/_protected/cases/$caseSlug": 1398,
+    "/_protected/cases/$caseSlug": 1500,
     "/_protected/cases/$caseSlug/": 65253,
     "/_protected/cases/$caseSlug/collect": 159874,
     "/_protected/cases/$caseSlug/entities/": 88210,
