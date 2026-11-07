@@ -14,7 +14,6 @@
   "apps/web/src/__tests__/start-timing.test.ts": 3,
   "apps/web/src/__tests__/start.test.ts": 3,
   "apps/web/src/app/layout/__tests__/app-shell.component.test.tsx": 3,
-  "apps/web/src/app/layout/__tests__/app-sidebar.component.test.tsx": 6,
   "apps/web/src/app/layout/__tests__/case-switcher-switch.component.test.tsx": 2,
   "apps/web/src/app/layout/__tests__/case-switcher.component.test.tsx": 3,
   "apps/web/src/app/lib/__tests__/activity-invalidation.test.ts": 1,
