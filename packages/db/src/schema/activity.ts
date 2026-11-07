@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   check,
+  foreignKey,
   index,
   pgTable,
   text,
@@ -49,7 +50,7 @@ export const activity = pgTable(
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     /**
-     * The Case's organization, copied at append (a Case never changes organization): the lead
+     * The Case's organization, copied at append and held to the Case's own by `activity_case_organization_fk`: the lead
      * column of the Recent activity list's indexes, so the organization-wide feed reads one
      * btree instead of joining every Case.
      */
@@ -90,6 +91,12 @@ export const activity = pgTable(
     index("activity_group_created_idx")
       .on(t.groupId, t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst())
       .where(sql`${t.groupId} IS NOT NULL`),
+    // The copied organization must be the Case's own.
+    foreignKey({
+      name: "activity_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
     check("activity_label_len", sql`char_length(${t.label}) <= 200`),
     vocabCheck(t.kind, ACTIVITY_ENTRY_KINDS),
     // The verb must belong to some kind; the (kind, verb) pairing stays in `appendActivityEffect`.

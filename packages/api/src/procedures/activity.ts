@@ -11,7 +11,7 @@ export const listRecent = authed
     method: "GET",
     path: "/activity/recent",
     summary:
-      "List recent activity across cases, newest first, a page at a time; one entry per playbook run, optionally for one case",
+      "List recent activity across cases, a page at a time, newest first unless sorted otherwise; one entry per playbook run, optionally for one case",
     tags: ["activity"],
   })
   .input(activityList.input)

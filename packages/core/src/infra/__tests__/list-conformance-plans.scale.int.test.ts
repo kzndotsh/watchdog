@@ -344,7 +344,8 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
             maxMs: round(Math.max(...samples)),
           };
         };
-        for (const q of NEEDLES) {
+        // A list that declares no search has no needles; its no-q read is still bounded.
+        for (const q of def.search === undefined ? [] : NEEDLES) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
           await check(`q=${q}`, { q });
         }

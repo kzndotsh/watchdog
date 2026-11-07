@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import type { ListAfter } from "@watchdog/db";
-import { CURSOR_MAX, URL_MAX } from "@watchdog/schemas/shared";
+import { CURSOR_MAX, parseIntRowId, URL_MAX } from "@watchdog/schemas/shared";
 import type { ListKeyType } from "@watchdog/schemas/shared";
 
 import { InvalidError, StaleCursorError } from "../errors/tagged-errors";
@@ -35,7 +35,6 @@ export type ListCursorSpec = {
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const INT_TEXT = /^\d{1,18}$/;
 const ISO_MICROS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
 
 /** sha256 of the text, first 12 hex characters. The same view always gives the same fingerprint. */
@@ -124,7 +123,7 @@ export function decodeListCursor(
     }
     if (
       typeof id !== "string" ||
-      !(spec.id === "int" ? INT_TEXT : UUID).test(id)
+      !(spec.id === "int" ? parseIntRowId(id) !== null : UUID.test(id))
     ) {
       return yield* invalid;
     }

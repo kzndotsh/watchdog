@@ -37,7 +37,7 @@ Which error tag to raise: [Error taxonomy](../../docs/reference/contracts/README
 
 ## Paged lists
 
-Every list service is a declared list (ADR-0007): `listPageEffect` (model `listEntitiesForCaseEffect`) answers a `ListPage<T>`: [`types.md`](../../docs/reference/platform/types.md#pagination).
+Every list service is a declared list (ADR-0007) except Graph history until #620: `listPageEffect` (model `listEntitiesForCaseEffect`) answers a `ListPage<T>`: [`types.md`](../../docs/reference/platform/types.md#pagination).
 
 ## `Db` service pattern (ADR-0002 phase 2)
 

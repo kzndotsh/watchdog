@@ -2,7 +2,12 @@ import { and, count, getTableName, ilike, inArray, or, sql } from "drizzle-orm";
 import type { AnyColumn, SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
-import { ARRAY_MAX, normalizeUuidList, opsOf } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  normalizeUuidList,
+  opsOf,
+  parseIntRowId,
+} from "@watchdog/schemas/shared";
 import type {
   AnyListDef,
   FilterKey,
@@ -206,7 +211,7 @@ export type ListRepo<Def extends AnyListDef, Row> = {
     cap: number
   ) => Promise<number>;
   /**
-   * Rows of the scope by id (at most `ARRAY_MAX`; ids that are not uuids are skipped), in the
+   * Rows of the scope by id (at most `ARRAY_MAX`; ids that are not uuids, or for an `idType: "int"` list not positive safe integers as text, are skipped), in the
    * default sort. Filters do not apply: a URL-selected row shows even when a filter hides it.
    */
   readonly byIds: (
@@ -256,9 +261,12 @@ export function listRepoOf<Def extends AnyListDef>(
   return repo as unknown as ListRepo<Def, ListRow>;
 }
 
-/** The ids of an integer-id list (`idType: "int"`): digit text only, as numbers; anything else is skipped. */
+/** The ids of an integer-id list (`idType: "int"`) as numbers; anything `parseIntRowId` refuses is skipped. */
 function normalizeIntIds(ids: readonly string[]): number[] {
-  return ids.flatMap((id) => (/^\d{1,15}$/.test(id) ? [Number(id)] : []));
+  return ids.flatMap((id) => {
+    const parsed = parseIntRowId(id);
+    return parsed === null ? [] : [parsed];
+  });
 }
 
 function isNullableSort<T extends PgTable, V>(

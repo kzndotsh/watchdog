@@ -9,6 +9,8 @@ import {
   untrustedCaseId,
 } from "@watchdog/schemas/testing";
 import {
+  expectPostgresRefusal,
+  PG_FOREIGN_KEY_VIOLATION,
   resetTestDb,
   seedCase,
   seedJob,
@@ -248,6 +250,24 @@ describe("activityListRepo", () => {
       const cased = await seedCase(tx);
       const row = await appendJob(tx, cased.id, testId(39), "queued");
       expect(row.organizationId).toBe(TEST_ORGANIZATION_ID);
+    });
+  });
+
+  it("refuses an entry whose organization is not its Case's", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      await expectPostgresRefusal(
+        tx.insert(activity).values({
+          caseId: cased.id,
+          organizationId: TEST_OTHER_ORGANIZATION_ID,
+          kind: "task",
+          action: "created",
+        }),
+        {
+          code: PG_FOREIGN_KEY_VIOLATION,
+          constraint: "activity_case_organization_fk",
+        }
+      );
     });
   });
 

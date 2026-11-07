@@ -18,6 +18,7 @@ const askedFilters = vi.hoisted(() => [] as ({ caseId: string } | undefined)[]);
 
 vi.mock("@/domains/activity/queries", () => ({
   activityListView: {
+    key: () => ["activity", "list", "activity"],
     infinite: (
       _scope: unknown,
       query: { filters: { caseId: string | null } }
@@ -43,6 +44,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
+    useQueryClient: () => ({ resetQueries: vi.fn() }),
     useInfiniteQuery: () => ({
       hasNextPage: activityState.hasNextPage,
       isFetchingNextPage: activityState.isFetchingNextPage,

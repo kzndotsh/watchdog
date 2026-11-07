@@ -25,4 +25,6 @@ export const activityListView = listView(activityList, {
   getId: (item: ActivityItem) => item.id,
   staleTime: STALE_DEFAULT,
   gcTime: GC_DEFAULT,
+  // The feed has always paged to the end, so it keeps no ceiling (no selection, light rows).
+  maxPages: Number.POSITIVE_INFINITY,
 });

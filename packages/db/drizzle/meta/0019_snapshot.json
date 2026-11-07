@@ -1,5 +1,5 @@
 {
-  "id": "534d1aba-d0ff-4b41-94c7-1736a9fdf885",
+  "id": "5f2670b9-d057-4512-9087-5542ca4d3e2d",
   "prevId": "514deecd-d058-45c3-8497-71743f35f0d9",
   "version": "7",
   "dialect": "postgresql",
@@ -406,6 +406,21 @@
           ],
           "columnsTo": [
             "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "activity_case_organization_fk": {
+          "name": "activity_case_organization_fk",
+          "tableFrom": "activity",
+          "tableTo": "cases",
+          "columnsFrom": [
+            "case_id",
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id",
+            "organization_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -1182,6 +1197,27 @@
         }
       },
       "indexes": {
+        "cases_id_organization_uidx": {
+          "name": "cases_id_organization_uidx",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "cases_organization_id_slug_uidx": {
           "name": "cases_organization_id_slug_uidx",
           "columns": [

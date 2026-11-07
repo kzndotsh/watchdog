@@ -18,15 +18,24 @@ import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
-/** The Case's task entries in Recent activity, newest first. */
+/** The Case's task entries in Recent activity, newest first: every page, so other kinds never hide one. */
 async function taskFeed(caseId: CaseId) {
-  const rows = await activityListRepo.page(
-    db,
-    { organizationId: TEST_ORGANIZATION_ID },
-    opsOf(activityList).queryOf({ caseId }),
-    { limit: 10, after: undefined }
-  );
-  return rows.filter((row) => row.kind === "task");
+  const query = opsOf(activityList).queryOf({ caseId });
+  const tasks: Awaited<ReturnType<typeof activityListRepo.page>> = [];
+  let after: { value: string | number; id: string } | undefined;
+  for (;;) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- each page needs the last row of the one before
+    const rows = await activityListRepo.page(
+      db,
+      { organizationId: TEST_ORGANIZATION_ID },
+      query,
+      { limit: 50, after }
+    );
+    tasks.push(...rows.filter((row) => row.kind === "task"));
+    const last = rows.at(-1);
+    if (rows.length < 50 || last === undefined) return tasks;
+    after = { value: last.listKey, id: String(last.id) };
+  }
 }
 
 describe("createTask", () => {
