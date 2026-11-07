@@ -1,5 +1,5 @@
+import type { DomainTag } from "../errors/tagged-errors";
 import { logSwallowed } from "../infra/process-log";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /**
  * A failed Job stores only `error.message` (client-visible). Keep the detail a

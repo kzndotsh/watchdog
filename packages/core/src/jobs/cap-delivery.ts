@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import { isOpenJobStatus, parseTrimmedUuid } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { jobsRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { failJobEffect, isPlainRecord } from "./stages/helpers";
 
 /** Best-effort domain job id from a pg-boss delivery payload. */

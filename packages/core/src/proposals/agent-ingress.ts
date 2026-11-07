@@ -21,6 +21,12 @@ import {
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import { assertCaseInOrgEffect } from "../cases/access";
+import {
+  ConflictError,
+  InternalError,
+  InvalidError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { createAttestationEffect } from "../evidence/evidence";
 import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
@@ -30,12 +36,6 @@ import { listPageEffect } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { graphWritesRepoFxDb, graphWritesRepoFx } from "../infra/repos-fx";
-import {
-  ConflictError,
-  InternalError,
-  InvalidError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 import { suppressAndProposeStageEffect } from "./suppress-and-propose";
 

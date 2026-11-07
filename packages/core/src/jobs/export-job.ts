@@ -12,6 +12,12 @@ import { requireActorIdEffect } from "../actors/require-actor-id";
 import { assertCaseInOrgEffect } from "../cases/access";
 import { getCaseByIdEffect } from "../cases/cases";
 import {
+  ConflictError,
+  InternalError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
+import {
   requireBreachCredentialCallerEffect,
   requireBreachCredentialOptInEffect,
 } from "../export/breach-credential-opt-in";
@@ -36,12 +42,6 @@ import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
-import {
-  ConflictError,
-  InternalError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import type { SystemJobContext, SystemJobFinish } from "./lifecycle/run";

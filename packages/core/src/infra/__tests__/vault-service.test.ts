@@ -1,7 +1,7 @@
 import { Effect, Exit, Layer } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { NotFoundError } from "../tagged-errors";
+import { NotFoundError } from "../../errors/tagged-errors";
 import {
   Vault,
   deleteCredentialEffect,

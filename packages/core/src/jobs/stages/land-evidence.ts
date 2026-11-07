@@ -2,11 +2,11 @@ import { Effect } from "effect";
 
 import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
 
+import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import { createCapturedEvidenceEffect } from "../../evidence/evidence-activity";
 import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
 import { jobsRepoFx, providerCallsRepoFx } from "../../infra/repos-fx";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { CollectResult } from "./collect";
 import { inputGraphUuidStrict } from "./helpers";
 import type { PreflightState } from "./preflight";

@@ -10,6 +10,11 @@ import { Effect, Predicate } from "effect";
 
 import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas/shared";
 
+import {
+  InternalError,
+  InvalidError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { BlobStore } from "./blob-store";
 import {
   contradictsContent,
@@ -17,7 +22,6 @@ import {
   sniffMime,
   SNIFF_BYTES,
 } from "./content-sniff";
-import { InternalError, InvalidError, type DomainTag } from "./tagged-errors";
 
 /** What the server itself established about a stored object: nothing here is client-supplied. */
 export type VerifiedObject = {

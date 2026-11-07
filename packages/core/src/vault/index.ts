@@ -16,4 +16,4 @@ export {
   listCredentialSlotsEffect,
   putCredentialSlotEffect,
   type CredentialSlot,
-} from "../infra/credential-slots";
+} from "../caps/credential-slots";

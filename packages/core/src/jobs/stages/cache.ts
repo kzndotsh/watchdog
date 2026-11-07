@@ -2,8 +2,8 @@ import { Effect } from "effect";
 
 import type { JobArtifact } from "@watchdog/db";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
-import type { DomainTag } from "../../infra/tagged-errors";
 import { storeCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import type { CollectRuntime } from "./collect";

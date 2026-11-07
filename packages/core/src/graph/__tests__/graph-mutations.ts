@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import { updateCaseEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
+import { updateCaseEffect } from "@watchdog/core/export";
 import {
   applyPatchEffect,
   createClaimEffect,
@@ -465,7 +465,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
   },
   {
     name: "case.update",
-    sites: ["cases/cases.ts#updateCaseEffect"],
+    sites: ["cases/cases.ts#updateCaseWithPreviousSlugEffect"],
     kind: "case",
     action: "updated",
     historyRows: 0,

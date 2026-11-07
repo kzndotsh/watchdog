@@ -14,6 +14,12 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
+import {
+  InternalError,
+  NotFoundError,
+  boundEchoedId,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { readArtifactBytesEffect, sha256Hex } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
@@ -22,12 +28,6 @@ import {
   jobsRepoFxDb,
   providerCallsRepoFxDb,
 } from "../infra/repos-fx";
-import {
-  InternalError,
-  NotFoundError,
-  boundEchoedId,
-  type DomainTag,
-} from "../infra/tagged-errors";
 
 /** Most calls a read returns. A Job makes a handful; a longer list is cut and says so. */
 export const PROVIDER_CALL_LIST_MAX = 200;

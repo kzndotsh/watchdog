@@ -75,7 +75,7 @@ Every other tagged error is internal-only: it is mapped to one of the tags above
 | `RateLimitedOutputError` | `rate_limited_output` | `ai` | internal-only |
 | `InvalidOutputError` | `invalid_output` | `ai` | internal-only |
 
-The API-visible codes are the first table; the vendor mapping is `toDomainTag` in `packages/core/src/infra/vendor-errors.ts`.
+The API-visible codes are the first table; the vendor mapping is `toDomainTag` in `packages/core/src/errors/vendor-errors.ts`.
 
 **CLI breaking change.** The CLI JSON envelope `error.code` for tagged errors is now the stable code: `not_found`, `conflict`, `invalid`, `forbidden`, `internal`. It was `NOT_FOUND`, `CONFLICT`, `BAD_REQUEST` (and the equivalent upper-case transport codes for the others). Scripts that match on `error.code` must be updated.
 

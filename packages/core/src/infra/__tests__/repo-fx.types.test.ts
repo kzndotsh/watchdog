@@ -3,10 +3,10 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import type { DbExec, JobRow, NewJob } from "@watchdog/db";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../db-service";
 import type { RepoFx, RepoFxDb } from "../repo-fx";
 import type { jobsRepoFx, jobsRepoFxDb } from "../repos-fx";
-import type { DomainTag } from "../tagged-errors";
 
 const fakeRepo = {
   async plain(_exec: DbExec, _id: string): Promise<{ id: string } | null> {

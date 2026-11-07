@@ -23,10 +23,10 @@ import {
 import { assertCaseInOrgEffect } from "../cases/access";
 import { loadEntityDisplayMapsForProposalPatchesEffect } from "../display/entity-display";
 import { proposalActivityLabel } from "../display/proposal-display";
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { nextCursorOf, pageWindow } from "../infra/page";
 import { activityLogRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { mapJobFeedRowsEffect } from "./job-feed";
 
 type FeedUsers = ReadonlyMap<string, { name: string; email: string }>;

@@ -42,6 +42,12 @@ import {
   buildEntityDisplayMaps,
   type EntityDisplayMaps,
 } from "../display/entity-display";
+import {
+  ConflictError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { createAttestationEffect } from "../evidence/evidence";
 import {
   assertEvidenceIdsInCaseEffect,
@@ -61,12 +67,6 @@ import {
   proposalsRepoFxDb,
   proposalsRepoFx,
 } from "../infra/repos-fx";
-import {
-  ConflictError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import { recordRejectedFingerprintsEffect } from "./finding-suppress";
 
 export type ProposalRecord = {

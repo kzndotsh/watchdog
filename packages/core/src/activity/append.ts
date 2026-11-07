@@ -11,9 +11,9 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
+import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import { requireWritten } from "../infra/postgres-effect";
 import { activityLogRepoFx } from "../infra/repos-fx";
-import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
 export type ActivityAppendInput = {
   caseId: CaseId;

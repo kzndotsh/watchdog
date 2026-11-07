@@ -12,9 +12,9 @@ import type {
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 import { setHistoryContextEffect } from "../../activity/graph-activity";
+import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   runGraphMutationInTx,
   type JoinedGraphWriter,

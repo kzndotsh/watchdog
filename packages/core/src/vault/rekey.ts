@@ -1,6 +1,9 @@
 import { credentialsRepo, lockVaultRekey, type DbExec } from "@watchdog/db";
 
-import { openSecretWithMaster, sealSecretWithMaster } from "./vault-crypto";
+import {
+  openSecretWithMaster,
+  sealSecretWithMaster,
+} from "../infra/vault-crypto";
 
 export type RekeyResult =
   /** Every credential now opens under the new key (and no longer under the old one). */

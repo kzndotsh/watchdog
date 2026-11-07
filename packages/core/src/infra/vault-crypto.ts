@@ -89,7 +89,7 @@ export function openSecret(userId: string, blob: Buffer): string {
 
 /**
  * `sealSecret` under an explicit master key instead of the configured one. For key rotation
- * (`vault-rekey.ts`), which holds two keys at once; ordinary code uses `sealSecret`.
+ * (`vault/rekey.ts`), which holds two keys at once; ordinary code uses `sealSecret`.
  */
 export function sealSecretWithMaster(
   master: string,

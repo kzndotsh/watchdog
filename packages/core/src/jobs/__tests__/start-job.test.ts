@@ -56,9 +56,9 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
   labelForActor: (id: string) => id,
 }));
 
+import { InvalidError, JobStartLimitError } from "../../errors/tagged-errors";
 import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";
-import { InvalidError, JobStartLimitError } from "../../infra/tagged-errors";
 import { fakeVault } from "../../infra/vault-fake";
 import { recordingJobQueue } from "../job-queue";
 import { startJobEffect, toJobRecord } from "../start-job";

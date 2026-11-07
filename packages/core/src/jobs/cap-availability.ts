@@ -18,9 +18,9 @@ import {
   BREACH_DISABLED_MESSAGE,
   breachCapsEnabled,
 } from "../caps/breach-caps";
+import { ForbiddenError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { casesRepoFxDb } from "../infra/repos-fx";
-import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
 
 function credentialNames(

@@ -12,9 +12,9 @@ import type {
 
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
 import { assertCaseInOrgEffect } from "../cases/access";
+import { NotFoundError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
-import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
 import { toEvidenceRecord, type EvidenceRecord } from "./evidence";
 
 /** Rows to wire records, with the actors' current labels. */

@@ -2,8 +2,8 @@ import type { Effect } from "effect";
 
 import type { OrganizationId } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import type { DomainTag } from "../infra/tagged-errors";
 import { requireOrganizationManagerEffect } from "../organization/roles";
 
 /** What a refused opt-in says: fixed, naming the rule and not the caller. */

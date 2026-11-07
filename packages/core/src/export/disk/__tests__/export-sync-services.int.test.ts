@@ -6,18 +6,18 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import { asCaseId } from "@watchdog/schemas/shared";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
-import { readArtifactBytesEffect } from "../blob";
-import { BlobStore, recordingBlobStore } from "../blob-store";
-import { Db } from "../db-service";
+import { readArtifactBytesEffect } from "../../../infra/blob";
+import { BlobStore, recordingBlobStore } from "../../../infra/blob-store";
+import { Db } from "../../../infra/db-service";
+import { tryDbWith } from "../../../infra/postgres-effect";
+import { transact } from "../../../infra/postgres-tx";
+import { runDomainWith } from "../../../infra/run-domain";
 import {
   claimCaseExportEffect,
   ExportWriteServices,
   isolatedExportWriteServices,
   scheduleCaseExportEffect,
 } from "../export-sync";
-import { tryDbWith } from "../postgres-effect";
-import { transact } from "../postgres-tx";
-import { runDomainWith } from "../run-domain";
 
 const ROLLBACK = new Error("rollback");
 

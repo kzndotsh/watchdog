@@ -18,13 +18,13 @@ import {
 
 import { labelForActor } from "../actors/resolve-actor-labels";
 import { jobActivityLabel } from "../display/job-display";
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import {
   entitiesRepoFxDb,
   evidenceRepoFxDb,
   activityLogRepoFxDb,
 } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /** The Job fields a feed label is built from: the Job itself, or a run's seed step. */
 type JobLabelSubject = {

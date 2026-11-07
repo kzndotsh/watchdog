@@ -8,9 +8,9 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { appendGraphActivityEffect } from "../activity/graph-activity";
+import type { DomainTag } from "../errors/tagged-errors";
 import { requireWritten } from "../infra/postgres-effect";
 import { caseDeletionRecordsRepoFx } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /** The Case a lifecycle event is about, as it reads at that moment. */
 export type DeletionSubject = {

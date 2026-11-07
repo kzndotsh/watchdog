@@ -8,15 +8,15 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
-import { attachEvidenceIds } from "../graph/attach-evidence";
-import type { Db } from "../infra/db-service";
-import { transact } from "../infra/postgres-tx";
-import { casesRepoFx, proposalsRepoFx } from "../infra/repos-fx";
 import {
   InvalidError,
   NotFoundError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import { attachEvidenceIds } from "../graph/attach-evidence";
+import type { Db } from "../infra/db-service";
+import { transact } from "../infra/postgres-tx";
+import { casesRepoFx, proposalsRepoFx } from "../infra/repos-fx";
 import { suppressKnownFindingsEffect } from "./finding-suppress";
 
 export type ProposeResult = {

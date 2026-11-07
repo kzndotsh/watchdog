@@ -2,7 +2,7 @@ import { Context, type Effect } from "effect";
 
 import type { JobLane } from "@watchdog/caps/sdk";
 
-import type { InternalError } from "../infra/tagged-errors";
+import type { InternalError } from "../errors/tagged-errors";
 
 export type QueueWorkOptions = {
   /** The lane whose queue this handler works. */

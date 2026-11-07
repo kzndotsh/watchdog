@@ -22,8 +22,8 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../cases/access";
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
   parseGraphEvidenceIdsEffect,
   assertConfidenceEvidenceEffect,

@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { InternalError } from "../infra/tagged-errors";
+import { InternalError } from "../errors/tagged-errors";
 
 export function exportFailure(what: string) {
   return (cause: unknown) => new InternalError({ reason: what, cause });

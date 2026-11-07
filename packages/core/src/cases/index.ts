@@ -10,7 +10,6 @@ export {
   listVisibleCaseIdsEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
-  updateCaseEffect,
   type ActiveCaseContext,
   type CaseRecord,
   type CreateCaseInput,

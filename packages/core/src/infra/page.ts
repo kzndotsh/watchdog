@@ -8,7 +8,7 @@ import {
   URL_MAX,
 } from "@watchdog/schemas/shared";
 
-import { InvalidError } from "./tagged-errors";
+import { InvalidError } from "../errors/tagged-errors";
 
 /**
  * Cursor pagination for list services. A list orders by sort columns and then the row id (a

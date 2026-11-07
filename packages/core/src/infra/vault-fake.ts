@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 
-import { InvalidError, NotFoundError } from "./tagged-errors";
+import { InvalidError, NotFoundError } from "../errors/tagged-errors";
 import {
   Vault,
   requireCredentialName,

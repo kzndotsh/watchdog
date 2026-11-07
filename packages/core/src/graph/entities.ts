@@ -22,16 +22,16 @@ import {
 
 import { dossierChannel } from "../activity/graph-activity";
 import { assertCaseInOrgEffect } from "../cases/access";
-import type { Db } from "../infra/db-service";
-import { listByIdsEffect, listPageEffect } from "../infra/list-page";
-import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
   ConflictError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {

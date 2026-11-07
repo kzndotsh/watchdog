@@ -5,9 +5,9 @@ import {
   type ActivityCursor,
 } from "@watchdog/schemas/feed";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { activityLogRepoFxDb, activityFloorRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 const ORIGIN: ActivityCursor = { xid: "0", id: 0 };
 

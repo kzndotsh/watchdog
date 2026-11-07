@@ -15,10 +15,10 @@ import {
 
 import { dossierChannel } from "../activity/graph-activity";
 import { assertEntityInCaseEffect } from "../cases/access";
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { edgesRepoFx, evidenceLinksRepoFx } from "../infra/repos-fx";
-import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
   assertEdgeKindsAllowedEffect,
   edgeUpdatePatchEffect,

@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import { testCaseId } from "@watchdog/schemas/testing";
 
+import { InternalError } from "../../errors/tagged-errors";
 import {
   createPresignedGetEffect,
   createPresignedPutEffect,
@@ -20,7 +21,6 @@ import {
   makeBlobStoreLayer,
   recordingBlobStore,
 } from "../blob-store";
-import { InternalError } from "../tagged-errors";
 
 const CASE_ID = testCaseId(1);
 

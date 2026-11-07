@@ -8,10 +8,10 @@ import {
 } from "@watchdog/db";
 import type { OrganizationId } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /** Cancellation reasons, stored in the cancelled Job's `error`. */
 const KEY_LOSS_REASON = {

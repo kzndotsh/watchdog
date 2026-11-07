@@ -7,8 +7,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { Effect, type Scope } from "effect";
 
+import { InternalError } from "../errors/tagged-errors";
 import { BlobStore, type BlobStoreApi } from "../infra/blob-store";
-import { InternalError } from "../infra/tagged-errors";
 import type { ZipSink } from "./zip-writer";
 
 /**

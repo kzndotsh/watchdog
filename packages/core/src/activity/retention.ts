@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -7,7 +8,6 @@ import {
   activityLogRepoFx,
   activityFloorRepoFx,
 } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /** Entries older than this are pruned (ADR-0005 decision 8). */
 export const ACTIVITY_RETENTION_DAYS = 90;

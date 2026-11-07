@@ -10,8 +10,8 @@ import {
 
 import { dossierChannel } from "../activity/graph-activity";
 import { assertEntityInCaseEffect } from "../cases/access";
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import { eventsTable, type EventRecord } from "./mutation/tables";
 

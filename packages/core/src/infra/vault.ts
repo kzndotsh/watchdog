@@ -3,10 +3,14 @@ import { Context, Effect, Layer } from "effect";
 import type { DbExec } from "@watchdog/db";
 import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
 
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { Db } from "./db-service";
 import { requireWritten } from "./postgres-effect";
 import { credentialsRepoFxDb } from "./repos-fx";
-import { InvalidError, NotFoundError, type DomainTag } from "./tagged-errors";
 import { VaultError, openSecret, sealSecret } from "./vault-crypto";
 
 export { VaultError };

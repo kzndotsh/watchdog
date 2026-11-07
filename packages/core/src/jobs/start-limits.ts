@@ -6,11 +6,11 @@ import type {
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
+import { JobStartLimitError, type DomainTag } from "../errors/tagged-errors";
 import {
   jobStartCountersRepoFx,
   jobStartLimitsRepoFx,
 } from "../infra/repos-fx";
-import { JobStartLimitError, type DomainTag } from "../infra/tagged-errors";
 import { jobStartLimitSettings } from "../organization/job-start-limits";
 
 export type JobStartCaller = {

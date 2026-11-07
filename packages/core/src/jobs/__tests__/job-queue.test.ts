@@ -2,7 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Exit, Fiber, Layer, Option, Scope } from "effect";
 import { vi } from "vitest";
 
-import { InternalError } from "../../infra/tagged-errors";
+import { InternalError } from "../../errors/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import {
   JobQueue,

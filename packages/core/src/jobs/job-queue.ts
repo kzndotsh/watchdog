@@ -4,8 +4,8 @@ import { PgBoss } from "pg-boss";
 import { JOB_LANES, type JobLane } from "@watchdog/caps/sdk";
 import { env } from "@watchdog/env/server";
 
+import { InternalError } from "../errors/tagged-errors";
 import { logProcessWarning, logSwallowed } from "../infra/process-log";
-import { InternalError } from "../infra/tagged-errors";
 import {
   JobQueueWorker,
   type QueueWorkHandler,

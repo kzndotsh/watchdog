@@ -20,23 +20,18 @@ import {
   appendGraphActivityEffect,
   graphActorFields,
 } from "../activity/graph-activity";
-import type { Db } from "../infra/db-service";
-import {
-  renameCaseExportDirEffect,
-  scheduleCaseExportEffect,
-} from "../infra/export-sync";
-import { listPageEffect } from "../infra/list-page";
-import { tryDbWith, requireWritten } from "../infra/postgres-effect";
-import { transact } from "../infra/postgres-tx";
-import { logSwallowed } from "../infra/process-log";
-import { casesRepoFxDb, casesRepoFx } from "../infra/repos-fx";
 import {
   boundEchoedId,
   ConflictError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { listPageEffect } from "../infra/list-page";
+import { tryDbWith, requireWritten } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import { casesRepoFxDb, casesRepoFx } from "../infra/repos-fx";
 import { requireOrganizationManagerEffect } from "../organization/roles";
 import { requireTrimmedCaseIdEffect } from "./access";
 import { toRecord, type CaseRecord } from "./case-record";
@@ -192,7 +187,8 @@ export function createCaseEffect(
   });
 }
 
-export function updateCaseEffect(
+/** The update, and the slug the Case had when it changed (`undefined` when the slug is unchanged), for the caller that keeps the disk Export in step. */
+export function updateCaseWithPreviousSlugEffect(
   input: {
     id: CaseId;
     organizationId: OrganizationId;
@@ -200,7 +196,11 @@ export function updateCaseEffect(
     description?: string | null;
     allowedEgress?: readonly EgressClass[];
   } & GraphActor
-): Effect.Effect<CaseRecord, DomainTag, Db> {
+): Effect.Effect<
+  { record: CaseRecord; previousSlug: string | undefined },
+  DomainTag,
+  Db
+> {
   return Effect.gen(function* updateCaseGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(input.id);
     const existing = yield* casesRepoFxDb.getById(caseId, input.organizationId);
@@ -285,26 +285,9 @@ export function updateCaseEffect(
       { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
     );
 
-    if (nextSlug !== undefined) {
-      yield* renameCaseExportDirEffect(
-        input.organizationId,
-        existing.slug,
-        nextSlug
-      ).pipe(
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            logSwallowed("rename-case-export", error, {
-              from: existing.slug,
-              to: nextSlug,
-            });
-          })
-        )
-      );
-      yield* scheduleCaseExportEffect(caseId).pipe(
-        Effect.forkDetach({ startImmediately: true })
-      );
-    }
-
-    return toRecord(updated);
+    return {
+      record: toRecord(updated),
+      previousSlug: nextSlug === undefined ? undefined : existing.slug,
+    };
   });
 }

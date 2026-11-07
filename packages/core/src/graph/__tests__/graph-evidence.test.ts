@@ -6,8 +6,8 @@ import { CONFIDENCE_TIERS } from "@watchdog/schemas/shared";
 import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+import { InvalidError } from "../../errors/tagged-errors";
 import { runDomain } from "../../infra/run-domain";
-import { InvalidError } from "../../infra/tagged-errors";
 import {
   assertConfidenceEvidenceEffect,
   assertEvidenceIdsInCaseEffect,

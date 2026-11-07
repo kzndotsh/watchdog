@@ -13,7 +13,7 @@ import {
   trimmedUuidSchema,
 } from "@watchdog/schemas/shared";
 
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 
 /**
  * The Zod schemas of a patch op's `data`, decoded at the op seam (ADR-0001) before the op

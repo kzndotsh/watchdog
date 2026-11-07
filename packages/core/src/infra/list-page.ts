@@ -11,11 +11,11 @@ import type {
   ListTotal,
 } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "./db-service";
 import { decodeListCursor, fingerprintOf, nextListCursor } from "./list-cursor";
 import type { ListCursorSpec } from "./list-cursor";
 import { tryDbWith } from "./postgres-effect";
-import type { DomainTag } from "./tagged-errors";
 
 /**
  * The one list service body (ADR-0007). A list service authorises its scope, then calls this

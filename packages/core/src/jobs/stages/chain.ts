@@ -17,12 +17,12 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../../activity/append";
+import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { requireWritten } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import { jobsRepoFx, playbookRunsRepoFx } from "../../infra/repos-fx";
-import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { appendJobActivityEffect } from "../job-activity";

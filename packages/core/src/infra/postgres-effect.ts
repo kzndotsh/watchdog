@@ -3,18 +3,18 @@ import { Effect } from "effect";
 import type { DbExec } from "@watchdog/db";
 import { timedDbCall } from "@watchdog/log";
 
-import { Db } from "./db-service";
 import {
   isCaseLifecycleViolation,
   isHistoryContextMissing,
   isUniqueViolation,
-} from "./error-utils";
+} from "../errors/error-utils";
 import {
   ConflictError,
   InternalError,
   mapDomainCatch,
   type DomainTag,
-} from "./tagged-errors";
+} from "../errors/tagged-errors";
+import { Db } from "./db-service";
 
 export type MapPostgresCatchOpts = {
   readonly uniqueIndex?: string;

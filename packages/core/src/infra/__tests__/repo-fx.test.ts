@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { DbExec } from "@watchdog/db";
 
+import { ConflictError, InternalError } from "../../errors/tagged-errors";
 import { Db } from "../db-service";
 import { repoFx, repoFxDb } from "../repo-fx";
-import { ConflictError, InternalError } from "../tagged-errors";
 
 const handle: DbExec = Object.create(null);
 

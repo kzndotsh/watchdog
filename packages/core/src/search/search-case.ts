@@ -37,6 +37,7 @@ import {
   entityNameForId,
   loadEntityDisplayMapsForIdsEffect,
 } from "../display/entity-display";
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import {
   entitiesRepoFxDb,
@@ -47,7 +48,6 @@ import {
   proposalsRepoFxDb,
   casesRepoFxDb,
 } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 const DEFAULT_PER_GROUP = 8;
 

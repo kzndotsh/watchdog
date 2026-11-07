@@ -3,9 +3,9 @@ import { Effect } from "effect";
 import type { ActivityCursor, ActivityEntry } from "@watchdog/schemas/feed";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { activityLogRepoFxDb, activityFloorRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { toActivityEntry } from "./append";
 import {
   isBelowActivityFloor,

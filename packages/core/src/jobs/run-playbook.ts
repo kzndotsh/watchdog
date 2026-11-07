@@ -33,6 +33,12 @@ import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "../cases/access";
+import {
+  ForbiddenError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
@@ -42,12 +48,6 @@ import {
   jobsRepoFx,
   playbookRunsRepoFx,
 } from "../infra/repos-fx";
-import {
-  ForbiddenError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
 import { formatCapAvailabilityError } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";

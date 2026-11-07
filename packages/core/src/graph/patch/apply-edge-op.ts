@@ -6,9 +6,9 @@ import {
   type ConfidenceTier,
 } from "@watchdog/schemas/shared";
 
+import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
 import { edgesRepoFx } from "../../infra/repos-fx";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { edgesTable, entitiesTable } from "../mutation/tables";
 import { decodeOpData, edgeOpData } from "./op-data";

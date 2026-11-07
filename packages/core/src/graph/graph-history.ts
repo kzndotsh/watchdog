@@ -22,6 +22,12 @@ import {
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
+import {
+  InvalidError,
+  type NotFoundEntity,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import {
   claimsRepoFxDb,
@@ -33,12 +39,6 @@ import {
   questionsRepoFxDb,
   tasksRepoFxDb,
 } from "../infra/repos-fx";
-import {
-  InvalidError,
-  type NotFoundEntity,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
 
 /**
  * The read side of `graph_history`. The table is written only by the database

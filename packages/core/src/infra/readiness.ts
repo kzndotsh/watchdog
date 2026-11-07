@@ -3,11 +3,11 @@ import { Cause, Effect, Option } from "effect";
 
 import { activityFloorRepo, type DbExec } from "@watchdog/db";
 
+import { InternalError } from "../errors/tagged-errors";
 import { BlobStore } from "./blob-store";
 import type { Db } from "./db-service";
 import { tryDbWith } from "./postgres-effect";
 import { logProcess, logSwallowed } from "./process-log";
-import { InternalError } from "./tagged-errors";
 
 /** How long each dependency check may take before it counts as `timeout`. */
 export const READINESS_TIMEOUT_MS = 3000;

@@ -6,7 +6,7 @@ import type { ListAfter } from "@watchdog/db";
 import { CURSOR_MAX, URL_MAX } from "@watchdog/schemas/shared";
 import type { ListKeyType } from "@watchdog/schemas/shared";
 
-import { InvalidError, StaleCursorError } from "./tagged-errors";
+import { InvalidError, StaleCursorError } from "../errors/tagged-errors";
 
 /**
  * Cursor v2, for declared lists (ADR-0007). A cursor names the VIEW it was issued for, not only

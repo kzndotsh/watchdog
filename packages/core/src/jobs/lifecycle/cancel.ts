@@ -3,10 +3,10 @@ import { Effect } from "effect";
 import type { DbTx } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { jobsRepoFx } from "../../infra/repos-fx";
-import type { DomainTag } from "../../infra/tagged-errors";
 import { JobFibers } from "../job-fibers";
 import type { JobQueue } from "../job-queue";
 import { settleJobInTx } from "./settle";

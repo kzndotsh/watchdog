@@ -27,8 +27,12 @@ vi.mock("@watchdog/core/cases", async (importOriginal) => {
     listCasesEffect,
     getCaseByIdEffect,
     createCaseEffect,
-    updateCaseEffect,
   };
+});
+
+vi.mock("@watchdog/core/export", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/export")>();
+  return { ...actual, updateCaseEffect };
 });
 
 import { testActor } from "@watchdog/schemas/testing";

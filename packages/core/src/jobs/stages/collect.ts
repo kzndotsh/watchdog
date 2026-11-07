@@ -28,6 +28,14 @@ import {
 } from "@watchdog/tools/http";
 
 import { credentialModeOfVersion } from "../../caps/breach-caps";
+import { errorMessage } from "../../errors/error-utils";
+import {
+  type InternalError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../../errors/tagged-errors";
+import { toDomainTag } from "../../errors/vendor-errors";
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {
   readArtifactBytesEffect,
@@ -36,18 +44,10 @@ import {
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
 import { instanceCredentialFingerprint } from "../../infra/credential-fingerprint";
 import { Db } from "../../infra/db-service";
-import { errorMessage } from "../../infra/error-utils";
 import { transact } from "../../infra/postgres-tx";
 import { logSwallowed } from "../../infra/process-log";
 import { jobsRepoFx } from "../../infra/repos-fx";
-import {
-  type InternalError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
 import { Vault, type VaultApi } from "../../infra/vault";
-import { toDomainTag } from "../../infra/vendor-errors";
 import { aiPrivateOrigins } from "../ai-private-origins";
 import { capCacheKey, lookupCapCacheEffect } from "../cap-cache";
 import type { JobLog } from "../job-log";

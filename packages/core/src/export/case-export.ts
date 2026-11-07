@@ -6,26 +6,20 @@ import type { EvidenceRow } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { getCaseByIdEffect } from "../cases/cases";
+import {
+  NotFoundError,
+  type DomainTag,
+  type InternalError,
+} from "../errors/tagged-errors";
 import { BlobStore, type BlobStoreApi } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
 import { instanceCredentialFingerprint } from "../infra/credential-fingerprint";
 import type { Db } from "../infra/db-service";
-import { renderEntityMarkdownEffect } from "../infra/export";
-import {
-  attestationSection,
-  attestationsHeader,
-  buildCaseMarkdown,
-} from "../infra/export-sections";
 import {
   casesRepoFxDb,
   entitiesRepoFxDb,
   evidenceRepoFxDb,
 } from "../infra/repos-fx";
-import {
-  NotFoundError,
-  type DomainTag,
-  type InternalError,
-} from "../infra/tagged-errors";
 import {
   BREACH_EVIDENCE_MAX_BYTES,
   evidenceOriginsEffect,
@@ -35,6 +29,12 @@ import {
   redactBreachBody,
   type BreachExportNotes,
 } from "./breach-evidence";
+import { renderEntityMarkdownEffect } from "./disk/export";
+import {
+  attestationSection,
+  attestationsHeader,
+  buildCaseMarkdown,
+} from "./disk/export-sections";
 import { evidenceZipPath } from "./evidence-paths";
 import { NO_OPT_INS, type CaseExportOptions } from "./provider-body-policy";
 import {

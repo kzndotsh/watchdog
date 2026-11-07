@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { testId } from "@watchdog/test-kit";
 
-import { InvalidError } from "../../infra/tagged-errors";
+import { InvalidError } from "../../errors/tagged-errors";
 import { parseValidatedCapInputEffect } from "../cap-input";
 
 describe("parseValidatedCapInputEffect", () => {

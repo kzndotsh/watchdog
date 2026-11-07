@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import { canManageTeam, type OrganizationId } from "@watchdog/schemas/shared";
 
+import { ForbiddenError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { organizationSettingsRepoFxDb } from "../infra/repos-fx";
-import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 
 /**
  * Whether the caller is an owner or admin of the organization: their Better Auth role, read

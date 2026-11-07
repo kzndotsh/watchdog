@@ -4,9 +4,9 @@ import { isBreachCap, redactBreachArtifact } from "@watchdog/caps";
 import type { CaseId } from "@watchdog/schemas/shared";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { jobsRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 
 /**
  * Why a breach Evidence file is not in the Export. The README (`VERIFY.md`) lists each withheld

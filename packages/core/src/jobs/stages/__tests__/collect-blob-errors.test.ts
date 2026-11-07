@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { ValidationVendorError } from "@watchdog/tools/errors";
 
+import { InternalError, InvalidError } from "../../../errors/tagged-errors";
 import { readArtifactBytesEffect } from "../../../infra/blob";
 import { recordingBlobStore } from "../../../infra/blob-store";
-import { InternalError, InvalidError } from "../../../infra/tagged-errors";
 import { blobToVendorError } from "../collect";
 
 const LIMIT = { maxBytes: 8, reason: "Artifact is over the Cap's input limit" };

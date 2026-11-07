@@ -21,10 +21,10 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { assertCaseInOrgEffect } from "../cases/access";
+import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
-import type { DomainTag } from "../infra/tagged-errors";
 import { toCaseEdgeRecord, type CaseEdgeRecord } from "./edges";
 import {
   toClaimRecord,

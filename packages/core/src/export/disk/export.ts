@@ -20,9 +20,20 @@ import {
   parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
-import { caseExportSettings } from "../export/settings";
-import { nowIsoStringEffect } from "./clock";
-import type { Db } from "./db-service";
+import type { DomainTag } from "../../errors/tagged-errors";
+import { nowIsoStringEffect } from "../../infra/clock";
+import type { Db } from "../../infra/db-service";
+import {
+  entitiesRepoFxDb,
+  claimsRepoFxDb,
+  identifiersRepoFxDb,
+  edgesRepoFxDb,
+  eventsRepoFxDb,
+  questionsRepoFxDb,
+  evidenceRepoFxDb,
+  casesRepoFxDb,
+} from "../../infra/repos-fx";
+import { caseExportSettings } from "../settings";
 import {
   appendClaimsSection,
   appendConnectionsSection,
@@ -36,17 +47,6 @@ import {
   buildEntityFrontmatter,
   isAttestationExportRow,
 } from "./export-sections";
-import {
-  entitiesRepoFxDb,
-  claimsRepoFxDb,
-  identifiersRepoFxDb,
-  edgesRepoFxDb,
-  eventsRepoFxDb,
-  questionsRepoFxDb,
-  evidenceRepoFxDb,
-  casesRepoFxDb,
-} from "./repos-fx";
-import type { DomainTag } from "./tagged-errors";
 
 export type EntityExport = {
   organizationId: OrganizationId;

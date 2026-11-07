@@ -17,13 +17,13 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { breachCapsMode, stampedCapVersion } from "../../caps/breach-caps";
+import { errorMessage } from "../../errors/error-utils";
+import type { DomainTag } from "../../errors/tagged-errors";
+import { InvalidError } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { errorMessage } from "../../infra/error-utils";
 import { logProcess } from "../../infra/process-log";
 import { casesRepoFxDb, jobsRepoFxDb } from "../../infra/repos-fx";
-import type { DomainTag } from "../../infra/tagged-errors";
-import { InvalidError } from "../../infra/tagged-errors";
 import type { Vault } from "../../infra/vault";
 import {
   evaluateCapAvailabilityEffect,

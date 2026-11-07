@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
+import { runDomain } from "../../../infra/run-domain";
 import {
   exportWritesSettledEffect,
   removeCaseExportDirEffect,
@@ -10,7 +11,6 @@ import {
   safeFilename,
   scheduleCaseExportEffect,
 } from "../export-sync.ts";
-import { runDomain } from "../run-domain";
 
 describe("safeFilename", () => {
   it("strips path separators and control characters", () => {

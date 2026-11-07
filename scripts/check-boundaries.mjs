@@ -21,7 +21,10 @@
  *      (`activity`, `cases`, `jobs`, ...) depend on one another in one direction only, so a
  *      concept lives in the folder that owns it. Tests (`__tests__`, `*.test.ts`) are not
  *      counted; files directly under src (`worker-entry.ts`) are entry points, not folders.
- *      The one allowed edge is named in CORE_CYCLE_ALLOWLIST.
+ *      Edges that may close a cycle are named in CORE_CYCLE_ALLOWLIST (empty today).
+ *   6. Infra holds no domain: a non-test file of `packages/core/src/infra/` imports no core
+ *      folder but `errors` (the error vocabulary, not a domain). Infra is the leaf the domain
+ *      folders stand on; anything that needs a domain folder belongs in that folder.
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
@@ -157,9 +160,14 @@ const RELATIVE_ALLOWED = new Set([
  * Core folder edges (`from -> to`) that may close an import cycle. Each is a known violation
  * waiting on the issue that removes it; the gate ignores these edges only, fails on any other
  * cycle, and fails when an entry no longer matches an import (so the entry is deleted with the fix).
- * TODO(#617): infra imports the export folder's settings; when infra imports no domain, delete this.
+ * Empty since #617; the mechanism stays for the next known violation.
+ * @type {Set<string>}
  */
-const CORE_CYCLE_ALLOWLIST = new Set(["infra -> export"]);
+const CORE_CYCLE_ALLOWLIST = new Set();
+/** The one core folder infra may import: the error vocabulary every layer shares. */
+const INFRA_MAY_IMPORT = new Set(["errors"]);
+/** @type {string[]} */
+const infraImportProblems = [];
 const CORE_SRC = "packages/core/src/";
 /** A non-test file inside a top-level folder of core's src. */
 const CORE_FOLDER_FILE =
@@ -183,6 +191,11 @@ function recordCoreEdge(rel, target, where, spec) {
   const to = target.slice(CORE_SRC.length).split("/")[0];
   // `../jobs` (a folder's index) names the folder; `../worker-entry` is a file beside the folders.
   if (to === undefined || to === from || !coreFolders.has(to)) return;
+  if (from === "infra" && !INFRA_MAY_IMPORT.has(to)) {
+    infraImportProblems.push(
+      `${where}: "${spec}": infra holds no domain, so it may not import the ${to} folder; move the code that needs ${to} into ${to}/ (or the shared piece down into infra/)`
+    );
+  }
   const key = `${from} -> ${to}`;
   if (!coreEdges.has(key)) coreEdges.set(key, `${where} "${spec}"`);
 }
@@ -468,6 +481,7 @@ for (const rel of listed) {
 }
 
 if (listed.some((f) => f.startsWith(CORE_SRC))) {
+  problems.push(...infraImportProblems);
   for (const key of CORE_CYCLE_ALLOWLIST) {
     if (!coreEdges.has(key)) {
       problems.push(
@@ -494,7 +508,7 @@ if (listed.some((f) => f.startsWith(CORE_SRC))) {
 if (problems.length > 0) {
   for (const p of problems) console.error(`✗ ${p}`);
   console.error(
-    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot; core folders import no cycle. See docs/contributing/ci-gates.md."
+    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder. See docs/contributing/ci-gates.md."
   );
   process.exit(1);
 }

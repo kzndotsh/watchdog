@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { MAX_ECHOED_ID_CHARS, NotFoundError } from "../../infra/tagged-errors";
+import { MAX_ECHOED_ID_CHARS, NotFoundError } from "../../errors/tagged-errors";
 import { requireTrimmedCaseIdEffect, requireTrimmedGraphId } from "../access";
 
 describe("Case access guards", () => {

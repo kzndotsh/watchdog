@@ -10,6 +10,7 @@ import {
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import { assertCaseInOrgEffect } from "../cases/access";
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 import {
   createPresignedPutEffect,
   verifyUploadedObjectEffect,
@@ -25,7 +26,6 @@ import {
   evidenceUploadsRepoFx,
   evidenceRepoFxDb,
 } from "../infra/repos-fx";
-import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import {
   entityIdForWrite,
   labeledEvidence,

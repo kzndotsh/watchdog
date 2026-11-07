@@ -1,8 +1,12 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
+import {
+  ConflictError,
+  InternalError,
+  InvalidError,
+} from "../../errors/tagged-errors";
 import { mapPostgresCatch, requireWritten, tryDb } from "../postgres-effect";
-import { ConflictError, InternalError, InvalidError } from "../tagged-errors";
 
 describe("mapPostgresCatch", () => {
   it("maps unique violations to ConflictError", () => {

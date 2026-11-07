@@ -2,7 +2,7 @@ export {
   renderEntityMarkdownEffect,
   renderCaseExportEffect,
   type EntityExport,
-} from "../infra/export";
+} from "./disk/export";
 export {
   ExportIOError,
   ExportWriteServices,
@@ -12,7 +12,8 @@ export {
   scheduleCaseExportEffect,
   removeCaseExportDirEffect,
   renameCaseExportDirEffect,
-} from "../infra/export-sync";
+} from "./disk/export-sync";
+export { updateCaseEffect } from "./case-update";
 export {
   measureCaseExportEffect,
   writeCaseExportZipEffect,

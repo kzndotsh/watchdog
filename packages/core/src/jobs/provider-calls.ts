@@ -18,13 +18,13 @@ import {
   type ProviderCall,
 } from "@watchdog/tools/http";
 
+import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import { uploadArtifactEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { logSwallowed } from "../infra/process-log";
 import { providerCallsRepoFxDb } from "../infra/repos-fx";
-import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
 /**
  * How long a failed or cancelled Job's provider calls get to be saved before it settles. A

@@ -16,12 +16,12 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../cases/access";
-import type { Db } from "../infra/db-service";
 import {
   ConflictError,
   InvalidError,
   type DomainTag,
-} from "../infra/tagged-errors";
+} from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
 import {
   parseGraphEvidenceIdsEffect,
   assertConfidenceEvidenceEffect,

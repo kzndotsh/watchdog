@@ -14,8 +14,8 @@ import {
   getCaseBySlugEffect,
   getCaseCountsEffect,
   listCasesEffect,
-  updateCaseEffect,
 } from "@watchdog/core/cases";
+import { updateCaseEffect } from "@watchdog/core/export";
 import {
   caseCountsInputSchema,
   createCaseInputSchema,
