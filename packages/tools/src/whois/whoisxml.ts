@@ -77,7 +77,8 @@ function whoisXmlSnapshot(
 export function fetchWhoisXmlEffect(
   host: string,
   key: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  options: { userAgent: string }
 ): Effect.Effect<WhoisSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWhoisXmlGen() {
     const url = new URL("https://www.whoisxmlapi.com/whoisserver/WhoisService");
@@ -89,6 +90,7 @@ export function fetchWhoisXmlEffect(
       signal,
       service: "WhoisXML",
       subject: host,
+      init: { headers: { "User-Agent": options.userAgent } },
     });
     const raw = whoisXmlResponseSchema.parse(body);
     return whoisXmlSnapshot(host, raw);

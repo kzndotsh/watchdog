@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "d6a4d8325335",
+    "version": "bca2d96a8669",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",

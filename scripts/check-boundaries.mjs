@@ -211,6 +211,62 @@ function capFacts() {
 const TOOLS_SOURCE =
   /^packages\/tools\/src\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
 const capFactsByLiteral = capFacts();
+/** Any Cap id or slot name as a whole token inside a literal (not part of a longer name or host). */
+const capFactToken = new RegExp(
+  `(?<![\\w.-])(?:${[...capFactsByLiteral.keys()]
+    .map((fact) => fact.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`))
+    .join("|")})(?![\\w.-])`,
+  "g"
+);
+
+/**
+ * The string literals of a source file, with the line each starts on. One pass: line and block
+ * comments are skipped, and each literal runs to its own closing quote (escapes honoured), so a
+ * quote of another kind inside it, or a template literal over several lines, is read whole.
+ * @param {string} source
+ * @returns {{ text: string; line: number }[]}
+ */
+function stringLiterals(source) {
+  /** @type {{ text: string; line: number }[]} */
+  const out = [];
+  let line = 1;
+  let i = 0;
+  while (i < source.length) {
+    const c = source[i];
+    if (c === "\n") {
+      line += 1;
+      i += 1;
+    } else if (c === "/" && source[i + 1] === "/") {
+      while (i < source.length && source[i] !== "\n") i += 1;
+    } else if (c === "/" && source[i + 1] === "*") {
+      const end = source.indexOf("*/", i + 2);
+      const stop = end === -1 ? source.length : end + 2;
+      for (; i < stop; i += 1) if (source[i] === "\n") line += 1;
+    } else if (c === '"' || c === "'" || c === "`") {
+      const start = line;
+      let text = "";
+      i += 1;
+      while (i < source.length && source[i] !== c) {
+        if (source[i] === "\\") {
+          text += source.slice(i, i + 2);
+          i += 2;
+          continue;
+        }
+        if (source[i] === "\n") {
+          if (c !== "`") break;
+          line += 1;
+        }
+        text += source[i];
+        i += 1;
+      }
+      i += 1;
+      out.push({ text, line: start });
+    } else {
+      i += 1;
+    }
+  }
+  return out;
+}
 
 /**
  * @param {string} rel
@@ -221,17 +277,14 @@ function capFactProblems(rel, source) {
   if (!TOOLS_SOURCE.test(rel)) return [];
   /** @type {string[]} */
   const out = [];
-  for (const [index, text] of source.split("\n").entries()) {
-    if (/^\s*(?:\/\/|\*|\/\*)/.test(text)) continue;
-    for (const m of text.matchAll(
-      /(?<quote>["'`])(?<lit>[^"'`\n]+)\k<quote>/g
-    )) {
-      const kind = capFactsByLiteral.get(m.groups?.lit ?? "");
-      if (kind) {
-        out.push(
-          `${rel}:${index + 1}: "${m.groups?.lit}" is a ${kind}; a tool takes it as a parameter from its Cap and never names one`
-        );
-      }
+  if (capFactsByLiteral.size === 0) return out;
+  for (const { text, line } of stringLiterals(source)) {
+    for (const m of text.matchAll(capFactToken)) {
+      const fact = m[0];
+      const at = line + (text.slice(0, m.index).match(/\n/g)?.length ?? 0);
+      out.push(
+        `${rel}:${at}: "${fact}" is a ${capFactsByLiteral.get(fact)}; a tool takes it as a parameter from its Cap and never names one`
+      );
     }
   }
   return out;

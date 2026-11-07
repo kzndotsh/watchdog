@@ -361,6 +361,31 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain("CATALOG_ONLY_TOKEN");
     });
 
+    it("reads each literal to its own quote, so an apostrophe earlier on the line hides nothing", () => {
+      const res = tools({
+        "src/a.ts": 'export const m = ["Couldn\'t load", "PROBE_API_KEY"];\n',
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("PROBE_API_KEY");
+    });
+
+    it("fails a Cap id inside a longer literal, at the line it sits on in a template over several lines", () => {
+      const res = tools({
+        "src/a.ts": "export const ua = `watchdog/1.0\n(net.probe.lookup)`;\n",
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("packages/tools/src/a.ts:2");
+      expect(res.output).toContain("net.probe.lookup");
+    });
+
+    it("does not match a Cap id or slot inside a longer name or host", () => {
+      const res = tools({
+        "src/a.ts":
+          'export const a = "https://net.probe.lookup.example.com/x";\nexport const b = "MY_PROBE_API_KEY_2";\n',
+      });
+      expect(res.code).toBe(0);
+    });
+
     it("applies only to packages/tools", () => {
       const res = workspace(
         {
