@@ -72,6 +72,7 @@ const workspaceYaml = asRecord(
  *   isApp: boolean,
  *   declared: Set<string>,
  *   exportKeys: string[],
+ *   exportTargets: Record<string, unknown>,
  * }} Pkg
  */
 
@@ -106,6 +107,12 @@ for (const glob of globs) {
         DEP_FIELDS.flatMap((f) => Object.keys(asRecord(manifest[f])))
       ),
       // Conditional-only maps (`{ import, default }`) describe the root entry.
+      /** Subpath -> file, for the string-valued entries (a self-import is resolved through them). */
+      exportTargets: Object.fromEntries(
+        Object.entries(asRecord(exportsField)).filter(
+          ([, value]) => typeof value === "string"
+        )
+      ),
       exportKeys: exportKeys.some((k) => k.startsWith("."))
         ? exportKeys.filter((k) => k.startsWith("."))
         : ["."],
@@ -430,7 +437,15 @@ for (const rel of listed) {
     if (!spec.startsWith(SCOPE)) continue;
     const [scope = "", pkgName = "", ...rest] = spec.split("/");
     const name = `${scope}/${pkgName}`;
-    if (name === owner.name) continue;
+    if (name === owner.name) {
+      // A self-import through a public subpath (`@watchdog/core/cases`) is a folder edge too.
+      const file =
+        owner.exportTargets[`.${rest.length > 0 ? `/${rest.join("/")}` : ""}`];
+      if (typeof file === "string") {
+        recordCoreEdge(rel, path.posix.join(owner.dir, file), where, spec);
+      }
+      continue;
+    }
     const target = byName.get(name);
     if (!target) {
       problems.push(`${where}: "${spec}": no workspace package named ${name}`);

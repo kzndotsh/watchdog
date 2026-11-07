@@ -7,11 +7,9 @@ import {
   deleteCaseEffect,
   purgeCaseEffect,
 } from "@watchdog/core/case-deletion";
+import { assertCaseInOrgEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
-import {
-  createEntityEffect,
-  assertCaseInOrgEffect,
-} from "@watchdog/core/graph";
+import { createEntityEffect } from "@watchdog/core/graph";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { activityLogRepo, db } from "@watchdog/db";

@@ -454,6 +454,30 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain("cases, jobs import each other in a cycle");
     });
 
+    it("counts a self-import through a public subpath (`@watchdog/core/jobs`) as a folder edge", () => {
+      const res = workspace(
+        {
+          core: {
+            exports: {
+              ".": "./src/index.ts",
+              "./jobs": "./src/jobs/index.ts",
+              "./cases": "./src/cases/index.ts",
+            },
+            files: {
+              ...allowedEdge,
+              "src/jobs/index.ts":
+                'import { a } from "@watchdog/core/cases";\nexport const j = a;\n',
+              "src/cases/index.ts":
+                'import { j } from "@watchdog/core/jobs";\nexport const a = j;\n',
+            },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("cases, jobs import each other in a cycle");
+    });
+
     it("fails a two-folder cycle between folders the allowlist does not name", () => {
       const res = core({
         ...allowedEdge,

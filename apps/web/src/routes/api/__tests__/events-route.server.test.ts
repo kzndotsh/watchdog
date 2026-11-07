@@ -86,11 +86,8 @@ vi.mock("@watchdog/core/activity", () => ({
   replayActivityEffect: replayActivityEffectMock,
 }));
 
-vi.mock("@watchdog/core/graph", () => ({
-  assertCaseInOrgEffect: assertCaseInOrgEffectMock,
-}));
-
 vi.mock("@watchdog/core/cases", () => ({
+  assertCaseInOrgEffect: assertCaseInOrgEffectMock,
   listVisibleCaseIdsEffect: listVisibleCaseIdsEffectMock,
 }));
 

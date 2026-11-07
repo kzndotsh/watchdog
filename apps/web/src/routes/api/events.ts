@@ -29,8 +29,10 @@ import {
 } from "@/lib/api-cors.server";
 import { runApp } from "@watchdog/api";
 import { ActivityTailer, replayActivityEffect } from "@watchdog/core/activity";
-import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
-import { assertCaseInOrgEffect } from "@watchdog/core/graph";
+import {
+  assertCaseInOrgEffect,
+  listVisibleCaseIdsEffect,
+} from "@watchdog/core/cases";
 import { createLogger } from "@watchdog/log";
 import {
   createActivityGate,

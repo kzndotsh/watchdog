@@ -1,4 +1,9 @@
 export {
+  assertCaseExistsUncheckedEffect,
+  assertCaseInOrgEffect,
+  assertEntityInCaseEffect,
+} from "./access";
+export {
   createCaseEffect,
   listCasesEffect,
   resolveActiveCaseEffect,

@@ -70,11 +70,6 @@ export {
   type UpdateEdgeInput,
 } from "./edges";
 export {
-  assertCaseExistsUncheckedEffect,
-  assertCaseInOrgEffect,
-  assertEntityInCaseEffect,
-} from "../cases/access";
-export {
   getEntitiesByIdsEffect,
   listEntitiesForCaseEffect,
   listEntityPickerEffect,

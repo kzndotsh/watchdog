@@ -20,12 +20,10 @@ import {
   listCasesEffect,
   listVisibleCaseIdsEffect,
   updateCaseEffect,
+  assertCaseInOrgEffect,
 } from "@watchdog/core/cases";
 import { isDomainTag, type DomainTag } from "@watchdog/core/errors";
-import {
-  assertCaseInOrgEffect,
-  listEntitiesForCaseEffect,
-} from "@watchdog/core/graph";
+import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import {
   recordingJobQueue,
