@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  caseRetentionDays,
-  DEFAULT_CASE_RETENTION_DAYS,
-  daysUntilPurge,
-  purgeDueAt,
-} from "../retention";
+import { caseRetentionDays, daysUntilPurge, purgeDueAt } from "../retention";
 
 const DAY_MS = 86_400_000;
 const DELETED = new Date("2026-10-01T12:00:00Z");
@@ -16,7 +11,6 @@ describe("case retention window", () => {
   });
 
   it("defaults to 30 days", () => {
-    expect(DEFAULT_CASE_RETENTION_DAYS).toBe(30);
     expect(caseRetentionDays()).toBe(30);
   });
 

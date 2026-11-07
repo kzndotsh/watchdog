@@ -13,11 +13,6 @@ import {
 } from "../infra/repos-fx";
 import { JobStartLimitError, type DomainTag } from "../infra/tagged-errors";
 
-/** The defaults of `WD_JOB_START_*`, for a process where `env` is not validated (lint, unit tests). */
-const DEFAULT_WINDOW_SECONDS = 3600;
-const DEFAULT_ORGANIZATION_LIMIT = 600;
-const DEFAULT_KEY_LIMIT = 120;
-
 /** What Job start limiting reads from configuration (`WD_JOB_START_*`). */
 export type JobStartLimitSettings = {
   /** Length of the fixed counting window, in seconds. */
@@ -30,13 +25,10 @@ export type JobStartLimitSettings = {
 
 /** Read at call time, so every web process and the worker agree. */
 export function jobStartLimitSettings(): JobStartLimitSettings {
-  const windowSeconds: number | undefined = env.WD_JOB_START_WINDOW_SECONDS;
-  const organizationLimit: number | undefined = env.WD_JOB_START_LIMIT_ORG;
-  const keyLimit: number | undefined = env.WD_JOB_START_LIMIT_KEY;
   return {
-    windowSeconds: windowSeconds ?? DEFAULT_WINDOW_SECONDS,
-    organizationLimit: organizationLimit ?? DEFAULT_ORGANIZATION_LIMIT,
-    keyLimit: keyLimit ?? DEFAULT_KEY_LIMIT,
+    windowSeconds: env.WD_JOB_START_WINDOW_SECONDS,
+    organizationLimit: env.WD_JOB_START_LIMIT_ORG,
+    keyLimit: env.WD_JOB_START_LIMIT_KEY,
   };
 }
 

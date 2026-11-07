@@ -1,21 +1,14 @@
 import { capVersion, isBreachCap } from "@watchdog/caps";
-import {
-  breachCapsModeSchema,
-  type BreachCapsMode,
-} from "@watchdog/env/breach-caps-mode";
+import type { BreachCapsMode } from "@watchdog/env/breach-caps-mode";
 import { env } from "@watchdog/env/server";
 
 /**
  * The operator's breach Caps mode (`WD_BREACH_CAPS`: `off`, `safe` or `full`, default `off`).
  * Read at call time, like `caseRetentionDays`, so every gate (availability, start-job, preflight,
- * Playbook start), the catalog, the Cap context and the Export agree. Under
- * `SKIP_ENV_VALIDATION` (lint, unit tests) `env` holds the raw string, so the value is parsed
- * again: anything unparsable counts as `off`.
+ * Playbook start), the catalog, the Cap context and the Export agree.
  */
 export function breachCapsMode(): BreachCapsMode {
-  const raw: unknown = env.WD_BREACH_CAPS;
-  const parsed = breachCapsModeSchema.safeParse(raw);
-  return parsed.success ? parsed.data : "off";
+  return env.WD_BREACH_CAPS;
 }
 
 /** Whether the breach Caps may run at all (`safe` or `full`). */

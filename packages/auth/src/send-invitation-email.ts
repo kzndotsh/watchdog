@@ -40,7 +40,7 @@ export async function sendInvitationEmail(
   try {
     await sendSmtpMail({
       host,
-      port: env.SMTP_PORT ?? 587,
+      port: env.SMTP_PORT,
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
       from,

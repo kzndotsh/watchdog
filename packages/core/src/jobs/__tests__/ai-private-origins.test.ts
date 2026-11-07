@@ -19,12 +19,6 @@ function withSetting(value: unknown, check: () => void) {
 }
 
 describe("aiPrivateOrigins", () => {
-  it("falls back to the local model address when the setting is absent", () => {
-    withSetting(undefined, () => {
-      expect(aiPrivateOrigins()).toEqual(["http://127.0.0.1:8080"]);
-    });
-  });
-
   it("reads the operator's list as normalized origins, and none as empty", () => {
     withSetting("http://10.0.0.5:9000, https://llm.lan", () => {
       expect(aiPrivateOrigins()).toEqual([
