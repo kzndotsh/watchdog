@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { expandIpv6 } from "@watchdog/schemas/graph";
+import { expandIpv6 } from "@watchdog/schemas/ip";
 
 import { normalizeIp } from "../../normalize/ip.ts";
 import { isRecord } from "../../parse/coerce.ts";

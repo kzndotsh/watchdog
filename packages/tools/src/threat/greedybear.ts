@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { expandIpv6 } from "@watchdog/schemas/graph";
+import { expandIpv6 } from "@watchdog/schemas/ip";
 
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import type { Egress } from "../http/egress";

@@ -26,7 +26,9 @@ describe("normalizeIp", () => {
         "2001:0db8:0000:0000:0000:0000:0000:0001",
       ],
       ["2001:db8::1", "[2001:db8::1]"],
-      ["::ffff:192.0.2.1", "::ffff:192.0.2.1"],
+      ["::ffff:192.0.2.1", "::FFFF:c000:201"],
+      ["::ffff:c000:201", "0:0:0:0:0:ffff:192.0.2.1"],
+      ["1:2:3:4:5:6:192.0.2.1", "1:2:3:4:5:6:c000:201"],
       ["::", "::"],
       ["fe80::", "FE80:0:0:0:0:0:0:0"],
       ["8.8.8.8", " 8.8.8.8 "],
@@ -44,5 +46,6 @@ describe("normalizeEmail", () => {
       domain: "mailhost.test",
     });
     expect(() => normalizeEmail("not-an-email")).toThrow(/Invalid email/);
+    expect(() => normalizeEmail("a@b@example.com")).toThrow(/Invalid email/);
   });
 });

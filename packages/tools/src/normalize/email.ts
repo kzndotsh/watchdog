@@ -4,7 +4,7 @@ import { validationVendorError } from "../errors/vendor-errors";
 export function normalizeEmail(raw: string): { email: string; domain: string } {
   const trimmed = raw.trim().toLowerCase();
   const at = trimmed.lastIndexOf("@");
-  if (at <= 0 || at === trimmed.length - 1) {
+  if (at <= 0 || at === trimmed.length - 1 || at !== trimmed.indexOf("@")) {
     throw validationVendorError(`Invalid email: ${raw}`);
   }
   const domain = trimmed.slice(at + 1);

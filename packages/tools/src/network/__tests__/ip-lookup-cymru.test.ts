@@ -8,6 +8,13 @@ import {
 } from "../ip-lookup-cymru";
 
 describe("ip-lookup-cymru", () => {
+  it("originLookupName spells an IPv4-mapped address as 32 hex nibbles", () => {
+    const name = originLookupName("::ffff:192.0.2.1");
+    expect(name).toBe(
+      "1.0.2.0.0.0.0.c.f.f.f.f.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.origin6.asn.cymru.com"
+    );
+  });
+
   it("originLookupName reverses IPv4 octets", () => {
     expect(originLookupName("8.8.8.8")).toBe("8.8.8.8.origin.asn.cymru.com");
   });

@@ -1,4 +1,4 @@
-import { compressIpv6 } from "./ip-canonical";
+import { compressIpv6 } from "./ip";
 import type { IdentifierType } from "./vocab";
 
 const TRACKING_PARAMS = new Set([
