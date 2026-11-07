@@ -128,13 +128,5 @@
   "apps/web/src/shared/ui/rich-text/__tests__/lazy-rich-text-editor.component.test.tsx": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/load-rich-text-editor.test.ts": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/rich-text-editor.component.test.tsx": 2,
-  "apps/worker/src/__tests__/main.test.ts": 1,
-  "packages/core/src/jobs/__tests__/cap-delivery.test.ts": 1,
-  "packages/core/src/jobs/__tests__/failure-cause.test.ts": 1,
-  "packages/core/src/jobs/__tests__/start-job.test.ts": 4,
-  "packages/core/src/jobs/stages/__tests__/cache.test.ts": 1,
-  "packages/core/src/jobs/stages/__tests__/interpret.test.ts": 1,
-  "packages/core/src/jobs/stages/__tests__/suppress.test.ts": 1,
-  "packages/core/src/proposals/__tests__/agent-ingress-readback.test.ts": 4,
-  "packages/core/src/tasks/__tests__/reorder-tasks.test.ts": 2
+  "apps/worker/src/__tests__/main.test.ts": 1
 }

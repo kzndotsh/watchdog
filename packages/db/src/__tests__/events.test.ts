@@ -19,6 +19,7 @@ import { ACTIVITY_CHANNEL, listenOnChannel } from "../events";
 
 describe("listenOnChannel", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -33,17 +34,16 @@ describe("listenOnChannel", () => {
       }
     );
     const onReady = vi.fn();
+    vi.useFakeTimers();
 
+    // `listen` is called synchronously: the loop's first await is on it.
     const listener = listenOnChannel(ACTIVITY_CHANNEL, () => {}, onReady);
+    expect(postgresMocks.listen).toHaveBeenCalledTimes(1);
 
-    await vi.waitFor(() => {
-      expect(postgresMocks.listen).toHaveBeenCalledTimes(1);
-    });
     // Awaiting `sql.listen` only waits for LISTEN to start: the connection must
-    // not be torn down behind it, or every notification would be lost.
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
+    // not be torn down behind it, or every notification would be lost. Let every
+    // pending continuation and a minute of fake time run first.
+    await vi.advanceTimersByTimeAsync(60_000);
     expect(postgresMocks.end).not.toHaveBeenCalled();
     expect(postgresMocks.listen).toHaveBeenCalledTimes(1);
     expect(postgresMocks.listen).toHaveBeenCalledWith(

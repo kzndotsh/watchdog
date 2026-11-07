@@ -25,37 +25,37 @@ const CONDITION_KEYS = [
   "Recheck Cond",
 ] as const;
 
-function perRowSubplans(node: PlanNode): string[] {
+/** A plan node with the condition text `PlanNode` leaves out. */
+type ConditionNode = Omit<PlanNode, "Plans"> & {
+  readonly Filter?: string;
+  readonly "Join Filter"?: string;
+  readonly "One-Time Filter"?: string;
+  readonly "Index Cond"?: string;
+  readonly "Recheck Cond"?: string;
+  readonly Plans?: readonly ConditionNode[];
+};
+
+function perRowSubplans(node: ConditionNode): string[] {
   const found: string[] = [];
-  const visit = (n: Record<string, unknown>): void => {
-    for (const key of CONDITION_KEYS) {
-      const text = n[key];
-      if (typeof text === "string" && PER_ROW_SUBPLAN.test(text)) {
-        found.push(`${key}: ${text}`);
-      }
+  for (const key of CONDITION_KEYS) {
+    const text = node[key];
+    if (text !== undefined && PER_ROW_SUBPLAN.test(text)) {
+      found.push(`${key}: ${text}`);
     }
-    const children = n.Plans;
-    if (Array.isArray(children)) {
-      for (const child of children) visit(child as Record<string, unknown>);
-    }
-  };
-  visit(node as unknown as Record<string, unknown>);
+  }
+  for (const child of node.Plans ?? []) found.push(...perRowSubplans(child));
   return found;
 }
 
 /** Conditions that bound each scan of `table` (index or recheck conditions), one string per scan. */
-function scanConditions(node: PlanNode, table: string): string[] {
-  const found: string[] = [];
-  const visit = (n: Record<string, unknown>): void => {
-    if (n["Relation Name"] === table) {
-      found.push(JSON.stringify([n["Index Cond"], n["Recheck Cond"]]));
-    }
-    const children = n.Plans;
-    if (Array.isArray(children)) {
-      for (const child of children) visit(child as Record<string, unknown>);
-    }
-  };
-  visit(node as unknown as Record<string, unknown>);
+function scanConditions(node: ConditionNode, table: string): string[] {
+  const found: string[] =
+    node["Relation Name"] === table
+      ? [JSON.stringify([node["Index Cond"], node["Recheck Cond"]])]
+      : [];
+  for (const child of node.Plans ?? []) {
+    found.push(...scanConditions(child, table));
+  }
   return found;
 }
 

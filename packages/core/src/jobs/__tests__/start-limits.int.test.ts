@@ -143,6 +143,18 @@ describe("Job start limits", () => {
     expect((await usage(TEST_ORGANIZATION_ID)).organization.used).toBe(2);
   });
 
+  it("counts a start with no override against the instance defaults: the organization for a session, the key too for a key", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const key = await newKey();
+
+    await startDns(cased.id);
+    await startDns(cased.id, { actorKeyId: key });
+
+    const state = await usage(TEST_ORGANIZATION_ID, key);
+    expect(state.organization).toMatchObject({ used: 2, source: "default" });
+    expect(state.key).toMatchObject({ used: 1, source: "default" });
+  });
+
   it("a limit of 0 refuses every start", async () => {
     const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(0);

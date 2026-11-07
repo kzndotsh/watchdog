@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseId } from "@watchdog/schemas/shared";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
@@ -16,19 +16,13 @@ import {
 
 const FAST = { pollMs: 5000, repollMs: 20 } as const;
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
-async function until(check: () => boolean, timeoutMs = 4000): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (!check()) {
-    if (Date.now() > deadline) throw new Error("condition not met in time");
-    // oxlint-disable-next-line eslint/no-await-in-loop
-    await sleep(10);
-  }
+function until(check: () => boolean, timeoutMs = 4000) {
+  return vi.waitFor(
+    () => {
+      if (!check()) throw new Error("condition not met in time");
+    },
+    { timeout: timeoutMs, interval: 10 }
+  );
 }
 
 describe("createActivityTailer", () => {
@@ -43,6 +37,7 @@ describe("createActivityTailer", () => {
   afterEach(async () => {
     await tailer?.stop();
     tailer = undefined;
+    vi.restoreAllMocks();
   });
 
   async function start(
@@ -78,7 +73,15 @@ describe("createActivityTailer", () => {
 
   it("never skips a row when the higher id commits first", async () => {
     const cased = await seedCase(db);
-    await start();
+    // `holdBackWarnMs: 0` makes the first drain that finds rows held back report it: the
+    // rendezvous that shows the tailer has looked at the log and delivered nothing.
+    const heldBack: number[] = [];
+    await start({
+      holdBackWarnMs: 0,
+      onHeldBack: (ms) => {
+        heldBack.push(ms);
+      },
+    });
 
     // T1 takes the lower id and stays open; T2 takes the higher id and commits first.
     let release: () => void = () => {};
@@ -103,7 +106,7 @@ describe("createActivityTailer", () => {
       await insertedRow;
       await append(cased.id, "T2 (higher id, commits first)");
       // T2 has committed but an older transaction is open: it must be held back.
-      await sleep(250);
+      await until(() => heldBack.length > 0);
       expect(seen).toEqual([]);
     } finally {
       release();
@@ -118,7 +121,13 @@ describe("createActivityTailer", () => {
 
   it("delivers both rows when the lower xid carries the higher id", async () => {
     const cased = await seedCase(db);
-    await start();
+    const heldBack: number[] = [];
+    await start({
+      holdBackWarnMs: 0,
+      onHeldBack: (ms) => {
+        heldBack.push(ms);
+      },
+    });
 
     // L takes the lower xid first (no row yet); H then inserts (xid higher, id lower);
     // L inserts afterwards (xid lower, id higher). H commits first.
@@ -144,7 +153,7 @@ describe("createActivityTailer", () => {
     try {
       await lowXidTaken;
       await append(cased.id, "H (higher xid, lower id)");
-      await sleep(250);
+      await until(() => heldBack.length > 0);
       expect(seen).toEqual([]);
     } finally {
       releaseL();
@@ -203,8 +212,10 @@ describe("createActivityTailer", () => {
     const cased = await seedCase(db);
     await start({ pollMs: 20 });
     await append(cased.id, "only once");
-    await sleep(300);
-    expect(seen.map((row) => row.label)).toEqual(["only once"]);
+    // A sentinel after it: a second delivery of "only once" would arrive before the sentinel.
+    await append(cased.id, "sentinel");
+    await until(() => seen.some((row) => row.label === "sentinel"));
+    expect(seen.map((row) => row.label)).toEqual(["only once", "sentinel"]);
   });
 
   it("falls back to the poll when LISTEN never wakes it", async () => {
@@ -221,8 +232,9 @@ describe("createActivityTailer", () => {
   it("warns once when an open transaction holds rows back", async () => {
     const cased = await seedCase(db);
     const held: number[] = [];
+    const drains = vi.spyOn(activityLogRepo, "drain");
     await start({
-      holdBackWarnMs: 100,
+      holdBackWarnMs: 0,
       onHeldBack: (ms) => {
         held.push(ms);
       },
@@ -249,7 +261,10 @@ describe("createActivityTailer", () => {
       await insertedRow;
       await append(cased.id, "waiting");
       await until(() => held.length > 0, 2000);
-      await sleep(200);
+      // The tailer keeps re-polling while the transaction is open (`repollMs`): let it poll
+      // five more times, counted rather than timed, and it must not have warned again.
+      const polled = drains.mock.calls.length;
+      await until(() => drains.mock.calls.length >= polled + 5, 2000);
       expect(held).toHaveLength(1);
     } finally {
       release();
@@ -260,12 +275,17 @@ describe("createActivityTailer", () => {
   it("stops delivering and ends LISTEN once the last subscriber leaves", async () => {
     const cased = await seedCase(db);
     let ended = 0;
+    let wake: (payload: string) => void = () => {};
+    const drains = vi.spyOn(activityLogRepo, "drain");
     const subscription = await start({
-      listen: () => ({
-        end: async () => {
-          ended += 1;
-        },
-      }),
+      listen: (onNotification) => {
+        wake = onNotification;
+        return {
+          end: async () => {
+            ended += 1;
+          },
+        };
+      },
       pollMs: 20,
     });
     await append(cased.id, "while subscribed");
@@ -273,7 +293,14 @@ describe("createActivityTailer", () => {
     subscription.unsubscribe();
     await until(() => ended === 1);
     await append(cased.id, "after unsubscribe");
-    await sleep(150);
+    // The wake-up a live LISTEN would deliver now, and a round trip after it: a tailer that
+    // still ran would have drained by then. No clock.
+    await db.execute(sql`select 1`);
+    const drained = drains.mock.calls.length;
+    wake("{}");
+    await db.execute(sql`select 1`);
+    await db.execute(sql`select 1`);
+    expect(drains.mock.calls.length).toBe(drained);
     expect(seen).toHaveLength(1);
   });
 });

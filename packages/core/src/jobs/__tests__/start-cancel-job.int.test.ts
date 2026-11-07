@@ -19,7 +19,10 @@ import {
   forceJobStatus,
   resetTestDb,
   seedAuthUser,
+  listAllActivity,
+  listCaseJobs,
   seedCase,
+  seedEntity,
   seedEvidence,
   seedJob,
 } from "@watchdog/test-db";
@@ -130,6 +133,94 @@ describe("startJob", () => {
     );
 
     expect(job.status).toBe("queued");
+  });
+
+  it("persists the queued Job with its activity entry and enqueues it", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    queue.sends.length = 0;
+    const job = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        actorId: TEST_ACTOR_ID,
+        input: { host: "mailhost.test" },
+      })
+    );
+
+    expect((await listCaseJobs(db, cased.id)).map((row) => row.id)).toEqual([
+      job.id,
+    ]);
+    const entries = (await listAllActivity()).filter(
+      (row) => row.kind === "job"
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      caseId: cased.id,
+      action: "queued",
+      subjectId: job.id,
+      toValue: "queued",
+    });
+    expect(queue.sends.map((send) => send.payload.jobId)).toEqual([job.id]);
+  });
+
+  it("persists trimmed graph ids in the Job input", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const entity = await seedEntity(db, cased.id);
+    const evidence = await seedEvidence(db, cased.id);
+
+    const entityJob = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "archive.page.history",
+        actorId: TEST_ACTOR_ID,
+        input: { url: "https://mailhost.test/", entityId: `  ${entity.id}  ` },
+      })
+    );
+    const enrichJob = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.url.enrich",
+        actorId: TEST_ACTOR_ID,
+        input: {
+          url: "https://mailhost.test/",
+          sourceEvidenceId: `  ${evidence.id}  `,
+        },
+      })
+    );
+
+    const stored = await listCaseJobs(db, cased.id);
+    expect(stored.find((row) => row.id === entityJob.id)?.input).toMatchObject({
+      entityId: entity.id,
+    });
+    expect(stored.find((row) => row.id === enrichJob.id)?.input).toMatchObject({
+      sourceEvidenceId: evidence.id,
+    });
+  });
+
+  it.each([
+    ["a whitespace-only capability id", { capabilityId: "   " }],
+    ["a blank actorId", { actorId: "   " }],
+  ])("rejects %s and leaves no Job or entry behind", async (_name, bad) => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    queue.sends.length = 0;
+    await expect(
+      runDomain(
+        startJobEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          capabilityId: "network.dns.lookup",
+          actorId: TEST_ACTOR_ID,
+          input: { host: "mailhost.test" },
+          ...bad,
+        })
+      )
+    ).rejects.toMatchObject({ _tag: "InvalidError" });
+    expect(await listCaseJobs(db, cased.id)).toEqual([]);
+    expect(await listAllActivity()).toEqual([]);
+    expect(queue.sends).toHaveLength(0);
   });
 
   it("rejects hidden evidence for process caps", async () => {

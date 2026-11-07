@@ -1,9 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
-import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
-import { claimsRepo, db, graphWritesRepo } from "@watchdog/db";
+import {
+  createAgentProposalEffect,
+  writeGraphFromAgentEffect,
+} from "@watchdog/core/proposals";
+import { claimsRepo, db, graphWritesRepo, proposalsRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
@@ -185,6 +188,61 @@ describe("writeGraphFromAgent", () => {
 
       const claims = await claimsRepo.listForEntity(db, entity.id);
       expect(claims.filter((row) => row.text === "Race claim")).toHaveLength(1);
+    });
+  });
+});
+
+describe("createAgentProposalEffect", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns the stored Proposal it created", async () => {
+    const cased = await seedCase(db);
+
+    const { proposal } = await runDomain(
+      createAgentProposalEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        actorId: TEST_ACTOR_ID,
+        patch: [
+          buildEntityCreateOp("Host A", "host-a", "person", { id: testId(91) }),
+        ],
+      })
+    );
+
+    const stored = await proposalsRepo.getInCase(db, cased.id, proposal.id);
+    expect(stored?.proposal.id).toBe(proposal.id);
+    expect(proposal.status).toBe("pending");
+  });
+
+  it("a Proposal that was created but cannot be read back is a server fault", async () => {
+    const cased = await seedCase(db);
+    // The read after the insert finds nothing (a replica lag, a concurrent delete).
+    vi.spyOn(proposalsRepo, "getInCase").mockResolvedValueOnce(null);
+
+    const failure = await runDomain(
+      createAgentProposalEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        actorId: TEST_ACTOR_ID,
+        patch: [
+          buildEntityCreateOp("Host A", "host-a", "person", { id: testId(91) }),
+        ],
+      })
+    ).then(
+      () => undefined,
+      (error: unknown) => error
+    );
+
+    expect(failure).toMatchObject({
+      _tag: "InternalError",
+      code: "internal",
+      reason: "Proposal created but not readable",
     });
   });
 });

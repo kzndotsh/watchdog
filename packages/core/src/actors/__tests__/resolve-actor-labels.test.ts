@@ -20,7 +20,7 @@ describe("loadActorUsersEffect", () => {
     getByIds.mockClear();
     await runDomain(
       loadActorUsersEffect([
-        undefined as unknown as string,
+        undefined,
         "",
         userId,
         userId,
