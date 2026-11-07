@@ -25,7 +25,6 @@ export {
   redactBreachArtifact,
 } from "./breach/export-redaction";
 export {
-  HOST_REDISTRIBUTION,
   redistributionVerdictFor,
   type RedistributionVerdict,
 } from "./redistribution";

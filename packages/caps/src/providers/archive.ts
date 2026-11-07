@@ -7,6 +7,9 @@ export const internetArchive = defineProvider({
   termsUrl: "https://archive.org/about/terms.php",
   tier: "free",
   commercialUse: "unknown",
+  hosts: {
+    "web.archive.org": "unknown",
+  },
 });
 
 /** The terms advise legal counsel on commercial use and are silent on the index API. */
@@ -16,4 +19,8 @@ export const commonCrawl = defineProvider({
   termsUrl: "https://commoncrawl.org/terms-of-use",
   tier: "free",
   commercialUse: "unknown",
+  hosts: {
+    // FAQ: "we apply as few restrictions as possible"; crawled pages keep their owners' rights.
+    "index.commoncrawl.org": "allowed",
+  },
 });

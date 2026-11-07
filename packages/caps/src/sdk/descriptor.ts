@@ -53,7 +53,8 @@ export type CapDescriptor = {
   /** Fingerprint of the code the Cap reaches (`pnpm generate:caps`); never authored. */
   version: string;
   title: string;
-  provider: CapProvider;
+  /** The provider's terms; its per-host redistribution verdicts (`hosts`) stay in the registry. */
+  provider: Omit<CapProvider, "hosts">;
   description?: string;
   dataSource?: string;
   kind?: CapKind;
@@ -182,6 +183,11 @@ function serializeCredentials(
   });
 }
 
+function omitHosts(provider: CapProvider): Omit<CapProvider, "hosts"> {
+  const { hosts: _hosts, ...terms } = provider;
+  return terms;
+}
+
 /**
  * The descriptor without a version, for the callers that read a Cap's declared metadata (egress,
  * flags, credentials) and not the catalog. Uses Zod 4 `z.toJSONSchema` for input / inputForm.
@@ -198,7 +204,7 @@ export function toCapMetadata<TSchema extends ZodType>(
   const descriptor: CapMetadata = {
     id: def.id,
     title: def.title,
-    provider: structuredClone(def.provider),
+    provider: structuredClone(omitHosts(def.provider)),
     egress: deriveEgressClasses(def.contacts),
     contacts: structuredClone([...def.contacts]),
     input,
