@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import {
   CAPABILITIES,
+  credentialSpecSlots,
   isBreachCap,
   listCapabilities,
   listPlaybookDescriptors,
@@ -62,8 +63,8 @@ export function breachOnlyCredentialNames(): ReadonlySet<string> {
     for (const cap of CAPABILITIES) {
       const target = isBreachCap(cap) ? breach : other;
       for (const spec of cap.credentials ?? []) {
-        for (const name of "anyOf" in spec ? spec.anyOf : [spec.name]) {
-          target.add(name);
+        for (const slot of credentialSpecSlots(spec)) {
+          target.add(slot.name);
         }
       }
     }

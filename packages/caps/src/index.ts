@@ -3,12 +3,14 @@ export {
   defineCapability,
   DEFAULT_CAP_TIMEOUT_MS,
   capTimeoutMs,
+  credentialSpecSlots,
   isBreachCap,
   toCapDescriptor,
   toCapMetadata,
   type CapArtifact,
   type CapContext,
   type CapCredentialSpec,
+  type CredentialSlotMeta,
   type CapDescriptor,
   type CapFlag,
   type CapIoKind,
@@ -84,9 +86,4 @@ export {
   type ProcessCapOutcome,
 } from "./evidence/lib/draft-to-patch-ops";
 export { harvestDeterministic } from "./evidence/harvest/harvest";
-export {
-  KNOWN_CREDENTIALS,
-  isSecretCredential,
-  listKnownCredentials,
-  type KnownCredential,
-} from "./known-credentials";
+export { isSecretCredential, listKnownCredentials } from "./known-credentials";

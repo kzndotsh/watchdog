@@ -102,11 +102,13 @@ describe("every registered Cap", () => {
   });
 });
 
+const slotK = { name: "K", label: "K", description: "K." };
+
 describe("deriveCapFlags", () => {
   it("derives needs_key from a required credential and third_party from egress", () => {
     expect(
       deriveCapFlags({
-        credentials: [{ name: "K" }],
+        credentials: [{ slot: slotK }],
         contacts: [contact.provider("x.test")],
         flags: ["slow"],
       })
@@ -115,14 +117,14 @@ describe("deriveCapFlags", () => {
 
   it("does not need a key when every credential is optional", () => {
     expect(
-      deriveCapFlags({ credentials: [{ name: "K", optional: true }] })
+      deriveCapFlags({ credentials: [{ slot: slotK, optional: true }] })
     ).toEqual([]);
   });
 
   it("needs a key for an anyOf group", () => {
-    expect(deriveCapFlags({ credentials: [{ anyOf: ["A", "B"] }] })).toEqual([
-      "needs_key",
-    ]);
+    expect(
+      deriveCapFlags({ credentials: [{ anyOf: [slotK, slotK] }] })
+    ).toEqual(["needs_key"]);
   });
 
   it("puts the provider on the descriptor", () => {

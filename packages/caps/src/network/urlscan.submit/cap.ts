@@ -24,7 +24,16 @@ export const urlscanSubmit = defineCollectCap({
   flags: ["invasive"],
   useCases: ["Active"],
   contacts: [contact.provider("urlscan.io", { keyed: true })],
-  credentials: [{ name: "URLSCAN_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "URLSCAN_API_KEY",
+        label: "urlscan.io",
+        description:
+          "urlscan.io API key for network.urlscan.submit (live scans).",
+      },
+    },
+  ],
   consumes: [{ kind: "url" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },

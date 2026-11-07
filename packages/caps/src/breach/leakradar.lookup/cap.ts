@@ -23,7 +23,16 @@ export const leakradarLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive"],
   contacts: [contact.provider("api.leakradar.io", { keyed: true })],
-  credentials: [{ name: "LEAKRADAR_API_KEY" }],
+  credentials: [
+    {
+      slot: {
+        name: "LEAKRADAR_API_KEY",
+        label: "LeakRadar",
+        description:
+          "LeakRadar API key (paid plan) for breach.leakradar.lookup; searches are masked and never unlock.",
+      },
+    },
+  ],
   consumes: [{ kind: "host" }, { kind: "identifier", type: "email" }],
   produces: [{ kind: "evidence", evidenceKind: "file" }],
   jobPolicy: {
