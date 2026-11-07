@@ -1,7 +1,7 @@
 /**
- * Proves the real `oxlint.config.ts` bans `apps/web/src/shared/ui` importing from
- * `apps/web/src/domains` (`watchdog/shared-ui-no-domain-imports`): alias and relative
- * specifiers, every import form, type imports included. Probe files are written into a
+ * Proves the real `oxlint.config.ts` bans `apps/web/src/shared` importing from
+ * `apps/web/src/domains`, `app` or `routes` (`watchdog/shared-no-upward-imports`, #621): alias
+ * and relative specifiers, every import form, type imports included, tests too. Probe files are written into a
  * throwaway repo that carries the real config and plugin (helpers/oxlint-fixture.ts).
  */
 import { beforeAll, describe, expect, it } from "vitest";
@@ -13,7 +13,7 @@ import {
 } from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const RULE = "watchdog/shared-ui-no-domain-imports";
+const RULE = "watchdog/shared-no-upward-imports";
 const SRC = "apps/web/src";
 const UI = `${SRC}/shared/ui`;
 
@@ -53,6 +53,17 @@ const FAIL = {
     'import { a } from "@/domains/entities/lib/a";\nexport { a };\n',
   "primitives/wrapper.ts":
     'import { a } from "@/domains/entities/lib/a";\nexport { a };\n',
+  "app-alias.ts":
+    'import { a } from "@/app/lib/query-invalidation";\nexport { a };\n',
+  "app-relative.ts":
+    'import { a } from "../../app/lib/query-invalidation";\nexport { a };\n',
+  "app-dynamic.ts":
+    'export const load = () => import("@/app/layout/app-shell");\n',
+  "routes-alias.ts": 'import { a } from "@/routes/a";\nexport { a };\n',
+  "routes-relative.ts":
+    'import { a } from "../../routes/_protected";\nexport { a };\n',
+  "routes-require.ts":
+    'declare const require: (id: string) => unknown;\nexport const a = require("../../routes/_protected");\n',
 } as const;
 
 const OK = {
@@ -68,7 +79,7 @@ const OK = {
   "comment.ts":
     '// import { a } from "@/domains/entities/lib/a";\nexport const a = "import(\\"@/domains/x\\")";\n',
   "dynamic-variable.ts": "export const load = (p: string) => import(p);\n",
-  "routes-alias.ts": 'import { a } from "@/routes/a";\nexport { a };\n',
+  "lookalike-app.ts": 'import { a } from "@/apps/a";\nexport { a };\n',
 } as const;
 
 beforeAll(() => {
@@ -93,6 +104,10 @@ beforeAll(() => {
     'import { a } from "@/domains/entities/lib/a";\nexport { a };\n'
   );
   fixture.write(
+    `${SRC}/app/lib/composes-domains.ts`,
+    'import { a } from "@/domains/entities/lib/a";\nexport { a };\n'
+  );
+  fixture.write(
     `${SRC}/routes/route.ts`,
     'import { a } from "@/domains/entities/lib/a";\nexport { a };\n'
   );
@@ -106,7 +121,7 @@ beforeAll(() => {
 
 const hits = (file: string) => findingsFor(result, file, RULE);
 
-describe("shared/ui imports no domain code (shared-ui-no-domain-imports)", () => {
+describe("shared imports no domain, app or route (shared-no-upward-imports)", () => {
   it.each(Object.keys(FAIL))("rejects %s", (name) => {
     expect(hits(`${UI}/${name}`)).toHaveLength(1);
   });
@@ -116,7 +131,7 @@ describe("shared/ui imports no domain code (shared-ui-no-domain-imports)", () =>
     expect(hit?.message).toContain("@/domains/entities/lib/a");
     expect(hit?.message).toContain("move");
     expect(hit?.message).toContain(
-      "conventions: shared/ui never imports a domain"
+      "conventions: shared imports no domain, app or route"
     );
     expect(hit?.line).toBe(1);
   });
@@ -125,14 +140,15 @@ describe("shared/ui imports no domain code (shared-ui-no-domain-imports)", () =>
     expect(hits(`${UI}/${name}`)).toHaveLength(0);
   });
 
-  it("exempts tests", () => {
+  it("covers tests and every shared folder, not only shared/ui", () => {
     expect(
       hits(`${UI}/__tests__/composes-domain.component.test.tsx`)
-    ).toHaveLength(0);
+    ).toHaveLength(1);
+    expect(hits(`${SRC}/shared/lib/not-ui.ts`)).toHaveLength(1);
   });
 
-  it("leaves shared/lib, domains, routes and other packages to their own rules", () => {
-    expect(hits(`${SRC}/shared/lib/not-ui.ts`)).toHaveLength(0);
+  it("leaves the app composition root, domains, routes and other packages to their own rules", () => {
+    expect(hits(`${SRC}/app/lib/composes-domains.ts`)).toHaveLength(0);
     expect(hits(`${SRC}/domains/cases/lib/domain-to-domain.ts`)).toHaveLength(
       0
     );

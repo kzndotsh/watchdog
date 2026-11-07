@@ -46,7 +46,7 @@ import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 import { oneComponentPerFile } from "./rules/one-component-per-file.mjs";
 import { procedureMustBeGuarded } from "./rules/procedure-must-be-guarded.mjs";
 import { keysInQueries } from "./rules/query-keys-in-queries-modules.mjs";
-import { sharedUiNoDomainImports } from "./rules/shared-ui-no-domain-imports.mjs";
+import { sharedNoUpwardImports } from "./rules/shared-no-upward-imports.mjs";
 
 export default {
   meta: { name: "watchdog" },
@@ -84,7 +84,7 @@ export default {
     "mutation-only-in-hooks": mutationOnlyInHooks,
     "cache-writes-only-in-hooks": cacheWritesInHooks,
     "query-keys-in-queries-modules": keysInQueries,
-    "shared-ui-no-domain-imports": sharedUiNoDomainImports,
+    "shared-no-upward-imports": sharedNoUpwardImports,
     "no-hooks-in-lib": noHooksInLib,
     "one-component-per-file": oneComponentPerFile,
     "no-test-imports-in-production": noTestImportsInProduction,

@@ -21,9 +21,9 @@ export type CaseEgress = Pick<CaseRecord, "allowedEgress" | "id" | "slug">;
 /** A restored Case; `previousSlug` is set when its old link was taken and it got a new one. */
 export type RestoredCaseRecord = CoreRestoredCaseRecord;
 
-/** A deleted Case as owners and admins see it: who, when, and how long it can be restored. */
 /** A Case's tile counts: each exact below the list cap, capped above it. */
 export type CaseCounts = CoreCaseCounts;
+/** A deleted Case as owners and admins see it: who, when, and how long it can be restored. */
 export type DeletedCaseRecord = CoreDeletedCaseRecord;
 /** The restore window, whether the caller may delete, restore and purge Cases, and the Jobs a delete cancels. */
 export type DeletionPolicy = CoreDeletionPolicy;

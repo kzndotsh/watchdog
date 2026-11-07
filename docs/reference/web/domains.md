@@ -48,8 +48,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
 | Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance`; `watchdog/no-types-from-functions` enforces only the ban: no type imports from, or re-exports of, a `*.functions` module, except in `*.functions.ts`, `queries.ts` and `*-queries.ts` under `domains/` |
 | An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
-| `shared/ui` imports no domain code | `watchdog/shared-ui-no-domain-imports` |
-| `shared/**` imports no domain, app or route | oxlint `no-restricted-imports` (`sharedImportRestrictions`) |
+| `shared/**` imports no domain, app or route (any import form, tests included) | `watchdog/shared-no-upward-imports` |
 | No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` |
 | A `.tsx` file exports one component; a family of parts is a folder of single-component files with an `index.ts` barrel (`shared/ui/skeletons/`) | `watchdog/one-component-per-file` |
 

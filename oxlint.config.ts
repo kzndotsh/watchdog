@@ -246,26 +246,6 @@ const domainImportRestrictions = [
   },
 ];
 
-/**
- * Extra patterns of `apps/web/src/shared/**`: shared depends on no domain and no app wiring
- * (`app/` composes domains and shared, never the reverse; docs/reference/web/domains.md).
- */
-const sharedImportRestrictions = [
-  {
-    group: [
-      "@/domains",
-      "@/domains/**",
-      "@/app",
-      "@/app/**",
-      "@/routes",
-      "@/routes/**",
-      "**/domains/**",
-    ],
-    message:
-      "shared/ imports no domain, app or route: cross-domain wiring lives in src/app/, single-domain code in its domain. See conventions.md.",
-  },
-];
-
 export default defineConfig({
   extends: [core, react, tanstack, effecttsgoRecommended],
   ignorePatterns: [...(core.ignorePatterns ?? []), ...watchdogIgnores],
@@ -553,17 +533,6 @@ export default defineConfig({
       },
     },
     {
-      // Shared depends on no domain: a domain change never forces a shared change. The two
-      // overrides below that replace this rule for shared files carry the same patterns.
-      files: ["apps/web/src/shared/**/*.{ts,tsx}"],
-      rules: {
-        "eslint/no-restricted-imports": [
-          "error",
-          webImportRestrictions(sharedImportRestrictions),
-        ],
-      },
-    },
-    {
       // Web design-system bans (ported from the retired ds-ban-check.mjs; inventory in
       // docs/reference/web/ui/rules.md). The decorative ban skips vendored primitives and
       // the Better Auth UI shells; the id-slice ban is for domain screens only.
@@ -688,8 +657,8 @@ export default defineConfig({
     },
     {
       // Web layering (docs/reference/web/domains.md, conventions table "Web" rows).
-      files: ["apps/web/src/shared/ui/**/*.{ts,tsx}"],
-      rules: { "watchdog/shared-ui-no-domain-imports": "error" },
+      files: ["apps/web/src/shared/**/*.{ts,tsx}"],
+      rules: { "watchdog/shared-no-upward-imports": "error" },
     },
     {
       files: ["apps/web/src/**/lib/**/*.{ts,tsx}"],
@@ -791,7 +760,6 @@ export default defineConfig({
       rules: {
         "watchdog/no-hooks-in-lib": "off",
         "watchdog/one-component-per-file": "off",
-        "watchdog/shared-ui-no-domain-imports": "off",
       },
     },
     {
@@ -837,10 +805,9 @@ export default defineConfig({
       rules: {
         "eslint/no-restricted-imports": [
           "error",
-          webImportRestrictions(
-            [...domainImportRestrictions, ...sharedImportRestrictions],
-            { allowInfinite: true }
-          ),
+          webImportRestrictions(domainImportRestrictions, {
+            allowInfinite: true,
+          }),
         ],
       },
     },
@@ -862,7 +829,6 @@ export default defineConfig({
                 message: "UI wrappers never touch the database.",
               },
             ],
-            patterns: sharedImportRestrictions,
           },
         ],
       },
