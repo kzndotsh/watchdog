@@ -1,6 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const inviteSignUp = vi.hoisted(() => vi.fn());
+
+const assign = vi.hoisted(() => vi.fn());
+
+beforeEach(() => {
+  assign.mockClear();
+  vi.stubGlobal("location", { assign });
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 vi.mock("@/auth/invitation-api", () => ({ inviteSignUp }));
 vi.mock("@/shared/ui/toast", async () => {
@@ -18,28 +28,28 @@ const VARIABLES = {
 };
 
 describe("useRegisterInvitee", () => {
-  it("signs up with the variables, then runs the callback and nothing else", async () => {
+  it("signs up with the variables, then hard-navigates home", async () => {
     inviteSignUp.mockResolvedValue(undefined);
-    const run = await runAuthMutation({
-      useVerb: (onDone) => useRegisterInvitee({ onRegistered: onDone }),
+    await runAuthMutation({
+      useVerb: () => useRegisterInvitee(),
       authCall: inviteSignUp,
       answer: { kind: "ok" },
       variables: VARIABLES,
     });
 
     expect(inviteSignUp).toHaveBeenCalledWith(VARIABLES);
-    expect(run.events).toEqual(["callback"]);
+    expect(assign).toHaveBeenCalledWith("/");
   });
 
-  it("surfaces a rejected sign-up on the mutation and skips the callback", async () => {
+  it("surfaces a rejected sign-up on the mutation", async () => {
     const run = await runAuthMutation({
-      useVerb: (onDone) => useRegisterInvitee({ onRegistered: onDone }),
+      useVerb: () => useRegisterInvitee(),
       authCall: inviteSignUp,
       answer: { kind: "rejected", message: "Invitation expired" },
       variables: VARIABLES,
     });
 
     expect(run.result.current.error).toEqual(new Error("Invitation expired"));
-    expect(run.events).toEqual([]);
+    expect(assign).not.toHaveBeenCalled();
   });
 });

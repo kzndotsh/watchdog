@@ -38,7 +38,7 @@ An organization with no live Case (a Deleted Case in its restore window does not
 | Layer | What it does |
 | --- | --- |
 | **Better Auth** | Cookie session; routes under `/auth/*` (BA UI) |
-| **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` and decides onboarding through `ensureOrganizationState` ([route guard cost](#route-guard-cost)) and sends an organization with no live Case to the [first-Case step](#first-case-step) |
+| **`_protected` layout** | Redirects unauthenticated users to sign-in with `redirectTo`; seeds `authQueryKeys.session` via `ensureAppSession` and decides onboarding through `ensureOrganizationState`, both through the one guard `requireSession` (`app/require-session.ts`, shared with `/onboarding`) ([route guard cost](#route-guard-cost)) and sends an organization with no live Case to the [first-Case step](#first-case-step) |
 | **`requireAuth` (global)** | All domain `createServerFn` handlers, installed in `src/start.ts`; throws `UnauthorizedError` |
 | **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export), not ServerFns |
 | **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created; a key stops working while its owner is banned (a ban with an expiry lifts on that date) or, for a scoped key, has left that organization; a key holds scopes (`cases:read`, `evidence:write`, `proposals:write`, `graph:write`) stored in the key's permissions, chosen in the create dialog (presets Agent, Collector, Full, or one switch per scope) and listed on each key (a key with no stored scopes is refused and shows "Unreadable scopes (key refused)"); keys are created only by the session-only `createApiKeyFn` server function, which sets the scopes and the creator's active organization on the server, and Better Auth's browser `/api-key/create` is refused (as is a browser `/api-key/update` that changes `metadata` or `permissions`; renaming and disabling stay allowed); a key never deletes or restores a Case, writes a credential, changes organization settings, or changes a Case's allowed egress: those need a signed-in session (an owner or admin where a role applies) ([`agent-ingress`](../reference/contracts/agent-ingress.md#key-scopes)) |
@@ -60,14 +60,14 @@ Cost per authenticated call, measured by `packages/auth/src/__tests__/session-co
 
 ## Route guard cost
 
-The `_protected` guard (`routes/_protected.tsx`) runs on every navigation and hover preload. It no longer makes two serial uncached requests.
+The `_protected` guard (`routes/_protected.tsx`, built on `requireSession`) runs on every navigation and hover preload. It no longer makes two serial uncached requests.
 
 | Step | Behavior |
 | --- | --- |
 | Session (`ensureAppSession`) | Query cache, **60 s** stale time (`STALE_SESSION`, the cookie cache length). A navigation inside the window makes no auth request. A signed-out answer is never kept. |
 | Hover preload (`preload` in the route context) | Uses the cached session whatever its age and fetches nothing while one exists. A preload never grants access; the click re-runs the guard with the normal stale time. |
 | Organization (`ensureOrganizationState`) | Cached per user until an organization change invalidates it. On the client the session's `activeOrganizationId` answers the first lookup, so a cold navigation is one request (the session). A full page load (SSR) still asks the database. |
-| Organization changes | Create, switch, accept an invitation, leave, delete and remove member call `invalidateAfterOrganizationChange` (the first five through `useReloadIntoOrganization`, which then reloads into `/`): the organization state and the session are marked stale. |
+| Organization changes | Create, switch, accept an invitation, leave, delete and remove member call `invalidateAfterOrganizationChange` (the first five through `useReloadIntoOrganization`, which then reloads into `/`; the accept, register, leave and delete hooks call it in their own success handler, so no caller reloads for them): the organization state and the session are marked stale. |
 | Revocation mid-visit | Noticed on the first navigation after the 60 s stale time (`beforeLoad` redirects to sign-in with `redirectTo`), and at once when any server function or mutation answers `Unauthorized`: `createAppQueryClient` revalidates the session and `useAuthenticate` redirects. Worst case from revocation to redirect is the cookie cache (60 s) plus the client stale time (60 s) for an idle tab that makes no server call. |
 
 A member removed from their active organization keeps the app shell until the next reload (or organization change): every server function reads membership, so they get no data. A reload corrects it.

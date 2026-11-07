@@ -34,7 +34,6 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
     const epoch = getActiveCaseHealEpoch();
     const caseSlug = normalizeEntitySlug(params.caseSlug);
     if (caseSlug === undefined) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
       throw notFound();
     }
 
@@ -43,7 +42,6 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
       caseBySlugQuery(caseSlug)
     );
     if (!workCase) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
       throw notFound();
     }
 

@@ -1,6 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const deleteOrganization = vi.hoisted(() => vi.fn());
+
+const assign = vi.hoisted(() => vi.fn());
+
+beforeEach(() => {
+  assign.mockClear();
+  vi.stubGlobal("location", { assign });
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 vi.mock("@/auth/client", () => ({
   authClient: { organization: { delete: deleteOrganization } },
@@ -14,10 +24,10 @@ import { useDeleteOrganization } from "@/domains/organization/hooks/use-delete-o
 import { organizationKeys } from "@/domains/organization/queries";
 import { runAuthMutation } from "@/shared/lib/__tests__/helpers/auth-mutation-harness";
 
-const SEED = [organizationKeys.team()];
+const SEED = [organizationKeys.state("u1")];
 
 describe("useDeleteOrganization", () => {
-  it("deletes the organization in the variables and settles no cache (the caller reloads)", async () => {
+  it("deletes the organization in the variables, invalidates the organization state and hard-navigates home", async () => {
     const run = await runAuthMutation({
       useVerb: () => useDeleteOrganization(),
       authCall: deleteOrganization,
@@ -29,8 +39,8 @@ describe("useDeleteOrganization", () => {
     expect(deleteOrganization).toHaveBeenCalledWith({
       organizationId: "org-1",
     });
-    expect(run.events).toEqual([]);
-    expect(run.invalidated(organizationKeys.team())).toBe(false);
+    expect(run.invalidated(organizationKeys.state("u1"))).toBe(true);
+    expect(assign).toHaveBeenCalledWith("/");
   });
 
   it("surfaces the refusal on the mutation", async () => {
@@ -42,7 +52,7 @@ describe("useDeleteOrganization", () => {
     });
 
     expect(run.result.current.error).toEqual(new Error("Owners only"));
-    expect(run.events).toEqual([]);
+    expect(assign).not.toHaveBeenCalled();
   });
 
   it("surfaces a rejected call on the mutation", async () => {

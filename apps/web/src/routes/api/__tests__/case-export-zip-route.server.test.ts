@@ -19,6 +19,7 @@ const writeZipMock = vi.hoisted(() => vi.fn());
 const linkMock = vi.hoisted(() => vi.fn());
 const optInMock = vi.hoisted(() => vi.fn());
 const breachOptInMock = vi.hoisted(() => vi.fn());
+const logErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -72,11 +73,20 @@ vi.mock("@watchdog/core/export", () => ({
   writeCaseExportZipEffect: writeZipMock,
 }));
 
+vi.mock("@watchdog/log", () => ({
+  createLogger: () => ({
+    error: logErrorMock,
+    warn: vi.fn(),
+    emit: vi.fn(),
+  }),
+}));
+
 vi.mock("@watchdog/core/jobs", () => ({
   startCaseExportJobEffect: startJobMock,
   caseExportLinkEffect: linkMock,
 }));
 
+import { exportFilename } from "@/lib/case-export.server";
 import { Route } from "@/routes/api/v1/cases.$caseId.export[.]zip";
 import { Route as DownloadRoute } from "@/routes/api/v1/cases.$caseId.exports.$jobId";
 
@@ -106,6 +116,15 @@ function signedIn(log = vi.fn()) {
     log: { set: log },
   });
 }
+
+describe("exportFilename", () => {
+  it("keeps only [A-Za-z0-9._-] so a slug cannot break out of the header", () => {
+    const name = exportFilename('al"pha\r\nX-Evil: 1/../é');
+    expect(name).toMatch(/^alphaX-Evil1\.\.-\d{12}\.zip$/);
+    expect(name).not.toMatch(/["\r\n/]/);
+    expect(exportFilename('"\r\n')).toMatch(/^case-\d{12}\.zip$/);
+  });
+});
 
 describe("case export zip route", () => {
   it("returns 401 when unauthenticated", async () => {
@@ -338,6 +357,7 @@ describe("case export zip route", () => {
 
     expect(response.status).toBe(200);
     await expect(response.arrayBuffer()).rejects.toThrow();
+    expect(logErrorMock).toHaveBeenCalledWith(new Error("read failed halfway"));
   });
 
   it("answers 202 with the Job when the Case is over the inline limit, and does not stream", async () => {

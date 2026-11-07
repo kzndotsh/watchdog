@@ -1,7 +1,7 @@
 import { createFileRoute, getRouteApi, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { ensureAppSession } from "@/auth/ensure-session";
+import { redirectIfSignedIn } from "@/app/require-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
 import { Auth } from "@/auth/ui/auth";
 import { AUTH_VIEW_PATHS } from "@/auth/ui/auth-view-paths";
@@ -36,23 +36,17 @@ export const Route = createFileRoute("/auth/$path")({
   }) => {
     const path = normalizeRouteSegment(rawPath);
     if (path === undefined || !AUTH_VIEW_PATHS.has(path)) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
       throw redirect({ to: "/auth/$path", params: { path: "sign-in" } });
     }
 
     const allowSignup = await getAllowSignup();
     if (path === "sign-up" && !allowSignup) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
       throw redirect({ to: "/auth/$path", params: { path: "sign-in" } });
     }
 
     // Already signed in → go home (also seeds authQueryKeys.session).
     if (path === "sign-in" || path === "sign-up") {
-      const session = await ensureAppSession(queryClient);
-      if (session) {
-        // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
-        throw redirect({ to: "/" });
-      }
+      await redirectIfSignedIn(queryClient);
     }
 
     return { allowSignup };

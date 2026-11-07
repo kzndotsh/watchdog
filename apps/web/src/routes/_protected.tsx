@@ -6,12 +6,11 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 
-import { ensureOrganizationState } from "@/app/ensure-organization";
 import { useActivityInvalidation } from "@/app/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/app/hooks/use-cases-changed-invalidation";
 import { AppShell } from "@/app/layout/app-shell";
+import { requireSession } from "@/app/require-session";
 import { authClient } from "@/auth/client";
-import { ensureAppSession } from "@/auth/ensure-session";
 import { firstCaseGateApplies } from "@/auth/first-case-gate";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
@@ -48,23 +47,11 @@ export const Route = createFileRoute("/_protected")({
   // A crash in the shell itself (pages have their own `RouteError` inside it) gets the root screen.
   errorComponent: RootError,
   beforeLoad: async ({ context: { queryClient }, location, preload }) => {
-    const session = await ensureAppSession(queryClient, { isPreload: preload });
-
-    if (!session) {
-      const returnTo = location.href;
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
-      throw redirect({
-        to: "/auth/$path",
-        params: { path: "sign-in" },
-        // BA UI AuthProvider reads `redirectTo` from the URL search string.
-        search: { redirectTo: returnTo },
-      });
-    }
-
     // Signed in but in no organization yet (self-serve signup): create one first.
-    const { organizationId } = await ensureOrganizationState(
+    const { session, organizationId } = await requireSession(
       queryClient,
-      session
+      location,
+      { isPreload: preload }
     );
     // Sidebar CaseSwitcher + case nav need cases context on every protected route. The same
     // read answers the first-Case gate, so it costs no second query.
@@ -81,7 +68,6 @@ export const Route = createFileRoute("/_protected")({
       !organizationId ||
       (firstCaseGateApplies(location.pathname) && !casesCtx?.cases.length)
     ) {
-      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
       throw redirect({ to: "/onboarding" });
     }
 
