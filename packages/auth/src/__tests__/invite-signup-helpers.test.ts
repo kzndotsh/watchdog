@@ -1,11 +1,33 @@
 import { APIError } from "better-auth/api";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
+  type PendingInvitation,
   assertPasswordLength,
   requirePendingInvitation,
   throwInvitationNotFound,
 } from "../invite-signup-helpers";
+
+function invitationRow(
+  overrides: Partial<PendingInvitation> = {}
+): PendingInvitation {
+  return {
+    id: "inv-1",
+    organizationId: "org-1",
+    email: "invitee@mailhost.test",
+    role: "member",
+    status: "pending",
+    inviterId: "user-1",
+    expiresAt: new Date(Date.now() + 60_000),
+    createdAt: new Date(),
+    ...overrides,
+  };
+}
+
+/** The one adapter call the helper makes, answering from a fixed row (or none). */
+function adapterFor(invitation: PendingInvitation | null) {
+  return { findInvitationById: async () => invitation };
+}
 
 describe("invite-signup-helpers", () => {
   describe("throwInvitationNotFound", () => {
@@ -24,44 +46,24 @@ describe("invite-signup-helpers", () => {
 
   describe("requirePendingInvitation", () => {
     it("returns a pending, unexpired invitation", async () => {
-      const invitation = {
-        status: "pending",
-        expiresAt: new Date(Date.now() + 60_000),
-      };
-      const adapter = {
-        findInvitationById: vi.fn().mockResolvedValue(invitation),
-      };
+      const invitation = invitationRow();
 
       await expect(
-        requirePendingInvitation(adapter as never, "inv-1")
+        requirePendingInvitation(adapterFor(invitation), "inv-1")
       ).resolves.toBe(invitation);
     });
 
-    it("rejects missing, non-pending, or expired invitations", async () => {
-      const adapter = {
-        findInvitationById: vi.fn(),
-      };
-
-      adapter.findInvitationById.mockResolvedValue(null);
+    it.each([
+      ["missing", null],
+      ["accepted", invitationRow({ status: "accepted" })],
+      ["expired", invitationRow({ expiresAt: new Date(Date.now() - 1) })],
+    ])("rejects a %s invitation as not found", async (_label, row) => {
       await expect(
-        requirePendingInvitation(adapter as never, "missing")
-      ).rejects.toBeInstanceOf(APIError);
-
-      adapter.findInvitationById.mockResolvedValue({
-        status: "accepted",
-        expiresAt: new Date(Date.now() + 60_000),
+        requirePendingInvitation(adapterFor(row), "inv-1")
+      ).rejects.toMatchObject({
+        status: "BAD_REQUEST",
+        body: expect.objectContaining({ code: "INVITATION_NOT_FOUND" }),
       });
-      await expect(
-        requirePendingInvitation(adapter as never, "accepted")
-      ).rejects.toBeInstanceOf(APIError);
-
-      adapter.findInvitationById.mockResolvedValue({
-        status: "pending",
-        expiresAt: new Date(Date.now() - 1),
-      });
-      await expect(
-        requirePendingInvitation(adapter as never, "expired")
-      ).rejects.toBeInstanceOf(APIError);
     });
   });
 

@@ -3,10 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const info = vi.fn();
 const error = vi.fn();
 
-vi.mock("@watchdog/log", () => ({
+vi.mock("@watchdog/log", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@watchdog/log")>()),
   peekRequestLogger: () => null,
   createLogger: () => ({ info, error }),
-  maskEmail: (email: string) => email.replace(/^[^@]+/, "i***"),
 }));
 
 const mockEnv = vi.hoisted(() => ({
@@ -20,11 +20,13 @@ const mockEnv = vi.hoisted(() => ({
 
 vi.mock("@watchdog/env/server", () => ({ env: mockEnv }));
 
-const sendSmtpMail = vi.hoisted(() => vi.fn());
+const nodemailer = vi.hoisted(() => {
+  const sendMail = vi.fn();
+  const createTransport = vi.fn((_options: unknown) => ({ sendMail }));
+  return { sendMail, createTransport };
+});
 
-vi.mock("../smtp-mail", () => ({
-  sendSmtpMail,
-}));
+vi.mock("nodemailer", () => ({ createTransport: nodemailer.createTransport }));
 
 import { sendInvitationEmail } from "../send-invitation-email";
 
@@ -45,7 +47,8 @@ describe("sendInvitationEmail", () => {
   beforeEach(() => {
     info.mockClear();
     error.mockClear();
-    sendSmtpMail.mockReset();
+    nodemailer.sendMail.mockReset();
+    nodemailer.createTransport.mockClear();
   });
 
   afterEach(() => {
@@ -64,7 +67,7 @@ describe("sendInvitationEmail", () => {
     expect(logged).not.toContain(ACCEPT_URL);
     expect(logged).not.toContain("accept-invitation");
     expect(logged).not.toContain("invitee@");
-    expect(sendSmtpMail).not.toHaveBeenCalled();
+    expect(nodemailer.sendMail).not.toHaveBeenCalled();
   });
 
   it("puts the accept URL in the mail and still not in the log", async () => {
@@ -73,8 +76,12 @@ describe("sendInvitationEmail", () => {
 
     await sendInvitationEmail(INVITATION);
 
-    expect(sendSmtpMail).toHaveBeenCalledOnce();
-    expect(sendSmtpMail.mock.calls[0]?.[0]).toMatchObject({
+    expect(nodemailer.createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({ host: "smtp.mailhost.test", port: 587 })
+    );
+    expect(nodemailer.sendMail).toHaveBeenCalledOnce();
+    expect(nodemailer.sendMail.mock.calls[0]?.[0]).toMatchObject({
+      from: "watchdog@mailhost.test",
       to: "invitee@mailhost.test",
       text: expect.stringContaining(ACCEPT_URL),
     });
@@ -84,7 +91,7 @@ describe("sendInvitationEmail", () => {
   it("keeps the URL out of the log when sending fails", async () => {
     mockEnv.SMTP_HOST = "smtp.mailhost.test";
     mockEnv.SMTP_FROM = "watchdog@mailhost.test";
-    sendSmtpMail.mockRejectedValue(new Error("connect ECONNREFUSED"));
+    nodemailer.sendMail.mockRejectedValue(new Error("connect ECONNREFUSED"));
 
     await sendInvitationEmail(INVITATION);
 

@@ -1,22 +1,11 @@
 import { Effect } from "effect";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-const { uploadJsonReportPairMock } = vi.hoisted(() => ({
-  uploadJsonReportPairMock: vi.fn(
-    (_upload: unknown, _snap: unknown, name: string) =>
-      Effect.succeed({
-        report: { id: "report", mime: "application/json", name: "report.json" },
-        artifact: { id: "artifact", mime: "application/json", name },
-      })
-  ),
-}));
-
-vi.mock("../upload-json-report-pair", () => ({
-  uploadJsonReportPair: uploadJsonReportPairMock,
-}));
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 
 import { defineProvider, runCap } from "../../../sdk";
+import { createCapRunHarness } from "../../../testing/runs-collect-cap";
 import { defineCollectCap } from "../define-collect-cap";
 
 const baseDef = {
@@ -37,67 +26,81 @@ const baseDef = {
   reportLabel: "test",
 };
 
-describe("defineCollectCap", () => {
-  it("run fetches snap and uploads report pair", async () => {
-    const interpretSnap = vi
-      .fn()
-      .mockResolvedValue({ patch: [], summary: "done" });
-    const fetch = vi.fn(() =>
-      Effect.succeed({ snap: { ok: true }, artifactName: "data.json" })
-    );
-    const uploadArtifact = vi.fn((input: { name?: string }) =>
-      Effect.succeed({
-        id: "upload-1",
-        ...input,
-      })
-    );
+const interpreted = { patch: [], summary: "interpreted" };
 
+describe("defineCollectCap", () => {
+  it("run uploads the fetched snapshot as report.json and as the named artifact", async () => {
+    const harness = createCapRunHarness<Record<string, never>>();
     const cap = defineCollectCap({
       ...baseDef,
-      fetch,
-      interpretSnap,
+      fetch: () =>
+        Effect.succeed({ snap: { ok: true }, artifactName: "data.json" }),
+      interpretSnap: () => interpreted,
     });
 
-    const runResult = await runCap(
-      cap.run({
-        input: {},
-        uploadArtifact,
-        log: () => {},
-        signal: AbortSignal.timeout(1000),
-        getCredential: () => Effect.die(new Error("unused")),
-      } as never)
-    );
+    const runResult = await runCap(cap.run(harness.ctx));
 
-    expect(fetch).toHaveBeenCalled();
-    expect(uploadJsonReportPairMock).toHaveBeenCalled();
-    expect(runResult.artifacts).toHaveLength(2);
+    expect(
+      runResult.artifacts.map(({ name, mime }) => ({ name, mime }))
+    ).toEqual([
+      { name: REPORT_JSON_ARTIFACT, mime: "application/json" },
+      { name: "data.json", mime: "application/json" },
+    ]);
+    const bodies = harness.artifacts.map(({ bytes }) =>
+      new TextDecoder().decode(bytes)
+    );
+    expect(bodies).toEqual([
+      JSON.stringify({ ok: true }, null, 2),
+      JSON.stringify({ ok: true }, null, 2),
+    ]);
   });
 
-  it("interpret parses report via schema and delegates to interpretSnap", () => {
-    const interpretSnap = vi
-      .fn()
-      .mockReturnValue({ patch: [], summary: "interpreted" });
-
+  it("run uploads nothing when the fetch fails", async () => {
+    const harness = createCapRunHarness<Record<string, never>>();
     const cap = defineCollectCap({
       ...baseDef,
-      fetch: vi.fn(),
-      interpretSnap,
+      fetch: () => Effect.die(new Error("provider down")),
+      interpretSnap: () => interpreted,
     });
 
-    const result = cap.interpret!({ ok: true }, { input: {} });
-    expect(interpretSnap).toHaveBeenCalledWith({ ok: true }, expect.anything());
-    expect(result.summary).toBe("interpreted");
+    await expect(runCap(cap.run(harness.ctx))).rejects.toThrow();
+    expect(harness.artifacts).toEqual([]);
+  });
+
+  it("interpret hands the schema-parsed report and the options to interpretSnap", () => {
+    const received: unknown[] = [];
+    const cap = defineCollectCap({
+      ...baseDef,
+      fetch: () => Effect.die(new Error("unused")),
+      interpretSnap: (snap, opts) => {
+        received.push(snap, opts);
+        return interpreted;
+      },
+    });
+
+    const result = cap.interpret?.(
+      { ok: true, extra: "dropped" },
+      { input: {} }
+    );
+
+    expect(received).toEqual([{ ok: true }, { input: {} }]);
+    expect(result).toEqual(interpreted);
   });
 
   it("interpret throws on invalid report shape", () => {
+    let called = false;
     const cap = defineCollectCap({
       ...baseDef,
-      fetch: vi.fn(),
-      interpretSnap: vi.fn(),
+      fetch: () => Effect.die(new Error("unused")),
+      interpretSnap: () => {
+        called = true;
+        return interpreted;
+      },
     });
 
-    expect(() => cap.interpret!({ bad: true }, {} as never)).toThrow(
+    expect(() => cap.interpret?.({ bad: true }, { input: {} })).toThrow(
       /Invalid test report/
     );
+    expect(called).toBe(false);
   });
 });
