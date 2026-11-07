@@ -14,6 +14,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
+import { artifactKeys } from "@/domains/jobs/jobs-keys";
 
 describe("ArtifactContent", () => {
   it("renders artifact preview while content is loading", () => {
@@ -133,14 +134,7 @@ describe("ArtifactContent", () => {
     expect(useQueryMock).toHaveBeenCalledWith(
       expect.objectContaining({
         enabled: true,
-        queryKey: [
-          "jobs",
-          testId(10),
-          "artifact",
-          "evidence",
-          testId(40),
-          "text/plain",
-        ],
+        queryKey: artifactKeys.evidence(testId(10), testId(40), "text/plain"),
       })
     );
   });

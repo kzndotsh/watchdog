@@ -23,7 +23,7 @@ import {
   questionsKeys,
 } from "@/domains/entities/questions/queries";
 import { evidenceKeys, evidenceListView } from "@/domains/intake/queries";
-import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { artifactKeys, jobsKeys } from "@/domains/jobs/jobs-keys";
 import { organizationKeys } from "@/domains/organization/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { credentialsKeys, usersKeys } from "@/domains/settings/queries";
@@ -99,8 +99,10 @@ const factories: readonly Factory[] = [
     jobsKeys.detail(CASE, ID),
     jobsKeys.playbookRun(CASE, ID),
     jobsKeys.providerCalls(CASE, ID),
-    jobsKeys.jobArtifact(CASE, ID, "sha", "text/plain"),
-    jobsKeys.evidenceArtifact(CASE, ID, "text/plain"),
+  ]),
+  factory("artifactKeys", artifactKeys.all, artifactKeys, [
+    artifactKeys.job(CASE, ID, "sha", "text/plain"),
+    artifactKeys.evidence(CASE, ID, "text/plain"),
   ]),
   factory("organizationKeys", organizationKeys.all, organizationKeys, [
     organizationKeys.stateAll(),

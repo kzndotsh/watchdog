@@ -8,7 +8,7 @@ vi.mock("@/domains/jobs/jobs-artifact.functions", () => ({
 }));
 
 import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
-import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { artifactKeys } from "@/domains/jobs/jobs-keys";
 
 describe("jobs artifact queries", () => {
   const caseId = testId(1);
@@ -47,7 +47,7 @@ describe("jobs artifact queries", () => {
       })
     ).toMatchObject({
       enabled: true,
-      queryKey: jobsKeys.jobArtifact(caseId, jobId, sha256, "text/plain"),
+      queryKey: artifactKeys.job(caseId, jobId, sha256, "text/plain"),
       staleTime: STALE_DEFAULT,
       gcTime: GC_DEFAULT,
       meta: { silentError: true },
@@ -80,7 +80,7 @@ describe("jobs artifact queries", () => {
       })
     ).toMatchObject({
       enabled: true,
-      queryKey: jobsKeys.evidenceArtifact(caseId, evidenceId, "text/plain"),
+      queryKey: artifactKeys.evidence(caseId, evidenceId, "text/plain"),
     });
   });
 });
