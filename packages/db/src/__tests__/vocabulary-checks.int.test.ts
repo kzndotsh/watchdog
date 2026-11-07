@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { client } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   expectPostgresRefusal,
   PG_CHECK_VIOLATION,
@@ -129,7 +130,12 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
     seed: EMPTY_JSON,
     actor_id: "a",
   }),
-  activity: (c) => ({ case_id: c.caseId, kind: "task", action: "created" }),
+  activity: (c) => ({
+    case_id: c.caseId,
+    organization_id: TEST_ORGANIZATION_ID,
+    kind: "task",
+    action: "created",
+  }),
   case_deletion_records: (c) => ({
     case_id: c.caseId,
     organization_id: "org-vocab",

@@ -63,16 +63,14 @@ const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Paged procedures that are not declared lists (ADR-0007): the two named legacy feeds, each with
- * its reason (`apps/web`'s infinite queries for the two web feeds are exempt in `oxlint.config.ts`
- * by the same names). Every other
+ * Paged procedures that are not declared lists (ADR-0007): the one named legacy feed, with
+ * its reason (`apps/web`'s infinite query for the web feed is exempt in `oxlint.config.ts`
+ * by the same name). Every other
  * procedure that returns a page takes a `LIST_DEFS` member's `input` and returns a list page
  * (`total` beside `items` and `nextCursor`): a hand-rolled paged procedure fails this file until
  * its list is declared or it is listed here.
  */
 const NOT_DECLARED: Readonly<Record<string, string>> = {
-  "activity.listRecent":
-    "the feed collapses entries by group in a window function before the keyset; not a filterable list",
   "history.list":
     "one row's history, ordered by the bigint history id itself; never filtered, sorted or searched",
 };

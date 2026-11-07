@@ -49,7 +49,7 @@ export type ChoicesFilter<T extends string = string> =
 /** One row of another list, by id (`entityId`); the Filters popover shows a picker fed by the screen. */
 export type RefFilter = FilterCommon<"ref"> & {
   /** What the id names: the picker to show, and how the CLI resolves a slug to an id. */
-  readonly refers: "entity" | "evidence" | "job" | "playbook-run";
+  readonly refers: "case" | "entity" | "evidence" | "job" | "playbook-run";
 };
 
 /** Any of an open vocabulary (Cap ids); options come from the screen at runtime. */

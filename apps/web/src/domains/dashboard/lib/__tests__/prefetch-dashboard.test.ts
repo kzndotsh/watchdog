@@ -1,11 +1,12 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { recentActivityQuery } from "@/domains/activity/queries";
+import { activityListView } from "@/domains/activity/queries";
 import { caseCountsQuery } from "@/domains/cases/queries";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { dueTasksQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
+import { activityList } from "@watchdog/schemas/feed";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {
@@ -26,7 +27,7 @@ describe("warmDashboardQueries", () => {
 
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: recentActivityQuery().queryKey,
+        queryKey: activityListView.key({}, activityList.queryOf({})),
       })
     );
     expect(query).toHaveBeenCalledTimes(1);

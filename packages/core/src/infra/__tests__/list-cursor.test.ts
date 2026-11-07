@@ -16,6 +16,7 @@ const timeSpec: ListCursorSpec = {
   sort: "captured.desc",
   fingerprint: fingerprintOf("view"),
   key: "time",
+  id: "uuid",
 };
 const textSpec: ListCursorSpec = {
   ...timeSpec,
@@ -43,6 +44,20 @@ describe("decodeListCursor", () => {
     await expect(
       Effect.runPromise(decodeListCursor(forged(timeSpec, value), timeSpec))
     ).resolves.toEqual({ id: ID, value });
+  });
+
+  it("takes digits as the id of an integer-id list, and a uuid as nothing", async () => {
+    const intSpec: ListCursorSpec = { ...timeSpec, id: "int" };
+    const value = "2026-01-01T00:10:00.123456Z";
+    const cursor = (id: string) => encodeListCursor(intSpec, { id, value });
+    await expect(
+      Effect.runPromise(decodeListCursor(cursor("42"), intSpec))
+    ).resolves.toEqual({ id: "42", value });
+    expect(await failureTag(cursor(ID), intSpec)).toBe("InvalidError");
+    expect(await failureTag(forged(timeSpec, value), intSpec)).toBe(
+      "InvalidError"
+    );
+    expect(await failureTag(cursor("42"), timeSpec)).toBe("InvalidError");
   });
 
   it("refuses a time value of the right shape that is not a real instant", async () => {

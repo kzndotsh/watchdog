@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobActivityLabelRow, RecentActivityLogRow } from "@watchdog/db";
+import type { JobActivityLabelRow, ActivityFeedRow } from "@watchdog/db";
 import type { ActivityItem } from "@watchdog/schemas/feed";
 import {
   entityIdsFromJobInputs,
@@ -86,7 +86,7 @@ function pickResultSummary(
  * result summary: the label a collapsed run showed before the log.
  */
 export function jobLabelSubject(
-  entry: Pick<RecentActivityLogRow, "subjectId" | "groupId">,
+  entry: Pick<ActivityFeedRow, "subjectId" | "groupId">,
   labelRows: readonly JobActivityLabelRow[]
 ): JobLabelSubject | undefined {
   const runId = entry.groupId === null ? null : parseTrimmedUuid(entry.groupId);
@@ -200,7 +200,7 @@ function loadEvidenceTitleMapEffect(
  * entries; they are resolved here from the Job rows the entries point at.
  */
 export function mapJobFeedRowsEffect(
-  rows: readonly RecentActivityLogRow[],
+  rows: readonly ActivityFeedRow[],
   actors: ReadonlyMap<string, { name: string; email: string }>
 ): Effect.Effect<ActivityItem[], DomainTag, Db> {
   return Effect.gen(function* mapJobFeedRowsGen() {

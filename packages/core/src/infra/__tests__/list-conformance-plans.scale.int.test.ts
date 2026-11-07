@@ -286,69 +286,75 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
       report[`${def.name}.filters`] = plans;
     });
 
-    it("with q: the first page and the count each read at most the Case's rows of the table, for the worst 3-character needles", async () => {
-      // The ceiling: a search kept inside the Case reads each of the Case's rows of the table
-      // at most once per statement. A plan that leaves the Case first (a global trigram bitmap,
-      // ADR-0007's open risk) reads every organisation's matching rows instead: for `com` at
-      // audit scale that is all 20,000 Evidence rows, 50 times this bound. Rows read are exact
-      // for the frozen seed and its plan, so CI load cannot flake them; the times are measured
-      // for the record only (`perf-baseline.md` holds the 50 ms budget's manual check).
-      const scopeRows = await planDb.rowsInScope(
-        indexNeeds.table,
-        indexNeeds.scopeColumn,
-        scopeValue
-      );
-      expect(
-        scopeRows,
-        `${indexNeeds.table} rows in ${PERF_CASE}`
-      ).toBeGreaterThan(0);
-      const timings: Record<string, unknown> = { scopeRows };
-      const check = async (
-        label: string,
-        wire: Readonly<Record<string, unknown>>
-      ) => {
-        const { page, statements } = await pageOf(wire);
-        const rowsRead: number[] = [];
-        const samples: number[] = [];
-        for (let run = 0; run <= RUNS; run += 1) {
-          let total = 0;
-          for (const statement of statements) {
-            // oxlint-disable-next-line eslint/no-await-in-loop -- sequential runs are the measurement
-            const analyzed = await planDb.analyze(statement);
-            total += analyzed.executionMs;
-            if (run === 0)
-              rowsRead.push(
-                // The list's own rows: a display join of the same table under another name
-                // (the Entity list's Connection peer) reads one row per page row by key.
-                rowsReadOn(analyzed.plan, indexNeeds.table, {
-                  alias: indexNeeds.table,
-                })
-              );
+    it.skipIf(def.search === undefined)(
+      "with q: the first page and the count each read at most the Case's rows of the table, for the worst 3-character needles",
+      async () => {
+        // The ceiling: a search kept inside the Case reads each of the Case's rows of the table
+        // at most once per statement. A plan that leaves the Case first (a global trigram bitmap,
+        // ADR-0007's open risk) reads every organisation's matching rows instead: for `com` at
+        // audit scale that is all 20,000 Evidence rows, 50 times this bound. Rows read are exact
+        // for the frozen seed and its plan, so CI load cannot flake them; the times are measured
+        // for the record only (`perf-baseline.md` holds the 50 ms budget's manual check).
+        const scopeRows = await planDb.rowsInScope(
+          indexNeeds.table,
+          indexNeeds.scopeColumn,
+          scopeValue
+        );
+        expect(
+          scopeRows,
+          `${indexNeeds.table} rows in ${PERF_CASE}`
+        ).toBeGreaterThan(0);
+        const timings: Record<string, unknown> = { scopeRows };
+        const check = async (
+          label: string,
+          wire: Readonly<Record<string, unknown>>
+        ) => {
+          const { page, statements } = await pageOf(wire);
+          const rowsRead: number[] = [];
+          const samples: number[] = [];
+          for (let run = 0; run <= RUNS; run += 1) {
+            let total = 0;
+            for (const statement of statements) {
+              // oxlint-disable-next-line eslint/no-await-in-loop -- sequential runs are the measurement
+              const analyzed = await planDb.analyze(statement);
+              total += analyzed.executionMs;
+              if (run === 0)
+                rowsRead.push(
+                  // The list's own rows: a display join of the same table under another name
+                  // (the Entity list's Connection peer) reads one row per page row by key.
+                  rowsReadOn(analyzed.plan, indexNeeds.table, {
+                    alias: indexNeeds.table,
+                  })
+                );
+            }
+            // The first run warms the cache: its times are not kept.
+            if (run > 0) samples.push(total);
           }
-          // The first run warms the cache: its times are not kept.
-          if (run > 0) samples.push(total);
-        }
-        for (const [index, rows] of rowsRead.entries()) {
-          expect(
-            rows,
-            `${label}: statement ${index + 1} rows read`
-          ).toBeLessThanOrEqual(scopeRows);
-        }
-        timings[label] = {
-          statements: statements.length,
-          total: page.total,
-          rowsRead,
-          p95Ms: round(p95(samples)),
-          maxMs: round(Math.max(...samples)),
+          for (const [index, rows] of rowsRead.entries()) {
+            expect(
+              rows,
+              `${label}: statement ${index + 1} rows read`
+            ).toBeLessThanOrEqual(scopeRows);
+          }
+          timings[label] = {
+            statements: statements.length,
+            total: page.total,
+            rowsRead,
+            p95Ms: round(p95(samples)),
+            maxMs: round(Math.max(...samples)),
+          };
         };
-      };
-      for (const q of NEEDLES) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
-        await check(`q=${q}`, { q });
+        for (const q of NEEDLES) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- one needle at a time
+          await check(`q=${q}`, { q });
+        }
+        await check("no q", {});
+        report[`${def.name}.q`] = timings;
+        console.info(
+          `list ${def.name} (${PERF_CASE}):`,
+          JSON.stringify(timings)
+        );
       }
-      await check("no q", {});
-      report[`${def.name}.q`] = timings;
-      console.info(`list ${def.name} (${PERF_CASE}):`, JSON.stringify(timings));
-    });
+    );
   }
 );

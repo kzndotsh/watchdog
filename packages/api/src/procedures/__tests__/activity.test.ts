@@ -26,7 +26,7 @@ describe("activity procedures", () => {
       Effect.succeed({
         items: [
           {
-            id: "00000000-0000-4000-8000-000000000010",
+            id: "10",
             kind: "job",
             action: "succeeded",
             caseId: "00000000-0000-4000-8000-000000000001",
@@ -36,6 +36,7 @@ describe("activity procedures", () => {
           },
         ],
         nextCursor: null,
+        total: { count: 1, isCapped: false },
       })
     );
 
@@ -56,8 +57,7 @@ describe("activity procedures", () => {
     );
     expect(listRecentActivityEffect).toHaveBeenCalledWith({
       organizationId: TEST_ORGANIZATION_ID,
-      caseId: undefined,
-      limit: 5,
+      input: { limit: 5 },
     });
   });
 });

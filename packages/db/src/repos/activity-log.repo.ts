@@ -1,13 +1,4 @@
-import {
-  and,
-  desc,
-  eq,
-  getTableColumns,
-  gte,
-  inArray,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 
 import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { PatchOp } from "@watchdog/schemas/graph";
@@ -24,8 +15,6 @@ import { cases } from "../schema/cases";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
-import { keysetAfter, timeKey } from "./_keyset";
-import type { KeysetAfter } from "./_keyset";
 import { orgCaseFilter } from "./_org-case-filter";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 
@@ -71,49 +60,6 @@ export type DrainActivityOpts = {
   /** Scope to an organization's Cases (replay); omit for the process-wide tailer. */
   organizationId?: OrganizationId;
   caseId?: CaseId;
-};
-
-/** One kind and the actions of it the feed shows (`FEED_ACTIONS` in core). */
-export type FeedFilter = {
-  kind: ActivityEntryKind;
-  actions: readonly string[];
-};
-
-export type RecentFeedOpts = {
-  organizationId: OrganizationId;
-  caseId?: CaseId;
-  /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
-  filters: readonly FeedFilter[];
-  limit: number;
-  /** The last entry of the previous page: the feed continues after it (newest first). */
-  after?: KeysetAfter;
-  /** The clock the lookback window counts back from; tests and benchmarks pin it. */
-  now?: Date;
-};
-
-/** Days of history the feed ranks first; a short page widens to the next, then to everything. */
-const FEED_LOOKBACK_DAYS = [1, 7, 30] as const;
-const DAY_MS = 86_400_000;
-
-/** Most rows one feed read returns (the largest page plus one). */
-const FEED_MAX_ROWS = 101;
-
-export type RecentActivityLogRow = {
-  id: number;
-  caseId: CaseId;
-  caseName: string;
-  kind: ActivityEntryKind;
-  action: string;
-  subjectId: string | null;
-  groupId: string | null;
-  label: string | null;
-  fromValue: string | null;
-  toValue: string | null;
-  actorId: string | null;
-  actorLabel: string | null;
-  at: Date;
-  /** `at` as ISO text at microsecond precision: what the cursor carries. */
-  keyTime: string;
 };
 
 /** What Recent activity needs to label a Proposal entry (Proposal labels are resolved on read). */
@@ -194,85 +140,6 @@ function pruneCandidatesQuery(opts: PruneActivityOpts, limit: number) {
     LIMIT ${limit}`;
 }
 
-/** One pass of the feed: rank the admitted entries created at or after `since` (all when null). */
-function rankedFeed(
-  exec: DbExec,
-  opts: RecentFeedOpts,
-  filters: readonly FeedFilter[],
-  limit: number,
-  since: Date | null
-): Promise<RecentActivityLogRow[]> {
-  const admitted = filters.map((filter) =>
-    and(
-      eq(activity.kind, filter.kind),
-      inArray(activity.action, [...filter.actions])
-    )
-  );
-  const ranked = exec
-    .select({
-      id: activity.id,
-      caseId: activity.caseId,
-      caseName: cases.name,
-      kind: activity.kind,
-      action: activity.action,
-      subjectId: activity.subjectId,
-      groupId: activity.groupId,
-      label: activity.label,
-      fromValue: activity.fromValue,
-      toValue: activity.toValue,
-      actorId: activity.actorId,
-      actorLabel: activity.actorLabel,
-      at: activity.createdAt,
-      atKey: timeKey(activity.createdAt).as("at_key"),
-      newestInGroup:
-        sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
-          "newest_in_group"
-        ),
-    })
-    .from(activity)
-    .innerJoin(cases, eq(cases.id, activity.caseId))
-    .where(
-      and(
-        orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
-        or(...admitted),
-        since === null ? undefined : gte(activity.createdAt, since)
-      )
-    )
-    .as("ranked");
-  return exec
-    .select({
-      id: ranked.id,
-      caseId: ranked.caseId,
-      caseName: ranked.caseName,
-      kind: ranked.kind,
-      action: ranked.action,
-      subjectId: ranked.subjectId,
-      groupId: ranked.groupId,
-      label: ranked.label,
-      fromValue: ranked.fromValue,
-      toValue: ranked.toValue,
-      actorId: ranked.actorId,
-      actorLabel: ranked.actorLabel,
-      at: ranked.at,
-      keyTime: ranked.atKey,
-    })
-    .from(ranked)
-    .where(
-      and(
-        eq(ranked.newestInGroup, 1),
-        // After the ranking, not before it: a group shows once, at its newest entry.
-        keysetAfter({
-          idColumn: ranked.id,
-          keys: [{ column: ranked.at, time: true }],
-          direction: "desc",
-          after: opts.after,
-        })
-      )
-    )
-    .orderBy(desc(ranked.at), desc(ranked.id))
-    .limit(limit);
-}
-
 export const activityLogRepo = {
   /**
    * The only writer of the log. Call it on the domain transaction's `tx`: a
@@ -301,6 +168,8 @@ export const activityLogRepo = {
       .insert(activity)
       .values({
         caseId,
+        // A Case never changes organization: the entry carries its Case's, for the feed's indexes.
+        organizationId: sql`(select ${cases.organizationId} from ${cases} where ${cases.id} = ${caseId})`,
         kind: values.kind,
         action: values.action,
         subjectId,
@@ -472,44 +341,6 @@ export const activityLogRepo = {
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
       .where(or(...match))
       .orderBy(jobs.id);
-  },
-
-  /**
-   * Recent activity: the newest entries the allowlist admits, newest first, in
-   * one org-scoped query (the only read of the feed). Collapsed by `group_id`:
-   * only the newest entry of each group survives (a playbook run's step Jobs
-   * show as one row), and an entry with no group is its own group, so a solo
-   * Job keeps its whole history. The collapse runs before the limit, so a busy
-   * run cannot crowd the page.
-   *
-   * The collapse ranks entries inside a lookback window (`activity_created_at_id_idx`)
-   * instead of the organization's whole history: one day, widened to 7, 30 and
-   * finally everything while the page comes back short. The answer is the same
-   * as ranking everything: a group's newest entry is inside any window that
-   * holds one of its entries, and a group outside the window is older than
-   * every group inside it, so a full page from a window is the full answer.
-   */
-  async recentFeed(
-    exec: DbExec,
-    opts: RecentFeedOpts
-  ): Promise<RecentActivityLogRow[]> {
-    const admitted = opts.filters.filter((filter) => filter.actions.length > 0);
-    if (admitted.length === 0) return [];
-    // A page plus the one row that says whether another follows: past the search cap on purpose.
-    const limit = Math.min(Math.max(1, Math.trunc(opts.limit)), FEED_MAX_ROWS);
-    const now = (opts.now ?? new Date()).getTime();
-    for (const days of FEED_LOOKBACK_DAYS) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- each window runs only if the last was short
-      const rows = await rankedFeed(
-        exec,
-        opts,
-        admitted,
-        limit,
-        new Date(now - days * DAY_MS)
-      );
-      if (rows.length >= limit) return rows;
-    }
-    return rankedFeed(exec, opts, admitted, limit, null);
   },
 
   /**

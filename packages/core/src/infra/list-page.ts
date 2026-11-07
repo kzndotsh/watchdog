@@ -71,6 +71,7 @@ export function listPageSpec<Def extends AnyListDef>(
     sort: query.sort,
     fingerprint: fingerprintOf(`${scopeKeyOf(scope)}\n${ops.keyOf(query)}`),
     key: ops.sortParts(query.sort).type,
+    id: def.idType ?? "uuid",
   };
 }
 

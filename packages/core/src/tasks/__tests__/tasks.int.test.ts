@@ -2,7 +2,6 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
-import { FEED_ACTIONS } from "@watchdog/core/feed";
 import { listCappedEffect, runDomain } from "@watchdog/core/infra";
 import {
   createTaskEffect,
@@ -12,11 +11,23 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { activityLogRepo, db, taskListRepo } from "@watchdog/db";
-import { taskList } from "@watchdog/schemas/feed";
+import { activityListRepo, db, taskListRepo } from "@watchdog/db";
+import { activityList, taskList } from "@watchdog/schemas/feed";
+import { opsOf, type CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
+
+/** The Case's task entries in Recent activity, newest first. */
+async function taskFeed(caseId: CaseId) {
+  const rows = await activityListRepo.page(
+    db,
+    { organizationId: TEST_ORGANIZATION_ID },
+    opsOf(activityList).queryOf({ caseId }),
+    { limit: 10, after: undefined }
+  );
+  return rows.filter((row) => row.kind === "task");
+}
 
 describe("createTask", () => {
   beforeEach(async () => {
@@ -70,12 +81,7 @@ describe("createTask", () => {
         actorId: "   ",
       })
     );
-    const events = await activityLogRepo.recentFeed(db, {
-      organizationId: TEST_ORGANIZATION_ID,
-      caseId: cased.id,
-      filters: [{ kind: "task", actions: FEED_ACTIONS.task }],
-      limit: 10,
-    });
+    const events = await taskFeed(cased.id);
     const createdEvent = events.find(
       (row) => row.action === "created" && row.subjectId === created.id
     );
@@ -101,12 +107,7 @@ describe("createTask", () => {
         actorId: TEST_ACTOR_ID,
       })
     );
-    const events = await activityLogRepo.recentFeed(db, {
-      organizationId: TEST_ORGANIZATION_ID,
-      caseId: cased.id,
-      filters: [{ kind: "task", actions: FEED_ACTIONS.task }],
-      limit: 10,
-    });
+    const events = await taskFeed(cased.id);
     expect(events.some((row) => row.action === "status_changed")).toBe(true);
     expect(events.every((row) => row.actorId === TEST_ACTOR_ID)).toBe(true);
   });

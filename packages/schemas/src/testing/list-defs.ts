@@ -1,3 +1,4 @@
+import { activityList } from "../activity-list";
 import { caseList } from "../case-list";
 import { claimList } from "../claim-list";
 import { collectList } from "../collect-list";
@@ -34,4 +35,5 @@ export const LIST_DEFS: readonly AnyListDef[] = [
   caseList,
   jobList,
   graphWriteList,
+  activityList,
 ];

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { activityList } from "@watchdog/schemas/feed";
+import { opsOf, type OrganizationId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -19,6 +21,7 @@ import { testId } from "@watchdog/test-kit";
 import { db } from "../../client.ts";
 import { ACTIVITY_CHANNEL, listenOnChannel } from "../../events.ts";
 import { activity } from "../../schema/activity.ts";
+import { activityListRepo } from "../activity-list.repo.ts";
 import { activityLogRepo } from "../activity-log.repo.ts";
 
 const START = { xid: "0", id: 0 } as const;
@@ -198,7 +201,23 @@ describe("activityLogRepo", () => {
   });
 });
 
-describe("activityLogRepo.recentFeed", () => {
+/** Recent activity's first rows for an organization (the `activityList` binding), newest first. */
+function feedOf(
+  exec: Parameters<typeof activityLogRepo.append>[0],
+  organizationId: OrganizationId,
+  opts: { caseId?: string; limit?: number } = {}
+) {
+  return activityListRepo.page(
+    exec,
+    { organizationId },
+    opsOf(activityList).queryOf(
+      opts.caseId === undefined ? {} : { caseId: opts.caseId }
+    ),
+    { limit: opts.limit ?? 20, after: undefined }
+  );
+}
+
+describe("activityListRepo", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
@@ -209,7 +228,7 @@ describe("activityLogRepo.recentFeed", () => {
     tx: Parameters<typeof activityLogRepo.append>[0],
     caseId: Parameters<typeof activityLogRepo.append>[1]["caseId"],
     subjectId: string,
-    action: (typeof JOB_ACTIONS)[number],
+    action: (typeof JOB_ACTIONS)[number] | "logged",
     groupId: string | null = null
   ) {
     const row = await activityLogRepo.append(tx, {
@@ -224,6 +243,14 @@ describe("activityLogRepo.recentFeed", () => {
     return row;
   }
 
+  it("stamps the entry with its Case's organization", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const row = await appendJob(tx, cased.id, testId(39), "queued");
+      expect(row.organizationId).toBe(TEST_ORGANIZATION_ID);
+    });
+  });
+
   it("keeps a solo Job's whole history and one row per group (the newest)", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -237,11 +264,8 @@ describe("activityLogRepo.recentFeed", () => {
       await appendJob(tx, cased.id, testId(42), "succeeded", run);
       const last = await appendJob(tx, cased.id, testId(43), "running", run);
 
-      const rows = await activityLogRepo.recentFeed(tx, {
-        organizationId: TEST_ORGANIZATION_ID,
+      const rows = await feedOf(tx, TEST_ORGANIZATION_ID, {
         caseId: cased.id,
-        filters: [{ kind: "job", actions: JOB_ACTIONS }],
-        limit: 20,
       });
       expect(rows).toHaveLength(4);
       expect(rows.filter((row) => row.subjectId === solo)).toHaveLength(3);
@@ -259,10 +283,8 @@ describe("activityLogRepo.recentFeed", () => {
         // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
         await appendJob(tx, cased.id, testId(51), "running", run);
       }
-      const rows = await activityLogRepo.recentFeed(tx, {
-        organizationId: TEST_ORGANIZATION_ID,
+      const rows = await feedOf(tx, TEST_ORGANIZATION_ID, {
         caseId: cased.id,
-        filters: [{ kind: "job", actions: JOB_ACTIONS }],
         limit: 2,
       });
       expect(rows.map((row) => row.groupId)).toHaveLength(2);
@@ -276,20 +298,16 @@ describe("activityLogRepo.recentFeed", () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await appendJob(tx, cased.id, testId(60), "queued");
-      const other = await activityLogRepo.recentFeed(tx, {
-        organizationId: TEST_OTHER_ORGANIZATION_ID,
-        filters: [{ kind: "job", actions: JOB_ACTIONS }],
-        limit: 20,
-      });
-      expect(other).toEqual([]);
-      const none = await activityLogRepo.recentFeed(tx, {
-        organizationId: TEST_ORGANIZATION_ID,
-        filters: [{ kind: "job", actions: ["succeeded"] }],
-        limit: 20,
-      });
-      expect(none).toEqual([]);
+      expect(await feedOf(tx, TEST_OTHER_ORGANIZATION_ID)).toEqual([]);
+      // `logged` drives the live signal only: never a feed row.
+      const other = await seedCase(tx, { slug: "logged-only" });
+      await appendJob(tx, other.id, testId(61), "logged");
+      expect(
+        await feedOf(tx, TEST_ORGANIZATION_ID, { caseId: other.id })
+      ).toEqual([]);
     });
   });
+
   it("reads several kinds in one query, each through its own allowlist", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -307,14 +325,7 @@ describe("activityLogRepo.recentFeed", () => {
       const created = await append("task", "created");
       const hidden = await append("evidence", "hidden");
       const captured = await append("evidence", "captured");
-      const rows = await activityLogRepo.recentFeed(tx, {
-        organizationId: TEST_ORGANIZATION_ID,
-        filters: [
-          { kind: "task", actions: ["created"] },
-          { kind: "evidence", actions: ["captured"] },
-        ],
-        limit: 20,
-      });
+      const rows = await feedOf(tx, TEST_ORGANIZATION_ID);
       expect(rows.map((row) => row.id)).toEqual([captured.id, created.id]);
       expect(rows.map((row) => row.id)).not.toContain(hidden.id);
     });
@@ -329,21 +340,9 @@ describe("activityLogRepo.recentFeed", () => {
         action: "created",
         subjectId: testId(71),
       });
-      const filters = [{ kind: "task" as const, actions: ["created"] }];
+      expect(await feedOf(tx, TEST_OTHER_ORGANIZATION_ID)).toEqual([]);
       expect(
-        await activityLogRepo.recentFeed(tx, {
-          organizationId: TEST_OTHER_ORGANIZATION_ID,
-          filters,
-          limit: 20,
-        })
-      ).toEqual([]);
-      expect(
-        await activityLogRepo.recentFeed(tx, {
-          organizationId: TEST_OTHER_ORGANIZATION_ID,
-          caseId: cased.id,
-          filters,
-          limit: 20,
-        })
+        await feedOf(tx, TEST_OTHER_ORGANIZATION_ID, { caseId: cased.id })
       ).toEqual([]);
     });
   });

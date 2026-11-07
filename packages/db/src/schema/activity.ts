@@ -14,7 +14,7 @@ import {
   ACTIVITY_ENTRY_KINDS,
 } from "@watchdog/schemas/feed";
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz, xid8 } from "./_helpers";
 import { vocabCheck } from "./_vocab";
@@ -48,6 +48,12 @@ export const activity = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /**
+     * The Case's organization, copied at append (a Case never changes organization): the lead
+     * column of the Recent activity list's indexes, so the organization-wide feed reads one
+     * btree instead of joining every Case.
+     */
+    organizationId: text("organization_id").$type<OrganizationId>().notNull(),
     /** The subject noun (`ACTIVITY_ENTRY_KINDS`). */
     kind: text("kind").$type<ActivityEntryKind>().notNull(),
     /** A verb from the closed list for the kind (`ACTIVITY_ENTRY_ACTIONS`). */
@@ -68,8 +74,22 @@ export const activity = pgTable(
   (t) => [
     index("activity_xid_id_idx").on(t.xid, t.id),
     index("activity_case_id_id_idx").on(t.caseId, t.id.desc()),
-    // Recent activity ranks a lookback window of the newest entries (`recentFeed`).
-    index("activity_created_at_id_idx").on(t.createdAt.desc(), t.id.desc()),
+    // Recent activity (`activityList`, ADR-0007): each sort is a btree led by the organization;
+    // the Case filter has its own, and the collapse of a run to its newest entry probes the group.
+    index("activity_org_created_idx").on(
+      t.organizationId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("activity_org_case_created_idx").on(
+      t.organizationId,
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("activity_group_created_idx")
+      .on(t.groupId, t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst())
+      .where(sql`${t.groupId} IS NOT NULL`),
     check("activity_label_len", sql`char_length(${t.label}) <= 200`),
     vocabCheck(t.kind, ACTIVITY_ENTRY_KINDS),
     // The verb must belong to some kind; the (kind, verb) pairing stays in `appendActivityEffect`.

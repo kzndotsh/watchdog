@@ -6,7 +6,8 @@ import { listRecentActivityEffect } from "@watchdog/core/feed";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
 import { activityLogRepo, db, evidenceRepo, proposalsRepo } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { activityList } from "@watchdog/schemas/feed";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -40,6 +41,21 @@ async function appendActivityRow(
   if (row === null) throw new Error("append failed");
 }
 
+/** The feed as the tests ask for it: a Case, a page size. */
+function listRecent(opts: {
+  organizationId: OrganizationId;
+  caseId?: CaseId;
+  limit?: number;
+}) {
+  return listRecentActivityEffect({
+    organizationId: opts.organizationId,
+    input: activityList.input.parse({
+      caseId: opts.caseId,
+      limit: opts.limit,
+    }),
+  });
+}
+
 describe("listRecentActivity", () => {
   beforeEach(async () => {
     await resetTestDb();
@@ -65,7 +81,7 @@ describe("listRecentActivity", () => {
       })
     );
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -95,7 +111,7 @@ describe("listRecentActivity", () => {
     );
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -126,7 +142,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -164,7 +180,7 @@ describe("listRecentActivity", () => {
     );
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -199,7 +215,7 @@ describe("listRecentActivity", () => {
     }
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -227,7 +243,7 @@ describe("listRecentActivity", () => {
     }
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -253,7 +269,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -280,7 +296,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -308,7 +324,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -337,7 +353,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -357,7 +373,7 @@ describe("listRecentActivity", () => {
     await seedProposal(db, cased.id, [], { summary: "Registrar is Acme" });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -384,7 +400,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -415,7 +431,7 @@ describe("listRecentActivity", () => {
     await appendActivityRow(cased.id, "evidence", "processed", ev.id);
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         limit: 20,
@@ -451,7 +467,7 @@ describe("listRecentActivity", () => {
     });
 
     const items = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         limit: 20,
       }).pipe(Effect.map((page) => page.items))
@@ -471,7 +487,7 @@ describe("listRecentActivity", () => {
     await seedJob(db, theirs.id);
 
     const all = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_ORGANIZATION_ID,
         limit: 50,
       }).pipe(Effect.map((page) => page.items))
@@ -480,7 +496,7 @@ describe("listRecentActivity", () => {
     expect(all.every((item) => item.caseId === mine.id)).toBe(true);
 
     const theirFeed = await runDomain(
-      listRecentActivityEffect({
+      listRecent({
         organizationId: TEST_OTHER_ORGANIZATION_ID,
         limit: 50,
       }).pipe(Effect.map((page) => page.items))
@@ -489,7 +505,7 @@ describe("listRecentActivity", () => {
 
     await expect(
       runDomain(
-        listRecentActivityEffect({
+        listRecent({
           organizationId: TEST_ORGANIZATION_ID,
           caseId: theirs.id,
         }).pipe(Effect.map((page) => page.items))
