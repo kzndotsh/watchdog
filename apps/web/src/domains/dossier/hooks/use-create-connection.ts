@@ -43,12 +43,11 @@ export function useCreateConnection({
           evidenceIds: values.evidenceIds,
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       toast.success("Connection added");
       onCreated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
     },
     onError: (caughtError) => {

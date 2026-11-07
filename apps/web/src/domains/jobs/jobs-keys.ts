@@ -10,8 +10,17 @@ export const jobsKeys = {
   /** Under `all`, so a Job's status change (SSE) refreshes the calls it made. */
   providerCalls: (caseId: string, jobId: string) =>
     ["jobs", caseId, "provider-calls", jobId] as const,
-  jobArtifact: (caseId: string, jobId: string, sha256: string, mime: string) =>
+};
+
+/**
+ * Artifact bodies: addressed by content (a Job artifact by its sha256), so they never change, and
+ * they can be large. Their own root keeps them out of every domain invalidation: a Job's status
+ * change must not re-download an open artifact.
+ */
+export const artifactKeys = {
+  all: ["artifact"] as const,
+  job: (caseId: string, jobId: string, sha256: string, mime: string) =>
     ["artifact", "job", caseId, jobId, sha256, mime] as const,
-  evidenceArtifact: (caseId: string, evidenceId: string, mime: string) =>
+  evidence: (caseId: string, evidenceId: string, mime: string) =>
     ["artifact", "evidence", caseId, evidenceId, mime] as const,
 };

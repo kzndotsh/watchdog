@@ -28,11 +28,10 @@ export function useCreateClaim({ onCreated }: { onCreated?: () => void } = {}) {
           evidenceIds: value.evidenceIds,
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onCreated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Claim saved");
     },

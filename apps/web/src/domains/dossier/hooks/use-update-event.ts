@@ -41,20 +41,18 @@ export function useUpdateEvent({
           where: value.where,
         }),
       }),
-    onSuccess: async (_data, { caseId, entityId, entitySlug }) => {
+    onSuccess: async (_data, { caseId, entityId }) => {
       onUpdated?.();
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
       toast.success("Event updated");
     },
-    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+    onError: (caughtError, { caseId, entityId }) => {
       notifyStale(caughtError, {
         noun: "event",
         caseId,
         entityId,
-        entitySlug,
         onReload,
       });
     },

@@ -46,15 +46,13 @@ export function useSaveEntityProse({
       );
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId,
-        slug: entitySlug,
       });
     },
-    onError: (caughtError, { caseId, entityId, entitySlug }) => {
+    onError: (caughtError, { caseId, entityId }) => {
       notifyStale(caughtError, {
         noun: "entity",
         caseId,
         entityId,
-        entitySlug,
         onReload,
       });
       onError?.(errMessage(caughtError, couldnt("save", "entity")));

@@ -21,7 +21,7 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { edgeList } from "@watchdog/schemas/graph";
 
 export const edgesKeys = {
-  prefix: (caseId: string) => ["edges", caseId] as const,
+  all: (caseId: string) => ["edges", caseId] as const,
   /** The Graph page's snapshot: under the Case prefix, so every Entity and Connection change refreshes it. */
   graphSnapshot: (caseId: string) =>
     ["edges", caseId, "graph-snapshot"] as const,
@@ -36,7 +36,7 @@ export const edgesKeys = {
 /**
  * The Case's Connection list (`edgeList`, ADR-0007), a page at a time: the Dossier Connections
  * tab and the Entities table's Connections popover are this list with `entityId` fixed. Keys sit
- * under `edgesKeys.prefix`, so every Entity, Connection and Proposal change refreshes each view.
+ * under `edgesKeys.all`, so every Entity, Connection and Proposal change refreshes each view.
  */
 export const edgeListView = listView(edgeList, {
   domain: "edges",

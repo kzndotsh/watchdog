@@ -112,7 +112,6 @@ export function useIdentifiersTableMutations(
         noun: "identifier",
         caseId,
         entityId: row?.entityId,
-        entitySlug: row?.entitySlug,
       });
       if (!handled) onIdentifierUpdateError(error);
     },
