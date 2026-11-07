@@ -50,14 +50,17 @@ export function buildEntityFrontmatter(input: {
     .join("\n");
 }
 
-function connectionPeerLabel(peer: EntityPeerRow): string {
+/** What a Connections line reads of the Entity on the other end of an edge. */
+type ConnectionPeer = Pick<EntityPeerRow, "slug" | "name">;
+
+function connectionPeerLabel(peer: ConnectionPeer): string {
   return entityDisplayLabel(peer);
 }
 
 export function appendConnectionsSection(
   lines: string[],
-  outEdges: EdgeRow[],
-  resolvedPeers: Map<string, EntityPeerRow>
+  outEdges: Pick<EdgeRow, "predicate" | "toId" | "notes">[],
+  resolvedPeers: Map<string, ConnectionPeer>
 ): void {
   if (outEdges.length === 0) return;
   lines.push("## Connections");
@@ -82,7 +85,10 @@ export function appendConnectionsSection(
 
 export function appendIdentifiersSection(
   lines: string[],
-  entityIdentifiers: IdentifierRow[]
+  entityIdentifiers: Pick<
+    IdentifierRow,
+    "type" | "platform" | "value" | "status" | "confidence"
+  >[]
 ): void {
   if (entityIdentifiers.length === 0) return;
   lines.push(
@@ -142,7 +148,7 @@ function questionLabel(index: number): string {
 
 export function appendQuestionsSection(
   lines: string[],
-  entityQuestions: QuestionRow[]
+  entityQuestions: Pick<QuestionRow, "text" | "status" | "resolvedNote">[]
 ): void {
   if (entityQuestions.length === 0) return;
   lines.push("## Questions");
@@ -164,7 +170,7 @@ export function appendQuestionsSection(
 
 export function appendEvidenceSection(
   lines: string[],
-  entityEvidence: EvidenceRow[]
+  entityEvidence: Pick<EvidenceRow, "id" | "kind" | "label" | "sourceUrl">[]
 ): void {
   if (entityEvidence.length === 0) return;
   lines.push("## Evidence");

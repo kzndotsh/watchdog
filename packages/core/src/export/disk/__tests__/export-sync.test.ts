@@ -1,4 +1,4 @@
-import { Deferred, Effect } from "effect";
+import { Deferred, Effect, Fiber } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
@@ -92,34 +92,33 @@ describe("exportWritesSettledEffect", () => {
 describe("scheduleCaseExportEffect", () => {
   it("coalesces concurrent schedules into one in-flight write then a follow-up", async () => {
     let calls = 0;
-    let releaseFirst!: () => void;
-    const firstGate = new Promise<void>((resolve) => {
-      releaseFirst = resolve;
-    });
 
-    const writeExport = () =>
-      Effect.gen(function* writeExportGen() {
-        calls += 1;
-        if (calls === 1) {
-          yield* Effect.promise(() => firstGate);
-        }
-      });
-
-    const caseId = testCaseId(99);
-    const first = runDomain(scheduleCaseExportEffect(caseId, writeExport));
-    await vi.waitFor(() => {
+    const program = Effect.gen(function* programGen() {
+      const gate = yield* Deferred.make<undefined>();
+      const firstStarted = yield* Deferred.make<undefined>();
+      const writeExport = () =>
+        Effect.gen(function* writeExportGen() {
+          calls += 1;
+          if (calls === 1) {
+            yield* Deferred.succeed(firstStarted, undefined);
+            yield* Deferred.await(gate);
+          }
+        });
+      const schedule = scheduleCaseExportEffect(testCaseId(99), writeExport);
+      const first = yield* Effect.forkChild(schedule);
+      // The first write has started and parked on the gate (no clock).
+      yield* Deferred.await(firstStarted);
+      // Marking happens when the Effect is interpreted: the second schedule marks the case
+      // dirty while the first write is still in flight, and starts no write of its own.
+      const second = yield* Effect.forkChild(schedule);
+      for (let i = 0; i < 10; i += 1) yield* Effect.yieldNow;
       expect(calls).toBe(1);
+      yield* Deferred.succeed(gate, undefined);
+      yield* Fiber.join(first);
+      yield* Fiber.join(second);
     });
-    // Marking happens when the Effect is interpreted: let the second schedule
-    // mark the case dirty while the first write is still in flight.
-    const second = runDomain(scheduleCaseExportEffect(caseId, writeExport));
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 20);
-    });
-    expect(calls).toBe(1);
 
-    releaseFirst();
-    await Promise.all([first, second]);
+    await runDomain(program);
     expect(calls).toBe(2);
   });
 

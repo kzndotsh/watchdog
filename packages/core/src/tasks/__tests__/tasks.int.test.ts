@@ -218,6 +218,43 @@ describe("createTask", () => {
     expect(board.items.map((row) => row.id)).toEqual([second.id, first.id]);
   });
 
+  it("rejects an invalid task id and leaves the column as it was", async () => {
+    const cased = await seedCase(db);
+    const first = await runDomain(
+      createTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        title: "First",
+      })
+    );
+    const second = await runDomain(
+      createTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        title: "Second",
+      })
+    );
+
+    await expect(
+      runDomain(
+        reorderTasksEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          status: "backlog",
+          orderedIds: [second.id, "not-a-uuid"],
+        })
+      )
+    ).rejects.toMatchObject({
+      _tag: "InvalidError",
+      reason: "Task order contains an invalid task id",
+    });
+
+    const board = await runDomain(
+      getTaskBoardEffect(cased.id, TEST_ORGANIZATION_ID, {})
+    );
+    expect(board.items.map((row) => row.id)).toEqual([first.id, second.id]);
+  });
+
   it("assigns distinct positions for concurrent creates", async () => {
     const cased = await seedCase(db);
     const [first, second] = await Promise.all([

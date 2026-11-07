@@ -1,27 +1,46 @@
 import { Effect } from "effect";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { recordingBlobStore, type BlobStore } from "@watchdog/core/blob";
-import type { JobRow } from "@watchdog/db";
+import { recordingBlobStore } from "@watchdog/core/blob";
+import type { JobArtifact, JobRow } from "@watchdog/db";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
-
-const { loadCapReportEffect } = vi.hoisted(() => ({
-  loadCapReportEffect: vi.fn(),
-}));
-
-vi.mock("../../load-cap-report", () => ({
-  loadCapReportEffect,
-}));
-
-const runStage = <A>(effect: Effect.Effect<A, never, BlobStore>) =>
-  Effect.runPromise(effect.pipe(Effect.provide(recordingBlobStore().layer)));
 
 import { createJobLog } from "../../job-log";
 import type { CollectRuntime } from "../collect";
 import { interpretStageEffect, logInterpretFailure } from "../interpret";
 import type { PreflightState } from "../preflight";
+
+const REPORT_URI = "jobs/report.json";
+
+/** Runs the stage against a blob store holding `report` as the Job's `report.json`. */
+function runStage(
+  state: PreflightState,
+  runtime: CollectRuntime,
+  report?: unknown
+) {
+  const store = recordingBlobStore();
+  const artifacts: JobArtifact[] = [];
+  if (report !== undefined) {
+    store.objects.set(
+      REPORT_URI,
+      new TextEncoder().encode(JSON.stringify(report))
+    );
+    artifacts.push({
+      name: "report.json",
+      mime: "application/json",
+      uri: REPORT_URI,
+      sha256: "a".repeat(64),
+    });
+  }
+  return Effect.runPromise(
+    interpretStageEffect(state, artifacts, runtime, {
+      proposalId: null,
+      resultSummary: "cached",
+    }).pipe(Effect.provide(store.layer))
+  );
+}
 
 function makeJobRow(): JobRow {
   const now = new Date("2026-01-03T00:00:00.000Z");
@@ -60,19 +79,15 @@ function makeJobRow(): JobRow {
 }
 
 function makeState(
-  interpret: PreflightState["cap"]["interpret"]
+  overrides: Partial<PreflightState["cap"]> = {}
 ): PreflightState {
   return {
     jobId: testId(1),
     job: makeJobRow(),
     capVersion: "test-version",
-    cap: {
-      ...requireCapability("network.dns.lookup"),
-      interpret,
-      pivots: undefined,
-    },
+    cap: { ...requireCapability("network.dns.lookup"), ...overrides },
     policy: {},
-    input: {},
+    input: { host: "mailhost.test" },
     reclaimArtifacts: null,
     reclaimEvidenceIds: [],
   };
@@ -91,6 +106,15 @@ function makeRuntime(overrides: Partial<CollectRuntime> = {}): CollectRuntime {
   };
 }
 
+const DNS_REPORT = {
+  host: "mailhost.test",
+  a: ["93.184.216.34"],
+  aaaa: [],
+  mx: [],
+  txt: [],
+  ns: ["ns1.mailhost.test."],
+};
+
 describe("interpret stage", () => {
   it("logInterpretFailure appends log line and fallback summary", () => {
     const jobLog = createJobLog();
@@ -101,86 +125,74 @@ describe("interpret stage", () => {
     );
   });
 
-  it("returns early when interpret and pivots are not needed", async () => {
-    const runtime = {
-      evidenceSnapshot: undefined,
-    } as CollectRuntime;
-    const state = {
-      cap: {},
-      input: {},
-    } as PreflightState;
+  it("returns the existing summary and no patch when the Cap neither interprets nor pivots", async () => {
+    const state = makeState({ interpret: undefined, pivots: undefined });
 
-    const result = await runStage(
-      interpretStageEffect(state, [], runtime, {
-        proposalId: null,
-        resultSummary: "cached",
-      })
-    );
+    const result = await runStage(state, makeRuntime());
 
     expect(result.resultSummary).toBe("cached");
     expect(result.patch).toEqual([]);
     expect(result.interpretError).toBeNull();
   });
 
-  it("captures interpret errors when report.json is missing", async () => {
-    loadCapReportEffect.mockReturnValueOnce(Effect.succeed(null));
-    const runtime = makeRuntime();
-    const state = makeState(vi.fn());
-
-    const result = await runStage(
-      interpretStageEffect(state, [], runtime, {
-        proposalId: null,
-        resultSummary: null,
-      })
-    );
+  it("captures an interpret error when report.json is missing", async () => {
+    const result = await runStage(makeState(), makeRuntime());
 
     expect(result.interpretError).toContain("No report.json");
+    expect(result.patch).toEqual([]);
   });
 
-  it("trims padded interpret summary", async () => {
-    loadCapReportEffect.mockReturnValueOnce(
-      Effect.succeed({ report: { ok: true } })
-    );
+  it("interprets a real DNS report into the Cap's summary and Identifier patch", async () => {
     const entityId = testId(20);
-    const runtime = makeRuntime();
-    const state = makeState(
-      vi.fn().mockReturnValue({
-        summary: "  dns ok  ",
-        patch: [
-          {
-            op: "create",
-            resource: "claim",
-            id: testId(21),
-            data: {
-              entityId,
-              text: "observed",
-              class: "observation",
-            },
-          },
-        ],
-      })
-    );
+    const state = makeState();
+    state.input = { host: "mailhost.test", entityId };
 
-    const result = await runStage(
-      interpretStageEffect(state, [], runtime, {
-        proposalId: null,
-        resultSummary: null,
-      })
-    );
+    const result = await runStage(state, makeRuntime(), DNS_REPORT);
+
+    expect(result.interpretError).toBeNull();
+    expect(result.resultSummary).toContain("93.184.216.34");
+    expect(
+      result.patch.some(
+        (op) => op.op === "create" && op.resource === "identifier"
+      )
+    ).toBe(true);
+  });
+
+  it("reports an interpret patch the graph would refuse as an error, with no patch", async () => {
+    const state = makeState({
+      interpret: () => ({
+        summary: "dns ok",
+        patch: [
+          { op: "create", resource: "claim", id: "not-a-uuid", data: {} },
+        ],
+      }),
+    });
+
+    const result = await runStage(state, makeRuntime(), DNS_REPORT);
+
+    expect(result.interpretError).toContain("interpret patch invalid");
+    expect(result.patch).toEqual([]);
+  });
+
+  it("trims a padded interpret summary", async () => {
+    const state = makeState({
+      interpret: () => ({ summary: "  dns ok  ", patch: [] }),
+    });
+
+    const result = await runStage(state, makeRuntime(), DNS_REPORT);
 
     expect(result.resultSummary).toBe("dns ok");
     expect(result.interpretError).toBeNull();
   });
 
-  it("passes trimmed snapshot text length to interpret", async () => {
-    const interpret = vi.fn().mockReturnValue({
-      summary: null,
-      patch: [],
-      markSourceProcessed: false,
+  it("tells interpret the trimmed length of the snapshot text", async () => {
+    let seen: number | undefined;
+    const state = makeState({
+      interpret: (_report, opts) => {
+        seen = opts.snapshotTextChars;
+        return { patch: [] };
+      },
     });
-    loadCapReportEffect.mockReturnValueOnce(
-      Effect.succeed({ report: { ok: true } })
-    );
     const runtime = makeRuntime({
       evidenceSnapshot: {
         evidenceId: testId(30),
@@ -191,18 +203,9 @@ describe("interpret stage", () => {
         packerVersion: 1,
       },
     });
-    const state = makeState(interpret);
 
-    await runStage(
-      interpretStageEffect(state, [], runtime, {
-        proposalId: null,
-        resultSummary: null,
-      })
-    );
+    await runStage(state, runtime, DNS_REPORT);
 
-    expect(interpret).toHaveBeenCalledWith(
-      { ok: true },
-      expect.objectContaining({ snapshotTextChars: 0 })
-    );
+    expect(seen).toBe(0);
   });
 });
