@@ -1,41 +1,39 @@
 import { describe, expect, it, vi } from "vitest";
 
-const cliMocks = vi.hoisted(() => ({
-  emit: vi.fn(),
-}));
+import { firstJson, runWd } from "./run-wd";
+import { API_KEY, API_URL, standInApi } from "./stand-in-api";
 
-vi.mock("../client", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../client")>();
-  return {
-    ...actual,
-    api: vi.fn(() => ({
-      cases: {
-        list: vi
-          .fn()
-          .mockResolvedValue({ items: [{ id: "case-1" }], nextCursor: null }),
-      },
-    })),
-    emit: cliMocks.emit,
-    wrapCommandTree: (command: unknown) => command,
-  };
-});
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
-vi.mock("../env", () => ({
-  loadCliEnv: vi.fn(),
-}));
+const standIn = standInApi();
+const API = { WD_API_KEY: API_KEY, WD_API_URL: API_URL };
 
-import { wdMain } from "../main";
+describe("wd without a subcommand", () => {
+  it("prints the root command index with the number of Cases", async () => {
+    standIn.json("get", "/cases", {
+      items: [{ id: "case-1" }],
+      nextCursor: null,
+    });
 
-describe("wdMain", () => {
-  it("emits the root command index when invoked without a subcommand", async () => {
-    await wdMain.run?.({ args: {} } as never);
+    const run = await runWd([], API);
 
-    expect(cliMocks.emit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        bin: "wd",
-        count: 1,
-        commands: expect.arrayContaining(["cases", "jobs", "proposals"]),
-      })
-    );
+    expect(run.status).toBe(0);
+    expect(firstJson(run.stdout)).toMatchObject({
+      bin: "wd",
+      count: 1,
+      commands: expect.arrayContaining(["cases", "jobs", "proposals"]),
+    });
+  });
+
+  it("prints a CONFIG error without a key", async () => {
+    const run = await runWd([]);
+
+    expect(run.status).toBe(1);
+    expect(firstJson(run.stdout)).toMatchObject({
+      ok: false,
+      error: { code: "CONFIG" },
+    });
+    expect(standIn.seen).toEqual([]);
   });
 });

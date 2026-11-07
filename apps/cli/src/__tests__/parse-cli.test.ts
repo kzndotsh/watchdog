@@ -6,12 +6,10 @@ import {
   parseOptionalCliEnum,
   parseOptionalNullableTrimmedPatch,
 } from "../parse-cli";
+import { failureOf } from "./stand-in-api";
 
-vi.mock("../io", () => ({
-  fail: vi.fn((code: string, message: string) => {
-    throw new Error(`${code}: ${message}`);
-  }),
-}));
+// A developer `.env` above the checkout would otherwise be loaded into process.env.
+vi.mock("dotenv", () => ({ config: vi.fn() }));
 
 const tierSchema = z.enum(["unverified", "possible", "confirmed"]);
 
@@ -22,10 +20,13 @@ describe("parseCliEnum", () => {
     );
   });
 
-  it("throws USAGE for invalid enum values", () => {
-    expect(() => parseCliEnum(tierSchema, "bogus", "confidence")).toThrow(
-      /USAGE/
+  it("fails USAGE naming the field for invalid enum values", async () => {
+    const failure = await failureOf(() =>
+      parseCliEnum(tierSchema, "bogus", "confidence")
     );
+    expect(failure.exitCode).toBe(1);
+    expect(failure.error.code).toBe("USAGE");
+    expect(failure.error.message).toContain("confidence");
   });
 });
 

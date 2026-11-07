@@ -1,19 +1,7 @@
 {
-  "apps/cli/src/__tests__/client.test.ts": 1,
-  "apps/cli/src/__tests__/custody-shared-message.test.ts": 1,
-  "apps/cli/src/__tests__/custody.test.ts": 1,
-  "apps/cli/src/__tests__/download.test.ts": 2,
-  "apps/cli/src/__tests__/ids-resolve.test.ts": 1,
-  "apps/cli/src/__tests__/job-entity-titles.test.ts": 1,
-  "apps/cli/src/__tests__/job-evidence-titles.test.ts": 1,
-  "apps/cli/src/__tests__/main.test.ts": 2,
-  "apps/cli/src/__tests__/parse-cli.test.ts": 1,
-  "apps/cli/src/__tests__/upload-file.test.ts": 2,
-  "apps/cli/src/commands/__tests__/commands.test.ts": 4,
   "apps/web/src/__tests__/router.test.ts": 2,
   "apps/web/src/__tests__/start-timing.test.ts": 3,
   "apps/web/src/__tests__/start.test.ts": 3,
-  "apps/web/src/app/layout/__tests__/app-shell.component.test.tsx": 3,
   "apps/web/src/app/layout/__tests__/case-switcher-switch.component.test.tsx": 2,
   "apps/web/src/app/layout/__tests__/case-switcher.component.test.tsx": 3,
   "apps/web/src/app/lib/__tests__/activity-invalidation.test.ts": 1,
@@ -122,6 +110,5 @@
   "apps/web/src/shared/ui/identifiers/__tests__/notes-icon-cell-lazy.component.test.tsx": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/lazy-rich-text-editor.component.test.tsx": 1,
   "apps/web/src/shared/ui/rich-text/__tests__/load-rich-text-editor.test.ts": 1,
-  "apps/web/src/shared/ui/rich-text/__tests__/rich-text-editor.component.test.tsx": 2,
-  "apps/worker/src/__tests__/main.test.ts": 1
+  "apps/web/src/shared/ui/rich-text/__tests__/rich-text-editor.component.test.tsx": 2
 }

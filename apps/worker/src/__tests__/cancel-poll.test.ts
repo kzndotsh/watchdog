@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Fiber } from "effect";
+import { Effect, Fiber, FiberMap } from "effect";
 import { TestClock } from "effect/testing";
 import { vi } from "vitest";
 
@@ -38,11 +38,12 @@ describe("cancelPollLoopEffect", () => {
         Effect.succeed(["job-1"])
       );
 
+      const map = yield* FiberMap.make<string>();
       const fiber = yield* cancelPollLoopEffect.pipe(
         Effect.provideService(
           JobFibers,
           JobFibers.of({
-            map: {} as never,
+            map,
             abort: (jobId, stop) =>
               Effect.sync(() => {
                 pollMocks.abort(jobId, stop);
