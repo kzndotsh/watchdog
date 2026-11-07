@@ -24,7 +24,8 @@ describe("github-user", () => {
 
       const snap = yield* fetchGithubUserEffect(
         "missing-user",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(githubUserSnapshotSchema.parse(snap).found).toBe(false);
@@ -50,7 +51,8 @@ describe("github-user", () => {
 
         const snap = yield* fetchGithubUserEffect(
           "ghost",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.found).toBe(false);

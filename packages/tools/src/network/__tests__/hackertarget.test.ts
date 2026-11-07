@@ -35,7 +35,8 @@ describe("hackertarget", () => {
 
         const snap = yield* fetchHackertargetReverseIpEffect(
           "8.8.8.8",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.domains).toContain("dns.google");

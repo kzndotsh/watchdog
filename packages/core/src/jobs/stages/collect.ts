@@ -145,7 +145,12 @@ export function blobToVendorError(
   return new ValidationVendorError({ message: error.reason, cause: error });
 }
 
-function vaultToTools(name: string) {
+/**
+ * What a Cap sees of a vault failure. A slot with no value is the one missing-key failure
+ * (`MissingCredentialError`, "<SLOT> required"): tools take the key value and never check it.
+ * The vault trims on put and refuses an empty secret, so a stored value is never blank.
+ */
+export function vaultToTools(name: string) {
   return (error: DomainTag): ToolsTag => {
     if (error instanceof NotFoundError) {
       return new MissingCredentialError({ slot: name });

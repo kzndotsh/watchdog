@@ -5,12 +5,10 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import {
   HttpVendorError,
-  MissingCredentialError,
   ParseVendorError,
   ValidationVendorError,
   type ToolsTag,
 } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
@@ -31,7 +29,6 @@ import { asNumber, recordRows } from "../parse/coerce";
 
 const BASE_URL = "https://api.leakradar.io";
 const SERVICE = "LeakRadar";
-const SLOT = "LEAKRADAR_API_KEY";
 
 export const LEAKRADAR_DEFAULT_PAGE_SIZE = 25;
 export const LEAKRADAR_MAX_PAGE_SIZE = 100;
@@ -98,7 +95,7 @@ export type LeakradarLookupSnapshot = z.infer<
 >;
 
 export type LeakradarOptions = {
-  userAgent?: string;
+  userAgent: string;
   /** Explicit kind; otherwise detected from the query. */
   kind?: LeakradarKind;
   /** 1 to `LEAKRADAR_MAX_PAGE`; default 1. */
@@ -313,24 +310,20 @@ function clampInt(
 
 export function fetchLeakradarLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: LeakradarOptions
+  options: LeakradarOptions
 ): Effect.Effect<LeakradarLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchLeakradarLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: SLOT });
-    }
     const { kind, value } = yield* Effect.try({
-      try: () => classifyLeakradarQuery(queryRaw, options?.kind),
+      try: () => classifyLeakradarQuery(queryRaw, options.kind),
       catch: mapToolsCatch,
     });
 
-    const page = clampInt(options?.page, 1, LEAKRADAR_MAX_PAGE);
+    const page = clampInt(options.page, 1, LEAKRADAR_MAX_PAGE);
     const pageSize = clampInt(
-      options?.pageSize,
+      options.pageSize,
       LEAKRADAR_DEFAULT_PAGE_SIZE,
       LEAKRADAR_MAX_PAGE_SIZE
     );
@@ -341,8 +334,7 @@ export function fetchLeakradarLookupEffect(
     const headers = {
       Accept: "application/json",
       Authorization: `Bearer ${key}`,
-      "User-Agent":
-        options?.userAgent ?? watchdogUserAgent("breach.leakradar.lookup"),
+      "User-Agent": options.userAgent,
     };
     const subject = `${kind} search`;
 
@@ -372,7 +364,7 @@ export function fetchLeakradarLookupEffect(
         totalUnlocked: null,
         domainCounts: counts,
       };
-      if (options?.includeRecords === true && result.total > 0) {
+      if (options.includeRecords === true && result.total > 0) {
         const body = yield* callEffect({
           url: `${path}/all?${paging}`,
           init: { method: "GET", headers },

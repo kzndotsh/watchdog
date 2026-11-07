@@ -6,8 +6,7 @@ import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import {
   assertHttpUrlScheme,
@@ -72,27 +71,19 @@ function authHeader(apiKey: string, apiPassword: string): string {
  */
 export function fetchXforceLookupEffect(
   queryRaw: string,
-  apiKey: string,
-  apiPassword: string,
+  key: string,
+  password: string,
   signal: AbortSignal,
-  options?: { userAgent?: string }
+  options: { userAgent: string }
 ): Effect.Effect<XforceLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchXforceLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    const password = apiPassword.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "XFORCE_API_KEY" });
-    }
-    if (!password) {
-      return yield* new MissingCredentialError({ slot: "XFORCE_API_PASSWORD" });
-    }
 
     const { kind, value } = yield* Effect.try({
       try: () => classifyXforceQuery(queryRaw),
       catch: mapToolsCatch,
     });
-    const ua = options?.userAgent ?? watchdogUserAgent("threat.xforce.lookup");
+    const ua = options.userAgent;
     const headers: Record<string, string> = {
       Accept: "application/json",
       Authorization: authHeader(key, password),

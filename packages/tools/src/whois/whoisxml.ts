@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import type { WhoisSnapshot } from "./schema";
 import { parseWhoisDate, whoisStatusList } from "./shared";
@@ -76,14 +76,11 @@ function whoisXmlSnapshot(
 
 export function fetchWhoisXmlEffect(
   host: string,
-  apiKey: string,
-  signal: AbortSignal
+  key: string,
+  signal: AbortSignal,
+  options: { userAgent: string }
 ): Effect.Effect<WhoisSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWhoisXmlGen() {
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "WHOIS_API_KEY" });
-    }
     const url = new URL("https://www.whoisxmlapi.com/whoisserver/WhoisService");
     url.searchParams.set("apiKey", key);
     url.searchParams.set("domainName", host);
@@ -93,6 +90,7 @@ export function fetchWhoisXmlEffect(
       signal,
       service: "WhoisXML",
       subject: host,
+      init: { headers: { "User-Agent": options.userAgent } },
     });
     const raw = whoisXmlResponseSchema.parse(body);
     return whoisXmlSnapshot(host, raw);

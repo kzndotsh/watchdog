@@ -3,12 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import {
-  MissingCredentialError,
-  ParseVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { recordRows } from "../parse/coerce";
@@ -41,15 +36,15 @@ export type HibpLookupSnapshot = z.infer<typeof hibpLookupSnapshotSchema>;
  */
 
 type HibpOptions = {
-  userAgent?: string;
+  userAgent: string;
   truncate?: number;
 };
 
 export function fetchHibpBreachedAccountEffect(
   email: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: HibpOptions
+  options: HibpOptions
 ): Effect.Effect<HibpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHibpBreachedAccountGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -57,13 +52,9 @@ export function fetchHibpBreachedAccountEffect(
       try: () => normalizeEmail(email),
       catch: mapToolsCatch,
     });
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "HIBP_API_KEY" });
-    }
 
-    const ua = options?.userAgent ?? watchdogUserAgent("breach.hibp.lookup");
-    const truncate = options?.truncate ?? 40;
+    const ua = options.userAgent;
+    const truncate = options.truncate ?? 40;
     const url = `https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(normalized)}?truncateResponse=false`;
 
     const { status, body: raw } = yield* fetchJsonUnknownEffect({

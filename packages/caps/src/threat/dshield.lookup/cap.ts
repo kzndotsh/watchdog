@@ -2,16 +2,21 @@ import { Effect } from "effect";
 
 import { normalizeIp } from "@watchdog/tools/dns";
 import {
-  DSHIELD_USER_AGENT,
   fetchDshieldLookupEffect,
   dshieldLookupSnapshotSchema,
 } from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dshield } from "../../providers";
-import { contact } from "../../sdk";
+import { contact, watchdogUserAgent } from "../../sdk";
 import { dshieldLookupInput } from "./input";
 import { interpretDshieldLookupReport } from "./interpret";
+
+/** SANS ISC asks for contact info in the User-Agent string. */
+const DSHIELD_USER_AGENT = watchdogUserAgent(
+  "threat.dshield.lookup",
+  "osint@watchdog.invalid"
+);
 
 export const dshieldLookup = defineCollectCap({
   id: "threat.dshield.lookup",

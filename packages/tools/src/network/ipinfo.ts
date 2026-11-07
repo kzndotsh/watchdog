@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, asString } from "../parse/coerce";
@@ -33,23 +32,19 @@ export type IpinfoLookupSnapshot = z.infer<typeof ipinfoLookupSnapshotSchema>;
  */
 
 type IpinfoOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchIpinfoLookupEffect(
   ipRaw: string,
-  apiToken: string,
+  token: string,
   signal: AbortSignal,
-  options?: IpinfoOptions
+  options: IpinfoOptions
 ): Effect.Effect<IpinfoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchIpinfoLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const token = apiToken.trim();
-    if (!token) {
-      return yield* new MissingCredentialError({ slot: "IPINFO_API_TOKEN" });
-    }
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options?.userAgent ?? watchdogUserAgent("network.ipinfo.lookup");
+    const ua = options.userAgent;
 
     const url = new URL(`https://ipinfo.io/${encodeURIComponent(ip)}/json`);
     url.searchParams.set("token", token);

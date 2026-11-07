@@ -1,25 +1,11 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Result } from "effect";
+import { Effect } from "effect";
 import { vi } from "vitest";
 
-import { MissingCredentialError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchC99SubdomainsEffect } from "../c99";
 
 describe("c99", () => {
-  it.effect("fetchC99SubdomainsEffect requires C99_API_KEY", () =>
-    Effect.gen(function* missingKeyGen() {
-      const outcome = yield* Effect.result(
-        fetchC99SubdomainsEffect("example.com", "", AbortSignal.timeout(5000))
-      );
-      expect(Result.isFailure(outcome)).toBe(true);
-      if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure).toMatchObject({ slot: "C99_API_KEY" });
-      }
-    }).pipe(Effect.provide(toolsHttpClientLayer))
-  );
-
   it.effect("fetchC99SubdomainsEffect maps subdomain rows", () =>
     Effect.gen(function* fetchC99Gen() {
       vi.stubGlobal(
@@ -40,7 +26,8 @@ describe("c99", () => {
       const snap = yield* fetchC99SubdomainsEffect(
         "example.com",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.domains).toEqual(["www.example.com", "cdn.example.com"]);

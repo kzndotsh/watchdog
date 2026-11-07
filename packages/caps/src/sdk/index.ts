@@ -19,6 +19,7 @@ export {
   type CapabilityDef,
 } from "./define";
 export { contact } from "./contacts";
+export { watchdogUserAgent } from "./user-agent";
 export { runCap } from "./run";
 export { optionalCapCredential } from "./optional-credential";
 export {

@@ -2,12 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
@@ -223,23 +218,19 @@ function dehashedEntryHasSubstance(entry: DehashedEntry): boolean {
  */
 
 type DehashedOptions = {
-  userAgent?: string;
+  userAgent: string;
   /** Required: a lookup never decides for itself whether to keep a password. */
   credentials: CredentialHandling;
 };
 
 export function fetchDehashedLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
   options: DehashedOptions
 ): Effect.Effect<DehashedLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchDehashedLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "DEHASHED_API_KEY" });
-    }
 
     const { kind, value } = classifyDehashedQuery(queryRaw);
     const query = yield* Effect.try({
@@ -253,7 +244,7 @@ export function fetchDehashedLookupEffect(
               cause: error instanceof Error ? error.name : typeof error,
             }),
     });
-    const ua = options.userAgent ?? watchdogUserAgent("breach.dehashed.lookup");
+    const ua = options.userAgent;
 
     const { body } = yield* fetchJsonObjectEffect({
       url: "https://api.dehashed.com/v2/search",

@@ -2,10 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-} from "../../errors/tagged-errors";
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchUrlhausLookupEffect,
@@ -13,19 +10,6 @@ import {
 } from "../urlhaus";
 
 describe("urlhaus", () => {
-  it.effect("fetchUrlhausLookupEffect requires THREATFOX_API_KEY", () =>
-    Effect.gen(function* missingKeyGen() {
-      const result = yield* fetchUrlhausLookupEffect(
-        "evil.example",
-        "   ",
-        AbortSignal.timeout(5000)
-      ).pipe(Effect.flip);
-
-      expect(result).toBeInstanceOf(MissingCredentialError);
-      expect(result).toMatchObject({ slot: "THREATFOX_API_KEY" });
-    }).pipe(Effect.provide(toolsHttpClientLayer))
-  );
-
   it.effect("fetchUrlhausLookupEffect maps host threat metadata", () =>
     Effect.gen(function* fetchUrlhausLookupGen() {
       vi.stubGlobal(
@@ -52,7 +36,8 @@ describe("urlhaus", () => {
       const snap = yield* fetchUrlhausLookupEffect(
         "evil.example",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(urlhausLookupSnapshotSchema.parse(snap).found).toBe(true);
@@ -83,7 +68,8 @@ describe("urlhaus", () => {
         const snap = yield* fetchUrlhausLookupEffect(
           hash,
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.kind).toBe("hash");
@@ -114,7 +100,8 @@ describe("urlhaus", () => {
         const snap = yield* fetchUrlhausLookupEffect(
           "https://evil.example/malware.exe",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.kind).toBe("url");
@@ -146,7 +133,8 @@ describe("urlhaus", () => {
         const snap = yield* fetchUrlhausLookupEffect(
           "evil.example",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(snap.kind).toBe("host");
@@ -164,7 +152,8 @@ describe("urlhaus", () => {
         fetchUrlhausLookupEffect(
           ["javascript", ":alert(1)"].join(""),
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         )
       );
       expect(Result.isFailure(outcome)).toBe(true);
@@ -180,7 +169,8 @@ describe("urlhaus", () => {
         fetchUrlhausLookupEffect(
           "not a host!",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         )
       );
       expect(Result.isFailure(outcome)).toBe(true);

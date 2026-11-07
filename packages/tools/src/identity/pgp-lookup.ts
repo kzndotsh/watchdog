@@ -2,7 +2,6 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { httpVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -32,7 +31,7 @@ export {
 } from "./pgp-schema";
 
 export type PgpLookupOptions = {
-  userAgent?: string;
+  userAgent: string;
   /** Own deadline of each server's request. Default 12 s. */
   serverTimeoutMs?: number;
   /** Servers queried at once. Default 3. */
@@ -126,20 +125,19 @@ function queryServer(
 export function fetchPgpLookupEffect(
   query: PgpQueryInput,
   signal: AbortSignal,
-  options?: PgpLookupOptions
+  options: PgpLookupOptions
 ): Effect.Effect<PgpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchPgpLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const userAgent =
-      options?.userAgent ?? watchdogUserAgent("identity.pgp.lookup");
+    const userAgent = options.userAgent;
     const outcomes = yield* Effect.forEach(
-      options?.servers ?? PGP_KEYSERVERS,
+      options.servers ?? PGP_KEYSERVERS,
       (server) =>
         queryServer(server, query, signal, {
           userAgent,
-          timeoutMs: options?.serverTimeoutMs ?? DEFAULT_SERVER_TIMEOUT_MS,
+          timeoutMs: options.serverTimeoutMs ?? DEFAULT_SERVER_TIMEOUT_MS,
         }),
-      { concurrency: options?.concurrency ?? DEFAULT_CONCURRENCY }
+      { concurrency: options.concurrency ?? DEFAULT_CONCURRENCY }
     );
 
     const asked = outcomes.filter((o) => o.result.status !== "skipped");

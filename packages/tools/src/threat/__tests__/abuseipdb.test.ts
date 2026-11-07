@@ -38,7 +38,8 @@ describe("abuseipdb", () => {
       const snap = yield* fetchAbuseIpdbCheckEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(abuseIpdbLookupSnapshotSchema.parse(snap).found).toBe(true);

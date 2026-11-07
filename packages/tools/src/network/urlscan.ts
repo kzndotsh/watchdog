@@ -3,7 +3,6 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
@@ -43,7 +42,7 @@ export type UrlscanLookupSnapshot = z.infer<typeof urlscanLookupSnapshotSchema>;
  */
 
 type UrlscanOptions = {
-  userAgent?: string;
+  userAgent: string;
   size?: number;
 };
 
@@ -112,14 +111,13 @@ function collectUrlscanHits(rows: unknown[]): {
 export function fetchUrlscanSearchEffect(
   hostRaw: string,
   signal: AbortSignal,
-  options?: UrlscanOptions
+  options: UrlscanOptions
 ): Effect.Effect<UrlscanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchUrlscanSearchGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
-    const size = Math.min(Math.max(options?.size ?? 20, 1), 100);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("network.urlscan.lookup");
+    const size = Math.min(Math.max(options.size ?? 20, 1), 100);
+    const ua = options.userAgent;
 
     const url = new URL("https://urlscan.io/api/v1/search/");
     url.searchParams.set("q", `page.domain:${host}`);

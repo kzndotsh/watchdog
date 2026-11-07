@@ -19,6 +19,16 @@ function workspace(packages: Record<string, Pkg>, apps: Record<string, Pkg>) {
     "pnpm-workspace.yaml",
     'packages:\n  - "apps/*"\n  - "packages/*"\n'
   );
+  repo.write(
+    "packages/caps/capabilities.gen.json",
+    JSON.stringify([
+      { id: "net.probe.lookup", credentials: [{ name: "PROBE_API_KEY" }] },
+    ])
+  );
+  repo.write(
+    "packages/caps/src/known-credentials.ts",
+    'export const KNOWN = [{ name: "CATALOG_ONLY_TOKEN" }];\n'
+  );
   const emit = (dir: string, name: string, pkg: Pkg) => {
     repo.write(
       `${dir}/package.json`,
@@ -305,6 +315,84 @@ describe("check-boundaries gate", () => {
       ].join("\n");
       const res = workspace(
         { lib, user: { deps: ["lib"], files: { "src/a.ts": src } } },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(0);
+    });
+  });
+
+  describe("tools name no Cap id or Vault slot", () => {
+    const tools = (files: Record<string, string>) =>
+      workspace({ tools: { files } }, {}).run(GATE);
+
+    it("passes a clean tools tree, and tests and testing helpers that name a Cap", () => {
+      const res = tools({
+        "src/a.ts": 'export const url = "https://example.com";\n',
+        "src/__tests__/a.test.ts": 'export const id = "net.probe.lookup";\n',
+        "src/testing/ids.ts": 'export const slot = "PROBE_API_KEY";\n',
+        "src/b.ts": '// the Cap "net.probe.lookup" passes a key\n',
+      });
+      expect(res.code).toBe(0);
+    });
+
+    it("fails a Cap id planted in a tools file", () => {
+      const res = tools({
+        "src/a.ts": 'export const ua = ["x", "net.probe.lookup"].join(" ");\n',
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("packages/tools/src/a.ts:1");
+      expect(res.output).toContain("net.probe.lookup");
+      expect(res.output).toContain("Cap id");
+    });
+
+    it("fails a Vault slot named by a Cap's declared credential", () => {
+      const res = tools({
+        "src/a.ts": 'export const slot = "PROBE_API_KEY";\n',
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("Vault slot name");
+    });
+
+    it("fails a Vault slot that only the credential catalog lists", () => {
+      const res = tools({
+        "src/a.ts": "export const slot = 'CATALOG_ONLY_TOKEN';\n",
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("CATALOG_ONLY_TOKEN");
+    });
+
+    it("reads each literal to its own quote, so an apostrophe earlier on the line hides nothing", () => {
+      const res = tools({
+        "src/a.ts": 'export const m = ["Couldn\'t load", "PROBE_API_KEY"];\n',
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("PROBE_API_KEY");
+    });
+
+    it("fails a Cap id inside a longer literal, at the line it sits on in a template over several lines", () => {
+      const res = tools({
+        "src/a.ts": "export const ua = `watchdog/1.0\n(net.probe.lookup)`;\n",
+      });
+      expect(res.code).not.toBe(0);
+      expect(res.output).toContain("packages/tools/src/a.ts:2");
+      expect(res.output).toContain("net.probe.lookup");
+    });
+
+    it("does not match a Cap id or slot inside a longer name or host", () => {
+      const res = tools({
+        "src/a.ts":
+          'export const a = "https://net.probe.lookup.example.com/x";\nexport const b = "MY_PROBE_API_KEY_2";\n',
+      });
+      expect(res.code).toBe(0);
+    });
+
+    it("applies only to packages/tools", () => {
+      const res = workspace(
+        {
+          other: {
+            files: { "src/a.ts": 'export const s = "PROBE_API_KEY";\n' },
+          },
+        },
         {}
       ).run(GATE);
       expect(res.code).toBe(0);

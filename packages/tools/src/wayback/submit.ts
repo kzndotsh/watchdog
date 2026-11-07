@@ -3,7 +3,6 @@ import type { HttpClient } from "effect/http";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
 import { normalizeWaybackUrl } from "./normalize-url";
@@ -25,12 +24,12 @@ export {
  */
 
 type SubmitOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 export function submitWaybackSaveEffect(
   url: string,
   signal: AbortSignal,
-  options?: SubmitOptions
+  options: SubmitOptions
 ): Effect.Effect<ArchiveSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* submitWaybackSaveGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -39,7 +38,7 @@ export function submitWaybackSaveEffect(
       catch: mapToolsCatch,
     });
     const saveUrl = `https://web.archive.org/save/${target}`;
-    const ua = options?.userAgent ?? watchdogUserAgent("archive.url.submit");
+    const ua = options.userAgent;
 
     let status: number | null = null;
     let archiveUrl: string | null = null;

@@ -24,7 +24,8 @@ describe("hashlookup", () => {
 
       const snap = yield* fetchHashlookupEffect(
         "44d88612fea8a8f36de82e1278abb02f",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(hashlookupSnapshotSchema.parse(snap).found).toBe(true);
@@ -46,7 +47,8 @@ describe("hashlookup", () => {
 
       const snap = yield* fetchHashlookupEffect(
         "44d88612fea8a8f36de82e1278abb02f",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(false);

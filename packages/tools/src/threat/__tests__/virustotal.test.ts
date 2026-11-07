@@ -19,7 +19,8 @@ describe("virustotal", () => {
       const snap = yield* fetchVirusTotalLookupEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(virusTotalLookupSnapshotSchema.parse(snap).found).toBe(false);

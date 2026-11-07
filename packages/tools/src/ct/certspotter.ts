@@ -3,7 +3,6 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
@@ -38,7 +37,7 @@ export type CertspotterLookupSnapshot = z.infer<
  */
 
 type CertspotterOptions = {
-  userAgent?: string;
+  userAgent: string;
   limit?: number;
 };
 
@@ -111,14 +110,13 @@ function collectIssuances(
 export function fetchCertspotterLookupEffect(
   hostRaw: string,
   signal: AbortSignal,
-  options?: CertspotterOptions
+  options: CertspotterOptions
 ): Effect.Effect<CertspotterLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCertspotterLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
-    const limit = options?.limit ?? 100;
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("network.certspotter.lookup");
+    const limit = options.limit ?? 100;
+    const ua = options.userAgent;
 
     const url = new URL("https://api.certspotter.com/v1/issuances");
     url.searchParams.set("domain", host);

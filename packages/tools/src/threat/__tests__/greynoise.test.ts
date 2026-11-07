@@ -29,7 +29,8 @@ describe("greynoise", () => {
 
       const snap = yield* fetchGreynoiseCommunityEffect(
         "8.8.8.8",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(greynoiseLookupSnapshotSchema.parse(snap).found).toBe(true);
@@ -59,7 +60,8 @@ describe("greynoise", () => {
 
       const snap = yield* fetchGreynoiseCommunityEffect(
         "8.8.8.8",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(true);
@@ -84,7 +86,8 @@ describe("greynoise", () => {
 
       const snap = yield* fetchGreynoiseCommunityEffect(
         "203.0.113.1",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(false);
@@ -107,7 +110,8 @@ describe("greynoise", () => {
 
         yield* fetchGreynoiseCommunityEffect(
           "2001:db8::1",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(String(fetchMock.mock.calls[0]?.[0])).toContain(

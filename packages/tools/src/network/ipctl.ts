@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import {
@@ -124,18 +123,18 @@ export function parseIpctlBody(
  */
 
 type IpctlOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchIpctlLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: IpctlOptions
+  options: IpctlOptions
 ): Effect.Effect<IpctlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchIpctlLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options?.userAgent ?? watchdogUserAgent("network.ipctl.lookup");
+    const ua = options.userAgent;
 
     const url = `https://api.ipctl.io/v1/ip/${encodeURIComponent(ip)}`;
     const { body } = yield* fetchJsonObjectEffect({

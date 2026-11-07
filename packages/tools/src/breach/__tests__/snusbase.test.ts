@@ -1,8 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Result } from "effect";
+import { Effect } from "effect";
 import { vi } from "vitest";
 
-import { MissingCredentialError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchSnusbaseLookupEffect,
@@ -11,24 +10,6 @@ import {
 import { FULL } from "./credential-fixtures";
 
 describe("snusbase", () => {
-  it.effect("fetchSnusbaseLookupEffect requires SNUSBASE_API_KEY", () =>
-    Effect.gen(function* missingKeyGen() {
-      const outcome = yield* Effect.result(
-        fetchSnusbaseLookupEffect(
-          "alice@mailhost.test",
-          "",
-          AbortSignal.timeout(5000),
-          { credentials: FULL }
-        )
-      );
-      expect(Result.isFailure(outcome)).toBe(true);
-      if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure).toMatchObject({ slot: "SNUSBASE_API_KEY" });
-      }
-    }).pipe(Effect.provide(toolsHttpClientLayer))
-  );
-
   it("parses lookup snapshot schema", () => {
     const snap = snusbaseLookupSnapshotSchema.parse({
       query: "alice@mailhost.test",
@@ -72,7 +53,7 @@ describe("snusbase", () => {
         "alice@mailhost.test",
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
 
       expect(snap.found).toBe(true);
@@ -110,7 +91,7 @@ describe("snusbase", () => {
           "alice@mailhost.test",
           "test-key",
           AbortSignal.timeout(5000),
-          { credentials: FULL }
+          { userAgent: "watchdog-test", credentials: FULL }
         );
 
         expect(snap.sampleCount).toBe(1);

@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { z } from "zod";
 
 import type { JsonValue } from "@watchdog/schemas/shared";
-import { watchdogUserAgent, type ToolsTag } from "@watchdog/tools/errors";
+import type { ToolsTag } from "@watchdog/tools/errors";
 
 import {
   defineCapability,
@@ -11,6 +11,7 @@ import {
   type CapInterpretResult,
   type CapServices,
   type CapabilityDef,
+  watchdogUserAgent,
 } from "../../sdk";
 import { uploadJsonReportPair } from "./upload-json-report-pair";
 

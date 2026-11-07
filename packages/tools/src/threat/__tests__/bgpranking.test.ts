@@ -38,7 +38,8 @@ describe("bgpranking", () => {
 
       const snap = yield* fetchBgprankingLookupEffect(
         "8.8.8.8",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(bgprankingLookupSnapshotSchema.parse(snap).found).toBe(true);
@@ -64,7 +65,8 @@ describe("bgpranking", () => {
 
         const snap = yield* fetchBgprankingLookupEffect(
           "203.0.113.1",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(bgprankingLookupSnapshotSchema.parse(snap).found).toBe(true);

@@ -2,8 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
@@ -42,24 +41,20 @@ function contactField(contact: unknown, key: string): string | null {
  */
 
 type WhoxyOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchWhoxyWhoisEffect(
   hostRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: WhoxyOptions
+  options: WhoxyOptions
 ): Effect.Effect<WhoxyLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWhoxyWhoisGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "WHOXY_API_KEY" });
-    }
 
-    const ua = options?.userAgent ?? watchdogUserAgent("network.whoxy.lookup");
+    const ua = options.userAgent;
     const url = new URL("https://api.whoxy.com/");
     url.searchParams.set("key", key);
     url.searchParams.set("whois", host);

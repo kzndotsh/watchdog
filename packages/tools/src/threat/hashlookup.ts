@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { validationVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -76,13 +75,13 @@ function firstProductName(body: Record<string, unknown>): string | null {
  */
 
 type HashlookupOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchHashlookupEffect(
   hashRaw: string,
   signal: AbortSignal,
-  options?: HashlookupOptions
+  options: HashlookupOptions
 ): Effect.Effect<HashlookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHashlookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -94,8 +93,7 @@ export function fetchHashlookupEffect(
       try: () => algoForHash(hash),
       catch: mapToolsCatch,
     });
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.hashlookup.lookup");
+    const ua = options.userAgent;
 
     const { status, body } = yield* fetchJsonObjectEffect({
       url: `https://hashlookup.circl.lu/lookup/${algo}/${hash}`,

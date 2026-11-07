@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
@@ -38,29 +37,24 @@ export type AbuseIpdbLookupSnapshot = z.infer<
  */
 
 type AbuseipdbOptions = {
-  userAgent?: string;
+  userAgent: string;
   maxAgeInDays?: number;
 };
 
 export function fetchAbuseIpdbCheckEffect(
   ipRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: AbuseipdbOptions
+  options: AbuseipdbOptions
 ): Effect.Effect<AbuseIpdbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchAbuseIpdbCheckGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "ABUSEIPDB_API_KEY" });
-    }
 
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.abuseipdb.lookup");
+    const ua = options.userAgent;
     const url = new URL("https://api.abuseipdb.com/api/v2/check");
     url.searchParams.set("ipAddress", ip);
-    url.searchParams.set("maxAgeInDays", String(options?.maxAgeInDays ?? 90));
+    url.searchParams.set("maxAgeInDays", String(options.maxAgeInDays ?? 90));
 
     const { status, body } = yield* fetchJsonObjectEffect({
       url,

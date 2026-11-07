@@ -16,7 +16,8 @@ describe("safebrowsing", () => {
         fetchSafebrowsingLookupEffect(
           "file:///etc/passwd",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         )
       );
 
@@ -39,7 +40,8 @@ describe("safebrowsing", () => {
       const snap = yield* fetchSafebrowsingLookupEffect(
         "https://example.com",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(safebrowsingLookupSnapshotSchema.parse(snap).found).toBe(false);

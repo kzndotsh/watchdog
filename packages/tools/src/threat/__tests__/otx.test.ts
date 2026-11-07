@@ -11,7 +11,9 @@ describe("otx", () => {
     Effect.gen(function* rejectJavascriptSchemeGen() {
       const badUrl = ["javascript", ":alert(1)"].join("");
       const outcome = yield* Effect.result(
-        fetchOtxLookupEffect(badUrl, "test-key", new AbortController().signal)
+        fetchOtxLookupEffect(badUrl, "test-key", new AbortController().signal, {
+          userAgent: "watchdog-test",
+        })
       );
 
       expect(Result.isFailure(outcome)).toBe(true);
@@ -43,7 +45,8 @@ describe("otx", () => {
       const snap = yield* fetchOtxLookupEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(otxLookupSnapshotSchema.parse(snap).found).toBe(true);
@@ -74,7 +77,8 @@ describe("otx", () => {
       const snap = yield* fetchOtxLookupEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(true);
@@ -103,7 +107,8 @@ describe("otx", () => {
         yield* fetchOtxLookupEffect(
           "2001:db8::1",
           "test-key",
-          AbortSignal.timeout(5000)
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
         );
 
         expect(

@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
@@ -50,24 +49,16 @@ function sumHistoryEvents(rows: unknown): number {
  */
 export function fetchHoneydbLookupEffect(
   ipRaw: string,
-  apiId: string,
-  apiKey: string,
+  id: string,
+  key: string,
   signal: AbortSignal,
-  options?: { userAgent?: string }
+  options: { userAgent: string }
 ): Effect.Effect<HoneydbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHoneydbLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const id = apiId.trim();
-    const key = apiKey.trim();
-    if (!id) {
-      return yield* new MissingCredentialError({ slot: "HONEYDB_API_ID" });
-    }
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "HONEYDB_API_KEY" });
-    }
 
-    const ua = options?.userAgent ?? watchdogUserAgent("threat.honeydb.lookup");
+    const ua = options.userAgent;
     const { status, body } = yield* fetchJsonObjectEffect({
       url: `https://honeydb.io/api/ip-context/${encodeURIComponent(ip)}`,
       signal,

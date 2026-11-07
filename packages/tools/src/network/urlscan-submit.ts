@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { normalizeHttpUrl } from "../http/normalize-http-url";
 import { assertAllowedTarget } from "../http/outbound-policy";
@@ -40,17 +39,13 @@ export type UrlscanSubmitSnapshot = z.infer<typeof urlscanSubmitSnapshotSchema>;
  */
 export function submitUrlscanEffect(
   url: string,
-  apiKey: string,
+  key: string,
   visibility: UrlscanSubmitVisibility,
   signal: AbortSignal,
-  options?: { userAgent?: string }
+  options: { userAgent: string }
 ): Effect.Effect<UrlscanSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* submitUrlscanGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "URLSCAN_API_KEY" });
-    }
     const target = yield* Effect.try({
       try: () => {
         const normalized = normalizeHttpUrl(url);
@@ -59,8 +54,7 @@ export function submitUrlscanEffect(
       },
       catch: mapToolsCatch,
     });
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("network.urlscan.submit");
+    const ua = options.userAgent;
 
     const { body } = yield* fetchJsonObjectEffect({
       url: "https://urlscan.io/api/v1/scan/",

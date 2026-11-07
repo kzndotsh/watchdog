@@ -22,7 +22,8 @@ describe("tranco", () => {
 
       const snap = yield* fetchTrancoLookupEffect(
         "example.com",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(trancoLookupSnapshotSchema.parse(snap).found).toBe(true);

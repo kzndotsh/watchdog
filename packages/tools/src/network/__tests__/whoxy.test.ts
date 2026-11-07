@@ -27,7 +27,8 @@ describe("whoxy", () => {
       const snap = yield* fetchWhoxyWhoisEffect(
         "example.com",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(whoxyLookupSnapshotSchema.parse(snap).ok).toBe(true);

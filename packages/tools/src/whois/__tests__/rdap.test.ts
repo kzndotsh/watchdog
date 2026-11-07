@@ -39,7 +39,8 @@ describe("rdap whois", () => {
 
       const snap = yield* fetchRdapWhoisEffect(
         "example.com",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.source).toBe("rdap");

@@ -2,12 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
@@ -69,25 +64,20 @@ function classifyQuery(raw: string): {
  */
 
 type ThreatfoxOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchThreatfoxLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: ThreatfoxOptions
+  options: ThreatfoxOptions
 ): Effect.Effect<ThreatfoxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchThreatfoxLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyQuery(queryRaw);
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "THREATFOX_API_KEY" });
-    }
 
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.threatfox.lookup");
+    const ua = options.userAgent;
 
     const { body } = yield* fetchJsonObjectEffect({
       url: "https://threatfox-api.abuse.ch/api/v1/",

@@ -49,7 +49,6 @@ export {
   type BgprankingLookupSnapshot,
 } from "./bgpranking";
 export {
-  DSHIELD_USER_AGENT,
   fetchDshieldLookupEffect,
   parseDshieldBody,
   dshieldLookupSnapshotSchema,

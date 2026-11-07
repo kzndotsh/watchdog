@@ -17,7 +17,8 @@ describe("shodan", () => {
       const snap = yield* fetchShodanHostEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(shodanLookupSnapshotSchema.parse(snap).found).toBe(false);
@@ -48,7 +49,8 @@ describe("shodan", () => {
       const snap = yield* fetchShodanHostEffect(
         "8.8.8.8",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(true);
@@ -64,7 +66,12 @@ describe("shodan", () => {
       yield* stubBody({ org: 42, ports: "nope" });
 
       const result = yield* Effect.result(
-        fetchShodanHostEffect("8.8.8.8", "test-key", AbortSignal.timeout(5000))
+        fetchShodanHostEffect(
+          "8.8.8.8",
+          "test-key",
+          AbortSignal.timeout(5000),
+          { userAgent: "watchdog-test" }
+        )
       );
 
       expect(Result.isFailure(result)).toBe(true);

@@ -3,12 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import {
-  MissingCredentialError,
-  ParseVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 
@@ -37,7 +32,7 @@ export type ShodanLookupSnapshot = z.infer<typeof shodanLookupSnapshotSchema>;
  */
 
 type ShodanOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 const optionalString = z.string().nullish();
@@ -86,19 +81,15 @@ function snapshotFromBody(
 
 export function fetchShodanHostEffect(
   ipRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: ShodanOptions
+  options: ShodanOptions
 ): Effect.Effect<ShodanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchShodanHostGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "SHODAN_API_KEY" });
-    }
 
-    const ua = options?.userAgent ?? watchdogUserAgent("network.shodan.lookup");
+    const ua = options.userAgent;
     const url = new URL(
       `https://api.shodan.io/shodan/host/${encodeURIComponent(ip)}`
     );

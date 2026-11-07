@@ -26,7 +26,8 @@ describe("ipinfo", () => {
       const snap = yield* fetchIpinfoLookupEffect(
         "8.8.8.8",
         "token",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(ipinfoLookupSnapshotSchema.parse(snap).city).toBe("Mountain View");
@@ -57,7 +58,8 @@ describe("ipinfo", () => {
       const snap = yield* fetchIpinfoLookupEffect(
         "8.8.8.8",
         "token",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(true);
@@ -82,7 +84,8 @@ describe("ipinfo", () => {
       const snap = yield* fetchIpinfoLookupEffect(
         "127.0.0.1",
         "token",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.found).toBe(false);
@@ -104,7 +107,8 @@ describe("ipinfo", () => {
       yield* fetchIpinfoLookupEffect(
         "2001:db8::1",
         "token",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(String(fetchMock.mock.calls[0]?.[0])).toContain(

@@ -2,10 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-} from "../../errors/tagged-errors";
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   dehashedEntrySchema,
@@ -30,24 +27,6 @@ function postBodyQuery(
 }
 
 describe("dehashed", () => {
-  it.effect("fetchDehashedLookupEffect requires DEHASHED_API_KEY", () =>
-    Effect.gen(function* missingKeyGen() {
-      const outcome = yield* Effect.result(
-        fetchDehashedLookupEffect(
-          "alice@mailhost.test",
-          "",
-          AbortSignal.timeout(5000),
-          { credentials: FULL }
-        )
-      );
-      expect(Result.isFailure(outcome)).toBe(true);
-      if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure).toMatchObject({ slot: "DEHASHED_API_KEY" });
-      }
-    }).pipe(Effect.provide(toolsHttpClientLayer))
-  );
-
   it("parses entry and snapshot schemas", () => {
     const entry = dehashedEntrySchema.parse({
       databaseName: "ExampleDump",
@@ -103,7 +82,7 @@ describe("dehashed", () => {
         "alice@mailhost.test",
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
 
       expect(snap.kind).toBe("email");
@@ -140,7 +119,7 @@ describe("dehashed", () => {
           "alice@mailhost.test",
           "test-key",
           AbortSignal.timeout(5000),
-          { credentials: FULL }
+          { userAgent: "watchdog-test", credentials: FULL }
         );
 
         expect(snap.sampleCount).toBe(1);
@@ -174,7 +153,7 @@ describe("dehashed", () => {
           "alice@mailhost.test",
           "test-key",
           AbortSignal.timeout(5000),
-          { credentials: FULL }
+          { userAgent: "watchdog-test", credentials: FULL }
         );
 
         expect(snap.found).toBe(false);
@@ -204,7 +183,7 @@ describe("dehashed", () => {
         "mailhost.test",
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
 
       expect(postBodyQuery(fetchMock, 0)).toBe('domain:"mailhost.test"');
@@ -233,7 +212,7 @@ describe("dehashed", () => {
         username,
         "test-key",
         AbortSignal.timeout(5000),
-        { credentials: FULL }
+        { userAgent: "watchdog-test", credentials: FULL }
       );
 
       expect(postBodyQuery(fetchMock, 0)).toBe(`username:"${username}"`);
@@ -250,7 +229,7 @@ describe("dehashed", () => {
           "example.com) OR email:admin",
           "test-key",
           AbortSignal.timeout(5000),
-          { credentials: FULL }
+          { userAgent: "watchdog-test", credentials: FULL }
         )
       );
       expect(Result.isFailure(outcome)).toBe(true);

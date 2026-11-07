@@ -1,8 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Result } from "effect";
+import { Effect } from "effect";
 import { vi } from "vitest";
 
-import { MissingCredentialError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchWhoisXmlEffect } from "../whoisxml";
 
@@ -29,7 +28,8 @@ describe("whoisxml", () => {
       const snap = yield* fetchWhoisXmlEffect(
         "example.com",
         "test-key",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(snap.source).toBe("whoisxml");
@@ -38,18 +38,5 @@ describe("whoisxml", () => {
       Effect.provide(toolsHttpClientLayer),
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
-  );
-
-  it.effect("fetchWhoisXmlEffect rejects an empty API key", () =>
-    Effect.gen(function* fetchWhoisXmlMissingKeyGen() {
-      const outcome = yield* Effect.result(
-        fetchWhoisXmlEffect("example.com", "  ", AbortSignal.timeout(5000))
-      );
-      expect(Result.isFailure(outcome)).toBe(true);
-      if (Result.isFailure(outcome)) {
-        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure).toMatchObject({ slot: "WHOIS_API_KEY" });
-      }
-    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });

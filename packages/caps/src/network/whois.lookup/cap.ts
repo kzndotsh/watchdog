@@ -30,11 +30,11 @@ export const whoisLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: whoisSnapshotSchema,
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* whoisLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`WHOIS (RDAP) for ${host}`);
-      const snap = yield* fetchRdapWhoisEffect(host, ctx.signal);
+      const snap = yield* fetchRdapWhoisEffect(host, ctx.signal, { userAgent });
       ctx.log("RDAP ok");
       return { snap, artifactName: `whois-${host}.json` };
     }),

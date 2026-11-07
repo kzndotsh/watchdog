@@ -2,8 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
@@ -39,25 +38,20 @@ export type VirusTotalLookupSnapshot = z.infer<
  */
 
 type VirustotalOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchVirusTotalLookupEffect(
   queryRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: VirustotalOptions
+  options: VirustotalOptions
 ): Effect.Effect<VirusTotalLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchVirusTotalLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "VIRUSTOTAL_API_KEY" });
-    }
 
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.virustotal.lookup");
+    const ua = options.userAgent;
     const path =
       kind === "ip"
         ? `ip_addresses/${encodeURIComponent(value)}`

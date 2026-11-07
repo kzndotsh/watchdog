@@ -3,12 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import {
   assertHttpUrlScheme,
@@ -49,14 +44,14 @@ const THREAT_TYPES = [
  */
 
 type SafebrowsingOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchSafebrowsingLookupEffect(
   urlRaw: string,
-  apiKey: string,
+  key: string,
   signal: AbortSignal,
-  options?: SafebrowsingOptions
+  options: SafebrowsingOptions
 ): Effect.Effect<SafebrowsingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchSafebrowsingLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -71,15 +66,8 @@ export function fetchSafebrowsingLookupEffect(
       },
       catch: mapToolsCatch,
     });
-    const key = apiKey.trim();
-    if (!key) {
-      return yield* new MissingCredentialError({
-        slot: "GOOGLE_SAFEBROWSING_API_KEY",
-      });
-    }
 
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("threat.safebrowsing.lookup");
+    const ua = options.userAgent;
 
     const { body } = yield* fetchJsonObjectEffect({
       url: `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${encodeURIComponent(key)}`,

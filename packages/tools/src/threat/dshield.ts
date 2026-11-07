@@ -27,10 +27,6 @@ export const dshieldLookupSnapshotSchema = z.object({
 
 export type DshieldLookupSnapshot = z.infer<typeof dshieldLookupSnapshotSchema>;
 
-/** SANS ISC asks for contact info in the User-Agent string. */
-export const DSHIELD_USER_AGENT =
-  "Watchdog/1.0 (+threat.dshield.lookup; OSINT; contact: osint@watchdog.invalid)";
-
 function toIntOrNull(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.trunc(value);
@@ -91,18 +87,18 @@ export function parseDshieldBody(
  */
 
 type DshieldOptions = {
-  userAgent?: string;
+  userAgent: string;
 };
 
 export function fetchDshieldLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
-  options?: DshieldOptions
+  options: DshieldOptions
 ): Effect.Effect<DshieldLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchDshieldLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options?.userAgent ?? DSHIELD_USER_AGENT;
+    const ua = options.userAgent;
 
     const { body } = yield* fetchJsonObjectEffect({
       url: `https://isc.sans.edu/api/ip/${encodeURIComponent(ip)}?json`,

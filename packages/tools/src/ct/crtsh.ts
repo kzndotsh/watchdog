@@ -3,7 +3,6 @@ import type { HttpClient } from "effect/http";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { parseVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -116,7 +115,7 @@ function collectCrtShEntries(
 export type FetchCrtShOptions = {
   /** Max cert rows to keep after dedupe (default 50). */
   limit?: number;
-  userAgent?: string;
+  userAgent: string;
 };
 
 /**
@@ -126,15 +125,14 @@ export type FetchCrtShOptions = {
 export function fetchCrtShLookupEffect(
   host: string,
   signal: AbortSignal,
-  options?: FetchCrtShOptions
+  options: FetchCrtShOptions
 ): Effect.Effect<CtLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCrtShLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
-    const resolved = options ?? {};
+    const resolved = options;
     const normalized = normalizeHost(host);
     const limit = resolved.limit ?? 50;
-    const userAgent =
-      resolved.userAgent ?? watchdogUserAgent("network.ct.lookup");
+    const userAgent = resolved.userAgent;
 
     const url = new URL(CRT_SH_URL);
     url.searchParams.set("q", `%.${normalized}`);

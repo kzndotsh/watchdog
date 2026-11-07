@@ -1,7 +1,6 @@
 import { URL_ENRICH_CAPABILITY_ID } from "@watchdog/schemas/jobs";
-import { watchdogUserAgent } from "@watchdog/tools/errors";
 
-import type { CapArtifact } from "../../sdk";
+import { watchdogUserAgent, type CapArtifact } from "../../sdk";
 
 /** How we got Markdown — mirrors markdown.new / CF Markdown-for-Agents tiers (in-process). */
 export type MdMethod =

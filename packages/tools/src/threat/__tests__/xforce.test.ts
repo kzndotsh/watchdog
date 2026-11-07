@@ -14,7 +14,8 @@ describe("xforce", () => {
           "file:///etc/passwd",
           "key",
           "pass",
-          new AbortController().signal
+          new AbortController().signal,
+          { userAgent: "watchdog-test" }
         )
       );
 
@@ -33,7 +34,8 @@ describe("xforce", () => {
           badUrl,
           "key",
           "pass",
-          new AbortController().signal
+          new AbortController().signal,
+          { userAgent: "watchdog-test" }
         )
       );
 
@@ -83,7 +85,8 @@ describe("xforce", () => {
         "8.8.8.8",
         "key",
         "pass",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(xforceLookupSnapshotSchema.parse(snap).found).toBe(true);

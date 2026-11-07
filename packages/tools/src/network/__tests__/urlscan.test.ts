@@ -40,7 +40,8 @@ describe("urlscan search", () => {
 
       const snap = yield* fetchUrlscanSearchEffect(
         "example.com",
-        AbortSignal.timeout(5000)
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
       );
 
       expect(urlscanLookupSnapshotSchema.parse(snap).hits).toHaveLength(1);

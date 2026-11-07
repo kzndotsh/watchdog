@@ -3,12 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
-import {
-  MissingCredentialError,
-  ValidationVendorError,
-  type ToolsTag,
-} from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { parseVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -87,14 +82,14 @@ export function parseEmailrepBody(
  */
 
 type EmailrepOptions = {
-  apiKey?: string;
-  userAgent?: string;
+  apiKey: string;
+  userAgent: string;
 };
 
 export function fetchEmailrepLookupEffect(
   emailRaw: string,
   signal: AbortSignal,
-  options?: EmailrepOptions
+  options: EmailrepOptions
 ): Effect.Effect<EmailrepLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchEmailrepLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
@@ -103,17 +98,12 @@ export function fetchEmailrepLookupEffect(
       catch: mapToolsCatch,
     });
 
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("identity.emailrep.lookup");
-    const key = options?.apiKey?.trim() ?? "";
-    if (!key) {
-      return yield* new MissingCredentialError({ slot: "EMAILREP_API_KEY" });
-    }
+    const ua = options.userAgent;
 
     const headers: Record<string, string> = {
       Accept: "application/json",
       "User-Agent": ua,
-      Key: key,
+      Key: options.apiKey,
     };
 
     const { status, body } = yield* fetchJsonObjectEffect({

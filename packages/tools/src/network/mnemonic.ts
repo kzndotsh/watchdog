@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { httpVendorError, parseVendorError } from "../errors/vendor-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -172,21 +171,20 @@ export function parseMnemonicPdnsBody(
  */
 
 type MnemonicOptions = {
-  userAgent?: string;
+  userAgent: string;
   limit?: number;
 };
 
 export function fetchMnemonicPdnsEffect(
   queryRaw: string,
   signal: AbortSignal,
-  options?: MnemonicOptions
+  options: MnemonicOptions
 ): Effect.Effect<MnemonicLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchMnemonicPdnsGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);
-    const limit = Math.min(Math.max(options?.limit ?? 50, 1), 500);
-    const ua =
-      options?.userAgent ?? watchdogUserAgent("network.mnemonic.lookup");
+    const limit = Math.min(Math.max(options.limit ?? 50, 1), 500);
+    const ua = options.userAgent;
 
     const url = new URL(
       `https://api.mnemonic.no/pdns/v3/${encodeURIComponent(value)}`

@@ -31,12 +31,14 @@ export const whoisXmlLookup = defineCollectCap({
     cacheTtlMs: 60 * 60_000,
   },
   schema: whoisSnapshotSchema,
-  fetch: (ctx) =>
+  fetch: (ctx, { userAgent }) =>
     Effect.gen(function* whoisXmlLookupFetch() {
       const host = normalizeHost(ctx.input.host);
       ctx.log(`WhoisXML for ${host}`);
       const key = yield* ctx.getCredential("WHOIS_API_KEY");
-      const snap = yield* fetchWhoisXmlEffect(host, key, ctx.signal);
+      const snap = yield* fetchWhoisXmlEffect(host, key, ctx.signal, {
+        userAgent,
+      });
       ctx.log("WhoisXML ok");
       return { snap, artifactName: `whoisxml-${host}.json` };
     }),
