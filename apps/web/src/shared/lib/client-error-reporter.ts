@@ -14,7 +14,7 @@ const MAX_REPORTS_PER_WINDOW = 5;
 const REPORT_WINDOW_MS = 5 * 60_000;
 
 /** Field caps (the server imports these) and the body budget under its 8 KiB cap. */
-const MAX_NAME = 100;
+export const MAX_NAME = 100;
 export const MAX_MESSAGE = 1000;
 export const MAX_STACK = 4000;
 export const MAX_PAGE = 1000;

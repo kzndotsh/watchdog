@@ -10,6 +10,7 @@ import "@tanstack/react-start/server-only";
 import { createReportLimiter, readCappedText } from "@/lib/csp-report.server";
 import {
   MAX_MESSAGE,
+  MAX_NAME,
   MAX_PAGE,
   MAX_STACK,
 } from "@/shared/lib/client-error-reporter";
@@ -52,7 +53,7 @@ export function parseClientError(body: string): ClientErrorReport | null {
   if (message === "") return null;
   return {
     kind: text(json, "kind", 32),
-    name: text(json, "name", 100) || "Error",
+    name: text(json, "name", MAX_NAME) || "Error",
     message,
     stack: text(json, "stack", MAX_STACK),
     page: pathOf(text(json, "page", MAX_PAGE)),
