@@ -3,7 +3,6 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
-import { pruneJobStartCountersEffect } from "@watchdog/core/worker";
 import {
   countJobStartCounters,
   resetTestDb,
@@ -11,6 +10,8 @@ import {
   seedJobStarts,
   testDb,
 } from "@watchdog/test-db";
+
+import { pruneJobStartCountersEffect } from "../start-limits-prune";
 
 const WINDOW_SECONDS = 3600;
 

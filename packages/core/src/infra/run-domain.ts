@@ -1,9 +1,11 @@
-import { Effect, Layer } from "effect";
+import type { Layer } from "effect";
+import { Effect } from "effect";
 
 import type { DomainTag } from "../errors/tagged-errors";
-import { blobStoreLayer, type BlobStore } from "./blob-store";
+import type { BlobStore } from "./blob-store";
 import { Db } from "./db-service";
-import { vaultLayer, type Vault } from "./vault";
+import { coreServicesLayer } from "./services";
+import type { Vault } from "./vault";
 
 /**
  * `runDomain` with an override Layer, for tests: `runDomainWith(Db.layerOf(spy))(e)`
@@ -16,9 +18,10 @@ export function runDomainWith<ROut>(layer: Layer.Layer<ROut>) {
 }
 
 /**
- * The services `runDomain` provides: the live `Db`, `Vault` and `BlobStore`
- * Layers. Both extras are cheap per call (the vault Layer only captures `Db`,
- * the blob Layer only builds an `S3Client`).
+ * The services `runDomain` provides: `coreServicesLayer` over the borrowed
+ * `Db.layer` (release order: see `services.ts`). The extras are cheap per call
+ * (the vault Layer only captures `Db`, the blob Layer only builds an
+ * `S3Client`, the outbound pools open on first request).
  *
  * Lifetime: they are built per call and the S3 client is destroyed when the
  * call returns, so a fiber the effect forks that outlives the call must not use
@@ -32,10 +35,7 @@ export function runDomainWith<ROut>(layer: Layer.Layer<ROut>) {
  * Stateful services (`JobQueue`) are not in here: pass them through
  * `runDomainWith`.
  */
-const domainLive = Layer.mergeAll(
-  Layer.provideMerge(vaultLayer, Db.layer),
-  blobStoreLayer
-);
+const domainLive = coreServicesLayer(Db.layer);
 
 /**
  * Run a domain Effect to a Promise with the live `Db`, `Vault` and `BlobStore`

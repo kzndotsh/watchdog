@@ -2,7 +2,7 @@ import "@watchdog/env/server";
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
 
-import { jobQueueWorkerLayer } from "@watchdog/core/worker";
+import { jobQueueWorkerLayer } from "@watchdog/core/jobs";
 import { evlogEffectLoggerLayer } from "@watchdog/log";
 
 import { bootWorkerEffect } from "./boot-worker";

@@ -7,7 +7,7 @@ package AGENTS.md files link here.
 ## Boot
 
 - Process entry: `NodeRuntime.runMain(provideWorkerLayers(bootWorkerEffect, jobQueueWorkerLayer))`;
-  it provides `JobFibers.layer` once (a scoped `Context.Service` owning the
+  it provides core's `coreServicesLayer` (release order documented there), `JobFibers.layer` once (a scoped `Context.Service` owning the
   FiberMap **and** each attempt's stop slot), `Db.owned` (the pool's owner, released last), and the worker queue
   Layer.
 - Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
@@ -112,7 +112,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
   only stops if it honours `ctx.signal`.
 - Reconcile: `reconcileJobsEffect` keeps `DomainTag` in `E`; the worker edge
-  (`jobReconcileLoopEffect`, `apps/worker/src/job-reconcile.ts`) catches and
+  (`apps/worker/src/maintenance.ts`, task `JOB_RECONCILE`) catches and
   logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
   core never forks a loop.
 - Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue
