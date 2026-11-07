@@ -148,7 +148,10 @@ describe("safeFetch retry", () => {
     const link = failingSend("UND_ERR_CONNECT_TIMEOUT", 99);
     await expect(
       harness({ overrides: { fetch: link.send } }).fetch(target.url)
-    ).rejects.toBeDefined();
+    ).rejects.toMatchObject({
+      message: "fetch failed",
+      cause: { code: "UND_ERR_CONNECT_TIMEOUT" },
+    });
     expect(link.sends()).toBe(3);
   });
 
@@ -157,7 +160,10 @@ describe("safeFetch retry", () => {
     const link = failingSend("UND_ERR_INFO", 1);
     await expect(
       harness({ overrides: { fetch: link.send } }).fetch(target.url)
-    ).rejects.toBeDefined();
+    ).rejects.toMatchObject({
+      message: "fetch failed",
+      cause: { code: "UND_ERR_INFO" },
+    });
     expect(link.sends()).toBe(1);
   });
 
@@ -181,7 +187,10 @@ describe("safeFetch retry", () => {
 
   it("stops at the attempt limit on repeated resets and fails", async () => {
     const target = await scripted(() => ({ kind: "reset" }));
-    await expect(harness().fetch(target.url)).rejects.toBeDefined();
+    await expect(harness().fetch(target.url)).rejects.toMatchObject({
+      message: "fetch failed",
+      cause: { code: expect.stringMatching(/^(ECONNRESET|UND_ERR_SOCKET)$/) },
+    });
     expect(target.attempts()).toBe(3);
   });
 

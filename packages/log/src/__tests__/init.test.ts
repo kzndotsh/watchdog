@@ -34,29 +34,21 @@ function drainBody(drainDir: string): string {
     .join("\n");
 }
 
-function waitForDrain(
+async function waitForDrain(
   drainDir: string,
   predicate: (body: string) => boolean,
-  timeoutMs = 3000
+  timeout = 3000
 ): Promise<string> {
-  const started = Date.now();
-  return new Promise((resolve, reject) => {
-    const tick = () => {
+  return vi.waitFor(
+    () => {
       const body = drainBody(drainDir);
-      if (predicate(body)) {
-        resolve(body);
-        return;
+      if (!predicate(body)) {
+        throw new Error(`drain did not satisfy predicate within ${timeout}ms`);
       }
-      if (Date.now() - started >= timeoutMs) {
-        reject(
-          new Error(`drain did not satisfy predicate within ${timeoutMs}ms`)
-        );
-        return;
-      }
-      setTimeout(tick, 20);
-    };
-    tick();
-  });
+      return body;
+    },
+    { timeout, interval: 20 }
+  );
 }
 
 describe("initWatchdogLogger", () => {

@@ -1,27 +1,28 @@
 import { createRouterClient } from "@orpc/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Effect } from "effect";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const vault = vi.hoisted(() => ({
-  current: undefined as
-    | { secrets: Map<string, Map<string, string>> }
-    | undefined,
-}));
-
-// Route `runApp` through a fake credential Layer: the procedures and the core
-// credential helpers run unpatched, only the vault service is swapped.
-vi.mock("../../runtime", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../runtime")>();
-  const { fakeVault } = await import("@watchdog/core/vault");
-  const fake = fakeVault();
-  vault.current = fake;
-  return { ...actual, runApp: actual.runAppWith(fake.layer) };
-});
-
+import { fakeVault } from "@watchdog/core/vault";
 import { testActor } from "@watchdog/schemas/testing";
 
+import { toOrpcError } from "../../map-domain-error";
+import * as runtime from "../../runtime";
 import { list, put, remove } from "../credentials";
 
 const actor = testActor();
+
+// The procedures and the core credential helpers run unpatched: only the vault service is
+// swapped, through a Layer, for the `runApp` edge they all run on.
+const vault = fakeVault();
+vi.spyOn(runtime, "runApp").mockImplementation(async (effect) =>
+  runtime.appRuntime.runPromise(
+    effect.pipe(Effect.mapError(toOrpcError), Effect.provide(vault.layer))
+  )
+);
+
+afterAll(() => {
+  vi.restoreAllMocks();
+});
 
 const context = {
   headers: new Headers(),
@@ -33,11 +34,8 @@ describe("credentials procedures", () => {
   // The fake vault is one in-memory map shared by every test (and every repeat):
   // reseed it so a delete or put never leaks into the next test.
   beforeEach(() => {
-    vault.current?.secrets.clear();
-    vault.current?.secrets.set(
-      "u1",
-      new Map([["AI_COMPAT_API_KEY", "sk-test"]])
-    );
+    vault.secrets.clear();
+    vault.secrets.set("u1", new Map([["AI_COMPAT_API_KEY", "sk-test"]]));
   });
 
   it("lists credential slots for the actor from the vault service", async () => {
@@ -56,9 +54,7 @@ describe("credentials procedures", () => {
 
     expect(slot).toMatchObject({ name: "SHODAN_API_KEY", configured: true });
     expect(JSON.stringify(slot)).not.toContain("s3cret");
-    expect(vault.current?.secrets.get("u1")?.get("SHODAN_API_KEY")).toBe(
-      "s3cret"
-    );
+    expect(vault.secrets.get("u1")?.get("SHODAN_API_KEY")).toBe("s3cret");
   });
 
   it("deletes a credential and reports a missing one as not found", async () => {

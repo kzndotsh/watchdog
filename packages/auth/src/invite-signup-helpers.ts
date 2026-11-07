@@ -15,7 +15,7 @@ export function throwInvitationNotFound(): never {
 }
 
 export async function requirePendingInvitation(
-  adapter: OrgAdapter,
+  adapter: Pick<OrgAdapter, "findInvitationById">,
   invitationId: string
 ): Promise<PendingInvitation> {
   const invitation = await adapter.findInvitationById(invitationId);
