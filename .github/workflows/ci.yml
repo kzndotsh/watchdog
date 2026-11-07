@@ -403,7 +403,7 @@ jobs:
       # only cost time. The gate project is not part of this run (see the test (gates) job).
       - name: Unit + property + component + e2e-parser coverage
         run: >
-          pnpm run test:coverage -- --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
+          pnpm run test:coverage --coverage.reporter=lcovonly --reporter=default --reporter=junit --outputFile.junit=junit.xml
 
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}
@@ -458,7 +458,7 @@ jobs:
 
       - name: Gate tests
         run: >
-          pnpm run test:gate -- --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
+          pnpm run test:gate --reporter=default --reporter=junit --outputFile.junit=junit-gate.xml
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
@@ -469,11 +469,18 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  # Integration tests and Playwright run as two parallel jobs, each with its own Postgres
+  # Integration tests and Playwright run as parallel jobs, each with its own Postgres
   # service and S3 container (a job is its own runner). Both feed the `check` aggregate and
   # keep the trigger set of the old combined job: neither is narrowed.
+  #
+  # The integration files run one at a time against their database (`maxWorkers: 1`: several
+  # tests see the whole cluster, e.g. the activity drain and advisory locks), so the suite is
+  # split across runners instead: three shards, each with its own Postgres, plus `scale`, the
+  # tests that measure at scale (`*.scale.int.test.ts`: the list plan gate, ADR-0007, which
+  # reads the perf seed, and the Case export memory budgets), run without coverage, so the
+  # shards skip the seed. Each shard uploads its own coverage; Codecov merges the uploads.
   integration:
-    name: "test (integration)"
+    name: "test (integration, ${{ matrix.part }})"
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -485,9 +492,12 @@ jobs:
       needs.changes.outputs.typescript_app == 'true' ||
       needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
-    # The suite grew to ~7 min on main (4.6 to 7.3 min over a day); 8 cancelled a full run. The
-    # perf seed for the list plan gate adds about a minute.
-    timeout-minutes: 14
+    # The unsharded suite took 6 to 10 min on main; a shard runs about a third of it.
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        part: ["1/3", "2/3", "3/3", scale]
     services:
       postgres:
         image: postgres:18-alpine
@@ -517,14 +527,25 @@ jobs:
       - name: Install psql
         run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
 
+      # A throwaway CI cluster needs no crash safety: skip the flushes the suite's commits wait on.
+      # (A service container takes no server flags; these settings apply on reload.)
+      - name: Postgres without durability
+        run: |
+          psql postgresql://postgres:postgres@127.0.0.1:5432/watchdog -v ON_ERROR_STOP=1 \
+            -c "ALTER SYSTEM SET fsync = off" \
+            -c "ALTER SYSTEM SET synchronous_commit = off" \
+            -c "ALTER SYSTEM SET full_page_writes = off" \
+            -c "SELECT pg_reload_conf()"
+
       - name: Test databases + migrate
         env:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
         run: pnpm test-db
 
       # The list standard's plan gate (ADR-0007): EXPLAIN at audit scale in a scratch database,
-      # read by packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts.
+      # read by packages/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts.
       - name: Perf seed (list plan gate)
+        if: matrix.part == 'scale'
         env:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
           PERF_SEED_DIV: "1"
@@ -549,16 +570,25 @@ jobs:
         run: bash scripts/s3-init.sh
 
       - name: Integration tests
+        if: matrix.part != 'scale'
+        env:
+          DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
+          DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
+          PART: ${{ matrix.part }}
+        # Coverage too: repos, core database paths, migrations and the purge job are tested here,
+        # not in the unit job, so without this upload Codecov reports them as uncovered.
+        run: pnpm test:integration --shard="$PART" --coverage --coverage.reporter=lcovonly
+
+      - name: Scale tests
+        if: matrix.part == 'scale'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
           WD_PERF_DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/wd_perf_ci
-        # Coverage too: repos, core database paths, migrations and the purge job are tested here,
-        # not in the unit job, so without this upload Codecov reports them as uncovered.
-        run: pnpm test:integration -- --coverage --coverage.reporter=lcovonly
+        run: pnpm test:scale
 
       - name: Upload integration coverage to Codecov
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.part != 'scale' }}
         continue-on-error: true
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
@@ -614,6 +644,16 @@ jobs:
 
       - name: Install psql
         run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+
+      # A throwaway CI cluster needs no crash safety: skip the flushes the suite's commits wait on.
+      # (A service container takes no server flags; these settings apply on reload.)
+      - name: Postgres without durability
+        run: |
+          psql postgresql://postgres:postgres@127.0.0.1:5432/watchdog -v ON_ERROR_STOP=1 \
+            -c "ALTER SYSTEM SET fsync = off" \
+            -c "ALTER SYSTEM SET synchronous_commit = off" \
+            -c "ALTER SYSTEM SET full_page_writes = off" \
+            -c "SELECT pg_reload_conf()"
 
       - name: Test databases + migrate
         env:

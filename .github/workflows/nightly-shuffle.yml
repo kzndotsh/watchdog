@@ -1,5 +1,5 @@
-# Nightly order-dependence probe. Every Vitest project except integration (it needs Postgres
-# and runs serially) runs with shuffled file order under a few seeds, then once with shuffled
+# Nightly order-dependence probe. Every Vitest project except integration and scale (they need Postgres
+# and run serially) runs with shuffled file order under a few seeds, then once with shuffled
 # tests and repeats. Projects share workers (isolate: false), so a test that leaks state
 # fails here under some orders while the fixed PR order stays green.
 #

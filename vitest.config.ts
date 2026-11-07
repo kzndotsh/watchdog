@@ -66,9 +66,6 @@ const integrationEnv = {
   S3_BUCKET: "watchdog-evidence",
   S3_REGION: "us-east-1",
   WD_MASTER_VAULT_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  // Export writes land in a throwaway directory, never the worktree's `export/`; the setup file
-  // `scripts/vitest/settle-export-writes.ts` removes it after each file.
-  WD_EXPORT_DIR: path.join(os.tmpdir(), `watchdog-int-export-${process.pid}`),
 } as const;
 
 /*
@@ -85,6 +82,55 @@ const integrationEnv = {
  * leaves a global, spy, `process.env` key or fake timer changed, so a leak is blamed on its
  * author instead of on whichever file runs next.
  */
+/** Tests that measure at scale (query plans, memory budgets): their own project, uninstrumented. */
+const SCALE_TESTS = [
+  "packages/*/src/**/__tests__/**/*.scale.int.test.ts",
+  "apps/*/src/**/__tests__/**/*.scale.int.test.ts",
+];
+
+/**
+ * A database project: one file at a time (several tests see the whole Postgres cluster: the
+ * activity drain, advisory locks), with `@` so web route-handler tests can import the routes.
+ */
+function integrationProject(
+  name: string,
+  files: { include: string[]; exclude?: string[] }
+) {
+  return {
+    resolve: {
+      alias: {
+        "@": webSrc,
+      },
+    },
+    test: {
+      name,
+      ...files,
+      environment: "node" as const,
+      fileParallelism: false,
+      maxWorkers: 1,
+      isolate: false,
+      unstubGlobals: true,
+      unstubEnvs: true,
+      // Settle detached Export writes after each test, before the canary snapshot (#379).
+      setupFiles: [
+        ...sharedWorkerSetup.slice(0, -1),
+        "scripts/vitest/settle-export-writes.ts",
+        ...sharedWorkerSetup.slice(-1),
+      ],
+      env: {
+        ...integrationEnv,
+        // Export writes land in a throwaway directory, never the worktree's `export/`; the setup
+        // file `scripts/vitest/settle-export-writes.ts` removes it after each file. One per
+        // project, so a project finishing never removes a directory another is writing to.
+        WD_EXPORT_DIR: path.join(
+          os.tmpdir(),
+          `watchdog-${name}-export-${process.pid}`
+        ),
+      },
+    },
+  };
+}
+
 export default defineConfig({
   test: {
     // Mock history is cleared before every test in each project below that sets
@@ -270,35 +316,18 @@ export default defineConfig({
           testTimeout: 30_000,
         },
       },
-      {
-        // `@` so web route-handler integration tests can import the routes.
-        resolve: {
-          alias: {
-            "@": webSrc,
-          },
-        },
-        test: {
-          name: "integration",
-          include: [
-            "packages/*/src/**/__tests__/**/*.int.test.ts",
-            "apps/*/src/**/__tests__/**/*.int.test.ts",
-          ],
-          exclude: ["**/node_modules/**"],
-          environment: "node",
-          fileParallelism: false,
-          maxWorkers: 1,
-          isolate: false,
-          unstubGlobals: true,
-          unstubEnvs: true,
-          // Settle detached Export writes after each test, before the canary snapshot (#379).
-          setupFiles: [
-            ...sharedWorkerSetup.slice(0, -1),
-            "scripts/vitest/settle-export-writes.ts",
-            ...sharedWorkerSetup.slice(-1),
-          ],
-          env: integrationEnv,
-        },
-      },
+      integrationProject("integration", {
+        include: [
+          "packages/*/src/**/__tests__/**/*.int.test.ts",
+          "apps/*/src/**/__tests__/**/*.int.test.ts",
+        ],
+        exclude: ["**/node_modules/**", ...SCALE_TESTS],
+      }),
+      // `*.scale.int.test.ts`: the list plan gate (ADR-0007, reads the perf-seeded database) and
+      // the Case export memory budgets. CI runs them on their own runner without coverage
+      // (instrumentation distorts a measurement and doubles a budget test's time), and only
+      // that runner pays for the perf seed.
+      integrationProject("scale", { include: SCALE_TESTS }),
     ],
   },
 });

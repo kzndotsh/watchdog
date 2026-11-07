@@ -17,7 +17,8 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 | `component` | `*.component.test.tsx` under `apps/web/src`, plus the hook and DOM `*.test.ts` files listed as `webDomTestGlobs` in `vitest.config.ts` | happy-dom | small | `pnpm test:component` |
 | `component-compiled` | `*.compiled.test.tsx` under `apps/web/src`: the `component` setup plus React Compiler (the app ships with it), for a render bug that only exists once a component is memoized | happy-dom | small | `pnpm test:component` |
 | `gate` | `scripts/__tests__/*.gate.test.ts` | node, spawns scripts and oxlint in temp repos | medium | `pnpm test:gate` |
-| `integration` | `*.int.test.ts` under `packages/*` or `apps/*` | node, `watchdog_test` Postgres (and S3 for blob and export) | medium | `pnpm test:integration` |
+| `integration` | `*.int.test.ts` under `packages/*` or `apps/*`, except `*.scale.int.test.ts` | node, `watchdog_test` Postgres (and S3 for blob and export) | medium | `pnpm test:integration` |
+| `scale` | `*.scale.int.test.ts`: tests that measure at scale (the list plan gate, ADR-0007; the Case export memory budgets) | node, `watchdog_test` and S3, plus a perf-seeded database for the plan gate (`WD_PERF_DATABASE_URL`; it skips locally without one) | medium | `pnpm test:scale` |
 | `e2e-parser` | `e2e/**/*.test.ts` (not `specs/`): the harness's own tests | node | small | `pnpm test:e2e-parser` |
 | Playwright | `e2e/specs/**/*.spec.ts` (not a Vitest project) | browser, `watchdog_e2e`, web, worker | large | `pnpm test:e2e` |
 

@@ -134,7 +134,7 @@ Notes:
 
 ## Measured: list search, the 50 ms budget (#549)
 
-[ADR-0007](../adr/0007-list-standard.md) budgets a list page with `q` (the first page plus its capped count) at a p95 of 50 ms of server time, at audit scale, for the worst 3-character needle. CI does not assert milliseconds. The plan gate (`packages/core/src/infra/__tests__/list-conformance-plans.int.test.ts`) asserts that each of those statements reads at most the Case's rows of the table, which a search that leaves the Case breaks. The budget itself is checked by hand, here.
+[ADR-0007](../adr/0007-list-standard.md) budgets a list page with `q` (the first page plus its capped count) at a p95 of 50 ms of server time, at audit scale, for the worst 3-character needle. CI does not assert milliseconds. The plan gate (`packages/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts`) asserts that each of those statements reads at most the Case's rows of the table, which a search that leaves the Case breaks. The budget itself is checked by hand, here.
 
 To measure, load the full seed (`PERF_SEED_DIV=1 just perf-seed wd_perf_<name>`). Then run that file with `WD_PERF_DATABASE_URL` pointed at the seed and `WD_PERF_REPORT=<file>`. It prints and writes, per list and needle, the rows read and the p95 and maximum over 20 runs, after one warm-up, of `EXPLAIN (ANALYZE, BUFFERS, TIMING OFF)` execution time.
 

@@ -30,7 +30,7 @@ import type { DomainTag } from "../tagged-errors";
  * (`LIST_CONFORMANCE`, `@watchdog/test-db`) with ties on every sort key, NULLs in the nullable
  * one, rows on both sides of every filter and a decoy in another Case. Every expectation is
  * hand-written from the fixture, never derived from the SQL under test. The PLAN half, on the
- * audit-scale perf seed, is `list-conformance-plans.int.test.ts`.
+ * audit-scale perf seed, is `list-conformance-plans.scale.int.test.ts`.
  */
 
 const run = runDomainWith(Db.layer);
