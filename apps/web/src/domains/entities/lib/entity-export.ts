@@ -142,8 +142,3 @@ export async function confirmOpenIn({
   tab.location.replace(openIn.url);
   toast.success(OPEN_IN_TARGETS[openIn.destination].opened);
 }
-
-export async function copyIdentifierValue(value: string): Promise<void> {
-  await navigator.clipboard.writeText(value);
-  toast.success(TOAST_COPIED);
-}

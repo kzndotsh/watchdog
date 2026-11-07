@@ -10,14 +10,14 @@ import {
 import { useEntityRefSource } from "@/domains/entities/hooks/use-entity-ref-source";
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import { entityPickerPort } from "@/domains/entities/queries";
 import { evidencePickerPort } from "@/domains/intake/queries";
 import { useList } from "@/shared/hooks/list/use-list";
 import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { useListTable } from "@/shared/hooks/list/use-list-table";
+import { copyText } from "@/shared/hooks/use-copy-text";
 import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
-import { toast } from "@/shared/ui/toast";
+import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import type { identifierList } from "@watchdog/schemas/graph";
 import type { ListSearch, UnfixedSearchPatch } from "@watchdog/schemas/shared";
 
@@ -97,13 +97,10 @@ export function useIdentifiersTable(
     [navigate, caseSlug]
   );
   const onCopyValue = useCallback((value: string) => {
-    void (async () => {
-      try {
-        await copyIdentifierValue(value);
-      } catch {
-        toast.error("Couldn't copy");
-      }
-    })();
+    void copyText(value, {
+      success: TOAST_COPIED,
+      failure: TOAST_COULDNT_COPY,
+    });
   }, []);
 
   const tableActions = useMemo(

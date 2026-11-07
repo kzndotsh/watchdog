@@ -27,3 +27,6 @@ export async function prefetchImport(
     // The first open retries the import and shows its own failure.
   }
 }
+
+/** How long after a screen mounts its lazy overlay's chunk is fetched, so the first open is instant. */
+export const OVERLAY_PREFETCH_MS = 2000;
