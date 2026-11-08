@@ -24,20 +24,16 @@ import {
   PROVIDER_CALL_TRANSPORTS,
   PROVIDER_REQUEST_BODY_STATES,
   caseIdSchema,
-  claimClassSchema,
   confidenceTierSchema,
   edgePredicateSchema,
   entityKindSchema,
   evidenceKindSchema,
-  identifierStatusSchema,
   identifierTypeSchema,
   jobStatusSchema,
   jsonObjectSchema,
   playbookRunOutcomeSchema,
   playbookRunStatusSchema,
   proposalStatusSchema,
-  questionStatusSchema,
-  retractKindSchema,
 } from "@watchdog/schemas/shared";
 
 /** Agent ingress escape hatch — required as `true` for API-key child Graph writes. */
@@ -106,130 +102,6 @@ export const caseCountsSchema = z.object({
   tasksOverdue: listTotalSchema,
   /** Open Tasks due from the caller's day start through the next 7 calendar days. */
   tasksDueSoon: listTotalSchema,
-});
-
-export const entitySchema = z.object({
-  id: z.uuid(),
-  caseId: caseIdSchema,
-  kind: entityKindSchema,
-  name: z.string(),
-  slug: z.string(),
-  summary: z.string().nullable(),
-  notes: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
-});
-
-export const claimSchema = z.object({
-  id: z.uuid(),
-  entityId: z.uuid(),
-  class: claimClassSchema,
-  text: z.string(),
-  confidence: confidenceTierSchema,
-  retracted: z.boolean(),
-  retractKind: retractKindSchema.nullable(),
-  retractedReason: z.string().nullable(),
-  retractedBy: z.string().nullable(),
-  retractedAt: z.string().nullable(),
-  evidenceIds: z.array(z.uuid()),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
-});
-
-export const identifierSchema = z.object({
-  id: z.uuid(),
-  entityId: z.uuid(),
-  type: identifierTypeSchema,
-  platform: z.string(),
-  value: z.string(),
-  confidence: confidenceTierSchema,
-  status: identifierStatusSchema,
-  notes: z.string().nullable(),
-  evidenceIds: z.array(z.uuid()),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-/** A row of the Identifier list: the Identifier with its owning Entity's labels. */
-export const caseIdentifierSchema = identifierSchema.extend({
-  entityName: z.string(),
-  entitySlug: z.string(),
-  entityKind: entityKindSchema,
-});
-
-export const edgeSchema = z.object({
-  id: z.uuid(),
-  fromId: z.uuid(),
-  toId: z.uuid(),
-  predicate: edgePredicateSchema,
-  confidence: confidenceTierSchema,
-  notes: z.string().nullable(),
-  evidenceIds: z.array(z.uuid()),
-  peerId: z.uuid(),
-  peerName: z.string(),
-  peerSlug: z.string(),
-  peerKind: entityKindSchema,
-  direction: z.enum(["out", "in"]),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
-});
-
-/**
- * A row of the Entity list: the Entity with its Connection counts, and its one Connection (an
- * Edge seen from it, without Evidence links) when it has exactly one; null otherwise.
- */
-const entityListItemSchema = entitySchema.extend({
-  connections: z.object({
-    outgoing: z.number().int().min(0),
-    incoming: z.number().int().min(0),
-  }),
-  soleConnection: edgeSchema.omit({ evidenceIds: true }).nullable(),
-});
-
-/**
- * A row of the Connection list (`edgeList`): the Connection with both ends' labels (absolute
- * endpoints, no peer or direction: an Entity's tab orients it).
- */
-export const caseEdgeSchema = z.object({
-  id: z.uuid(),
-  fromId: z.uuid(),
-  fromName: z.string(),
-  fromSlug: z.string(),
-  fromKind: entityKindSchema,
-  toId: z.uuid(),
-  toName: z.string(),
-  toSlug: z.string(),
-  toKind: entityKindSchema,
-  predicate: edgePredicateSchema,
-  confidence: confidenceTierSchema,
-  notes: z.string().nullable(),
-  evidenceIds: z.array(z.uuid()),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
-});
-
-export const eventSchema = z.object({
-  id: z.uuid(),
-  entityId: z.uuid(),
-  when: z.string(),
-  what: z.string(),
-  where: z.string().nullable(),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
-});
-
-export const questionSchema = z.object({
-  id: z.uuid(),
-  entityId: z.uuid(),
-  text: z.string(),
-  status: questionStatusSchema,
-  resolvedNote: z.string().nullable(),
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: z.number().int().positive(),
 });
 
 export const presignedUploadSchema = z.object({
@@ -532,7 +404,6 @@ export const graphWritePageSchema = listPageSchema(graphWriteRecordSchema);
 export const activityPageSchema = listPageSchema(activityItemSchema);
 export const graphHistoryPageSchema = listPageSchema(graphHistoryEntrySchema);
 /** Declared lists (ADR-0007): a page plus `total` on the first page. */
-export const entityListPageSchema = listPageSchema(entityListItemSchema);
 export const evidenceListPageSchema = listPageSchema(evidenceSchema);
 export const collectListPageSchema = listPageSchema(collectQueueItemSchema);
 /** `collect.get`: the row an id belongs to, and the member Job to focus (null for a row's own id). */
@@ -553,11 +424,6 @@ export const entityPickerPageSchema = listPageSchema(entityPickerItemSchema);
 export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema
 );
-export const identifierListPageSchema = listPageSchema(caseIdentifierSchema);
-export const claimListPageSchema = listPageSchema(claimSchema);
-export const eventListPageSchema = listPageSchema(eventSchema);
-export const questionListPageSchema = listPageSchema(questionSchema);
-export const edgeListPageSchema = listPageSchema(caseEdgeSchema);
 
 /**
  * The Dossier ego graph's capped read (`graph.ego`, #585): one Entity's Connections at either

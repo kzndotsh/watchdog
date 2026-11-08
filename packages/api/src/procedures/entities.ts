@@ -19,6 +19,8 @@ import {
   getEntitiesInputSchema,
   matchEntityNamesInputSchema,
   updateEntityInputSchema,
+  entityListPageSchema,
+  entitySchema,
 } from "@watchdog/schemas/graph";
 import {
   ARRAY_MAX,
@@ -29,12 +31,7 @@ import {
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import {
-  entityListPageSchema,
-  entityPickerItemSchema,
-  entityPickerPageSchema,
-  entitySchema,
-} from "../schemas";
+import { entityPickerItemSchema, entityPickerPageSchema } from "../schemas";
 
 /**
  * The Case's Entity list (`entityList`, ADR-0007): filters, `q` and sort, a page at a time with

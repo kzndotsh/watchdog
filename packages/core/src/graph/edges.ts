@@ -1,6 +1,8 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import type { EdgeListRow } from "@watchdog/db";
+import type { caseEdgeSchema, edgeSchema } from "@watchdog/schemas/graph";
 import {
   normalizeUuidList,
   parseOptionalTrimmedUuid,
@@ -8,7 +10,6 @@ import {
   type CaseId,
   type ConfidenceTier,
   type EdgePredicate,
-  type EntityKind,
   type OrganizationId,
   type GraphActor,
 } from "@watchdog/schemas/shared";
@@ -33,24 +34,6 @@ import {
   type GraphWriter,
 } from "./mutation/run-graph-mutation";
 import { edgesTable, type EdgeWritten } from "./mutation/tables";
-
-export type EdgeRecord = {
-  id: string;
-  fromId: string;
-  toId: string;
-  predicate: EdgePredicate;
-  confidence: ConfidenceTier;
-  notes: string | null;
-  evidenceIds: string[];
-  /** Peer Entity for dossier display (the other end from this Entity). */
-  peerId: string;
-  peerName: string;
-  peerSlug: string;
-  peerKind: EntityKind;
-  direction: "out" | "in";
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
 
 export type CreateEdgeInput = {
   caseId: CaseId;
@@ -88,6 +71,10 @@ export type UpdateEdgeInput = {
   evidenceIds?: string[];
 } & GraphActor;
 
+export type EdgeRecord = z.output<typeof edgeSchema>;
+/** Case-wide edge: absolute endpoints (no peer or direction). */
+export type CaseEdgeRecord = z.output<typeof caseEdgeSchema>;
+
 function toRecord(
   row: EdgeListRow,
   viewEntityId: string,
@@ -112,23 +99,6 @@ function toRecord(
 }
 
 /** Case-wide edge — absolute endpoints (no peer/direction). */
-export type CaseEdgeRecord = {
-  id: string;
-  fromId: string;
-  fromName: string;
-  fromSlug: string;
-  fromKind: EntityKind;
-  toId: string;
-  toName: string;
-  toSlug: string;
-  toKind: EntityKind;
-  predicate: EdgePredicate;
-  confidence: ConfidenceTier;
-  notes: string | null;
-  evidenceIds: string[];
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
 
 export function toCaseEdgeRecord(
   row: EdgeListRow,
