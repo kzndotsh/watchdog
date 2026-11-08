@@ -39,4 +39,29 @@ describe("whoxy", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+  it.effect("reads a non-numeric status string as no status", () =>
+    Effect.gen(function* whoxyTextStatusGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ status: "error" }), { status: 200 })
+          )
+      );
+
+      const snap = yield* fetchWhoxyWhoisEffect(
+        "example.com",
+        "test-key",
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
+      );
+
+      expect(snap.status).toBeNull();
+      expect(snap.ok).toBe(false);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

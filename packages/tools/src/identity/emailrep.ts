@@ -1,12 +1,8 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { ValidationVendorError } from "../errors/tagged-errors";
 import { parseVendorError } from "../errors/vendor-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeEmail } from "../normalize";
 import { asBool, asNumber, asString, isRecord } from "../parse/coerce";
 
@@ -86,55 +82,36 @@ type EmailrepOptions = {
   userAgent: string;
 };
 
-export function fetchEmailrepLookupEffect(
-  emailRaw: string,
-  signal: AbortSignal,
-  options: EmailrepOptions
-): Effect.Effect<EmailrepLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchEmailrepLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const { email } = yield* Effect.try({
-      try: () => normalizeEmail(emailRaw),
-      catch: mapToolsCatch,
-    });
-
-    const ua = options.userAgent;
-
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      "User-Agent": ua,
-      Key: options.apiKey,
-    };
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://emailrep.io/${encodeURIComponent(email)}`,
-      signal,
-      service: "EmailRep",
-      subject: email,
-      acceptStatus: (code) =>
-        (code >= 200 && code < 300) || code === 401 || code === 403,
-      init: {
-        method: "GET",
-        headers,
-      },
-    });
-
+const lookupEmailrep = defineJsonProvider({
+  service: "EmailRep",
+  schema: emailrepLookupSnapshotSchema,
+  key: { header: "Key" },
+  normalize: (raw) => normalizeEmail(raw).email,
+  request: (email, _options: EmailrepOptions) => ({
+    url: `https://emailrep.io/${encodeURIComponent(email)}`,
+  }),
+  // 401 and 403 are the vendor refusing the call; each is a caller-visible failure, not "unknown".
+  notFoundStatuses: [401, 403],
+  notFound: ({ status }) => {
     if (status === 401) {
-      return yield* new ValidationVendorError({
+      throw new ValidationVendorError({
         message: "EmailRep API key invalid",
         cause: "HTTP 401",
       });
     }
-    if (status === 403) {
-      return yield* new ValidationVendorError({
-        message: "EmailRep rejected request (missing User-Agent)",
-        cause: "HTTP 403",
-      });
-    }
-
-    return yield* Effect.try({
-      try: () => parseEmailrepBody(email, queriedAt, body),
-      catch: mapToolsCatch,
+    throw new ValidationVendorError({
+      message: "EmailRep rejected request (missing User-Agent)",
+      cause: "HTTP 403",
     });
-  });
+  },
+  toSnapshot: ({ subject: email, queriedAt, body }) =>
+    parseEmailrepBody(email, queriedAt, body),
+});
+
+export function fetchEmailrepLookupEffect(
+  emailRaw: string,
+  signal: AbortSignal,
+  options: EmailrepOptions
+) {
+  return lookupEmailrep(emailRaw, options.apiKey, signal, options);
 }

@@ -1,11 +1,8 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { ParseVendorError } from "../errors/tagged-errors";
+import { defineJsonProvider } from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 
 export const shodanLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -79,58 +76,39 @@ function snapshotFromBody(
   return snapshot.success ? snapshot.data : undefined;
 }
 
-export function fetchShodanHostEffect(
-  ipRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: ShodanOptions
-): Effect.Effect<ShodanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchShodanHostGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-
-    const ua = options.userAgent;
+export const fetchShodanHostEffect = defineJsonProvider({
+  service: "Shodan",
+  schema: shodanLookupSnapshotSchema,
+  key: { query: "key" },
+  normalize: normalizeIp,
+  request: (ip, _options: ShodanOptions) => {
     const url = new URL(
       `https://api.shodan.io/shodan/host/${encodeURIComponent(ip)}`
     );
-    url.searchParams.set("key", key);
     url.searchParams.set("minify", "true");
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "Shodan",
-      subject: ip,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-    });
-
-    if (status === 404) {
-      return shodanLookupSnapshotSchema.parse({
-        ip,
-        queriedAt,
-        found: false,
-        status: 404,
-        org: null,
-        isp: null,
-        asn: null,
-        hostnames: [],
-        ports: [],
-        tags: [],
-        os: null,
-        countryCode: null,
-        city: null,
-        lastUpdate: null,
-      });
-    }
-
+    return { url };
+  },
+  notFound: ({ subject: ip, queriedAt }) => ({
+    ip,
+    queriedAt,
+    found: false,
+    status: 404,
+    org: null,
+    isp: null,
+    asn: null,
+    hostnames: [],
+    ports: [],
+    tags: [],
+    os: null,
+    countryCode: null,
+    city: null,
+    lastUpdate: null,
+  }),
+  toSnapshot: ({ subject: ip, queriedAt, status, body }) => {
     const snapshot = snapshotFromBody(ip, queriedAt, status, body);
     if (snapshot === undefined) {
-      return yield* new ParseVendorError({ service: "Shodan", subject: ip });
+      throw new ParseVendorError({ service: "Shodan", subject: ip });
     }
     return snapshot;
-  });
-}
+  },
+});

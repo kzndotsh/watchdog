@@ -45,4 +45,29 @@ describe("censys", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+  it.effect.each([
+    ["a blank secret", "id", ""],
+    ["a blank id", "", "secret"],
+  ])("sends no credentials with %s", ([, id, secret]) =>
+    Effect.gen(function* censysBlankCredentialGen() {
+      const fetch = vi.fn<typeof globalThis.fetch>(() =>
+        Promise.resolve(new Response(null, { status: 404 }))
+      );
+      vi.stubGlobal("fetch", fetch);
+
+      yield* fetchCensysHostEffect(
+        "8.8.8.8",
+        id,
+        secret,
+        AbortSignal.timeout(5000),
+        { userAgent: "watchdog-test" }
+      );
+
+      const init = fetch.mock.calls[0]?.[1];
+      expect(new Headers(init?.headers).has("authorization")).toBe(false);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

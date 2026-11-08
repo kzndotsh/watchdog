@@ -1,10 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { HttpVendorError } from "../errors/tagged-errors";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeHost } from "../normalize";
 import { isRecord } from "../parse/coerce";
 
@@ -53,54 +50,31 @@ type TrancoOptions = {
   userAgent: string;
 };
 
-function readTrancoBodyEffect(
-  domain: string,
-  signal: AbortSignal,
-  ua: string
-): Effect.Effect<Record<string, unknown>, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* readTrancoBodyGen() {
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://tranco-list.eu/api/ranks/domain/${encodeURIComponent(domain)}`,
-      signal,
-      service: "Tranco",
-      subject: domain,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 403,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-    });
-    if (status === 403) {
-      return yield* new HttpVendorError({ service: "Tranco", status });
-    }
-    return body;
-  });
-}
-
-export function fetchTrancoLookupEffect(
-  domainRaw: string,
-  signal: AbortSignal,
-  options: TrancoOptions
-): Effect.Effect<TrancoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchTrancoLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const domain = normalizeHost(domainRaw);
-    const ua = options.userAgent;
-
-    const body = yield* readTrancoBodyEffect(domain, signal, ua);
+export const fetchTrancoLookupEffect = defineJsonProvider({
+  service: "Tranco",
+  schema: trancoLookupSnapshotSchema,
+  normalize: normalizeHost,
+  request: (domain, _options: TrancoOptions) => ({
+    url: `https://tranco-list.eu/api/ranks/domain/${encodeURIComponent(domain)}`,
+  }),
+  // Tranco answers 403 to a request it refuses; that is a failure, not "not ranked".
+  notFoundStatuses: [403],
+  notFound: ({ status }) => {
+    throw new HttpVendorError({ service: "Tranco", status });
+  },
+  toSnapshot: ({ subject: domain, queriedAt, body }) => {
     const rows = parseRanks(body.ranks).sort((a, b) =>
       b.date.localeCompare(a.date)
     );
     const latest = rows[0] ?? null;
-
-    return trancoLookupSnapshotSchema.parse({
+    return {
       domain,
       queriedAt,
-      source: "tranco-list.eu",
+      source: "tranco-list.eu" as const,
       found: rows.length > 0,
       latestRank: latest?.rank ?? null,
       latestDate: latest?.date ?? null,
       ranksCount: rows.length,
-    });
-  });
-}
+    };
+  },
+});

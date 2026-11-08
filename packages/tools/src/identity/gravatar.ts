@@ -1,13 +1,8 @@
 import { createHash } from "node:crypto";
 
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeEmail } from "../normalize";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 
@@ -143,37 +138,19 @@ type GravatarOptions = {
   userAgent: string;
 };
 
-export function fetchGravatarLookupEffect(
-  emailRaw: string,
-  signal: AbortSignal,
-  options: GravatarOptions
-): Effect.Effect<GravatarLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchGravatarLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const { email } = yield* Effect.try({
-      try: () => normalizeEmail(emailRaw),
-      catch: mapToolsCatch,
-    });
-    const hash = gravatarEmailHash(email);
-    const ua = options.userAgent;
-
-    const url = `https://secure.gravatar.com/${hash}.json`;
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "Gravatar",
-      subject: hash,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-    });
-
-    if (status === 404) {
-      return emptyGravatar(email, hash, queriedAt);
-    }
-
-    return parseGravatarBody(email, hash, queriedAt, body);
-  });
-}
+export const fetchGravatarLookupEffect = defineJsonProvider({
+  service: "Gravatar",
+  schema: gravatarLookupSnapshotSchema,
+  // The vendor and its errors know the subject by its hash, never the address.
+  normalize: (raw) => {
+    const { email } = normalizeEmail(raw);
+    return { value: gravatarEmailHash(email), email };
+  },
+  request: ({ value: hash }, _options: GravatarOptions) => ({
+    url: `https://secure.gravatar.com/${hash}.json`,
+  }),
+  notFound: ({ subject: { email, value: hash }, queriedAt }) =>
+    emptyGravatar(email, hash, queriedAt),
+  toSnapshot: ({ subject: { email, value: hash }, queriedAt, body }) =>
+    parseGravatarBody(email, hash, queriedAt, body),
+});
