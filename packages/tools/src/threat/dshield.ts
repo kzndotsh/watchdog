@@ -1,11 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { child, defineJsonProvider } from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 import { asString, isRecord } from "../parse/coerce";
 
 export const dshieldLookupSnapshotSchema = z.object({
@@ -90,27 +86,13 @@ type DshieldOptions = {
   userAgent: string;
 };
 
-export function fetchDshieldLookupEffect(
-  ipRaw: string,
-  signal: AbortSignal,
-  options: DshieldOptions
-): Effect.Effect<DshieldLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchDshieldLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options.userAgent;
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url: `https://isc.sans.edu/api/ip/${encodeURIComponent(ip)}?json`,
-      signal,
-      service: "DShield",
-      subject: ip,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-    });
-    const data = isRecord(body.ip) ? body.ip : {};
-    return parseDshieldBody(ip, queriedAt, data);
-  });
-}
+export const fetchDshieldLookupEffect = defineJsonProvider({
+  service: "DShield",
+  schema: dshieldLookupSnapshotSchema,
+  normalize: normalizeIp,
+  request: (ip, _options: DshieldOptions) => ({
+    url: `https://isc.sans.edu/api/ip/${encodeURIComponent(ip)}?json`,
+  }),
+  toSnapshot: ({ subject: ip, queriedAt, body }) =>
+    parseDshieldBody(ip, queriedAt, child(body, "ip")),
+});

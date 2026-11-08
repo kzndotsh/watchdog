@@ -1,10 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { ValidationVendorError } from "../errors/tagged-errors";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -67,55 +64,39 @@ type ThreatfoxOptions = {
   userAgent: string;
 };
 
-export function fetchThreatfoxLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: ThreatfoxOptions
-): Effect.Effect<ThreatfoxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchThreatfoxLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const { kind, value } = classifyQuery(queryRaw);
-
-    const ua = options.userAgent;
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url: "https://threatfox-api.abuse.ch/api/v1/",
-      init: {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "Auth-Key": key,
-          "User-Agent": ua,
-        },
-        body: JSON.stringify({
-          query: "search_ioc",
-          search_term: value,
-          exact_match: true,
-        }),
-      },
-      signal,
-      service: "ThreatFox",
-      subject: value,
-    });
+export const fetchThreatfoxLookupEffect = defineJsonProvider({
+  service: "ThreatFox",
+  schema: threatfoxLookupSnapshotSchema,
+  key: { header: "Auth-Key" },
+  normalize: classifyQuery,
+  request: ({ value }, _options: ThreatfoxOptions) => ({
+    url: "https://threatfox-api.abuse.ch/api/v1/",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: "search_ioc",
+      search_term: value,
+      exact_match: true,
+    }),
+  }),
+  toSnapshot: ({ subject: { kind, value }, queriedAt, body }) => {
     const queryStatus =
       typeof body.query_status === "string" ? body.query_status : "unknown";
 
     if (queryStatus === "no_result") {
-      return threatfoxLookupSnapshotSchema.parse({
+      return {
         query: value,
         kind,
         queriedAt,
-        source: "threatfox-api.abuse.ch",
+        source: "threatfox-api.abuse.ch" as const,
         queryStatus,
         found: false,
         iocs: [],
-      });
+      };
     }
 
     if (queryStatus !== "ok") {
-      return yield* new ValidationVendorError({
+      throw new ValidationVendorError({
         message: "ThreatFox query failed",
         cause: `query_status=${queryStatus}`,
       });
@@ -147,14 +128,14 @@ export function fetchThreatfoxLookupEffect(
       });
     }
 
-    return threatfoxLookupSnapshotSchema.parse({
+    return {
       query: value,
       kind,
       queriedAt,
-      source: "threatfox-api.abuse.ch",
+      source: "threatfox-api.abuse.ch" as const,
       queryStatus,
       found: true,
       iocs,
-    });
-  });
-}
+    };
+  },
+});

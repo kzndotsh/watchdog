@@ -1,17 +1,12 @@
 import { isIP, isIPv4 } from "node:net";
 
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { defineJsonProvider } from "../http/define-json-provider";
 import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
-import { nowIsoStringEffect } from "../infra/clock";
 import { normalizeHost, normalizeIp } from "../normalize";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 
@@ -119,61 +114,30 @@ type OtxOptions = {
   userAgent: string;
 };
 
-export function fetchOtxLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: OtxOptions
-): Effect.Effect<OtxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchOtxLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-
-    const { kind, otxType, value } = yield* Effect.try({
-      try: () => classifyOtxIndicator(queryRaw),
-      catch: mapToolsCatch,
-    });
-    const ua = options.userAgent;
-    const url = `https://otx.alienvault.com/api/v1/indicators/${otxType}/${encodeURIComponent(value)}/general`;
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "OTX",
-      subject: value,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "X-OTX-API-KEY": key,
-          "User-Agent": ua,
-        },
-      },
-    });
-
-    if (status === 404) {
-      return otxLookupSnapshotSchema.parse({
-        query: value,
-        kind,
-        queriedAt,
-        source: "otx.alienvault.com",
-        found: false,
-        pulseCount: 0,
-        pulseNames: [],
-        malwareFamilies: [],
-      });
-    }
-    const { pulseCount, pulseNames, malwareFamilies } = extractPulseInfo(body);
-
-    return otxLookupSnapshotSchema.parse({
-      query: value,
-      kind,
-      queriedAt,
-      source: "otx.alienvault.com",
-      found: true,
-      pulseCount,
-      pulseNames,
-      malwareFamilies,
-    });
-  });
-}
+export const fetchOtxLookupEffect = defineJsonProvider({
+  service: "OTX",
+  schema: otxLookupSnapshotSchema,
+  key: { header: "X-OTX-API-KEY" },
+  normalize: classifyOtxIndicator,
+  request: ({ otxType, value }, _options: OtxOptions) => ({
+    url: `https://otx.alienvault.com/api/v1/indicators/${otxType}/${encodeURIComponent(value)}/general`,
+  }),
+  notFound: ({ subject: { kind, value }, queriedAt }) => ({
+    query: value,
+    kind,
+    queriedAt,
+    source: "otx.alienvault.com" as const,
+    found: false,
+    pulseCount: 0,
+    pulseNames: [],
+    malwareFamilies: [],
+  }),
+  toSnapshot: ({ subject: { kind, value }, queriedAt, body }) => ({
+    query: value,
+    kind,
+    queriedAt,
+    source: "otx.alienvault.com" as const,
+    found: true,
+    ...extractPulseInfo(body),
+  }),
+});

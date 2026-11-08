@@ -1,12 +1,13 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import {
+  child,
+  defineJsonProvider,
+  num,
+  pick,
+  str,
+} from "../http/define-json-provider";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
-import { isRecord } from "../parse/coerce";
 
 export const virusTotalLookupSnapshotSchema = z.object({
   query: z.string().min(1),
@@ -41,84 +42,53 @@ type VirustotalOptions = {
   userAgent: string;
 };
 
-export function fetchVirusTotalLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: VirustotalOptions
-): Effect.Effect<VirusTotalLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchVirusTotalLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const { kind, value } = classifyIpOrHost(queryRaw);
-
-    const ua = options.userAgent;
-    const path =
-      kind === "ip"
-        ? `ip_addresses/${encodeURIComponent(value)}`
-        : `domains/${encodeURIComponent(value)}`;
-    const url = `https://www.virustotal.com/api/v3/${path}`;
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "VirusTotal",
-      subject: value,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "x-apikey": key,
-          "User-Agent": ua,
-        },
-      },
-    });
-
-    if (status === 404) {
-      return virusTotalLookupSnapshotSchema.parse({
-        query: value,
-        kind,
-        queriedAt,
-        found: false,
-        status: 404,
-        reputation: null,
-        malicious: null,
-        suspicious: null,
-        harmless: null,
-        undetected: null,
-        asOwner: null,
-        asn: null,
-        country: null,
-        network: null,
-        registrar: null,
-      });
-    }
-
-    const data = isRecord(body.data) ? body.data : {};
-    const attrs = isRecord(data.attributes) ? data.attributes : {};
-    const stats = isRecord(attrs.last_analysis_stats)
-      ? attrs.last_analysis_stats
-      : {};
-
-    return virusTotalLookupSnapshotSchema.parse({
+export const fetchVirusTotalLookupEffect = defineJsonProvider({
+  service: "VirusTotal",
+  schema: virusTotalLookupSnapshotSchema,
+  key: { header: "x-apikey" },
+  normalize: classifyIpOrHost,
+  request: ({ kind, value }, _options: VirustotalOptions) => ({
+    url: `https://www.virustotal.com/api/v3/${kind === "ip" ? "ip_addresses" : "domains"}/${encodeURIComponent(value)}`,
+  }),
+  notFound: ({ subject: { kind, value }, queriedAt }) => ({
+    query: value,
+    kind,
+    queriedAt,
+    found: false,
+    status: 404,
+    reputation: null,
+    malicious: null,
+    suspicious: null,
+    harmless: null,
+    undetected: null,
+    asOwner: null,
+    asn: null,
+    country: null,
+    network: null,
+    registrar: null,
+  }),
+  toSnapshot: ({ subject: { kind, value }, queriedAt, status, body }) => {
+    const attrs = child(child(body, "data"), "attributes");
+    return {
       query: value,
       kind,
       queriedAt,
       found: true,
       status,
-      reputation:
-        typeof attrs.reputation === "number" ? attrs.reputation : null,
-      malicious: typeof stats.malicious === "number" ? stats.malicious : null,
-      suspicious:
-        typeof stats.suspicious === "number" ? stats.suspicious : null,
-      harmless: typeof stats.harmless === "number" ? stats.harmless : null,
-      undetected:
-        typeof stats.undetected === "number" ? stats.undetected : null,
-      asOwner: typeof attrs.as_owner === "string" ? attrs.as_owner : null,
-      asn: typeof attrs.asn === "number" ? attrs.asn : null,
-      country: typeof attrs.country === "string" ? attrs.country : null,
-      network: typeof attrs.network === "string" ? attrs.network : null,
-      registrar: typeof attrs.registrar === "string" ? attrs.registrar : null,
-    });
-  });
-}
+      ...pick(attrs, {
+        reputation: num(),
+        asOwner: str("as_owner"),
+        asn: num(),
+        country: str(),
+        network: str(),
+        registrar: str(),
+      }),
+      ...pick(child(attrs, "last_analysis_stats"), {
+        malicious: num(),
+        suspicious: num(),
+        harmless: num(),
+        undetected: num(),
+      }),
+    };
+  },
+});

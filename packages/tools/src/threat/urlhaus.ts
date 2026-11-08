@@ -1,15 +1,10 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { defineJsonProvider } from "../http/define-json-provider";
 import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
-import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -49,12 +44,13 @@ function classifyQuery(raw: string): {
 function emptyResult(
   kind: "url" | "host" | "hash",
   value: string,
-  queryStatus: string
+  queryStatus: string,
+  queriedAt: string
 ) {
   return {
     query: value,
     kind,
-    queriedAt: new Date().toISOString(),
+    queriedAt,
     source: "urlhaus-api.abuse.ch" as const,
     queryStatus,
     found: false,
@@ -91,61 +87,29 @@ type UrlhausOptions = {
   userAgent: string;
 };
 
-export function fetchUrlhausLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: UrlhausOptions
-): Effect.Effect<UrlhausLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchUrlhausLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const { kind, value } = yield* Effect.try({
-      try: () => classifyQuery(queryRaw),
-      catch: mapToolsCatch,
-    });
+function urlhausForm(kind: "url" | "host" | "hash", value: string) {
+  if (kind === "url") return new URLSearchParams({ url: value });
+  if (kind === "host") return new URLSearchParams({ host: value });
+  return new URLSearchParams({
+    [value.length === 64 ? "sha256_hash" : "md5_hash"]: value,
+  });
+}
 
-    const ua = options.userAgent;
-
-    let endpoint: "url" | "payload" | "host";
-    if (kind === "url") {
-      endpoint = "url";
-    } else if (kind === "hash") {
-      endpoint = "payload";
-    } else {
-      endpoint = "host";
-    }
-    const body = new URLSearchParams();
-    if (kind === "url") {
-      body.set("url", value);
-    } else if (kind === "host") {
-      body.set("host", value);
-    } else {
-      body.set(value.length === 64 ? "sha256_hash" : "md5_hash", value);
-    }
-
-    const { body: raw } = yield* fetchJsonObjectEffect({
-      url: `https://urlhaus-api.abuse.ch/v1/${endpoint}/`,
-      init: {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Auth-Key": key,
-          "User-Agent": ua,
-        },
-        body,
-      },
-      signal,
-      service: "URLhaus",
-      subject: value,
-    });
+export const fetchUrlhausLookupEffect = defineJsonProvider({
+  service: "URLhaus",
+  schema: urlhausLookupSnapshotSchema,
+  key: { header: "Auth-Key" },
+  normalize: classifyQuery,
+  request: ({ kind, value }, _options: UrlhausOptions) => ({
+    url: `https://urlhaus-api.abuse.ch/v1/${kind === "hash" ? "payload" : kind}/`,
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: urlhausForm(kind, value),
+  }),
+  toSnapshot: ({ subject: { kind, value }, queriedAt, body: raw }) => {
     const queryStatus = asString(raw.query_status) ?? "unknown";
-
-    if (queryStatus !== "ok") {
-      return urlhausLookupSnapshotSchema.parse(
-        emptyResult(kind, value, queryStatus)
-      );
-    }
+    const miss = emptyResult(kind, value, queryStatus, queriedAt);
+    if (queryStatus !== "ok") return miss;
 
     if (kind === "url") {
       const tags = Array.isArray(raw.tags)
@@ -161,16 +125,12 @@ export function fetchUrlhausLookupEffect(
         urlhausReference !== null ||
         firstSeen !== null ||
         tags.length > 0;
-      if (!hasHit) {
-        return urlhausLookupSnapshotSchema.parse(
-          emptyResult(kind, value, queryStatus)
-        );
-      }
-      return urlhausLookupSnapshotSchema.parse({
+      if (!hasHit) return miss;
+      return {
         query: value,
         kind,
         queriedAt,
-        source: "urlhaus-api.abuse.ch",
+        source: "urlhaus-api.abuse.ch" as const,
         queryStatus,
         found: true,
         threat,
@@ -178,7 +138,7 @@ export function fetchUrlhausLookupEffect(
         tags,
         urlhausReference,
         firstSeen,
-      });
+      };
     }
 
     if (kind === "host") {
@@ -189,20 +149,15 @@ export function fetchUrlhausLookupEffect(
           )
         : [];
       const first = urls[0];
-      const tags =
-        first && Array.isArray(first.tags)
-          ? first.tags.filter((t): t is string => typeof t === "string")
-          : [];
-      if (urls.length === 0) {
-        return urlhausLookupSnapshotSchema.parse(
-          emptyResult(kind, value, queryStatus)
-        );
-      }
-      return urlhausLookupSnapshotSchema.parse({
+      if (!first) return miss;
+      const tags = Array.isArray(first.tags)
+        ? first.tags.filter((t): t is string => typeof t === "string")
+        : [];
+      return {
         query: value,
         kind,
         queriedAt,
-        source: "urlhaus-api.abuse.ch",
+        source: "urlhaus-api.abuse.ch" as const,
         queryStatus,
         found: true,
         threat: asString(first.threat),
@@ -210,7 +165,7 @@ export function fetchUrlhausLookupEffect(
         tags,
         urlhausReference: asString(first.urlhaus_reference),
         firstSeen: asString(raw.firstseen),
-      });
+      };
     }
 
     // payload / hash lookup — MalwareBazaar-style single record, no per-URL fields.
@@ -225,16 +180,12 @@ export function fetchUrlhausLookupEffect(
       md5 !== null ||
       fileType !== null ||
       firstSeen !== null;
-    if (!hasHit) {
-      return urlhausLookupSnapshotSchema.parse(
-        emptyResult(kind, value, queryStatus)
-      );
-    }
-    return urlhausLookupSnapshotSchema.parse({
+    if (!hasHit) return miss;
+    return {
       query: value,
       kind,
       queriedAt,
-      source: "urlhaus-api.abuse.ch",
+      source: "urlhaus-api.abuse.ch" as const,
       queryStatus,
       found: true,
       threat,
@@ -242,6 +193,6 @@ export function fetchUrlhausLookupEffect(
       tags: [],
       urlhausReference: null,
       firstSeen,
-    });
-  });
-}
+    };
+  },
+});

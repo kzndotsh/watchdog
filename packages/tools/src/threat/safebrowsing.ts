@@ -1,15 +1,11 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { ValidationVendorError } from "../errors/tagged-errors";
+import { defineJsonProvider } from "../http/define-json-provider";
 import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
-import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 
 export const safebrowsingMatchSchema = z.object({
@@ -47,51 +43,33 @@ type SafebrowsingOptions = {
   userAgent: string;
 };
 
-export function fetchSafebrowsingLookupEffect(
-  urlRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: SafebrowsingOptions
-): Effect.Effect<SafebrowsingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchSafebrowsingLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const url = yield* Effect.try({
-      try: () => {
-        const trimmed = urlRaw.trim();
-        if (!trimmed) {
-          throw new ValidationVendorError({ message: "url required" });
-        }
-        assertHttpUrlScheme(trimmed);
-        return normalizeHttpUrl(trimmed);
+export const fetchSafebrowsingLookupEffect = defineJsonProvider({
+  service: "Safe Browsing",
+  schema: safebrowsingLookupSnapshotSchema,
+  key: { query: "key" },
+  normalize: (raw) => {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      throw new ValidationVendorError({ message: "url required" });
+    }
+    assertHttpUrlScheme(trimmed);
+    return normalizeHttpUrl(trimmed);
+  },
+  request: (url, _options: SafebrowsingOptions) => ({
+    url: "https://safebrowsing.googleapis.com/v4/threatMatches:find",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client: { clientId: "watchdog", clientVersion: "1.0" },
+      threatInfo: {
+        threatTypes: THREAT_TYPES,
+        platformTypes: ["ANY_PLATFORM"],
+        threatEntryTypes: ["URL"],
+        threatEntries: [{ url }],
       },
-      catch: mapToolsCatch,
-    });
-
-    const ua = options.userAgent;
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url: `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${encodeURIComponent(key)}`,
-      signal,
-      service: "Safe Browsing",
-      subject: url,
-      init: {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": ua,
-        },
-        body: JSON.stringify({
-          client: { clientId: "watchdog", clientVersion: "1.0" },
-          threatInfo: {
-            threatTypes: THREAT_TYPES,
-            platformTypes: ["ANY_PLATFORM"],
-            threatEntryTypes: ["URL"],
-            threatEntries: [{ url }],
-          },
-        }),
-      },
-    });
+    }),
+  }),
+  toSnapshot: ({ subject: url, queriedAt, body }) => {
     const rawMatches = Array.isArray(body.matches) ? body.matches : [];
     const matches: SafebrowsingMatch[] = [];
     for (const row of rawMatches) {
@@ -107,13 +85,12 @@ export function fetchSafebrowsingLookupEffect(
         platformType: row.platformType,
       });
     }
-
-    return safebrowsingLookupSnapshotSchema.parse({
+    return {
       url,
       queriedAt,
-      source: "safebrowsing.googleapis.com",
+      source: "safebrowsing.googleapis.com" as const,
       found: matches.length > 0,
       matches,
-    });
-  });
-}
+    };
+  },
+});

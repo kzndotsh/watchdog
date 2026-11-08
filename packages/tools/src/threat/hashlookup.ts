@@ -1,12 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
 import { validationVendorError } from "../errors/vendor-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { asString, recordRows } from "../parse/coerce";
 
 export const HASHLOOKUP_ALGOS = ["md5", "sha1", "sha256", "sha512"] as const;
@@ -78,52 +73,38 @@ type HashlookupOptions = {
   userAgent: string;
 };
 
-export function fetchHashlookupEffect(
-  hashRaw: string,
-  signal: AbortSignal,
-  options: HashlookupOptions
-): Effect.Effect<HashlookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchHashlookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const hash = yield* Effect.try({
-      try: () => normalizeHashlookupHash(hashRaw),
-      catch: mapToolsCatch,
-    });
-    const algo = yield* Effect.try({
-      try: () => algoForHash(hash),
-      catch: mapToolsCatch,
-    });
-    const ua = options.userAgent;
+function missSnapshot(hash: string, algo: HashlookupAlgo, queriedAt: string) {
+  return {
+    hash,
+    algo,
+    queriedAt,
+    source: "hashlookup.circl.lu" as const,
+    found: false,
+    trust: null,
+    fileName: null,
+    product: null,
+    md5: null,
+    sha1: null,
+    sha256: null,
+    parentCount: null,
+    childCount: null,
+  };
+}
 
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://hashlookup.circl.lu/lookup/${algo}/${hash}`,
-      signal,
-      service: "CIRCL hashlookup",
-      subject: hash,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-    });
-
-    if (status === 404) {
-      return hashlookupSnapshotSchema.parse({
-        hash,
-        algo,
-        queriedAt,
-        source: "hashlookup.circl.lu",
-        found: false,
-        trust: null,
-        fileName: null,
-        product: null,
-        md5: null,
-        sha1: null,
-        sha256: null,
-        parentCount: null,
-        childCount: null,
-      });
-    }
+export const fetchHashlookupEffect = defineJsonProvider({
+  service: "CIRCL hashlookup",
+  schema: hashlookupSnapshotSchema,
+  normalize: (raw) => {
+    const value = normalizeHashlookupHash(raw);
+    return { value, algo: algoForHash(value) };
+  },
+  request: ({ value, algo }, _options: HashlookupOptions) => ({
+    url: `https://hashlookup.circl.lu/lookup/${algo}/${value}`,
+  }),
+  notFound: ({ subject, queriedAt }) =>
+    missSnapshot(subject.value, subject.algo, queriedAt),
+  toSnapshot: ({ subject, queriedAt, body }) => {
+    const { value: hash, algo } = subject;
     const trustRaw = body["hashlookup:trust"];
     const trust =
       typeof trustRaw === "number" || typeof trustRaw === "string"
@@ -149,30 +130,13 @@ export function fetchHashlookupEffect(
       sha256 !== null ||
       (parentCount ?? 0) > 0 ||
       (childCount ?? 0) > 0;
+    if (!hasHit) return missSnapshot(hash, algo, queriedAt);
 
-    if (!hasHit) {
-      return hashlookupSnapshotSchema.parse({
-        hash,
-        algo,
-        queriedAt,
-        source: "hashlookup.circl.lu",
-        found: false,
-        trust: null,
-        fileName: null,
-        product: null,
-        md5: null,
-        sha1: null,
-        sha256: null,
-        parentCount: null,
-        childCount: null,
-      });
-    }
-
-    return hashlookupSnapshotSchema.parse({
+    return {
       hash,
       algo,
       queriedAt,
-      source: "hashlookup.circl.lu",
+      source: "hashlookup.circl.lu" as const,
       found: true,
       trust,
       fileName,
@@ -182,6 +146,6 @@ export function fetchHashlookupEffect(
       sha256,
       parentCount,
       childCount,
-    });
-  });
-}
+    };
+  },
+});

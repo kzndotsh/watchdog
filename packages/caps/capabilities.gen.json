@@ -4062,7 +4062,7 @@
   },
   {
     "id": "threat.virustotal.lookup",
-    "version": "a13463a99a8c",
+    "version": "a00215cd2978",
     "title": "VirusTotal lookup",
     "provider": {
       "name": "VirusTotal",
@@ -4158,7 +4158,7 @@
   },
   {
     "id": "threat.abuseipdb.lookup",
-    "version": "387b73cee100",
+    "version": "c48ec177be6e",
     "title": "AbuseIPDB lookup",
     "provider": {
       "name": "AbuseIPDB",
@@ -4251,7 +4251,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "4ac8c78f99d2",
+    "version": "85288c3905ff",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4351,7 +4351,7 @@
   },
   {
     "id": "threat.urlhaus.lookup",
-    "version": "adfebf2fb8f9",
+    "version": "137d0fa781bb",
     "title": "URLhaus lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4458,7 +4458,7 @@
   },
   {
     "id": "threat.malwarebazaar.lookup",
-    "version": "d8f68f259ff5",
+    "version": "908c0f95e249",
     "title": "MalwareBazaar lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4636,7 +4636,7 @@
   },
   {
     "id": "threat.greynoise.lookup",
-    "version": "796623ae0a66",
+    "version": "b27d21a9263f",
     "title": "GreyNoise Community",
     "provider": {
       "name": "GreyNoise",
@@ -4725,7 +4725,7 @@
   },
   {
     "id": "threat.hashlookup.lookup",
-    "version": "4b2ddf0b8c3c",
+    "version": "41b912436d87",
     "title": "CIRCL hashlookup",
     "provider": {
       "name": "CIRCL",
@@ -4899,7 +4899,7 @@
   },
   {
     "id": "threat.dshield.lookup",
-    "version": "f003829d39b6",
+    "version": "38d7ee38342f",
     "title": "SANS ISC DShield",
     "provider": {
       "name": "SANS ISC DShield",
@@ -5150,7 +5150,7 @@
   },
   {
     "id": "threat.otx.lookup",
-    "version": "77ba508fb6ef",
+    "version": "9013ef9d0d91",
     "title": "OTX lookup",
     "provider": {
       "name": "AlienVault OTX",
@@ -5253,7 +5253,7 @@
   },
   {
     "id": "threat.safebrowsing.lookup",
-    "version": "ff23f3711969",
+    "version": "bdd1a559f828",
     "title": "Google Safe Browsing lookup",
     "provider": {
       "name": "Google Safe Browsing",
@@ -5541,7 +5541,7 @@
   },
   {
     "id": "threat.honeydb.lookup",
-    "version": "6065414914b2",
+    "version": "b1a331b7abf3",
     "title": "HoneyDB lookup",
     "provider": {
       "name": "HoneyDB",
