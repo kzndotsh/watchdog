@@ -21,6 +21,11 @@ export {
   CONFIDENCE_GATED_RESOURCES,
 } from "./patch";
 export { normalizeIdentifierValue } from "./normalize-identifier";
+export {
+  IDENTIFIER_TYPE_TABLE,
+  type IdentifierTypeEntry,
+  identifierTypeEntry,
+} from "./identifier-types";
 export type { ResolveQuestionFields } from "./question-resolve";
 export type { ResolveQuestionInput } from "./question-resolve";
 export {
