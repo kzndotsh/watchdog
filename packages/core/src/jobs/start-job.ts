@@ -1,14 +1,15 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import { requireCapability } from "@watchdog/caps";
 import { jobListRepo } from "@watchdog/db";
-import type { JobArtifact, JobListRow, JobRow } from "@watchdog/db";
+import type { JobListRow, JobRow } from "@watchdog/db";
 import { evidenceIdsFromJobInputs, jobList } from "@watchdog/schemas/jobs";
+import type { jobListSchema, jobSchema } from "@watchdog/schemas/jobs";
 import {
   normalizeUuidList,
   trimmedOrUndefined,
   type CaseId,
-  type JobStatus,
   type JsonObject,
   type OrganizationId,
   type PlaybookRunOutcome,
@@ -70,39 +71,10 @@ export type StartJobInput = {
   playbookSlot?: PlaybookSlot;
 };
 
-export type JobRecord = {
-  id: string;
-  caseId: CaseId;
-  capabilityId: string;
-  input: JsonObject;
-  output: JobArtifact[] | null;
-  status: JobStatus;
-  error: string | null;
-  /** Present when run succeeded but interpret failed (no Proposal). */
-  interpretError: string | null;
-  proposalId: string | null;
-  evidenceIds: string[] | null;
-  resultSummary: string | null;
-  fromCache: boolean;
-  suppressedCount: number;
-  actorId: string;
-  actorLabel: string;
-  logs: string[];
-  playbookRunId: string | null;
-  playbookStep: number | null;
-  playbookFanIndex: number;
-  retryOfJobId: string | null;
-  playbookId: string | null;
-  playbookRunStatus: PlaybookRunStatus | null;
-  playbookRunOutcome: PlaybookRunOutcome | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-};
+export type JobRecord = z.output<typeof jobSchema>;
 
 /** Job queue row without logs (detail via getJobForCase). */
-export type JobListRecord = Omit<JobRecord, "logs">;
+export type JobListRecord = z.output<typeof jobListSchema>;
 
 /** The Playbook run a Job belongs to, as the read model and the wire record carry it. */
 export type PlaybookContext = {

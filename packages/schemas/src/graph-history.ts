@@ -3,6 +3,7 @@ import { z } from "zod";
 import { trimmedCaseIdSchema } from "./ids";
 import { jsonObjectSchema } from "./json-wire";
 import { defineList } from "./lists/define-list";
+import { listPageSchema } from "./lists/list-page";
 import { trimmedUuidSchema } from "./primitives";
 import {
   GRAPH_HISTORY_CHANNELS,
@@ -65,6 +66,7 @@ export const graphHistoryEntrySchema = z.object({
   at: z.string(),
 });
 export type GraphHistoryEntry = z.output<typeof graphHistoryEntrySchema>;
+export const graphHistoryPageSchema = listPageSchema(graphHistoryEntrySchema);
 
 /** Who created and last changed the row as it stands now (display names; null: no recorded author). */
 export const graphHistoryAttributionSchema = z.object({

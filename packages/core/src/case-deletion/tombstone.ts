@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import {
   casesRepo,
@@ -10,6 +11,11 @@ import {
   type DeletedCaseRow,
 } from "@watchdog/db";
 import { deletedCaseList } from "@watchdog/schemas/cases";
+import type {
+  deletedCaseSchema,
+  deletionPolicySchema,
+  restoredCaseSchema,
+} from "@watchdog/schemas/cases";
 import {
   PAGE_LIMIT_DEFAULT,
   type CaseId,
@@ -25,7 +31,7 @@ import {
   assertCaseInOrgEffect,
   requireTrimmedCaseIdEffect,
 } from "../cases/access";
-import { toRecord, type CaseRecord } from "../cases/case-record";
+import { toRecord } from "../cases/case-record";
 import {
   caseRetentionDays,
   daysUntilPurge,
@@ -78,39 +84,9 @@ export const MANAGE_REASON =
   "Only an owner or admin can delete, restore or purge a Case";
 
 /** A tombstoned Case as Deleted Cases lists it: what was deleted, by whom, and when it goes for good. */
-export type DeletedCaseRecord = {
-  id: CaseId;
-  name: string;
-  slug: string;
-  description: string | null;
-  /** ISO timestamp. */
-  deletedAt: string;
-  deletedById: string | null;
-  /** Display name of `deletedById`; null when unknown or the user is gone. */
-  deletedByName: string | null;
-  /** ISO timestamp after which the scheduled purge takes the Case. */
-  purgeAt: string;
-  /** Whole days left to restore it; 0 once the window has passed. */
-  daysLeft: number;
-  /** A purge has begun (a restore is refused; it can only be purged). */
-  purging: boolean;
-  /** The last purge attempt's failure, when one failed and will be retried. */
-  purgeError: string | null;
-};
+export type DeletedCaseRecord = z.output<typeof deletedCaseSchema>;
 
-export type DeletionPolicy = {
-  /** Days a deleted Case stays restorable (`WD_CASE_RETENTION_DAYS`) for a Case deleted now. */
-  restoreWindowDays: number;
-  /** The caller is an owner or admin: they may delete, restore and purge Cases. */
-  canManage: boolean;
-  /** With a `caseId`: queued and running Jobs a delete would cancel (0 for a non-manager). */
-  cancellableJobs: number;
-  /**
-   * The caller may include breach credentials in an Export: an owner or admin, on an instance
-   * that runs `WD_BREACH_CAPS=full`. The same two checks the Export enforces.
-   */
-  canIncludeBreachCredentials: boolean;
-};
+export type DeletionPolicy = z.output<typeof deletionPolicySchema>;
 
 /**
  * What the delete confirmation and the Cases list need: the configured restore window, whether
@@ -351,7 +327,7 @@ export function deleteCaseEffect(
 }
 
 /** A restored Case; `previousSlug` is set when its old slug was taken meanwhile and it got a new one. */
-export type RestoredCaseRecord = CaseRecord & { previousSlug: string | null };
+export type RestoredCaseRecord = z.output<typeof restoredCaseSchema>;
 
 const MAX_SLUG_ATTEMPTS = 50;
 

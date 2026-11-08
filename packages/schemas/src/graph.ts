@@ -21,6 +21,11 @@ export {
   CONFIDENCE_GATED_RESOURCES,
 } from "./patch";
 export { normalizeIdentifierValue } from "./normalize-identifier";
+export {
+  IDENTIFIER_TYPE_TABLE,
+  type IdentifierTypeEntry,
+  identifierTypeEntry,
+} from "./identifier-types";
 export type { ResolveQuestionFields } from "./question-resolve";
 export type { ResolveQuestionInput } from "./question-resolve";
 export {
@@ -56,7 +61,12 @@ export {
   retractClaimInputSchema,
 } from "./claim-retract";
 export type { GraphWriteInput } from "./graph-write";
-export { graphWriteInputSchema } from "./graph-write";
+export {
+  graphWriteInputSchema,
+  graphWritePageSchema,
+  graphWriteResultSchema,
+} from "./graph-write";
+export { graphEgoSchema, graphSnapshotSchema } from "./graph-snapshot";
 export { graphWriteList } from "./graph-write-list";
 export type { ClaimUpdateFields } from "./claim-update";
 export type { UpdateClaimInput } from "./claim-update";
@@ -159,6 +169,7 @@ export {
   graphHistoryAttributionSchema,
   graphHistoryEntrySchema,
   graphHistoryList,
+  graphHistoryPageSchema,
   graphHistoryRowInputSchema,
   graphHistorySnapshotSchema,
 } from "./graph-history";
@@ -187,6 +198,8 @@ export {
   edgeSchema,
   entityListItemSchema,
   entityListPageSchema,
+  entityPickerItemSchema,
+  entityPickerPageSchema,
   entitySchema,
   eventListPageSchema,
   eventSchema,

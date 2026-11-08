@@ -29,6 +29,7 @@ export {
   activityItemSchema,
   activityKindLabel,
   activityKindSchema,
+  activityPageSchema,
   normalizeSseCaseId,
   parseSseCaseIdParam,
 } from "./activity";

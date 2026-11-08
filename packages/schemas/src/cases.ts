@@ -33,3 +33,12 @@ export {
   searchCaseResultSchema,
   searchCaseTaskHitSchema,
 } from "./search";
+export {
+  caseCountsSchema,
+  casePageSchema,
+  caseSchema,
+  deletedCaseSchema,
+  deletedCasesPageSchema,
+  deletionPolicySchema,
+  restoredCaseSchema,
+} from "./case-records";

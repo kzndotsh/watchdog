@@ -1,9 +1,13 @@
 import { getCollectItemEffect, listCollectEffect } from "@watchdog/core/jobs";
-import { collectList, locateCollectInputSchema } from "@watchdog/schemas/jobs";
+import {
+  collectList,
+  locateCollectInputSchema,
+  collectListPageSchema,
+  collectLocatedSchema,
+} from "@watchdog/schemas/jobs";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { collectListPageSchema, collectLocatedSchema } from "../schemas";
 
 /**
  * Collect's queue (`collectList`, ADR-0007): Evidence rows, playbook runs and lone Jobs, each

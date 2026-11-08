@@ -144,3 +144,12 @@ export const claimListPageSchema = listPageSchema(claimSchema);
 export const eventListPageSchema = listPageSchema(eventSchema);
 export const questionListPageSchema = listPageSchema(questionSchema);
 export const edgeListPageSchema = listPageSchema(caseEdgeSchema);
+
+/** An Entity picker's item (#573): label parts and kind, no notes, counts or Connection. */
+export const entityPickerItemSchema = z.object({
+  id: z.uuid(),
+  kind: entityKindSchema,
+  name: z.string(),
+  slug: z.string(),
+});
+export const entityPickerPageSchema = listPageSchema(entityPickerItemSchema);
