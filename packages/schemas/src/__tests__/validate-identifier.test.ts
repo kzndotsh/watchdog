@@ -88,6 +88,41 @@ describe("validateIdentifierValue", () => {
     expect(validateIdentifierValue("ip", "2001:db8:::1").ok).toBe(false);
   });
 
+  it("ip rejects leading-zero octets and accepts 0.0.0.0", () => {
+    expect(validateIdentifierValue("ip", "007.0.0.1").ok).toBe(false);
+    expect(validateIdentifierValue("ip", "1.02.3.4").ok).toBe(false);
+    expect(validateIdentifierValue("ip", "::ffff:1.02.3.4").ok).toBe(false);
+    expect(validateIdentifierValue("ip", "0.0.0.0")).toEqual({
+      ok: true,
+      value: "0.0.0.0",
+    });
+  });
+
+  it("ip allows a dotted tail only after `::` or full groups, and brackets only in pairs", () => {
+    expect(validateIdentifierValue("ip", ":192.168.1.1").ok).toBe(false);
+    expect(validateIdentifierValue("ip", "[::1").ok).toBe(false);
+    expect(validateIdentifierValue("ip", "::1]").ok).toBe(false);
+    expect(validateIdentifierValue("ip", "::192.168.1.1").ok).toBe(true);
+    expect(validateIdentifierValue("ip", "::ffff:1.2.3.4").ok).toBe(true);
+    expect(validateIdentifierValue("ip", "[::1]")).toEqual({
+      ok: true,
+      value: "::1",
+    });
+  });
+
+  it("email rejects any whitespace inside the address", () => {
+    for (const raw of [
+      "a\tb@example.com",
+      "a@exa\nmple.com",
+      "a\u00A0b@example.com",
+    ]) {
+      expect(
+        validateIdentifierValue("email", raw).ok,
+        JSON.stringify(raw)
+      ).toBe(false);
+    }
+  });
+
   it("pgp hex lengths and PGP armor only", () => {
     expect(validateIdentifierValue("pgp", "ABCD1234ABCD1234").ok).toBe(true);
     expect(

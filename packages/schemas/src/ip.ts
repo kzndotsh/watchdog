@@ -5,12 +5,15 @@ function invalid(ip: string): Error {
   return new Error(`Invalid IPv6: ${ip}`);
 }
 
+function isValidIpv4(value: string): boolean {
+  const octets = value.split(".");
+  return octets.length === 4 && octets.every((o) => IPV4_OCTET.test(o));
+}
+
 /** A dotted IPv4 tail as its two hextets, or null when it is not one. */
 function ipv4Hextets(tail: string): [string, string] | null {
+  if (!isValidIpv4(tail)) return null;
   const octets = tail.split(".");
-  if (octets.length !== 4 || !octets.every((o) => IPV4_OCTET.test(o))) {
-    return null;
-  }
   const hex = octets.map((o) => Number(o).toString(16).padStart(2, "0"));
   return [`${hex[0]}${hex[1]}`, `${hex[2]}${hex[3]}`];
 }
@@ -49,6 +52,20 @@ export function expandIpv6(ip: string): string {
     full = [...head, ...Array.from({ length: missing }, () => "0"), ...tail];
   }
   return full.map((h) => h.toLowerCase().padStart(4, "0")).join(":");
+}
+
+/**
+ * The one IP grammar, shared by validation and paste recognition: a bare IPv4 address (decimal
+ * octets, no leading zeros) or any IPv6 spelling `expandIpv6` accepts. No brackets, no port.
+ */
+export function isValidIp(value: string): boolean {
+  if (!value.includes(":")) return isValidIpv4(value);
+  try {
+    expandIpv6(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function stripIpv6Hextets(parts: string[]): string[] {

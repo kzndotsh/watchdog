@@ -1,3 +1,5 @@
+import { isValidIp } from "./ip";
+
 export type ValidateIdentifierResult =
   | { ok: true; value: string }
   | { ok: false; message: string };
@@ -12,92 +14,6 @@ const PGP_HEX_LENGTHS = new Set([8, 16, 40, 64]);
 
 function fail(message: string): ValidateIdentifierResult {
   return { ok: false, message };
-}
-
-function isValidIpv4(value: string): boolean {
-  const parts = value.split(".");
-  if (parts.length !== 4) return false;
-  return parts.every((part) => {
-    if (!/^\d{1,3}$/.test(part)) return false;
-    const n = Number(part);
-    return n >= 0 && n <= 255;
-  });
-}
-
-/** At most one `::`; 1–8 groups of 1–4 hex; optional trailing IPv4-mapped dotted-quad. */
-function ipv6HasInvalidCompression(value: string): boolean {
-  return (value.match(/::/g) ?? []).length > 1 || value.includes(":::");
-}
-
-function splitIpv6Value(
-  value: string
-): { head: string; ipv4Tail: string | null } | null {
-  const head = value;
-  const ipv4Tail: string | null = null;
-  const lastColon = value.lastIndexOf(":");
-  if (lastColon === -1) return { head, ipv4Tail };
-
-  const after = value.slice(lastColon + 1);
-  if (!after.includes(".")) return { head, ipv4Tail };
-  if (!isValidIpv4(after)) return null;
-  return { head: value.slice(0, lastColon), ipv4Tail: after };
-}
-
-function parseIpv6HexGroups(head: string): string[] | null {
-  if (head === "::" || head === "") return [];
-
-  const compressed = head.includes("::");
-  const sides = compressed ? head.split("::") : [head];
-  if (sides.length > 2) return null;
-
-  const groups: string[] = [];
-  for (const side of sides) {
-    if (side === "") continue;
-    const parts = side.split(":");
-    if (parts.some((part) => part === "" || !/^[0-9a-fA-F]{1,4}$/.test(part))) {
-      return null;
-    }
-    groups.push(...parts);
-  }
-  return groups;
-}
-
-function ipv6GroupsWithinLimit(
-  groups: string[],
-  compressed: boolean,
-  ipv4Tail: string | null
-): boolean {
-  const maxGroups = ipv4Tail === null ? 8 : 6;
-  if (compressed) return groups.length < maxGroups;
-  return groups.length === maxGroups;
-}
-
-function isValidIpv6(value: string): boolean {
-  if (ipv6HasInvalidCompression(value)) return false;
-
-  const split = splitIpv6Value(value);
-  if (split === null) return false;
-  const { head, ipv4Tail } = split;
-
-  if (head === "::" || head === "") {
-    return ipv4Tail !== null || value === "::";
-  }
-
-  const groups = parseIpv6HexGroups(head);
-  if (groups === null) return false;
-  if (!ipv6GroupsWithinLimit(groups, head.includes("::"), ipv4Tail)) {
-    return false;
-  }
-  return groups.length >= 1 || ipv4Tail !== null || value === "::";
-}
-
-function isValidIp(value: string): boolean {
-  if (value.includes(".")) {
-    if (value.includes(":")) return isValidIpv6(value);
-    return isValidIpv4(value);
-  }
-  if (value.includes(":")) return isValidIpv6(value);
-  return false;
 }
 
 /** The domain grammar: validation and paste recognition share it. */
@@ -118,7 +34,7 @@ export function isValidDomain(value: string): boolean {
 }
 
 function validateEmail(normalized: string): ValidateIdentifierResult | null {
-  if (normalized.includes(" ")) {
+  if (/\s/.test(normalized)) {
     return fail("Invalid email.");
   }
   const parts = normalized.split("@");
