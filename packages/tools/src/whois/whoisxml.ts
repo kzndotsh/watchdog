@@ -1,11 +1,8 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import type { WhoisSnapshot } from "./schema";
-import { parseWhoisDate, whoisStatusList } from "./shared";
+import { defineJsonProvider } from "../http/define-json-provider";
+import { whoisSnapshotSchema, type WhoisSnapshot } from "./schema";
+import { normalizeWhoisHost, parseWhoisDate, whoisStatusList } from "./shared";
 
 const whoisXmlResponseSchema = z.object({
   WhoisRecord: z
@@ -74,25 +71,17 @@ function whoisXmlSnapshot(
   };
 }
 
-export function fetchWhoisXmlEffect(
-  host: string,
-  key: string,
-  signal: AbortSignal,
-  options: { userAgent: string }
-): Effect.Effect<WhoisSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchWhoisXmlGen() {
+export const fetchWhoisXmlEffect = defineJsonProvider({
+  service: "WhoisXML",
+  schema: whoisSnapshotSchema,
+  key: { query: "apiKey" },
+  normalize: normalizeWhoisHost,
+  request: (host, _options: { userAgent: string }) => {
     const url = new URL("https://www.whoisxmlapi.com/whoisserver/WhoisService");
-    url.searchParams.set("apiKey", key);
     url.searchParams.set("domainName", host);
     url.searchParams.set("outputFormat", "JSON");
-    const { body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "WhoisXML",
-      subject: host,
-      init: { headers: { "User-Agent": options.userAgent } },
-    });
-    const raw = whoisXmlResponseSchema.parse(body);
-    return whoisXmlSnapshot(host, raw);
-  });
-}
+    return { url };
+  },
+  toSnapshot: ({ subject: host, body }) =>
+    whoisXmlSnapshot(host, whoisXmlResponseSchema.parse(body)),
+});

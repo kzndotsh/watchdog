@@ -1,10 +1,9 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import {
+  defineJsonProvider,
+  type JsonProviderContext,
+} from "../http/define-json-provider";
 import { normalizeHost } from "../normalize";
 import { isRecord } from "../parse/coerce";
 
@@ -44,90 +43,79 @@ type WhoxyOptions = {
   userAgent: string;
 };
 
-export function fetchWhoxyWhoisEffect(
-  hostRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: WhoxyOptions
-): Effect.Effect<WhoxyLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchWhoxyWhoisGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const host = normalizeHost(hostRaw);
+function whoxySnapshot({
+  subject: host,
+  queriedAt,
+  body,
+}: JsonProviderContext<string, WhoxyOptions>) {
+  let statusNum: number | null;
+  if (typeof body.status === "number") {
+    statusNum = body.status;
+  } else if (typeof body.status === "string") {
+    const parsed = Number(body.status);
+    statusNum = Number.isInteger(parsed) ? parsed : null;
+  } else {
+    statusNum = null;
+  }
 
-    const ua = options.userAgent;
-    const url = new URL("https://api.whoxy.com/");
-    url.searchParams.set("key", key);
-    url.searchParams.set("whois", host);
+  let nameServers: string[];
+  if (Array.isArray(body.name_servers)) {
+    nameServers = body.name_servers.filter(
+      (n): n is string => typeof n === "string"
+    );
+  } else if (typeof body.name_servers === "string") {
+    nameServers = body.name_servers.split(/[\s,]+/).filter(Boolean);
+  } else {
+    nameServers = [];
+  }
 
-    const { body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "Whoxy",
-      subject: host,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-    });
-    let statusNum: number | null;
-    if (typeof body.status === "number") {
-      statusNum = body.status;
-    } else if (typeof body.status === "string") {
-      statusNum = Number(body.status);
-    } else {
-      statusNum = null;
-    }
-    const ok = statusNum === 1;
+  const registrant = body.registrant_contact;
 
-    let nameServers: string[];
-    if (Array.isArray(body.name_servers)) {
-      nameServers = body.name_servers.filter(
-        (n): n is string => typeof n === "string"
-      );
-    } else if (typeof body.name_servers === "string") {
-      nameServers = body.name_servers.split(/[\s,]+/).filter(Boolean);
-    } else {
-      nameServers = [];
-    }
+  const registrarObj = isRecord(body.domain_registrar)
+    ? body.domain_registrar
+    : null;
+  let registrarName: string | null;
+  if (typeof registrarObj?.registrar_name === "string") {
+    registrarName = registrarObj.registrar_name;
+  } else if (typeof body.registrar_name === "string") {
+    registrarName = body.registrar_name;
+  } else {
+    registrarName = null;
+  }
 
-    const registrant = body.registrant_contact;
-
-    const registrarObj = isRecord(body.domain_registrar)
-      ? body.domain_registrar
-      : null;
-    let registrarName: string | null;
-    if (typeof registrarObj?.registrar_name === "string") {
-      registrarName = registrarObj.registrar_name;
-    } else if (typeof body.registrar_name === "string") {
-      registrarName = body.registrar_name;
-    } else {
-      registrarName = null;
-    }
-
-    return whoxyLookupSnapshotSchema.parse({
-      host,
-      queriedAt,
-      status: statusNum,
-      ok,
-      registrarName,
-      createDate:
-        typeof body.create_date === "string" ? body.create_date : null,
-      updateDate:
-        typeof body.update_date === "string" ? body.update_date : null,
-      expireDate:
-        typeof body.expiry_date === "string" ? body.expiry_date : null,
-      domainRegistrar: registrarName,
-      nameServers,
-      registrantName: contactField(registrant, "full_name"),
-      registrantEmail: contactField(registrant, "email_address"),
-      registrantOrg: contactField(registrant, "company_name"),
-      registrantCountry:
-        contactField(registrant, "country_name") ??
-        contactField(registrant, "country_code"),
-      rawStatus:
-        typeof body.status === "string" || typeof body.status === "number"
-          ? body.status
-          : null,
-    });
-  });
+  return {
+    host,
+    queriedAt,
+    status: statusNum,
+    ok: statusNum === 1,
+    registrarName,
+    createDate: typeof body.create_date === "string" ? body.create_date : null,
+    updateDate: typeof body.update_date === "string" ? body.update_date : null,
+    expireDate: typeof body.expiry_date === "string" ? body.expiry_date : null,
+    domainRegistrar: registrarName,
+    nameServers,
+    registrantName: contactField(registrant, "full_name"),
+    registrantEmail: contactField(registrant, "email_address"),
+    registrantOrg: contactField(registrant, "company_name"),
+    registrantCountry:
+      contactField(registrant, "country_name") ??
+      contactField(registrant, "country_code"),
+    rawStatus:
+      typeof body.status === "string" || typeof body.status === "number"
+        ? body.status
+        : null,
+  };
 }
+
+export const fetchWhoxyWhoisEffect = defineJsonProvider({
+  service: "Whoxy",
+  schema: whoxyLookupSnapshotSchema,
+  key: { query: "key" },
+  normalize: normalizeHost,
+  request: (host, _options: WhoxyOptions) => {
+    const url = new URL("https://api.whoxy.com/");
+    url.searchParams.set("whois", host);
+    return { url };
+  },
+  toSnapshot: whoxySnapshot,
+});

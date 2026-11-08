@@ -1,10 +1,10 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { ValidationVendorError } from "../errors/tagged-errors";
+import {
+  defineJsonProvider,
+  type JsonProviderContext,
+} from "../http/define-json-provider";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
 import {
@@ -223,89 +223,94 @@ type DehashedOptions = {
   credentials: CredentialHandling;
 };
 
-export function fetchDehashedLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: DehashedOptions
-): Effect.Effect<DehashedLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchDehashedLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
+/** DeHashed accepts any status below 400; `fetch` follows redirects, so only a stray 3xx reaches here. */
+const REDIRECT_STATUSES = Array.from({ length: 100 }, (_, i) => 300 + i);
 
-    const { kind, value } = classifyDehashedQuery(queryRaw);
-    const query = yield* Effect.try({
-      try: () => buildDehashedQuery(kind, value),
-      catch: (error) =>
-        error instanceof ValidationVendorError
-          ? error
-          : new ValidationVendorError({
-              message: "Invalid DeHashed query",
-              // The thrown message can echo the query value: keep the class only.
-              cause: error instanceof Error ? error.name : typeof error,
-            }),
+type DehashedSubject = {
+  kind: "email" | "ip" | "domain" | "username" | "query";
+  value: string;
+  query: string;
+};
+
+function normalizeDehashedQuery(raw: string): DehashedSubject {
+  const { kind, value } = classifyDehashedQuery(raw);
+  if (value === "") {
+    throw new ValidationVendorError({ message: "DeHashed query is empty" });
+  }
+  try {
+    return { kind, value, query: buildDehashedQuery(kind, value) };
+  } catch (error) {
+    if (error instanceof ValidationVendorError) throw error;
+    throw new ValidationVendorError({
+      message: "Invalid DeHashed query",
+      // The thrown message can echo the query value: keep the class only.
+      cause: error instanceof Error ? error.name : typeof error,
     });
-    const ua = options.userAgent;
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url: "https://api.dehashed.com/v2/search",
-      init: {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          "DeHashed-Api-Key": key,
-          "User-Agent": ua,
-        },
-        body: JSON.stringify({
-          query,
-          page: 1,
-          size: ENTRIES_CAP,
-          de_dupe: true,
-          wildcard: false,
-        }),
-      },
-      signal,
-      service: "DeHashed",
-      subject: value,
-      acceptStatus: (status) => status < 400,
-    });
-    const rawEntries = Array.isArray(body.entries) ? body.entries : [];
-    const entries: DehashedEntry[] = [];
-    for (const raw of rawEntries.slice(0, ENTRIES_CAP)) {
-      const mapped = mapEntry(raw);
-      if (mapped !== null && dehashedEntryHasSubstance(mapped)) {
-        entries.push(mapped);
-      }
-    }
-    const total = typeof body.total === "number" ? body.total : entries.length;
-    const balance = typeof body.balance === "number" ? body.balance : null;
-    const databases = extractDatabases(entries);
-
-    const { mode, fingerprint } = options.credentials;
-    const base = {
-      query: value,
-      kind,
-      queriedAt,
-      source: "api.dehashed.com" as const,
-      found: entries.length > 0,
-      total,
-      balance,
-      databases,
-      sampleCount: entries.length,
-      reuse: credentialReuse(
-        entries.map((entry) =>
-          credentialPair(entry.password, entry.hashedPassword, fingerprint)
-        )
-      ),
-    };
-    return dehashedLookupSnapshotSchema.parse(
-      mode === "full"
-        ? { ...base, credentialMode: "full", entries }
-        : {
-            ...base,
-            credentialMode: "safe",
-            entries: entries.map((entry) => safeEntryOf(entry, fingerprint)),
-          }
-    );
-  });
+  }
 }
+
+function dehashedSnapshot({
+  subject: { kind, value },
+  queriedAt,
+  body,
+  options,
+}: JsonProviderContext<DehashedSubject, DehashedOptions>) {
+  const rawEntries = Array.isArray(body.entries) ? body.entries : [];
+  const entries: DehashedEntry[] = [];
+  for (const raw of rawEntries.slice(0, ENTRIES_CAP)) {
+    const mapped = mapEntry(raw);
+    if (mapped !== null && dehashedEntryHasSubstance(mapped)) {
+      entries.push(mapped);
+    }
+  }
+  const total = typeof body.total === "number" ? body.total : entries.length;
+  const balance = typeof body.balance === "number" ? body.balance : null;
+  const databases = extractDatabases(entries);
+
+  const { mode, fingerprint } = options.credentials;
+  const base = {
+    query: value,
+    kind,
+    queriedAt,
+    source: "api.dehashed.com" as const,
+    found: entries.length > 0,
+    total,
+    balance,
+    databases,
+    sampleCount: entries.length,
+    reuse: credentialReuse(
+      entries.map((entry) =>
+        credentialPair(entry.password, entry.hashedPassword, fingerprint)
+      )
+    ),
+  };
+  return mode === "full"
+    ? { ...base, credentialMode: "full" as const, entries }
+    : {
+        ...base,
+        credentialMode: "safe" as const,
+        entries: entries.map((entry) => safeEntryOf(entry, fingerprint)),
+      };
+}
+
+export const fetchDehashedLookupEffect = defineJsonProvider({
+  service: "DeHashed",
+  schema: dehashedLookupSnapshotSchema,
+  key: { header: "DeHashed-Api-Key" },
+  normalize: normalizeDehashedQuery,
+  request: ({ query }, _options: DehashedOptions) => ({
+    url: "https://api.dehashed.com/v2/search",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query,
+      page: 1,
+      size: ENTRIES_CAP,
+      de_dupe: true,
+      wildcard: false,
+    }),
+  }),
+  notFoundStatuses: REDIRECT_STATUSES,
+  notFound: dehashedSnapshot,
+  toSnapshot: dehashedSnapshot,
+});

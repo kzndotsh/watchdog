@@ -1,17 +1,12 @@
 import { isIP } from "node:net";
 
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
 import {
   parseVendorError,
   validationVendorError,
 } from "../errors/vendor-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeHost } from "../normalize";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -257,35 +252,15 @@ type KeybaseOptions = {
   userAgent: string;
 };
 
-export function fetchKeybaseLookupEffect(
-  queryRaw: string,
-  signal: AbortSignal,
-  options: KeybaseOptions
-): Effect.Effect<KeybaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchKeybaseLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const { kind, value, param } = yield* Effect.try({
-      try: () => classifyQuery(queryRaw),
-      catch: mapToolsCatch,
-    });
-    const ua = options.userAgent;
-
+export const fetchKeybaseLookupEffect = defineJsonProvider({
+  service: "Keybase",
+  schema: keybaseLookupSnapshotSchema,
+  normalize: classifyQuery,
+  request: ({ value, param }, _options: KeybaseOptions) => {
     const url = new URL("https://keybase.io/_/api/1.0/user/lookup.json");
     url.searchParams.set(param, value);
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-      signal,
-      service: "Keybase",
-      subject: value,
-    });
-    return yield* Effect.try({
-      try: () => parseKeybaseBody(value, kind, queriedAt, body),
-      catch: mapToolsCatch,
-    });
-  });
-}
+    return { url };
+  },
+  toSnapshot: ({ subject: { kind, value }, queriedAt, body }) =>
+    parseKeybaseBody(value, kind, queriedAt, body),
+});

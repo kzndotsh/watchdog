@@ -1,13 +1,8 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeHttpUrl } from "../http/normalize-http-url";
 import { assertAllowedTarget } from "../http/outbound-policy";
-import { nowIsoStringEffect } from "../infra/clock";
 
 export const urlscanSubmitVisibilitySchema = z.enum([
   "public",
@@ -32,6 +27,43 @@ export type UrlscanSubmitVisibility = z.infer<
 >;
 export type UrlscanSubmitSnapshot = z.infer<typeof urlscanSubmitSnapshotSchema>;
 
+type UrlscanSubmitOptions = {
+  userAgent: string;
+  visibility: UrlscanSubmitVisibility;
+};
+
+const submitUrlscan = defineJsonProvider({
+  service: "URLScan",
+  schema: urlscanSubmitSnapshotSchema,
+  key: { header: "API-Key" },
+  normalize: (raw) => {
+    const normalized = normalizeHttpUrl(raw);
+    assertAllowedTarget(new URL(normalized));
+    return normalized;
+  },
+  request: (target, { visibility }: UrlscanSubmitOptions) => ({
+    url: "https://urlscan.io/api/v1/scan/",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: target, visibility }),
+  }),
+  toSnapshot: ({ subject: target, queriedAt, body, options }) => {
+    const uuid =
+      typeof body.uuid === "string" && body.uuid !== "" ? body.uuid : null;
+    return {
+      url: target,
+      visibility: options.visibility,
+      queriedAt,
+      source: "urlscan.io" as const,
+      uuid,
+      resultUrl: typeof body.result === "string" ? body.result : null,
+      apiUrl: typeof body.api === "string" ? body.api : null,
+      message: typeof body.message === "string" ? body.message : null,
+      accepted: uuid !== null,
+    };
+  },
+});
+
 /**
  * Submit a URL for a live urlscan.io browser scan.
  * POST https://urlscan.io/api/v1/scan/
@@ -43,47 +75,6 @@ export function submitUrlscanEffect(
   visibility: UrlscanSubmitVisibility,
   signal: AbortSignal,
   options: { userAgent: string }
-): Effect.Effect<UrlscanSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* submitUrlscanGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const target = yield* Effect.try({
-      try: () => {
-        const normalized = normalizeHttpUrl(url);
-        assertAllowedTarget(new URL(normalized));
-        return normalized;
-      },
-      catch: mapToolsCatch,
-    });
-    const ua = options.userAgent;
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url: "https://urlscan.io/api/v1/scan/",
-      signal,
-      service: "URLScan",
-      subject: target,
-      init: {
-        method: "POST",
-        headers: {
-          "API-Key": key,
-          "Content-Type": "application/json",
-          "User-Agent": ua,
-        },
-        body: JSON.stringify({ url: target, visibility }),
-      },
-    });
-    const uuid =
-      typeof body.uuid === "string" && body.uuid !== "" ? body.uuid : null;
-
-    return urlscanSubmitSnapshotSchema.parse({
-      url: target,
-      visibility,
-      queriedAt,
-      source: "urlscan.io",
-      uuid,
-      resultUrl: typeof body.result === "string" ? body.result : null,
-      apiUrl: typeof body.api === "string" ? body.api : null,
-      message: typeof body.message === "string" ? body.message : null,
-      accepted: uuid !== null,
-    });
-  });
+) {
+  return submitUrlscan(url, key, signal, { ...options, visibility });
 }
