@@ -1,11 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import type { ToolsTag } from "../errors/tagged-errors";
 import { validationVendorError } from "../errors/vendor-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { asString } from "../parse/coerce";
 
 export const githubUserSnapshotSchema = z.object({
@@ -48,11 +44,12 @@ type GithubUserOptions = {
 
 function notFoundGithubSnapshot(
   handle: string,
+  queriedAt: string,
   authenticated: boolean
-): GithubUserSnapshot {
-  return githubUserSnapshotSchema.parse({
+) {
+  return {
     handle,
-    queriedAt: new Date().toISOString(),
+    queriedAt,
     found: false,
     url: null,
     name: null,
@@ -65,24 +62,24 @@ function notFoundGithubSnapshot(
     createdAt: null,
     status: 404,
     authenticated,
-  });
+  };
 }
 
 function githubUserFromBody(
   handle: string,
+  queriedAt: string,
   body: Record<string, unknown>,
   status: number,
   authenticated: boolean
-): GithubUserSnapshot {
-  const blog = asString(body.blog);
-  return githubUserSnapshotSchema.parse({
+) {
+  return {
     handle,
-    queriedAt: new Date().toISOString(),
+    queriedAt,
     found: true,
     url: asString(body.html_url) ?? `https://github.com/${handle}`,
     name: asString(body.name),
     bio: asString(body.bio),
-    blog: blog ?? null,
+    blog: asString(body.blog),
     location: asString(body.location),
     company: asString(body.company),
     publicRepos:
@@ -91,50 +88,42 @@ function githubUserFromBody(
     createdAt: asString(body.created_at),
     status,
     authenticated,
-  });
+  };
 }
+
+const lookupGithubUser = defineJsonProvider({
+  service: "GitHub",
+  schema: githubUserSnapshotSchema,
+  key: "bearer",
+  normalize: normalizeGithubHandle,
+  request: (handle, _options: GithubUserOptions) => ({
+    url: `https://api.github.com/users/${handle}`,
+    headers: {
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  }),
+  notFound: ({ subject: handle, queriedAt, options }) =>
+    notFoundGithubSnapshot(handle, queriedAt, Boolean(options.token?.trim())),
+  toSnapshot: ({ subject: handle, queriedAt, status, body, options }) => {
+    const authenticated = Boolean(options.token?.trim());
+    const login = asString(body.login);
+    if (login === null) {
+      return notFoundGithubSnapshot(handle, queriedAt, authenticated);
+    }
+    return githubUserFromBody(login, queriedAt, body, status, authenticated);
+  },
+});
 
 export function fetchGithubUserEffect(
   handleRaw: string,
   signal: AbortSignal,
   options: GithubUserOptions
-): Effect.Effect<GithubUserSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchGithubUserGen() {
-    const handle = yield* Effect.try({
-      try: () => normalizeGithubHandle(handleRaw),
-      catch: mapToolsCatch,
-    });
-    const ua = options.userAgent;
-    const headers: Record<string, string> = {
-      Accept: "application/vnd.github+json",
-      "User-Agent": ua,
-      "X-GitHub-Api-Version": "2022-11-28",
-    };
-    const token = options.token?.trim();
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const authenticated = Boolean(token);
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://api.github.com/users/${handle}`,
-      signal,
-      service: "GitHub",
-      subject: handle,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers,
-      },
-    });
-
-    if (status === 404) {
-      return notFoundGithubSnapshot(handle, authenticated);
-    }
-
-    const login = asString(body.login);
-    if (login === null) {
-      return notFoundGithubSnapshot(handle, authenticated);
-    }
-
-    return githubUserFromBody(login, body, status, authenticated);
-  });
+) {
+  return lookupGithubUser(
+    handleRaw,
+    options.token?.trim() ?? "",
+    signal,
+    options
+  );
 }

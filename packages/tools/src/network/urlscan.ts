@@ -1,10 +1,6 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeHost } from "../normalize";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -108,42 +104,28 @@ function collectUrlscanHits(rows: unknown[]): {
   return { hits, urls, domains };
 }
 
-export function fetchUrlscanSearchEffect(
-  hostRaw: string,
-  signal: AbortSignal,
-  options: UrlscanOptions
-): Effect.Effect<UrlscanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchUrlscanSearchGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const host = normalizeHost(hostRaw);
+export const fetchUrlscanSearchEffect = defineJsonProvider({
+  service: "URLScan",
+  schema: urlscanLookupSnapshotSchema,
+  normalize: normalizeHost,
+  request: (host, options: UrlscanOptions) => {
     const size = Math.min(Math.max(options.size ?? 20, 1), 100);
-    const ua = options.userAgent;
-
     const url = new URL("https://urlscan.io/api/v1/search/");
     url.searchParams.set("q", `page.domain:${host}`);
     url.searchParams.set("size", String(size));
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-      signal,
-      service: "URLScan",
-      subject: host,
-    });
+    return { url };
+  },
+  toSnapshot: ({ subject: host, queriedAt, body }) => {
     const rows = Array.isArray(body.results) ? body.results : [];
     const { hits, urls, domains } = collectUrlscanHits(rows);
-
-    return urlscanLookupSnapshotSchema.parse({
+    return {
       host,
       queriedAt,
-      source: "urlscan.io/api/v1/search",
+      source: "urlscan.io/api/v1/search" as const,
       total: typeof body.total === "number" ? body.total : null,
       urls,
       domains,
       hits,
-    });
-  });
-}
+    };
+  },
+});

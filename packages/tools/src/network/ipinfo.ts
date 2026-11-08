@@ -1,11 +1,11 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import {
+  defineJsonProvider,
+  pick,
+  type Field,
+} from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 import { asBool, asString } from "../parse/coerce";
 
 export const ipinfoLookupSnapshotSchema = z.object({
@@ -35,44 +35,31 @@ type IpinfoOptions = {
   userAgent: string;
 };
 
-export function fetchIpinfoLookupEffect(
-  ipRaw: string,
-  token: string,
-  signal: AbortSignal,
-  options: IpinfoOptions
-): Effect.Effect<IpinfoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchIpinfoLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options.userAgent;
+/** Trimmed, blank is `null`: how this vendor's text fields were always read. */
+const trimmed: Field<string | null> = { read: asString };
 
-    const url = new URL(`https://ipinfo.io/${encodeURIComponent(ip)}/json`);
-    url.searchParams.set("token", token);
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-      signal,
-      service: "IPinfo",
-      subject: ip,
-    });
-
-    return ipinfoLookupSnapshotSchema.parse({
-      ip,
-      queriedAt,
-      source: "ipinfo.io",
-      found: asBool(body.bogon) !== true,
-      hostname: asString(body.hostname),
-      city: asString(body.city),
-      region: asString(body.region),
-      country: asString(body.country),
-      loc: asString(body.loc),
-      org: asString(body.org),
-      postal: asString(body.postal),
-      timezone: asString(body.timezone),
-    });
-  });
-}
+export const fetchIpinfoLookupEffect = defineJsonProvider({
+  service: "IPinfo",
+  schema: ipinfoLookupSnapshotSchema,
+  key: { query: "token" },
+  normalize: normalizeIp,
+  request: (ip, _options: IpinfoOptions) => ({
+    url: `https://ipinfo.io/${encodeURIComponent(ip)}/json`,
+  }),
+  toSnapshot: ({ subject: ip, queriedAt, body }) => ({
+    ip,
+    queriedAt,
+    source: "ipinfo.io" as const,
+    found: asBool(body.bogon) !== true,
+    ...pick(body, {
+      hostname: trimmed,
+      city: trimmed,
+      region: trimmed,
+      country: trimmed,
+      loc: trimmed,
+      org: trimmed,
+      postal: trimmed,
+      timezone: trimmed,
+    }),
+  }),
+});
