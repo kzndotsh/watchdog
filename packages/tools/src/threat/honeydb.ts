@@ -1,11 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { child, defineJsonProvider } from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 import { asString, isRecord } from "../parse/coerce";
 
 export const honeydbLookupSnapshotSchema = z.object({
@@ -22,6 +18,9 @@ export const honeydbLookupSnapshotSchema = z.object({
 });
 
 export type HoneydbLookupSnapshot = z.infer<typeof honeydbLookupSnapshotSchema>;
+
+/** The vendor's API id rides in the options: the key placement carries only the key. */
+type HoneydbOptions = { userAgent: string; id: string };
 
 function toEventCount(raw: unknown): number {
   if (typeof raw === "number") return raw;
@@ -47,68 +46,51 @@ function sumHistoryEvents(rows: unknown): number {
  * GET https://honeydb.io/api/ip-context/{ip}
  * @see https://honeydb.io/mssp-aisoc
  */
+const lookupHoneydb = defineJsonProvider({
+  service: "HoneyDB",
+  schema: honeydbLookupSnapshotSchema,
+  key: { header: "X-HoneyDb-ApiKey" },
+  normalize: normalizeIp,
+  request: (ip, options: HoneydbOptions) => ({
+    url: `https://honeydb.io/api/ip-context/${encodeURIComponent(ip)}`,
+    headers: { "X-HoneyDb-ApiId": options.id },
+  }),
+  notFound: ({ subject: ip, queriedAt }) => ({
+    ip,
+    queriedAt,
+    source: "honeydb.io" as const,
+    found: false,
+    asn: null,
+    country: null,
+    isTor: false,
+    isThreat: false,
+    internetScanner: false,
+    historyEventCount: 0,
+  }),
+  toSnapshot: ({ subject: ip, queriedAt, body }) => {
+    const networkInfo = child(body, "network_info");
+    const threatInfo = child(body, "threat_info");
+    return {
+      ip,
+      queriedAt,
+      source: "honeydb.io" as const,
+      found: true,
+      asn: typeof networkInfo.asn === "number" ? networkInfo.asn : null,
+      country: asString(networkInfo.country),
+      isTor: threatInfo.is_tor === true,
+      isThreat: threatInfo.is_threat === true,
+      internetScanner: body.internet_scanner === true,
+      historyEventCount: sumHistoryEvents(body.ip_history),
+    };
+  },
+});
+
 export function fetchHoneydbLookupEffect(
   ipRaw: string,
   id: string,
   key: string,
   signal: AbortSignal,
   options: { userAgent: string }
-): Effect.Effect<HoneydbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchHoneydbLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-
-    const ua = options.userAgent;
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://honeydb.io/api/ip-context/${encodeURIComponent(ip)}`,
-      signal,
-      service: "HoneyDB",
-      subject: ip,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "X-HoneyDb-ApiId": id,
-          "X-HoneyDb-ApiKey": key,
-          "User-Agent": ua,
-        },
-      },
-    });
-
-    if (status === 404) {
-      return honeydbLookupSnapshotSchema.parse({
-        ip,
-        queriedAt,
-        source: "honeydb.io",
-        found: false,
-        asn: null,
-        country: null,
-        isTor: false,
-        isThreat: false,
-        internetScanner: false,
-        historyEventCount: 0,
-      });
-    }
-    const networkInfo = isRecord(body.network_info) ? body.network_info : {};
-    const threatInfo = isRecord(body.threat_info) ? body.threat_info : {};
-
-    const isTor = threatInfo.is_tor === true;
-    const isThreat = threatInfo.is_threat === true;
-    const internetScanner = body.internet_scanner === true;
-    const historyEventCount = sumHistoryEvents(body.ip_history);
-
-    return honeydbLookupSnapshotSchema.parse({
-      ip,
-      queriedAt,
-      source: "honeydb.io",
-      found: true,
-      asn: typeof networkInfo.asn === "number" ? networkInfo.asn : null,
-      country: asString(networkInfo.country),
-      isTor,
-      isThreat,
-      internetScanner,
-      historyEventCount,
-    });
-  });
+) {
+  return lookupHoneydb(ipRaw, key, signal, { ...options, id });
 }

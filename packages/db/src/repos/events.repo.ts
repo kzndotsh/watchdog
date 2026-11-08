@@ -7,7 +7,7 @@ import { entities } from "../schema/entities";
 import { events } from "../schema/events";
 import { entityRowInCase } from "./_entity-in-case";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
-import { atVersion, setOrTouch } from "./_version";
+import { updateVersionedInCase } from "./_version";
 
 export const eventColumns = {
   id: events.id,
@@ -113,20 +113,20 @@ export const eventsRepo = {
     patch: EventPatch,
     expectedVersion?: number
   ): Promise<EventRow | null> {
-    const scoped = trimScopedCaseIds(caseId, eventId);
-    if (!scoped) return null;
-    const [updated] = await exec
-      .update(events)
-      .set(setOrTouch(patch, scoped.resourceId))
-      .where(
-        and(
-          eq(events.id, scoped.resourceId),
-          entityRowInCase(events.entityId, scoped.caseId),
-          atVersion(events.version, expectedVersion)
-        )
-      )
-      .returning(eventColumns);
-    return updated ?? null;
+    return updateVersionedInCase(
+      exec,
+      {
+        table: events,
+        idColumn: events.id,
+        versionColumn: events.version,
+        columns: eventColumns,
+        inCase: (id) => entityRowInCase(events.entityId, id),
+      },
+      caseId,
+      eventId,
+      patch,
+      expectedVersion
+    );
   },
 
   async delete(exec: DbExec, eventId: string): Promise<EventRow | null> {

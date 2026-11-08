@@ -12,7 +12,7 @@ import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
 import { edgeRowInCase } from "./_entity-in-case";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
-import { atVersion, setOrTouch } from "./_version";
+import { updateVersionedInCase } from "./_version";
 
 export const edgeColumns = {
   id: edges.id,
@@ -346,22 +346,21 @@ export const edgesRepo = {
     patch: EdgePatch,
     expectedVersion?: number
   ): Promise<EdgeRow | null> {
-    const scoped = trimScopedCaseIds(caseId, edgeId);
-    if (!scoped) return null;
-    const patchToSet = edgePatchEndpointIds(patch);
-    if (patchToSet === null) return null;
-    const [updated] = await exec
-      .update(edges)
-      .set(setOrTouch(patchToSet, scoped.resourceId))
-      .where(
-        and(
-          eq(edges.id, scoped.resourceId),
-          edgeRowInCase(edges.id, scoped.caseId),
-          atVersion(edges.version, expectedVersion)
-        )
-      )
-      .returning(edgeColumns);
-    return updated ?? null;
+    return updateVersionedInCase(
+      exec,
+      {
+        table: edges,
+        idColumn: edges.id,
+        versionColumn: edges.version,
+        columns: edgeColumns,
+        inCase: (id) => edgeRowInCase(edges.id, id),
+        rewritePatch: edgePatchEndpointIds,
+      },
+      caseId,
+      edgeId,
+      patch,
+      expectedVersion
+    );
   },
 
   async delete(exec: DbExec, edgeId: string): Promise<boolean> {

@@ -1,12 +1,14 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
-import { isRecord } from "../parse/coerce";
+import {
+  bool,
+  child,
+  defineJsonProvider,
+  num,
+  pick,
+  str,
+} from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 
 export const abuseIpdbLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -41,62 +43,33 @@ type AbuseipdbOptions = {
   maxAgeInDays?: number;
 };
 
-export function fetchAbuseIpdbCheckEffect(
-  ipRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: AbuseipdbOptions
-): Effect.Effect<AbuseIpdbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchAbuseIpdbCheckGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-
-    const ua = options.userAgent;
+export const fetchAbuseIpdbCheckEffect = defineJsonProvider({
+  service: "AbuseIPDB",
+  schema: abuseIpdbLookupSnapshotSchema,
+  key: { header: "Key" },
+  normalize: normalizeIp,
+  request: (ip, options: AbuseipdbOptions) => {
     const url = new URL("https://api.abuseipdb.com/api/v2/check");
     url.searchParams.set("ipAddress", ip);
     url.searchParams.set("maxAgeInDays", String(options.maxAgeInDays ?? 90));
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "AbuseIPDB",
-      subject: ip,
-      init: {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Key: key,
-          "User-Agent": ua,
-        },
-      },
-    });
-    const data = isRecord(body.data) ? body.data : {};
-
-    return abuseIpdbLookupSnapshotSchema.parse({
-      ip,
-      queriedAt,
-      found: true,
-      status,
-      abuseConfidenceScore:
-        typeof data.abuseConfidenceScore === "number"
-          ? data.abuseConfidenceScore
-          : null,
-      totalReports:
-        typeof data.totalReports === "number" ? data.totalReports : null,
-      numDistinctUsers:
-        typeof data.numDistinctUsers === "number"
-          ? data.numDistinctUsers
-          : null,
-      lastReportedAt:
-        typeof data.lastReportedAt === "string" ? data.lastReportedAt : null,
-      isPublic: typeof data.isPublic === "boolean" ? data.isPublic : null,
-      isWhitelisted:
-        typeof data.isWhitelisted === "boolean" ? data.isWhitelisted : null,
-      isp: typeof data.isp === "string" ? data.isp : null,
-      domain: typeof data.domain === "string" ? data.domain : null,
-      usageType: typeof data.usageType === "string" ? data.usageType : null,
-      countryCode:
-        typeof data.countryCode === "string" ? data.countryCode : null,
-    });
-  });
-}
+    return { url };
+  },
+  toSnapshot: ({ subject: ip, queriedAt, status, body }) => ({
+    ip,
+    queriedAt,
+    found: true,
+    status,
+    ...pick(child(body, "data"), {
+      abuseConfidenceScore: num(),
+      totalReports: num(),
+      numDistinctUsers: num(),
+      lastReportedAt: str(),
+      isPublic: bool(),
+      isWhitelisted: bool(),
+      isp: str(),
+      domain: str(),
+      usageType: str(),
+      countryCode: str(),
+    }),
+  }),
+});

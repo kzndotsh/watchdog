@@ -22,7 +22,7 @@ import {
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
-import { atVersion, setOrTouch } from "./_version";
+import { updateVersionedInCase } from "./_version";
 import { visibleCase } from "./_visible-case";
 
 export const entityColumns = {
@@ -364,20 +364,20 @@ export const entitiesRepo = {
     patch: EntityPatch,
     expectedVersion?: number
   ): Promise<EntityRow | null> {
-    const scoped = trimScopedCaseIds(caseId, entityId);
-    if (!scoped) return null;
-    const [updated] = await exec
-      .update(entities)
-      .set(setOrTouch(patch, scoped.resourceId))
-      .where(
-        and(
-          eq(entities.id, scoped.resourceId),
-          eq(entities.caseId, scoped.caseId),
-          atVersion(entities.version, expectedVersion)
-        )
-      )
-      .returning(entityColumns);
-    return updated ?? null;
+    return updateVersionedInCase(
+      exec,
+      {
+        table: entities,
+        idColumn: entities.id,
+        versionColumn: entities.version,
+        columns: entityColumns,
+        inCase: (id) => eq(entities.caseId, id),
+      },
+      caseId,
+      entityId,
+      patch,
+      expectedVersion
+    );
   },
 
   async delete(exec: DbExec, entityId: string): Promise<boolean> {
