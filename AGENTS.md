@@ -109,6 +109,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Hard navigation into the new organization after an organization change (invalidates the organization state first; the organization hooks call it themselves) | `apps/web/src/domains/organization/hooks/use-reload-into-organization.ts` | `useReloadIntoOrganization` |
 | A lazy dialog or drawer (mounts on first open and stays mounted; optional prefetch after `OVERLAY_PREFETCH_MS`; never hand-write the `lazy` + `isMounted` + timer) | `apps/web/src/shared/lib/lazy-overlay.ts` | `lazyOverlay` |
 | Copy text to the clipboard with the copied state and toasts (never call `navigator.clipboard.writeText` in a component; `route-error.tsx` keeps its own because its copied state never resets): `useCopyText` for a control with a copied state, `copyText` for a one-shot | `apps/web/src/shared/hooks/use-copy-text.ts` | `useCopyText`, `copyText` |
+| Identifier type facts (canonicalizer, validator, paste recogniser per type; never a `switch` over the type; a type without an entry fails to compile) | `packages/schemas/src/identifier-types.ts` | `IDENTIFIER_TYPE_TABLE`, `identifierTypeEntry` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
