@@ -1,10 +1,10 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { ValidationVendorError } from "../errors/tagged-errors";
+import {
+  defineJsonProvider,
+  type JsonProviderContext,
+} from "../http/define-json-provider";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
 import {
@@ -194,65 +194,69 @@ type SnusbaseOptions = {
   credentials: CredentialHandling;
 };
 
-export function fetchSnusbaseLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: SnusbaseOptions
-): Effect.Effect<SnusbaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchSnusbaseLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
+/** Snusbase accepts any status below 400; `fetch` follows redirects, so only a stray 3xx reaches here. */
+const REDIRECT_STATUSES = Array.from({ length: 100 }, (_, i) => 300 + i);
 
-    const { kind, value, type } = classifySnusbaseQuery(queryRaw);
-    const ua = options.userAgent;
-
-    const { body } = yield* fetchJsonObjectEffect({
-      url: "https://api.snusbase.com/data/search",
-      init: {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Auth: key,
-          "User-Agent": ua,
-        },
-        body: JSON.stringify({ terms: [value], types: [type] }),
-      },
-      signal,
-      service: "Snusbase",
-      subject: value,
-      acceptStatus: (status) => status < 400,
-    });
-    const { tables, entries } = flattenSearchResults(body.results);
-    const total =
-      typeof body.size === "number"
-        ? body.size
-        : tables.reduce((sum, t) => sum + t.count, 0);
-
-    const { mode, fingerprint } = options.credentials;
-    const base = {
-      query: value,
-      kind,
-      queriedAt,
-      source: "api.snusbase.com" as const,
-      found: entries.length > 0,
-      total,
-      tables,
-      sampleCount: entries.length,
-      reuse: credentialReuse(
-        entries.map((entry) =>
-          credentialPair(entry.password, entry.hash, fingerprint)
-        )
-      ),
-    };
-    return snusbaseLookupSnapshotSchema.parse(
-      mode === "full"
-        ? { ...base, credentialMode: "full", entries }
-        : {
-            ...base,
-            credentialMode: "safe",
-            entries: entries.map((entry) => safeEntryOf(entry, fingerprint)),
-          }
-    );
-  });
+function normalizeSnusbaseQuery(raw: string) {
+  const subject = classifySnusbaseQuery(raw);
+  if (subject.value === "") {
+    throw new ValidationVendorError({ message: "Snusbase query is empty" });
+  }
+  return subject;
 }
+
+function snusbaseSnapshot({
+  subject: { kind, value },
+  queriedAt,
+  body,
+  options,
+}: JsonProviderContext<
+  ReturnType<typeof normalizeSnusbaseQuery>,
+  SnusbaseOptions
+>) {
+  const { tables, entries } = flattenSearchResults(body.results);
+  const total =
+    typeof body.size === "number"
+      ? body.size
+      : tables.reduce((sum, t) => sum + t.count, 0);
+
+  const { mode, fingerprint } = options.credentials;
+  const base = {
+    query: value,
+    kind,
+    queriedAt,
+    source: "api.snusbase.com" as const,
+    found: entries.length > 0,
+    total,
+    tables,
+    sampleCount: entries.length,
+    reuse: credentialReuse(
+      entries.map((entry) =>
+        credentialPair(entry.password, entry.hash, fingerprint)
+      )
+    ),
+  };
+  return mode === "full"
+    ? { ...base, credentialMode: "full" as const, entries }
+    : {
+        ...base,
+        credentialMode: "safe" as const,
+        entries: entries.map((entry) => safeEntryOf(entry, fingerprint)),
+      };
+}
+
+export const fetchSnusbaseLookupEffect = defineJsonProvider({
+  service: "Snusbase",
+  schema: snusbaseLookupSnapshotSchema,
+  key: { header: "Auth" },
+  normalize: normalizeSnusbaseQuery,
+  request: ({ value, type }, _options: SnusbaseOptions) => ({
+    url: "https://api.snusbase.com/data/search",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ terms: [value], types: [type] }),
+  }),
+  notFoundStatuses: REDIRECT_STATUSES,
+  notFound: snusbaseSnapshot,
+  toSnapshot: snusbaseSnapshot,
+});
