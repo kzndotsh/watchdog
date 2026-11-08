@@ -31,6 +31,8 @@ import type {
   IdentifierRecord,
   QuestionRecord,
 } from "..";
+import type { toCaseEdgeRecord } from "../edges";
+import type { toCaseIdentifierRecord } from "../identifiers";
 import type {
   toClaimRecord,
   toEntityRecord,
@@ -81,6 +83,12 @@ describe("graph records equal their schemas' output", () => {
     >();
     expectTypeOf<ReturnType<typeof toIdentifierRecord>>().toEqualTypeOf<
       z.output<typeof identifierSchema>
+    >();
+    expectTypeOf<ReturnType<typeof toCaseEdgeRecord>>().toEqualTypeOf<
+      z.output<typeof caseEdgeSchema>
+    >();
+    expectTypeOf<ReturnType<typeof toCaseIdentifierRecord>>().toEqualTypeOf<
+      z.output<typeof caseIdentifierSchema>
     >();
     expect(true).toBe(true);
   });
