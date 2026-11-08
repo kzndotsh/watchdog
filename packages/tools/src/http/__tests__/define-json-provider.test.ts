@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
+import type { HttpClient } from "effect/http";
 import { vi } from "vitest";
 import { z } from "zod";
 
@@ -7,6 +8,7 @@ import {
   HttpVendorError,
   ParseVendorError,
   RateLimitedError,
+  UnexpectedToolError,
   ValidationVendorError,
 } from "../../errors/tagged-errors";
 import {
@@ -64,12 +66,11 @@ function sent(fetch: ReturnType<typeof stubFetch>) {
     url: String(url),
     headers: new Headers(init?.headers),
     method: init?.method,
+    body: typeof init?.body === "string" ? init.body : undefined,
   };
 }
 
-const provided = <A, E>(
-  effect: Effect.Effect<A, E, import("effect/http").HttpClient.HttpClient>
-) =>
+const provided = <A, E>(effect: Effect.Effect<A, E, HttpClient.HttpClient>) =>
   effect.pipe(
     Effect.provide(toolsHttpClientLayer),
     Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
@@ -190,6 +191,7 @@ describe("defineJsonProvider key placement", () => {
       expect(request.method).toBe("POST");
       expect(request.headers.get("content-type")).toBe("application/json");
       expect(request.headers.get("auth-key")).toBe("k");
+      expect(JSON.parse(request.body ?? "null")).toEqual({ id: "q" });
     }).pipe(provided)
   );
 });
@@ -319,6 +321,76 @@ describe("defineJsonProvider failures", () => {
       if (Result.isFailure(badBody)) {
         expect(badBody.failure).toBeInstanceOf(ValidationVendorError);
       }
+    }).pipe(provided)
+  );
+});
+
+describe("defineJsonProvider throws map to tools errors", () => {
+  const base = {
+    service: "Example",
+    schema,
+    normalize: (raw: string) => raw,
+    request: (id: string, _options: typeof options) => ({
+      url: `https://example.com/${id}`,
+    }),
+    toSnapshot: ({
+      subject,
+      queriedAt,
+    }: {
+      subject: string;
+      queriedAt: string;
+    }) => ({
+      id: subject,
+      queriedAt,
+      found: true,
+      score: null,
+    }),
+  };
+
+  it.effect("maps a throwing request, bad URL, toSnapshot and notFound", () =>
+    Effect.gen(function* mappedGen() {
+      const fetch = stubFetch(() => new Response(null, { status: 404 }));
+      const failure = (
+        effect: Effect.Effect<unknown, unknown, HttpClient.HttpClient>
+      ) => Effect.result(effect);
+      const badRequest = defineJsonProvider({
+        ...base,
+        request: () => {
+          throw new Error("boom");
+        },
+      });
+      const badUrl = defineJsonProvider({
+        ...base,
+        key: { query: "k" },
+        request: () => ({ url: "not a url" }),
+      });
+      const badMap = defineJsonProvider({
+        ...base,
+        toSnapshot: () => {
+          throw new Error("boom");
+        },
+      });
+      const badNotFound = defineJsonProvider({
+        ...base,
+        notFound: () => {
+          throw new Error("boom");
+        },
+      });
+      const signal = AbortSignal.timeout(5000);
+      const outcomes = [
+        yield* failure(badRequest("a", signal, options)),
+        yield* failure(badUrl("a", "k", signal, options)),
+        yield* failure(badNotFound("a", signal, options)),
+      ];
+      stubFetch(() => new Response("{}", { status: 200 }));
+      outcomes.push(yield* failure(badMap("a", signal, options)));
+      for (const outcome of outcomes) {
+        expect(Result.isFailure(outcome)).toBe(true);
+        if (Result.isFailure(outcome)) {
+          expect(outcome.failure).toBeInstanceOf(UnexpectedToolError);
+        }
+      }
+      expect(fetch).toHaveBeenCalledTimes(1);
     }).pipe(provided)
   );
 });

@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import type { z } from "zod";
 
-import { isToolsTag, mapToolsCatch } from "../errors/map-tools-catch";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
@@ -120,12 +120,16 @@ function runJsonProvider<
       try: () => spec.normalize(raw),
       catch: mapToolsCatch,
     });
-    const { url, init } = keyedRequest(
-      spec.request(subject, options),
-      spec.key,
-      key,
-      options.userAgent
-    );
+    const { url, init } = yield* Effect.try({
+      try: () =>
+        keyedRequest(
+          spec.request(subject, options),
+          spec.key,
+          key,
+          options.userAgent
+        ),
+      catch: mapToolsCatch,
+    });
     const { status, body } = yield* fetchJsonObjectEffect({
       url,
       init,
@@ -142,10 +146,7 @@ function runJsonProvider<
         : spec.toSnapshot;
     const input = yield* Effect.try({
       try: () => build(ctx),
-      catch: (error) => {
-        if (isToolsTag(error)) return error;
-        throw error;
-      },
+      catch: mapToolsCatch,
     });
     return spec.schema.parse(input);
   });

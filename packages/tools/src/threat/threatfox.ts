@@ -68,7 +68,13 @@ export const fetchThreatfoxLookupEffect = defineJsonProvider({
   service: "ThreatFox",
   schema: threatfoxLookupSnapshotSchema,
   key: { header: "Auth-Key" },
-  normalize: classifyQuery,
+  normalize: (raw) => {
+    const classified = classifyQuery(raw);
+    if (classified.value === "") {
+      throw new ValidationVendorError({ message: "query required" });
+    }
+    return classified;
+  },
   request: ({ value }, _options: ThreatfoxOptions) => ({
     url: "https://threatfox-api.abuse.ch/api/v1/",
     method: "POST",

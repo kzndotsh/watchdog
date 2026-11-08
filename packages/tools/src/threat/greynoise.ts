@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { HttpVendorError } from "../errors/tagged-errors";
 import {
   defineJsonProvider,
   type JsonProviderContext,
@@ -71,7 +72,13 @@ const lookupGreynoiseCommunity = defineJsonProvider({
   }),
   // A 404 carries the vendor's own message for an unseen IP, so both statuses build the same way.
   notFound: (ctx) => greynoiseSnapshot(ctx),
-  toSnapshot: (ctx) => greynoiseSnapshot(ctx),
+  toSnapshot: (ctx) => {
+    // Only 200 is a hit; any other 2xx is not a community answer.
+    if (ctx.status !== 200) {
+      throw new HttpVendorError({ service: "GreyNoise", status: ctx.status });
+    }
+    return greynoiseSnapshot(ctx);
+  },
 });
 
 export function fetchGreynoiseCommunityEffect(
