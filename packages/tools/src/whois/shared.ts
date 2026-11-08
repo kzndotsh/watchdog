@@ -1,12 +1,13 @@
 import { ValidationVendorError } from "../errors/tagged-errors";
 import { isRecord } from "../parse/coerce";
 
-/** The host as given; a blank one fails before any request. */
+/** The host trimmed; a blank one fails before any request. */
 export function normalizeWhoisHost(raw: string): string {
-  if (raw.trim() === "") {
+  const host = raw.trim();
+  if (host === "") {
     throw new ValidationVendorError({ message: "Whois host is empty" });
   }
-  return raw;
+  return host;
 }
 
 export function whoisStatusList(status: unknown): string[] {

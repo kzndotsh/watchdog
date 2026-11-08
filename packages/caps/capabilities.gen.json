@@ -441,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "39de585e25a0",
+    "version": "5d89e8f63adc",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "58b0232e5ff2",
+    "version": "8743a5c076ec",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
