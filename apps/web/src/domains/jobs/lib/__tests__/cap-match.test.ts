@@ -137,6 +137,17 @@ describe("cap-match", () => {
     }
   );
 
+  it.each([
+    ["a@b..co", "unknown"],
+    ["a@.b.co", "unknown"],
+    ["@b.co", "unknown"],
+  ] as const)(
+    "detectPasteSeed types %s as %s (a malformed email is never a host)",
+    (raw, kind) => {
+      expect(detectPasteSeed(raw).kind).toBe(kind);
+    }
+  );
+
   it("detectPasteSeed host / ip / email / handle / url / evidence / hash", () => {
     expect(detectPasteSeed("example.com").kind).toBe("host");
     expect(detectPasteSeed("8.8.8.8").kind).toBe("ip");

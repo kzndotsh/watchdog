@@ -46,6 +46,12 @@ function detectEmailOrHandle(value: string): PasteDetectResult | null {
   return null;
 }
 
+/** An `@` outside a URL is a malformed email, never a host: URL parsing would read it as userinfo. */
+function detectMalformedEmail(value: string): PasteDetectResult | null {
+  const isUrl = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) || value.includes("/");
+  return value.includes("@") && !isUrl ? { kind: "unknown", value } : null;
+}
+
 function detectUrlOrHost(value: string): PasteDetectResult | null {
   try {
     const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(value)
@@ -94,6 +100,7 @@ export function detectPasteSeed(raw: string): PasteDetectResult {
   return (
     detectEvidenceOrIp(value) ??
     detectEmailOrHandle(value) ??
+    detectMalformedEmail(value) ??
     detectUrlOrHost(value) ??
     detectBareHost(value) ??
     detectFileHash(value) ?? { kind: "unknown", value }
