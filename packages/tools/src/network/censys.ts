@@ -1,11 +1,13 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import {
+  child,
+  defineJsonProvider,
+  num,
+  pick,
+  str,
+} from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 import { isRecord, recordRows } from "../parse/coerce";
 
 export const censysLookupSnapshotSchema = z.object({
@@ -49,88 +51,69 @@ function censysHostnames(
  * GET https://search.censys.io/api/v2/hosts/{ip} (HTTP Basic: API ID + secret).
  * @see https://docs.censys.com/docs/ls-api
  */
+const lookupCensysHost = defineJsonProvider({
+  service: "Censys",
+  schema: censysLookupSnapshotSchema,
+  key: "basic",
+  normalize: normalizeIp,
+  request: (ip, _options: { userAgent: string }) => ({
+    url: `https://search.censys.io/api/v2/hosts/${encodeURIComponent(ip)}`,
+  }),
+  notFound: ({ subject: ip, queriedAt }) => ({
+    ip,
+    queriedAt,
+    found: false,
+    status: 404,
+    asn: null,
+    asName: null,
+    asCountryCode: null,
+    countryCode: null,
+    city: null,
+    ports: [],
+    serviceNames: [],
+    hostnames: [],
+  }),
+  toSnapshot: ({ subject: ip, queriedAt, status, body }) => {
+    const result = child(body, "result");
+    const autonomous = pick(child(result, "autonomous_system"), {
+      asn: num(),
+      name: str(),
+      countryCode: str("country_code"),
+    });
+    const location = pick(child(result, "location"), {
+      countryCode: str("country_code"),
+      city: str(),
+    });
+    const ports: number[] = [];
+    const serviceNames: string[] = [];
+    for (const svc of recordRows(result.services)) {
+      if (typeof svc.port === "number") ports.push(svc.port);
+      if (typeof svc.service_name === "string")
+        serviceNames.push(svc.service_name);
+    }
+    return {
+      ip,
+      queriedAt,
+      found: true,
+      status,
+      asn: autonomous.asn,
+      asName: autonomous.name,
+      asCountryCode: autonomous.countryCode,
+      countryCode: location.countryCode,
+      city: location.city,
+      ports: [...new Set(ports)].sort((a, b) => a - b),
+      serviceNames: [...new Set(serviceNames)],
+      hostnames: censysHostnames(result, ip),
+    };
+  },
+});
+
 export function fetchCensysHostEffect(
   ipRaw: string,
   id: string,
   secret: string,
   signal: AbortSignal,
   options: { userAgent: string }
-): Effect.Effect<CensysLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchCensysHostGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-
-    const ua = options.userAgent;
-    const auth = Buffer.from(`${id}:${secret}`).toString("base64");
-    const url = `https://search.censys.io/api/v2/hosts/${encodeURIComponent(ip)}`;
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "Censys",
-      subject: ip,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Basic ${auth}`,
-          "User-Agent": ua,
-        },
-      },
-    });
-
-    if (status === 404) {
-      return censysLookupSnapshotSchema.parse({
-        ip,
-        queriedAt,
-        found: false,
-        status: 404,
-        asn: null,
-        asName: null,
-        asCountryCode: null,
-        countryCode: null,
-        city: null,
-        ports: [],
-        serviceNames: [],
-        hostnames: [],
-      });
-    }
-
-    const result = isRecord(body.result) ? body.result : {};
-    const location = isRecord(result.location) ? result.location : {};
-    const autonomous = isRecord(result.autonomous_system)
-      ? result.autonomous_system
-      : {};
-    const services = recordRows(result.services);
-
-    const ports: number[] = [];
-    const serviceNames: string[] = [];
-    for (const svc of services) {
-      if (typeof svc.port === "number") ports.push(svc.port);
-      if (typeof svc.service_name === "string")
-        serviceNames.push(svc.service_name);
-    }
-
-    return censysLookupSnapshotSchema.parse({
-      ip,
-      queriedAt,
-      found: true,
-      status,
-      asn: typeof autonomous.asn === "number" ? autonomous.asn : null,
-      asName: typeof autonomous.name === "string" ? autonomous.name : null,
-      asCountryCode:
-        typeof autonomous.country_code === "string"
-          ? autonomous.country_code
-          : null,
-      countryCode:
-        typeof location.country_code === "string"
-          ? location.country_code
-          : null,
-      city: typeof location.city === "string" ? location.city : null,
-      ports: [...new Set(ports)].sort((a, b) => a - b),
-      serviceNames: [...new Set(serviceNames)],
-      hostnames: censysHostnames(result, ip),
-    });
-  });
+) {
+  return lookupCensysHost(ipRaw, `${id}:${secret}`, signal, options);
 }

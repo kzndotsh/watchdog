@@ -1,11 +1,7 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { child, defineJsonProvider } from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 import {
   asBool,
   asNumber,
@@ -126,28 +122,13 @@ type IpctlOptions = {
   userAgent: string;
 };
 
-export function fetchIpctlLookupEffect(
-  ipRaw: string,
-  signal: AbortSignal,
-  options: IpctlOptions
-): Effect.Effect<IpctlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchIpctlLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-    const ua = options.userAgent;
-
-    const url = `https://api.ipctl.io/v1/ip/${encodeURIComponent(ip)}`;
-    const { body } = yield* fetchJsonObjectEffect({
-      url,
-      init: {
-        method: "GET",
-        headers: { Accept: "application/json", "User-Agent": ua },
-      },
-      signal,
-      service: "ipctl",
-      subject: ip,
-    });
-    const data = isRecord(body.data) ? body.data : {};
-    return parseIpctlBody(ip, queriedAt, data);
-  });
-}
+export const fetchIpctlLookupEffect = defineJsonProvider({
+  service: "ipctl",
+  schema: ipctlLookupSnapshotSchema,
+  normalize: normalizeIp,
+  request: (ip, _options: IpctlOptions) => ({
+    url: `https://api.ipctl.io/v1/ip/${encodeURIComponent(ip)}`,
+  }),
+  toSnapshot: ({ subject: ip, queriedAt, body }) =>
+    parseIpctlBody(ip, queriedAt, child(body, "data")),
+});

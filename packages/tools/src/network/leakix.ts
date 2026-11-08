@@ -1,10 +1,6 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -42,49 +38,26 @@ type LeakixOptions = {
   userAgent: string;
 };
 
-export function fetchLeakixLookupEffect(
-  queryRaw: string,
-  key: string,
-  signal: AbortSignal,
-  options: LeakixOptions
-): Effect.Effect<LeakixLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchLeakixLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-
-    const { kind, value } = classifyIpOrHost(queryRaw);
-    const ua = options.userAgent;
-    const path = kind === "ip" ? "host" : "domain";
-    const url = `https://leakix.net/${path}/${encodeURIComponent(value)}`;
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url,
-      signal,
-      service: "LeakIX",
-      subject: value,
-      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
-      init: {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "api-key": key,
-          "User-Agent": ua,
-        },
-      },
-    });
-
-    if (status === 404) {
-      return leakixLookupSnapshotSchema.parse({
-        query: value,
-        kind,
-        queriedAt,
-        source: "leakix.net",
-        found: false,
-        serviceCount: 0,
-        leakCount: 0,
-        protocols: [],
-        hostnames: [],
-      });
-    }
+export const fetchLeakixLookupEffect = defineJsonProvider({
+  service: "LeakIX",
+  schema: leakixLookupSnapshotSchema,
+  key: { header: "api-key" },
+  normalize: classifyIpOrHost,
+  request: ({ kind, value }, _options: LeakixOptions) => ({
+    url: `https://leakix.net/${kind === "ip" ? "host" : "domain"}/${encodeURIComponent(value)}`,
+  }),
+  notFound: ({ subject: { kind, value }, queriedAt }) => ({
+    query: value,
+    kind,
+    queriedAt,
+    source: "leakix.net" as const,
+    found: false,
+    serviceCount: 0,
+    leakCount: 0,
+    protocols: [],
+    hostnames: [],
+  }),
+  toSnapshot: ({ subject: { kind, value }, queriedAt, body }) => {
     const services = firstArray(body, ["Services", "services"]);
     const leaks = firstArray(body, ["Leaks", "leaks"]);
 
@@ -101,16 +74,16 @@ export function fetchLeakixLookupEffect(
       }
     }
 
-    return leakixLookupSnapshotSchema.parse({
+    return {
       query: value,
       kind,
       queriedAt,
-      source: "leakix.net",
+      source: "leakix.net" as const,
       found: true,
       serviceCount: services.length,
       leakCount: leaks.length,
       protocols: [...protocols].slice(0, MAX_PROTOCOLS),
       hostnames: [...hostnames],
-    });
-  });
-}
+    };
+  },
+});
