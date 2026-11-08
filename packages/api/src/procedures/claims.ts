@@ -11,6 +11,8 @@ import {
   createClaimInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
+  claimListPageSchema,
+  claimSchema,
 } from "@watchdog/schemas/graph";
 import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
@@ -18,11 +20,7 @@ import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import {
-  claimListPageSchema,
-  claimSchema,
-  userOverrideSchema,
-} from "../schemas";
+import { userOverrideSchema } from "../schemas";
 
 /**
  * The Case's Claim list (`claimList`, ADR-0007). One Entity's Claims are this list with

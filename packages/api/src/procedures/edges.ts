@@ -13,6 +13,9 @@ import {
   edgeList,
   getEdgesInputSchema,
   updateEdgeInputSchema,
+  caseEdgeSchema,
+  edgeListPageSchema,
+  edgeSchema,
 } from "@watchdog/schemas/graph";
 import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
@@ -20,12 +23,7 @@ import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import {
-  caseEdgeSchema,
-  edgeListPageSchema,
-  edgeSchema,
-  userOverrideSchema,
-} from "../schemas";
+import { userOverrideSchema } from "../schemas";
 
 /**
  * The Case's Connection list (`edgeList`, ADR-0007). One Entity's Connections (either end) are this list with

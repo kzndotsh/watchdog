@@ -1,15 +1,18 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import type {
   IdentifierListRow,
   IdentifierPatch,
   IdentifierRow,
 } from "@watchdog/db";
-import { validateIdentifierWrite } from "@watchdog/schemas/graph";
+import {
+  validateIdentifierWrite,
+  type caseIdentifierSchema,
+} from "@watchdog/schemas/graph";
 import type {
   CaseId,
   ConfidenceTier,
-  EntityKind,
   IdentifierStatus,
   IdentifierType,
   OrganizationId,
@@ -66,11 +69,7 @@ export type UpdateIdentifierInput = {
 } & GraphActor;
 
 /** Identifier plus its owning Entity's labels: a row of the Identifier list. */
-export type CaseIdentifierRecord = {
-  entityName: string;
-  entitySlug: string;
-  entityKind: EntityKind;
-} & IdentifierRecord;
+export type CaseIdentifierRecord = z.output<typeof caseIdentifierSchema>;
 
 export function toCaseIdentifierRecord(
   row: IdentifierListRow,
