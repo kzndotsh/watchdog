@@ -1,11 +1,11 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { normalizeIpEffect } from "../dns/reverse";
-import type { ToolsTag } from "../errors/tagged-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { HttpVendorError } from "../errors/tagged-errors";
+import {
+  defineJsonProvider,
+  type JsonProviderContext,
+} from "../http/define-json-provider";
+import { normalizeIp } from "../normalize";
 import { asBool, asString } from "../parse/coerce";
 
 export const greynoiseLookupSnapshotSchema = z.object({
@@ -39,50 +39,57 @@ type GreynoiseOptions = {
   userAgent: string;
 };
 
+function greynoiseSnapshot({
+  subject: ip,
+  queriedAt,
+  status,
+  body,
+  options,
+}: JsonProviderContext<string, GreynoiseOptions>) {
+  return {
+    ip,
+    queriedAt,
+    source: "api.greynoise.io/v3/community" as const,
+    found: status === 200,
+    noise: asBool(body.noise),
+    riot: asBool(body.riot),
+    classification: asString(body.classification),
+    name: asString(body.name),
+    link: asString(body.link),
+    lastSeen: asString(body.last_seen),
+    message: asString(body.message),
+    authenticated: Boolean(options.apiKey?.trim()),
+  };
+}
+
+const lookupGreynoiseCommunity = defineJsonProvider({
+  service: "GreyNoise",
+  schema: greynoiseLookupSnapshotSchema,
+  key: { header: "key" },
+  normalize: normalizeIp,
+  request: (ip, _options: GreynoiseOptions) => ({
+    url: `https://api.greynoise.io/v3/community/${encodeURIComponent(ip)}`,
+  }),
+  // A 404 carries the vendor's own message for an unseen IP, so both statuses build the same way.
+  notFound: (ctx) => greynoiseSnapshot(ctx),
+  toSnapshot: (ctx) => {
+    // Only 200 is a hit; any other 2xx is not a community answer.
+    if (ctx.status !== 200) {
+      throw new HttpVendorError({ service: "GreyNoise", status: ctx.status });
+    }
+    return greynoiseSnapshot(ctx);
+  },
+});
+
 export function fetchGreynoiseCommunityEffect(
   ipRaw: string,
   signal: AbortSignal,
   options: GreynoiseOptions
-): Effect.Effect<GreynoiseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchGreynoiseCommunityGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const ip = yield* normalizeIpEffect(ipRaw);
-    const key = options.apiKey?.trim() ?? "";
-    const ua = options.userAgent;
-
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      "User-Agent": ua,
-    };
-    if (key) headers.key = key;
-
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://api.greynoise.io/v3/community/${encodeURIComponent(ip)}`,
-      init: {
-        method: "GET",
-        headers,
-      },
-      signal,
-      service: "GreyNoise",
-      subject: ip,
-      acceptStatus: (httpStatus) => httpStatus === 200 || httpStatus === 404,
-    });
-    const noise = asBool(body.noise);
-    const riot = asBool(body.riot);
-
-    return greynoiseLookupSnapshotSchema.parse({
-      ip,
-      queriedAt,
-      source: "api.greynoise.io/v3/community",
-      found: status === 200,
-      noise,
-      riot,
-      classification: asString(body.classification),
-      name: asString(body.name),
-      link: asString(body.link),
-      lastSeen: asString(body.last_seen),
-      message: asString(body.message),
-      authenticated: Boolean(key),
-    });
-  });
+) {
+  return lookupGreynoiseCommunity(
+    ipRaw,
+    options.apiKey?.trim() ?? "",
+    signal,
+    options
+  );
 }
