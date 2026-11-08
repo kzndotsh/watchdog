@@ -13,7 +13,7 @@ import {
   trimResourceId,
   trimScopedCaseIds,
 } from "./_scoped-ids";
-import { atVersion, setOrTouch } from "./_version";
+import { updateVersionedInCase } from "./_version";
 
 export const claimColumns = {
   id: claims.id,
@@ -202,18 +202,20 @@ export const claimsRepo = {
     if (Object.keys(patch).length === 0 && expectedVersion === undefined) {
       return claimsRepo.getInCase(exec, scoped.caseId, scoped.resourceId);
     }
-    const [updated] = await exec
-      .update(claims)
-      .set(setOrTouch(patch, scoped.resourceId))
-      .where(
-        and(
-          eq(claims.id, scoped.resourceId),
-          entityRowInCase(claims.entityId, scoped.caseId),
-          atVersion(claims.version, expectedVersion)
-        )
-      )
-      .returning(claimColumns);
-    return updated ?? null;
+    return updateVersionedInCase(
+      exec,
+      {
+        table: claims,
+        idColumn: claims.id,
+        versionColumn: claims.version,
+        columns: claimColumns,
+        inCase: (id) => entityRowInCase(claims.entityId, id),
+      },
+      caseId,
+      claimId,
+      patch,
+      expectedVersion
+    );
   },
 
   async retract(
