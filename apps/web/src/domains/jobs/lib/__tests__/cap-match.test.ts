@@ -114,6 +114,29 @@ describe("cap-match", () => {
     },
   ];
 
+  // Not IPs: "1:2", "001.2.3.4" and "1.2.3.04" still read as a host, because the URL parser
+  // normalizes them to one (a pre-existing quirk of the host fallback, not of IP recognition).
+  it.each([
+    ["::1", "ip"],
+    ["1::", "ip"],
+    ["::ffff:1.2.3.4", "ip"],
+    ["dead:beef", "unknown"],
+    ["1:2", "host"],
+    ["aa:bb", "unknown"],
+    ["1:2:3", "unknown"],
+    ["12:34:56", "unknown"],
+    ["001.2.3.4", "host"],
+    ["1.2.3.04", "host"],
+    ["256.1.1.1", "unknown"],
+    ["fe80::1%eth0", "unknown"],
+    ["[::1]", "unknown"],
+  ] as const)(
+    "detectPasteSeed types %s as %s (the IP table recogniser)",
+    (raw, kind) => {
+      expect(detectPasteSeed(raw).kind).toBe(kind);
+    }
+  );
+
   it("detectPasteSeed host / ip / email / handle / url / evidence / hash", () => {
     expect(detectPasteSeed("example.com").kind).toBe("host");
     expect(detectPasteSeed("8.8.8.8").kind).toBe("ip");

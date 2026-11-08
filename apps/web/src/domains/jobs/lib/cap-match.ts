@@ -1,5 +1,9 @@
 import type { CapListItem } from "@/domains/jobs/types";
 import { capCategory, categoryLabel } from "@/shared/lib/cap-category";
+import {
+  IDENTIFIER_TYPE_TABLE,
+  identifierTypeEntry,
+} from "@watchdog/schemas/graph";
 import { isUuidString } from "@watchdog/schemas/shared";
 
 export type PasteSeedKind =
@@ -19,33 +23,21 @@ export type PasteDetectResult = {
   hostHint?: string;
 };
 
-const IPV4_RE =
-  /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const FILE_HASH_RE =
   /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64}|[a-f0-9]{128})$/i;
 
-function looksLikeIpv6(value: string): boolean {
-  if (value.includes(".")) return false;
-  return /^[0-9a-f:]+$/i.test(value) && value.split(":").length >= 3;
-}
-
-function looksLikeIp(value: string): boolean {
-  return IPV4_RE.test(value) || looksLikeIpv6(value);
+function isIp(value: string): boolean {
+  return IDENTIFIER_TYPE_TABLE.ip.recognise?.(value) ?? false;
 }
 
 function detectEvidenceOrIp(value: string): PasteDetectResult | null {
   if (isUuidString(value)) return { kind: "evidence", value };
-  if (IPV4_RE.test(value) || (value.includes(":") && looksLikeIpv6(value))) {
-    return { kind: "ip", value };
-  }
+  if (isIp(value)) return { kind: "ip", value };
   return null;
 }
 
 function detectEmailOrHandle(value: string): PasteDetectResult | null {
-  if (EMAIL_RE.test(value)) {
+  if (IDENTIFIER_TYPE_TABLE.email.recognise?.(value)) {
     return { kind: "email", value: value.toLowerCase() };
   }
   if (/^@[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i.test(value)) {
@@ -77,7 +69,10 @@ function detectUrlOrHost(value: string): PasteDetectResult | null {
 }
 
 function detectBareHost(value: string): PasteDetectResult | null {
-  if (/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(value) || value === "localhost") {
+  if (
+    IDENTIFIER_TYPE_TABLE.domain.recognise?.(value) ||
+    value === "localhost"
+  ) {
     const host = value.toLowerCase();
     return { kind: "host", value: host, hostHint: host };
   }
@@ -131,9 +126,11 @@ function capPasteKinds(cap: CapListItem): Set<PasteSeedKind> {
         break;
       }
       case "identifier": {
-        if (c.type === "email") out.add("email");
-        if (c.type === "handle") out.add("handle");
-        // pgp fingerprints aren't a paste kind yet — email queries match via email consume
+        const seed =
+          c.type === undefined
+            ? undefined
+            : identifierTypeEntry(c.type)?.capSeed;
+        if (seed !== undefined) out.add(seed);
         break;
       }
       default: {
@@ -151,7 +148,7 @@ function pasteCompatibleKinds(paste: PasteDetectResult): Set<PasteSeedKind> {
   const hostHint = paste.hostHint;
   if (hostHint !== undefined && hostHint !== "") {
     kinds.add("host");
-    if (looksLikeIp(hostHint)) kinds.add("ip");
+    if (isIp(hostHint)) kinds.add("ip");
   }
   return kinds;
 }
