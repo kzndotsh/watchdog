@@ -1,12 +1,11 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import { entityListRepo, entityPickerListRepo } from "@watchdog/db";
 import type { EntityListRow, EntityPickerListRow } from "@watchdog/db";
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList, type entityListItemSchema } from "@watchdog/schemas/graph";
 import type {
   CaseId,
-  ConfidenceTier,
-  EdgePredicate,
   EntityKind,
   ListInput,
   ListPage,
@@ -47,29 +46,15 @@ export type { EntityRecord };
  * One Connection of a listed Entity, seen from that Entity: the Edge and its peer. Evidence
  * links are not joined; the Dossier's Connection list carries them.
  */
-export type EntityListConnection = {
-  id: string;
-  fromId: string;
-  toId: string;
-  predicate: EdgePredicate;
-  confidence: ConfidenceTier;
-  notes: string | null;
-  peerId: string;
-  peerName: string;
-  peerSlug: string;
-  peerKind: EntityKind;
-  direction: "out" | "in";
-  version: number;
-};
+export type EntityListConnection = NonNullable<
+  EntityListItem["soleConnection"]
+>;
 
 /**
  * A row of the Entity list: the Entity with its Connection counts, and the Connection itself
  * when it has exactly one (the Entities table names it in the row).
  */
-export type EntityListItem = EntityRecord & {
-  connections: { outgoing: number; incoming: number };
-  soleConnection: EntityListConnection | null;
-};
+export type EntityListItem = z.output<typeof entityListItemSchema>;
 
 export type CreateEntityInput = {
   caseId: CaseId;

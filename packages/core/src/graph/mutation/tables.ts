@@ -1,3 +1,5 @@
+import type { z } from "zod";
+
 import {
   claimsRepo,
   edgesRepo,
@@ -28,15 +30,12 @@ import {
   type RetractClaimValues,
 } from "@watchdog/db";
 import type {
-  CaseId,
-  ClaimClass,
-  ConfidenceTier,
-  IdentifierStatus,
-  IdentifierType,
-  EntityKind,
-  QuestionStatus,
-  RetractKind,
-} from "@watchdog/schemas/shared";
+  claimSchema,
+  entitySchema,
+  eventSchema,
+  identifierSchema,
+  questionSchema,
+} from "@watchdog/schemas/graph";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import type {
@@ -45,15 +44,12 @@ import type {
   RemovableGraphTable,
 } from "./graph-table";
 
-export type EventRecord = {
-  id: string;
-  entityId: string;
-  when: string;
-  what: string;
-  where: string | null;
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
+/** The Graph records are the wire schemas' output types (`@watchdog/schemas/graph`): one owner per shape. */
+export type EventRecord = z.output<typeof eventSchema>;
+export type ClaimRecord = z.output<typeof claimSchema>;
+export type IdentifierRecord = z.output<typeof identifierSchema>;
+export type EntityRecord = z.output<typeof entitySchema>;
+export type QuestionRecord = z.output<typeof questionSchema>;
 
 export function toEventRecord(row: EventRow): EventRecord {
   return {
@@ -65,22 +61,6 @@ export function toEventRecord(row: EventRow): EventRecord {
     version: row.version,
   };
 }
-
-export type ClaimRecord = {
-  id: string;
-  entityId: string;
-  class: ClaimClass;
-  text: string;
-  confidence: ConfidenceTier;
-  retracted: boolean;
-  retractKind: RetractKind | null;
-  retractedReason: string | null;
-  retractedBy: string | null;
-  retractedAt: string | null;
-  evidenceIds: string[];
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
 
 export function toClaimRecord(
   row: ClaimRow,
@@ -158,22 +138,6 @@ export const retractClaim: GraphTransition<ClaimRow, RetractClaimValues> = {
   conflict: "Claim already retracted",
   apply: (exec, caseId, id, set) =>
     claimsRepo.retractInCase(exec, caseId, id, set),
-};
-
-export type IdentifierRecord = {
-  id: string;
-  entityId: string;
-  type: IdentifierType;
-  platform: string;
-  value: string;
-  confidence: ConfidenceTier;
-  status: IdentifierStatus;
-  notes: string | null;
-  evidenceIds: string[];
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-  createdAt: string;
-  updatedAt: string;
 };
 
 export function toIdentifierRecord(
@@ -287,20 +251,6 @@ export const edgesTable: RemovableGraphTable<
   },
 };
 
-export type EntityRecord = {
-  id: string;
-  caseId: CaseId;
-  kind: EntityKind;
-  name: string;
-  slug: string;
-  summary: string | null;
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
-
 export function toEntityRecord(row: EntityRow): EntityRecord {
   return {
     id: row.id,
@@ -315,16 +265,6 @@ export function toEntityRecord(row: EntityRow): EntityRecord {
     version: row.version,
   };
 }
-
-export type QuestionRecord = {
-  id: string;
-  entityId: string;
-  text: string;
-  status: QuestionStatus;
-  resolvedNote: string | null;
-  /** Optimistic-concurrency token: send it back as `expectedVersion` on an update. */
-  version: number;
-};
 
 export function toQuestionRecord(row: QuestionRow): QuestionRecord {
   return {

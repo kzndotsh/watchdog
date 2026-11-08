@@ -13,6 +13,9 @@ import {
   getIdentifiersInputSchema,
   identifierList,
   updateIdentifierInputSchema,
+  identifierSchema,
+  caseIdentifierSchema,
+  identifierListPageSchema,
 } from "@watchdog/schemas/graph";
 import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
@@ -20,12 +23,7 @@ import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
-import {
-  identifierSchema,
-  userOverrideSchema,
-  caseIdentifierSchema,
-  identifierListPageSchema,
-} from "../schemas";
+import { userOverrideSchema } from "../schemas";
 
 /**
  * The Case's Identifier list (`identifierList`, ADR-0007). One Entity's Identifiers are this list
