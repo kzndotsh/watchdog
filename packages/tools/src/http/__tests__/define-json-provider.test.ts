@@ -66,7 +66,10 @@ function sent(fetch: ReturnType<typeof stubFetch>) {
     url: String(url),
     headers: new Headers(init?.headers),
     method: init?.method,
-    body: typeof init?.body === "string" ? init.body : undefined,
+    body:
+      init?.body instanceof Uint8Array
+        ? new TextDecoder().decode(init.body)
+        : ((init?.body as string | undefined) ?? ""),
   };
 }
 
@@ -191,7 +194,7 @@ describe("defineJsonProvider key placement", () => {
       expect(request.method).toBe("POST");
       expect(request.headers.get("content-type")).toBe("application/json");
       expect(request.headers.get("auth-key")).toBe("k");
-      expect(JSON.parse(request.body ?? "null")).toEqual({ id: "q" });
+      expect(JSON.parse(request.body)).toEqual({ id: "q" });
     }).pipe(provided)
   );
 });
