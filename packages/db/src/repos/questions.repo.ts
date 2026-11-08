@@ -8,7 +8,7 @@ import { entities } from "../schema/entities";
 import { questions } from "../schema/questions";
 import { entityRowInCase } from "./_entity-in-case";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
-import { atVersion, setOrTouch } from "./_version";
+import { updateVersionedInCase } from "./_version";
 
 export const questionColumns = {
   id: questions.id,
@@ -143,20 +143,20 @@ export const questionsRepo = {
     patch: QuestionPatch,
     expectedVersion?: number
   ): Promise<QuestionRow | null> {
-    const scoped = trimScopedCaseIds(caseId, questionId);
-    if (!scoped) return null;
-    const [updated] = await exec
-      .update(questions)
-      .set(setOrTouch(patch, scoped.resourceId))
-      .where(
-        and(
-          eq(questions.id, scoped.resourceId),
-          entityRowInCase(questions.entityId, scoped.caseId),
-          atVersion(questions.version, expectedVersion)
-        )
-      )
-      .returning(questionColumns);
-    return updated ?? null;
+    return updateVersionedInCase(
+      exec,
+      {
+        table: questions,
+        idColumn: questions.id,
+        versionColumn: questions.version,
+        columns: questionColumns,
+        inCase: (id) => entityRowInCase(questions.entityId, id),
+      },
+      caseId,
+      questionId,
+      patch,
+      expectedVersion
+    );
   },
 
   async resolve(
