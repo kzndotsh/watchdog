@@ -87,3 +87,13 @@ describe("Identifier type table recognisers", () => {
     );
   });
 });
+
+describe("Identifier recognisers on adversarial input", () => {
+  it("rejects a long run of dots in an email's domain without backtracking", () => {
+    const recognise = IDENTIFIER_TYPE_TABLE.email.recognise;
+    const input = `!@!.${"!.".repeat(50_000)}\n`;
+    const started = performance.now();
+    expect(recognise?.(input)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+});
