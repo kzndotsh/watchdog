@@ -17,7 +17,7 @@ import {
   validateSoftValue,
   validateUrlValue,
 } from "./identifier-validators";
-import { expandIpv6 } from "./ip";
+import { isValidIp } from "./ip";
 import { IDENTIFIER_TYPES, type IdentifierType } from "./vocab";
 
 /** What one Identifier type is: how it is stored, checked and spotted in pasted text. */
@@ -38,22 +38,8 @@ export type IdentifierTypeEntry = {
 /** The paste seeds an Identifier-typed Cap input can be offered for. */
 export type IdentifierCapSeed = "email" | "handle";
 
-const IPV4_RE =
-  /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 /** Labels exclude `.`, so each dot is a separator and matching stays linear (no ReDoS). */
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
-
-/** A bare IPv4 or IPv6 address (an embedded dotted tail allowed); `expandIpv6` is the IPv6 grammar. */
-function recogniseIp(raw: string): boolean {
-  const value = raw.trim();
-  if (!value.includes(":")) return IPV4_RE.test(value);
-  try {
-    expandIpv6(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /** A bare phone number as pasted: 8-15 digits, and a `+`, a separator or 10+ digits to tell it from a number. */
 function recognisePhone(raw: string): boolean {
@@ -97,7 +83,7 @@ export const IDENTIFIER_TYPE_TABLE: Readonly<
   ip: {
     canonicalize: canonicalizeIp,
     validate: validateIpValue,
-    recognise: recogniseIp,
+    recognise: (raw) => isValidIp(raw.trim()),
   },
   crypto: soft,
   pgp: { canonicalize: canonicalizePgp, validate: validatePgpValue },

@@ -12,27 +12,19 @@ const TRACKING_PARAMS = new Set([
   "mc_eid",
 ]);
 
-function ipv6HasInvalidCompression(value: string): boolean {
-  return (value.match(/::/g) ?? []).length > 1 || value.includes(":::");
-}
-
-/** Trim and strip surrounding [brackets] until stable, so a second pass is a no-op. */
+/** Trim and strip a surrounding `[...]` pair until stable, so a second pass is a no-op; a lone bracket stays. */
 function stripIpBrackets(raw: string): string {
   let value = raw.trim();
-  for (;;) {
-    const next = value.replace(/^\[/, "").replace(/\]$/, "").trim();
-    if (next === value) return value;
-    value = next;
+  while (value.startsWith("[") && value.endsWith("]")) {
+    value = value.slice(1, -1).trim();
   }
+  return value;
 }
 
 function normalizeIpValue(raw: string): string {
   const trimmed = stripIpBrackets(raw);
   if (trimmed.includes(":")) {
     const lower = trimmed.toLowerCase();
-    if (ipv6HasInvalidCompression(lower)) {
-      return lower;
-    }
     try {
       return compressIpv6(lower);
     } catch {

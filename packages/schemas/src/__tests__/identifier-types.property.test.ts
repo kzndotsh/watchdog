@@ -22,6 +22,12 @@ const ipish = fc.oneof(
     })
   ),
   fc.stringMatching(/^[0-9a-fA-F:.]{0,30}$/),
+  fc
+    .tuple(
+      fc.constantFrom("", ":", "::", "::ffff:", "1:2:3:4:5:6:"),
+      fc.array(fc.stringMatching(/^\d{1,3}$/), { minLength: 4, maxLength: 4 })
+    )
+    .map(([prefix, octets]) => `${prefix}${octets.join(".")}`),
   fc.constantFrom("::", "::1", "1::", ":::", "1:2:3", "::ffff:192.0.2.1")
 );
 
@@ -98,6 +104,17 @@ describe("Identifier type table recognisers", () => {
     for (const raw of ["localhost", "a..co", "-a.co", "a.co/x"]) {
       expect(recognised("domain", raw), raw).toBe(false);
     }
+  });
+
+  it("the IP validator and the paste recogniser accept the same bare strings", () => {
+    fc.assert(
+      fc.property(ipish, (raw) => {
+        expect(validateIdentifierValue("ip", raw).ok, raw).toBe(
+          recognised("ip", raw)
+        );
+      }),
+      { numRuns: 1000 }
+    );
   });
 
   it("every generated IP address is recognised", () => {
