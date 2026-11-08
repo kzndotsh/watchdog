@@ -14,17 +14,15 @@ import {
   GRAPH_SNAPSHOT_ENTITY_MAX,
   graphWriteInputSchema,
   graphWriteList,
+  graphEgoSchema,
+  graphSnapshotSchema,
+  graphWriteResultSchema,
+  graphWritePageSchema,
 } from "@watchdog/schemas/graph";
 
 import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import {
-  graphEgoSchema,
-  graphSnapshotSchema,
-  graphWriteResultSchema,
-  graphWritePageSchema,
-} from "../schemas";
 
 export const snapshot = authed
   .meta({ scope: "cases:read" })

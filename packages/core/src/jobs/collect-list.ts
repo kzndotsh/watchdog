@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import {
   collectListRepo,
@@ -12,11 +13,13 @@ import {
   entityIdsFromJobInputs,
   evidenceIdsFromJobInputs,
 } from "@watchdog/schemas/jobs";
-import type { LocateCollectInput } from "@watchdog/schemas/jobs";
+import type {
+  LocateCollectInput,
+  collectLocatedSchema,
+  collectQueueItemSchema,
+} from "@watchdog/schemas/jobs";
 import type {
   CaseId,
-  CollectRowKind,
-  CollectRowState,
   ListInput,
   ListPage,
   OrganizationId,
@@ -28,44 +31,23 @@ import { loadEntityDisplayMapsForIdsEffect } from "../display/entity-display";
 import { NotFoundError } from "../errors/tagged-errors";
 import type { DomainTag } from "../errors/tagged-errors";
 import { toEvidenceRecord } from "../evidence/evidence";
-import type { EvidenceRecord } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { tryDbWith } from "../infra/postgres-effect";
 import { toJobListRecord } from "./start-job";
-import type { JobListRecord } from "./start-job";
 
 /** The titles of the Evidence and Entities the row's Job inputs name (labels, not state). */
-export type CollectQueueTitles = {
-  evidence: Record<string, string>;
-  entity: Record<string, string>;
-};
+export type CollectQueueTitles = CollectQueueItem["titles"];
 
 /**
  * One row of Collect's queue (#574): an Evidence row, a playbook run or a lone Job, with the
  * member Jobs it holds and its Evidence. `state` and the Jobs come from one statement
  * (`collectListRepo`), so a row never shows a Job its state does not know.
  */
-export type CollectQueueItem = {
-  id: string;
-  kind: CollectRowKind;
-  state: CollectRowState;
-  sortAt: string;
-  activityAt: string;
-  entityId: string | null;
-  capabilityIds: string[];
-  /** The run's id for a run row; null for an Evidence or lone Job row. */
-  playbookRunId: string | null;
-  evidence: EvidenceRecord | null;
-  jobs: JobListRecord[];
-  titles: CollectQueueTitles;
-};
+export type CollectQueueItem = z.output<typeof collectQueueItemSchema>;
 
 /** `collect.get`: the row an id belongs to, and the member Job to focus (null for a row id). */
-export type CollectLocatedItem = {
-  item: CollectQueueItem;
-  focusJobId: string | null;
-};
+export type CollectLocatedItem = z.output<typeof collectLocatedSchema>;
 
 function memberRow(member: CollectMemberJson) {
   return {

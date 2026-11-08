@@ -4,6 +4,7 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { db, jobsRepo, providerCallsRepo } from "@watchdog/db";
+import { PROVIDER_CALL_LIST_MAX } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
@@ -24,7 +25,6 @@ import {
   getProviderCallResponseEffect,
   listEvidenceProviderCallsEffect,
   listJobProviderCallsEffect,
-  PROVIDER_CALL_LIST_MAX,
 } from "../provider-call-view";
 
 /*

@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import {
   GRAPH_EGO_EDGE_MAX,
@@ -6,12 +7,10 @@ import {
   GRAPH_SNAPSHOT_ENTITY_MAX,
 } from "@watchdog/schemas/graph";
 import type {
-  CaseId,
-  ConfidenceTier,
-  EdgePredicate,
-  EntityKind,
-  OrganizationId,
-} from "@watchdog/schemas/shared";
+  graphEgoSchema,
+  graphSnapshotSchema,
+} from "@watchdog/schemas/graph";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import {
   assertCaseInOrgEffect,
@@ -21,27 +20,12 @@ import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { graphSnapshotRepoFxDb } from "../infra/repos-fx";
 
-export type GraphSnapshotEntity = {
-  readonly id: string;
-  readonly name: string;
-  readonly slug: string;
-  readonly kind: EntityKind;
-};
+export type GraphSnapshotEntity = GraphSnapshot["entities"][number];
 
-export type GraphSnapshotEdge = {
-  readonly id: string;
-  readonly fromId: string;
-  readonly toId: string;
-  readonly predicate: EdgePredicate;
-  readonly confidence: ConfidenceTier;
-};
+export type GraphSnapshotEdge = GraphSnapshot["edges"][number];
 
 /** What the Graph page draws: a capped part of the Case, and whether anything was left out. */
-export type GraphSnapshot = {
-  readonly entities: GraphSnapshotEntity[];
-  readonly edges: GraphSnapshotEdge[];
-  readonly isTruncated: boolean;
-};
+export type GraphSnapshot = z.output<typeof graphSnapshotSchema>;
 
 /** The caps; tests pass small ones. */
 export type GraphSnapshotCaps = {
@@ -87,15 +71,10 @@ export function getGraphSnapshotEffect(
 }
 
 /** One of the Entity's Connections in the ego graph, with the label of its other end. */
-export type GraphEgoEdge = GraphSnapshotEdge & {
-  readonly peer: GraphSnapshotEntity;
-};
+export type GraphEgoEdge = GraphEgo["edges"][number];
 
 /** What the Dossier ego graph draws: a capped star around one Entity. */
-export type GraphEgo = {
-  readonly edges: GraphEgoEdge[];
-  readonly isTruncated: boolean;
-};
+export type GraphEgo = z.output<typeof graphEgoSchema>;
 
 /**
  * One Entity's neighbourhood, capped on the server (#585): its Connections at either end, most

@@ -66,7 +66,6 @@ export {
   getProviderCallResponseEffect,
   listEvidenceProviderCallsEffect,
   listJobProviderCallsEffect,
-  PROVIDER_CALL_LIST_MAX,
   type ProviderCallBody,
   type ProviderCallCacheHit,
   type ProviderCallList,

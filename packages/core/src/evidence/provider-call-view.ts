@@ -1,17 +1,17 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import type { ProviderCallWithOutcome } from "@watchdog/db";
-import type {
-  CaseId,
-  OrganizationId,
-  ProvenanceState,
-  ProviderBodyKind,
-  ProviderBodyReason,
-  ProviderBodyState,
-  ProviderCallOutcome,
-  ProviderCallTransport,
-  ProviderRequestBodyState,
-} from "@watchdog/schemas/shared";
+import {
+  PROVIDER_CALL_LIST_MAX,
+  type providerCallBodySchema,
+  type providerCallCacheHitSchema,
+  type providerCallListSchema,
+  type providerCallOriginalSchema,
+  type providerCallRequestBodySchema,
+  type providerCallSchema,
+} from "@watchdog/schemas/jobs";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import {
@@ -29,79 +29,21 @@ import {
   providerCallsRepoFxDb,
 } from "../infra/repos-fx";
 
-/** Most calls a read returns. A Job makes a handful; a longer list is cut and says so. */
-export const PROVIDER_CALL_LIST_MAX = 200;
+export type ProviderCallBody = z.output<typeof providerCallBodySchema>;
 
-/** What the call's recorded body is and what was kept of it. */
-export type ProviderCallBody = {
-  kind: ProviderBodyKind;
-  state: ProviderBodyState;
-  reason: ProviderBodyReason | null;
-  sha256: string | null;
-  bytes: number | null;
-  /** The provider's own `Content-Type` (from the recorded headers); never the served type. */
-  contentType: string | null;
-  /** The raw response is stored and can be downloaded as an attachment. */
-  isDownloadable: boolean;
-};
-
-export type ProviderCallRequestBody = {
-  state: ProviderRequestBodyState;
-  sha256: string | null;
-  bytes: number | null;
-};
+export type ProviderCallRequestBody = z.output<
+  typeof providerCallRequestBodySchema
+>;
 
 /** The call a cache answered for, when it is a call of the caller's own Case. */
-export type ProviderCallOriginal = { callId: string; jobId: string };
+export type ProviderCallOriginal = z.output<typeof providerCallOriginalSchema>;
 
-export type ProviderCallRecord = {
-  id: string;
-  jobId: string;
-  capabilityId: string;
-  /** The Cap's code fingerprint when the Job ran; null for a Job from before it was stamped. */
-  capVersion: string | null;
-  transport: ProviderCallTransport;
-  method: string;
-  /** Redacted when it was recorded. Shown as text, never followed. */
-  url: string;
-  startedAt: string;
-  /** Null when no outcome was recorded (the worker died mid-call, or the save was lost). */
-  outcome: ProviderCallOutcome | null;
-  status: number | null;
-  hops: number;
-  headersMs: number | null;
-  durationMs: number | null;
-  failureTag: string | null;
-  failureReason: string | null;
-  requestBody: ProviderCallRequestBody;
-  /** Null while there is no outcome. */
-  body: ProviderCallBody | null;
-  /** An in-process cache answered; no request went to the provider. */
-  isServedFromCache: boolean;
-  /**
-   * The original call of a cache answer, only when it belongs to this Case. Outside the Case
-   * (the caches are shared by the process) it is null and nothing about it is read.
-   */
-  original: ProviderCallOriginal | null;
-};
+export type ProviderCallRecord = z.output<typeof providerCallSchema>;
 
 /** A Job (or the Jobs behind one Evidence row) that reused a cached result. */
-export type ProviderCallCacheHit = {
-  jobId: string;
-  /** The Job the cached result came from, only when it is a Job of this Case; else null. */
-  sourceJobId: string | null;
-};
+export type ProviderCallCacheHit = z.output<typeof providerCallCacheHitSchema>;
 
-export type ProviderCallList = {
-  /** `incomplete` says calls or outcomes were lost: an empty or short list is then a gap. */
-  provenance: ProvenanceState;
-  calls: ProviderCallRecord[];
-  /** More calls exist than `PROVIDER_CALL_LIST_MAX`. */
-  isTruncated: boolean;
-  cacheHits: ProviderCallCacheHit[];
-  /** More cache-hit Jobs exist than `PROVIDER_CALL_LIST_MAX`. */
-  areCacheHitsTruncated: boolean;
-};
+export type ProviderCallList = z.output<typeof providerCallListSchema>;
 
 function contentTypeOf(headers: Record<string, string>): string | null {
   const value = headers["content-type"];

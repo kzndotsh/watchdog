@@ -3,7 +3,11 @@ import type { z } from "zod";
 
 import { entityListRepo, entityPickerListRepo } from "@watchdog/db";
 import type { EntityListRow, EntityPickerListRow } from "@watchdog/db";
-import { entityList, type entityListItemSchema } from "@watchdog/schemas/graph";
+import {
+  entityList,
+  type entityListItemSchema,
+  type entityPickerItemSchema,
+} from "@watchdog/schemas/graph";
 import type {
   CaseId,
   EntityKind,
@@ -154,12 +158,7 @@ export function listEntitiesForCaseEffect(
 }
 
 /** What an Entity picker shows of an Entity: its label parts and kind, never its notes or counts. */
-export type EntityPickerItem = {
-  id: string;
-  kind: EntityKind;
-  name: string;
-  slug: string;
-};
+export type EntityPickerItem = z.output<typeof entityPickerItemSchema>;
 
 function pickerItems(
   rows: readonly EntityPickerListRow[]

@@ -1,3 +1,11 @@
+import { z } from "zod";
+
+import {
+  edgePredicateSchema,
+  entityKindSchema,
+  confidenceTierSchema,
+} from "./enums";
+
 /**
  * The Graph snapshot's caps (#570). The Graph page draws at most this many Entities: the Case's
  * most connected (by Connection count, then most recently updated). The layout stays readable and
@@ -17,3 +25,59 @@ export const GRAPH_SNAPSHOT_EDGE_MAX = 600;
  * Connections list beside it pages through them all.
  */
 export const GRAPH_EGO_EDGE_MAX = 60;
+
+/**
+ * The Graph page's capped snapshot (`graph.snapshot`, #570): the Case's most connected Entities
+ * (at most `GRAPH_SNAPSHOT_ENTITY_MAX`) and the Connections between them (at most
+ * `GRAPH_SNAPSHOT_EDGE_MAX`). `isTruncated` is true when either cap left something out.
+ */
+export const graphSnapshotSchema = z.object({
+  entities: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        slug: z.string(),
+        kind: entityKindSchema,
+      })
+    )
+    .max(GRAPH_SNAPSHOT_ENTITY_MAX),
+  edges: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        fromId: z.uuid(),
+        toId: z.uuid(),
+        predicate: edgePredicateSchema,
+        confidence: confidenceTierSchema,
+      })
+    )
+    .max(GRAPH_SNAPSHOT_EDGE_MAX),
+  isTruncated: z.boolean(),
+});
+
+/**
+ * The Dossier ego graph's capped read (`graph.ego`, #585): one Entity's Connections at either
+ * end, most recently updated first, at most `GRAPH_EGO_EDGE_MAX`, each with its peer's label.
+ * `isTruncated` is true when the Entity has more.
+ */
+export const graphEgoSchema = z.object({
+  edges: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        fromId: z.uuid(),
+        toId: z.uuid(),
+        predicate: edgePredicateSchema,
+        confidence: confidenceTierSchema,
+        peer: z.object({
+          id: z.uuid(),
+          name: z.string(),
+          slug: z.string(),
+          kind: entityKindSchema,
+        }),
+      })
+    )
+    .max(GRAPH_EGO_EDGE_MAX),
+  isTruncated: z.boolean(),
+});
