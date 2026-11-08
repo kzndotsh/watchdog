@@ -115,5 +115,7 @@ export function fetchCensysHostEffect(
   signal: AbortSignal,
   options: { userAgent: string }
 ) {
-  return lookupCensysHost(ipRaw, `${id}:${secret}`, signal, options);
+  // Basic auth needs both halves; with either blank, send no credentials at all.
+  const key = id.trim() && secret.trim() ? `${id}:${secret}` : "";
+  return lookupCensysHost(ipRaw, key, signal, options);
 }

@@ -1739,7 +1739,7 @@
   },
   {
     "id": "network.censys.lookup",
-    "version": "9dfe3c03c645",
+    "version": "6b248805ab93",
     "title": "Censys lookup",
     "provider": {
       "name": "Censys",
