@@ -1,3 +1,4 @@
+import { IDENTIFIER_TYPE_TABLE } from "@watchdog/schemas/graph";
 import {
   IDENTIFIER_PLATFORMS,
   type IdentifierType,
@@ -18,35 +19,6 @@ export function cleanPasteCell(raw: string): string {
     }
   }
   return s;
-}
-
-function looksLikePhone(value: string): boolean {
-  const v = value.trim();
-  if (/^tel:/i.test(v)) return true;
-  if (!/^\+?[\d\s()./-]+$/.test(v)) return false;
-  const digits = v.replaceAll(/\D/g, "");
-  if (digits.length < 8 || digits.length > 15) return false;
-  return v.startsWith("+") || /[\s()./-]/.test(v) || digits.length >= 10;
-}
-
-function looksLikeIp(value: string): boolean {
-  const v = value.trim();
-  if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(v)) {
-    return v.split(".").every((octet) => {
-      const n = Number(octet);
-      return n >= 0 && n <= 255;
-    });
-  }
-  return v.includes(":") && /^[0-9a-f:]+$/i.test(v) && v.length >= 3;
-}
-
-function looksLikeDomain(value: string): boolean {
-  return (
-    !value.includes("/") &&
-    !value.includes("@") &&
-    !value.includes(" ") &&
-    /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(value)
-  );
 }
 
 function matchProfileUrl(
@@ -134,18 +106,21 @@ export function inferPasteIdentity(raw: string): {
     };
   }
 
-  if (v.includes("@") && v.includes(".")) {
+  if (IDENTIFIER_TYPE_TABLE.email.recognise?.(v)) {
     return { type: "email", value: v, platform: null };
   }
   if (/^@[\w.]{1,32}$/.test(v)) {
     return { type: "handle", value: v.slice(1), platform: null };
   }
-  if (looksLikeIp(v)) return { type: "ip", value: v, platform: null };
-  if (looksLikePhone(v)) return { type: "phone", value: v, platform: null };
+  if (IDENTIFIER_TYPE_TABLE.ip.recognise?.(v))
+    return { type: "ip", value: v, platform: null };
+  if (IDENTIFIER_TYPE_TABLE.phone.recognise?.(v))
+    return { type: "phone", value: v, platform: null };
   if (/^https?:\/\//i.test(v)) return { type: "url", value: v, platform: null };
   const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(v);
   if (!hasScheme && v.includes("/"))
     return { type: "url", value: v, platform: null };
-  if (looksLikeDomain(v)) return { type: "domain", value: v, platform: null };
+  if (IDENTIFIER_TYPE_TABLE.domain.recognise?.(v))
+    return { type: "domain", value: v, platform: null };
   return { type: null, value: v, platform: null };
 }

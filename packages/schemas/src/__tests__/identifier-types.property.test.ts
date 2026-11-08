@@ -33,13 +33,22 @@ const domainish = fc.oneof(
   fc.string()
 );
 
+const phoneish = fc.oneof(
+  fc.stringMatching(/^\+?[\d\s()./-]{0,20}$/),
+  fc.string(),
+  fc.integer({ min: 0, max: 9_999_999_999_999 }).map(String)
+);
+
 const emailish = fc.oneof(
   fc.emailAddress(),
   fc.string(),
   fc.tuple(fc.string(), fc.string()).map(([a, b]) => `${a}@${b}`)
 );
 
-function recognised(type: "ip" | "email" | "domain", raw: string): boolean {
+function recognised(
+  type: "ip" | "email" | "domain" | "phone",
+  raw: string
+): boolean {
   return IDENTIFIER_TYPE_TABLE[type].recognise?.(raw) ?? false;
 }
 
@@ -48,6 +57,7 @@ describe("Identifier type table recognisers", () => {
     ["ip", ipish],
     ["email", emailish],
     ["domain", domainish],
+    ["phone", phoneish],
   ] as const) {
     it(`${type}: whatever is recognised canonicalizes to a valid value`, () => {
       fc.assert(
@@ -96,6 +106,21 @@ describe("Identifier type table recognisers", () => {
         expect(recognised("ip", ip)).toBe(true);
       })
     );
+  });
+
+  it("recognises phones by length and separators, not bare short numbers", () => {
+    for (const raw of ["+1 555 123 4567", "(555) 123-4567", "5551234567"]) {
+      expect(recognised("phone", raw), raw).toBe(true);
+    }
+    for (const raw of [
+      "1234567",
+      "12345678",
+      "+1",
+      "abc",
+      "tel:+15551234567",
+    ]) {
+      expect(recognised("phone", raw), raw).toBe(false);
+    }
   });
 
   it("an IP is not an email or a domain", () => {
