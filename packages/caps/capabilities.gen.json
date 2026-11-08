@@ -441,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "ae20c590c795",
+    "version": "39de585e25a0",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "173559ce0a88",
+    "version": "58b0232e5ff2",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "392af3870f66",
+    "version": "e8465bae8ec2",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "0a5d298b855d",
+    "version": "b405094c1a8a",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
