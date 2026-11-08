@@ -64,6 +64,32 @@ describe("Identifier type table recognisers", () => {
     });
   }
 
+  it("every generated email address is recognised", () => {
+    fc.assert(
+      fc.property(fc.emailAddress(), (email) => {
+        expect(recognised("email", email)).toBe(true);
+      })
+    );
+  });
+
+  it("every generated domain is recognised, underscore labels included", () => {
+    fc.assert(
+      fc.property(fc.domain(), (domain) => {
+        expect(recognised("domain", domain)).toBe(true);
+      })
+    );
+    expect(recognised("domain", "_dmarc.example.com")).toBe(true);
+  });
+
+  it("rejects plainly malformed emails and domains", () => {
+    for (const raw of ["a@b", "a@.b.co", "a@b..co", "@b.co"]) {
+      expect(recognised("email", raw), raw).toBe(false);
+    }
+    for (const raw of ["localhost", "a..co", "-a.co", "a.co/x"]) {
+      expect(recognised("domain", raw), raw).toBe(false);
+    }
+  });
+
   it("every generated IP address is recognised", () => {
     fc.assert(
       fc.property(fc.oneof(fc.ipV4(), fc.ipV6()), (ip) => {

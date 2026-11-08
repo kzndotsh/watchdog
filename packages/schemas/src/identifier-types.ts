@@ -8,6 +8,7 @@ import {
 } from "./identifier-canonical";
 import {
   type IdentifierValidator,
+  isValidDomain,
   validateDomainValue,
   validateEmailValue,
   validateIpValue,
@@ -33,7 +34,6 @@ const IPV4_RE =
   /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 /** Labels exclude `.`, so each dot is a separator and matching stays linear (no ReDoS). */
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
-const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
 /** A bare IPv4 or IPv6 address (an embedded dotted tail allowed); `expandIpv6` is the IPv6 grammar. */
 function recogniseIp(raw: string): boolean {
@@ -68,7 +68,7 @@ export const IDENTIFIER_TYPE_TABLE: Readonly<
   domain: {
     canonicalize: canonicalizeDomain,
     validate: validateDomainValue,
-    recognise: (raw) => DOMAIN_RE.test(raw.trim()),
+    recognise: (raw) => isValidDomain(raw.trim()),
   },
   ip: {
     canonicalize: canonicalizeIp,

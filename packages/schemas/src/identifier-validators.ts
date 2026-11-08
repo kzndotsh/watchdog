@@ -100,7 +100,8 @@ function isValidIp(value: string): boolean {
   return false;
 }
 
-function isValidDomain(value: string): boolean {
+/** The domain grammar: validation and paste recognition share it. */
+export function isValidDomain(value: string): boolean {
   if (
     !value ||
     value.includes(" ") ||
