@@ -52,7 +52,8 @@ function whoxySnapshot({
   if (typeof body.status === "number") {
     statusNum = body.status;
   } else if (typeof body.status === "string") {
-    statusNum = Number(body.status);
+    const parsed = Number(body.status);
+    statusNum = Number.isInteger(parsed) ? parsed : null;
   } else {
     statusNum = null;
   }

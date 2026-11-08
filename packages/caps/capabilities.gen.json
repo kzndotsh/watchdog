@@ -606,7 +606,7 @@
   },
   {
     "id": "network.whoxy.lookup",
-    "version": "e99c89fa7feb",
+    "version": "7a4153ebf7d3",
     "title": "Whoxy lookup",
     "provider": {
       "name": "Whoxy",
