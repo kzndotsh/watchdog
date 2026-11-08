@@ -1,5 +1,7 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
+import type { caseCountsSchema } from "@watchdog/schemas/cases";
 import {
   LIST_TOTAL_CAP,
   type CaseId,
@@ -14,15 +16,7 @@ import { caseCountsRepoFxDb } from "../infra/repos-fx";
 import { assertCaseInOrgEffect } from "./access";
 
 /** A Case's tile counts, each exact below `LIST_TOTAL_CAP` and capped at it above (#571). */
-export type CaseCounts = {
-  readonly entities: ListTotal;
-  readonly identifiers: ListTotal;
-  readonly connections: ListTotal;
-  readonly evidence: ListTotal;
-  readonly liveJobs: ListTotal;
-  readonly tasksOverdue: ListTotal;
-  readonly tasksDueSoon: ListTotal;
-};
+export type CaseCounts = z.output<typeof caseCountsSchema>;
 
 /** A task is "due soon" through this many calendar days after today. */
 export const TASK_DUE_SOON_DAYS = 7;

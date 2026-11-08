@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import type { IdentifierListRow } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
@@ -8,6 +9,7 @@ import {
   patchOpEntityId,
   type PatchOp,
 } from "@watchdog/schemas/graph";
+import type { identifierCollisionSchema } from "@watchdog/schemas/jobs";
 import {
   IDENTIFIER_TYPES,
   entityDisplayLabel,
@@ -20,14 +22,7 @@ import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { identifiersRepoFxDb } from "../infra/repos-fx";
 
-export type IdentifierCollision = {
-  opId: string;
-  type: IdentifierType;
-  value: string;
-  entityId: string;
-  entityName: string;
-  entitySlug: string;
-};
+export type IdentifierCollision = z.output<typeof identifierCollisionSchema>;
 
 function identifierKey(type: string, value: string): string {
   return `${type}\0${value}`;

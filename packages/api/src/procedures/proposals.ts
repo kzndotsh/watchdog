@@ -12,15 +12,13 @@ import {
   getProposalInputSchema,
   proposalList,
   rejectProposalInputSchema,
+  proposalSchema,
+  proposalListPageSchema,
+  proposalQueuePageSchema,
 } from "@watchdog/schemas/jobs";
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";
-import {
-  proposalSchema,
-  proposalListPageSchema,
-  proposalQueuePageSchema,
-} from "../schemas";
 
 export const create = authed
   .meta({ scope: "proposals:write" })

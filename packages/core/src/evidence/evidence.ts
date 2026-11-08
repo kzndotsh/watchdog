@@ -1,11 +1,9 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import type { DbExec, EvidenceRow } from "@watchdog/db";
-import type {
-  CaseId,
-  EvidenceKind,
-  OrganizationId,
-} from "@watchdog/schemas/shared";
+import type { evidenceSchema } from "@watchdog/schemas/evidence";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
   parseTrimmedUuid,
   trimmedOrNull,
@@ -45,24 +43,7 @@ import type {
   SoftDeleteInput,
 } from "./evidence-inputs";
 
-export type EvidenceRecord = {
-  id: string;
-  caseId: CaseId;
-  entityId: string | null;
-  kind: EvidenceKind;
-  label: string | null;
-  notes: string | null;
-  mime: string | null;
-  uri: string | null;
-  sha256: string | null;
-  text: string | null;
-  sourceUrl: string | null;
-  actorId: string;
-  actorLabel: string;
-  capturedAt: string;
-  processedAt: string | null;
-  deletedAt: string | null;
-};
+export type EvidenceRecord = z.output<typeof evidenceSchema>;
 
 /** An Evidence row as its wire record, with the actor label resolved from `users`. */
 export function toEvidenceRecord(

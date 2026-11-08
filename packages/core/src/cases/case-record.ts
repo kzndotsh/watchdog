@@ -1,13 +1,10 @@
-import type { CaseRow } from "@watchdog/db";
-import type { CaseId, EgressClass } from "@watchdog/schemas/shared";
+import type { z } from "zod";
 
-export type CaseRecord = {
-  id: CaseId;
-  name: string;
-  slug: string;
-  description: string | null;
-  allowedEgress: EgressClass[];
-};
+import type { CaseRow } from "@watchdog/db";
+import type { caseSchema } from "@watchdog/schemas/cases";
+
+/** A Case as the API returns it: the output of `caseSchema`. */
+export type CaseRecord = z.output<typeof caseSchema>;
 
 export function toRecord(row: CaseRow): CaseRecord {
   return {

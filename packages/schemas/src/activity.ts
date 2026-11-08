@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { caseIdSchema, type CaseId } from "./ids";
+import { listPageSchema } from "./lists/list-page";
 import { parseTrimmedCaseId } from "./primitives";
 
 export const ACTIVITY_KINDS = [
@@ -41,6 +42,7 @@ export const activityItemSchema = z.object({
   actor: z.string().optional(),
 });
 export type ActivityItem = z.output<typeof activityItemSchema>;
+export const activityPageSchema = listPageSchema(activityItemSchema);
 
 export type SseCaseIdFilter = {
   caseId: CaseId | null;

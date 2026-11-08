@@ -6,11 +6,11 @@ import {
   graphHistoryAttributionSchema,
   graphHistoryList,
   graphHistoryRowInputSchema,
+  graphHistoryPageSchema,
 } from "@watchdog/schemas/graph";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { graphHistoryPageSchema } from "../schemas";
 
 export const list = authed
   .meta({ scope: "cases:read" })
