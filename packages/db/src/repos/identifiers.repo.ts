@@ -22,7 +22,7 @@ import { entitySlugIlikePatterns } from "./_ilike";
 import { inArrayForDisplayLabelMatch } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
-import { atVersion, setOrTouch } from "./_version";
+import { updateVersionedInCase } from "./_version";
 
 export const identifierColumns = {
   id: identifiers.id,
@@ -336,20 +336,20 @@ export const identifiersRepo = {
     patch: IdentifierPatch,
     expectedVersion?: number
   ): Promise<IdentifierRow | null> {
-    const scoped = trimScopedCaseIds(caseId, identifierId);
-    if (!scoped) return null;
-    const [updated] = await exec
-      .update(identifiers)
-      .set(setOrTouch(patch, scoped.resourceId))
-      .where(
-        and(
-          eq(identifiers.id, scoped.resourceId),
-          entityRowInCase(identifiers.entityId, scoped.caseId),
-          atVersion(identifiers.version, expectedVersion)
-        )
-      )
-      .returning(identifierColumns);
-    return updated ?? null;
+    return updateVersionedInCase(
+      exec,
+      {
+        table: identifiers,
+        idColumn: identifiers.id,
+        versionColumn: identifiers.version,
+        columns: identifierColumns,
+        inCase: (id) => entityRowInCase(identifiers.entityId, id),
+      },
+      caseId,
+      identifierId,
+      patch,
+      expectedVersion
+    );
   },
 
   /** Delete an identifier only when its owning entity is in the Case; returns the deleted row. */
