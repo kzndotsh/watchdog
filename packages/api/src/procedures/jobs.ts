@@ -21,16 +21,14 @@ import {
   startJobInputSchema,
   startPlaybookInputSchema,
   jobList,
+  jobSchema,
+  jobListPageSchema,
+  providerCallListSchema,
 } from "@watchdog/schemas/jobs";
 
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import {
-  jobSchema,
-  jobListPageSchema,
-  providerCallListSchema,
-} from "../schemas";
 
 export const listForCase = authed
   .meta({ scope: "cases:read" })

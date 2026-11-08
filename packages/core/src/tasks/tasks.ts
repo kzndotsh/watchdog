@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import { taskListRepo } from "@watchdog/db";
 import type { tasksRepo, TaskListRow, TaskRow } from "@watchdog/db";
@@ -7,7 +8,13 @@ import {
   TASK_DUE_LIST_LIMIT,
   taskList,
 } from "@watchdog/schemas/feed";
-import type { TaskBoardInput } from "@watchdog/schemas/feed";
+import type {
+  TaskBoardInput,
+  taskBoardSchema,
+  taskEntityLabelSchema,
+  taskListItemSchema,
+  taskSchema,
+} from "@watchdog/schemas/feed";
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
@@ -18,7 +25,6 @@ import {
   OPEN_TASK_STATUSES,
   PAGE_LIMIT_DEFAULT,
   type CaseId,
-  type EntityKind,
   type ListInput,
   type ListPage,
   type ListTotal,
@@ -46,39 +52,21 @@ import {
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listCappedEffect, listPageEffect } from "../infra/list-page";
-import type { CappedList } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { tasksRepoFxDb, tasksRepoFx, casesRepoFx } from "../infra/repos-fx";
 import { mergeColumnOrder } from "./task-order";
 
-export type TaskRecord = {
-  id: string;
-  caseId: CaseId;
-  entityId: string | null;
-  title: string;
-  description: string | null;
-  status: TaskStatus;
-  priority: TaskPriority | null;
-  dueDate: string | null;
-  position: number;
-  createdAt: string;
-  updatedAt: string;
-};
+export type TaskRecord = z.output<typeof taskSchema>;
 
 /** The Entity a listed Task is about, joined into its row for the card. */
-export type TaskEntityLabel = {
-  id: string;
-  name: string;
-  slug: string;
-  kind: EntityKind;
-};
+export type TaskEntityLabel = z.output<typeof taskEntityLabelSchema>;
 
 /** A row of the Task list and of the board: the Task and its Entity's label. */
-export type TaskListItem = TaskRecord & { entity: TaskEntityLabel | null };
+export type TaskListItem = z.output<typeof taskListItemSchema>;
 
 /** `tasks.board`: the open Tasks, at most `TASK_BOARD_MAX`, and whether more matched. */
-export type TaskBoardRecord = CappedList<TaskListItem>;
+export type TaskBoardRecord = z.output<typeof taskBoardSchema>;
 
 export type CreateTaskInput = {
   caseId: CaseId;

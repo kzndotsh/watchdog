@@ -25,12 +25,6 @@ import {
   deletedCaseList,
   updateCaseInputSchema,
   caseList,
-} from "@watchdog/schemas/cases";
-
-import { graphActorFromContext } from "../actor-label";
-import { authed, sessionAuthed } from "../os";
-import { runApp } from "../runtime";
-import {
   caseCountsSchema,
   casePageSchema,
   caseSchema,
@@ -38,7 +32,11 @@ import {
   deletedCasesPageSchema,
   deletionPolicySchema,
   restoredCaseSchema,
-} from "../schemas";
+} from "@watchdog/schemas/cases";
+
+import { graphActorFromContext } from "../actor-label";
+import { authed, sessionAuthed } from "../os";
+import { runApp } from "../runtime";
 import { assertSessionCredential } from "../scope";
 
 export const list = authed

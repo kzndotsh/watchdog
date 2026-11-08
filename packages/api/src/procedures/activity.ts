@@ -1,9 +1,8 @@
 import { listRecentActivityEffect } from "@watchdog/core/feed";
-import { activityList } from "@watchdog/schemas/feed";
+import { activityList, activityPageSchema } from "@watchdog/schemas/feed";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { activityPageSchema } from "../schemas";
 
 export const listRecent = authed
   .meta({ scope: "cases:read" })

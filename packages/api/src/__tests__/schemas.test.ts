@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { credentialSlotSchema, graphWriteResultSchema } from "../schemas";
+import { graphWriteResultSchema } from "@watchdog/schemas/graph";
+
+import { credentialSlotSchema } from "../schemas";
 
 const graphWriteResult = {
   writeId: "00000000-0000-4000-8000-000000000099",

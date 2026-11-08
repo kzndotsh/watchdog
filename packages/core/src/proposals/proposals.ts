@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import type { z } from "zod";
 
 import { proposalListRepo, proposalQueueListRepo } from "@watchdog/db";
 import type {
@@ -10,13 +11,16 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
 import { proposalList } from "@watchdog/schemas/jobs";
 import type {
+  proposalQueueItemSchema,
+  proposalSchema,
+} from "@watchdog/schemas/jobs";
+import type {
   CaseId,
   ConfidenceTier,
   OrganizationId,
   GraphActor,
   ListInput,
   ListPage,
-  ProposalStatus,
 } from "@watchdog/schemas/shared";
 import {
   PAGE_LIMIT_DEFAULT,
@@ -69,34 +73,7 @@ import {
 } from "../infra/repos-fx";
 import { recordRejectedFingerprintsEffect } from "./finding-suppress";
 
-export type ProposalRecord = {
-  id: string;
-  caseId: CaseId;
-  jobId: string | null;
-  capabilityId: string | null;
-  playbookId: string | null;
-  status: ProposalStatus;
-  patch: PatchOp[];
-  summary: string | null;
-  suppressedCount: number;
-  evidenceIds: string[];
-  rejectReason: string | null;
-  decidedBy: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-  /** True when arrived via agent propose API (not Cap Jobs). */
-  agentSourced: boolean;
-  /** Actor who created the Proposal; Cap Jobs leave null. */
-  createdBy: string | null;
-  createdByLabel: string | null;
-  decidedByLabel: string | null;
-  /** entityId → name map for display purposes */
-  entityNames?: Record<string, string>;
-  /** entityId → dossier slug map for display links */
-  entitySlugs?: Record<string, string>;
-  /** Identifier ops whose type+value already exist on another Entity. */
-  identifierCollisions?: IdentifierCollision[];
-};
+export type ProposalRecord = z.output<typeof proposalSchema>;
 
 function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
   const entityIds = new Set<string>();
@@ -270,18 +247,7 @@ export function listProposalsForCaseEffect(
 }
 
 /** What a queue row shows of a Proposal: never its patch (the Detail reads that by id). */
-export type ProposalQueueItem = {
-  id: string;
-  status: ProposalStatus;
-  summary: string | null;
-  capabilityId: string | null;
-  playbookId: string | null;
-  createdAt: string;
-  /** Patch ops by resource (`{ claim: 2 }`). */
-  opCounts: Record<string, number>;
-  /** Evidence ids the Proposal cites at its own level. */
-  evidenceCount: number;
-};
+export type ProposalQueueItem = z.output<typeof proposalQueueItemSchema>;
 
 function queueItems(
   rows: readonly ProposalQueueListRow[]

@@ -56,7 +56,12 @@ export {
   retractClaimInputSchema,
 } from "./claim-retract";
 export type { GraphWriteInput } from "./graph-write";
-export { graphWriteInputSchema } from "./graph-write";
+export {
+  graphWriteInputSchema,
+  graphWritePageSchema,
+  graphWriteResultSchema,
+} from "./graph-write";
+export { graphEgoSchema, graphSnapshotSchema } from "./graph-snapshot";
 export { graphWriteList } from "./graph-write-list";
 export type { ClaimUpdateFields } from "./claim-update";
 export type { UpdateClaimInput } from "./claim-update";
@@ -159,6 +164,7 @@ export {
   graphHistoryAttributionSchema,
   graphHistoryEntrySchema,
   graphHistoryList,
+  graphHistoryPageSchema,
   graphHistoryRowInputSchema,
   graphHistorySnapshotSchema,
 } from "./graph-history";
@@ -187,6 +193,8 @@ export {
   edgeSchema,
   entityListItemSchema,
   entityListPageSchema,
+  entityPickerItemSchema,
+  entityPickerPageSchema,
   entitySchema,
   eventListPageSchema,
   eventSchema,
