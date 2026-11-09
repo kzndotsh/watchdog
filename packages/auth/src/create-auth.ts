@@ -31,6 +31,7 @@ import {
   instanceAdminAccess,
 } from "./instance-admin";
 import { inviteSignupPlugin } from "./invite-signup-plugin";
+import { AUTH_RATE_LIMIT_RULES } from "./rate-limit-rules";
 import { sendInvitationEmail } from "./send-invitation-email";
 import {
   needsAuthoritativeSession,
@@ -127,18 +128,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
       before: beforeHook,
       after: sessionCacheAfterHook,
     },
-    // Better Auth applies this in production only (per IP, in memory). Paths not listed keep
-    // its defaults (sign-in and password flows are already throttled).
-    rateLimit: {
-      customRules: {
-        "/sign-up/email": { window: 60 * 60, max: 10 },
-        "/organization/create": { window: 60 * 60, max: 5 },
-        "/organization/delete": { window: 60 * 60, max: 5 },
-        "/organization/update-member-role": { window: 60, max: 10 },
-        "/organization/remove-member": { window: 60, max: 20 },
-        "/organization/invite-member": { window: 60, max: 20 },
-      },
-    },
+    rateLimit: { customRules: { ...AUTH_RATE_LIMIT_RULES } },
     advanced: {
       database: {
         generateId: () => crypto.randomUUID(),
