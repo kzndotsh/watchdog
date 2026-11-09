@@ -99,6 +99,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`; `packages/caps/src/testing`) |
 | `createCapRunHarness` | Fake `CapContext` (upload / credentials) for Cap `run()` |
 | `mockServer` / `mockJson` / `http` | MSW via `@watchdog/test-kit/http` |
+| `listenFetchable(server, host?)` | Listen a real test server on a free loopback port that `fetch` will call; never `listen(0)` directly (an ephemeral port on the fetch bad-port list fails every request to it, where the OS port range starts low) |
 
 Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/URLs live in test-kit; helpers that need a workspace package live with it (see above).
 

@@ -11,6 +11,8 @@ import { HttpClient } from "effect/http";
 import { Agent } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { listenFetchable } from "@watchdog/test-kit";
+
 import { isBlockedAddress } from "../blocked-address";
 import { unrecordedEgressLayer } from "../egress";
 import { httpClientLayer } from "../http-client-layer";
@@ -79,9 +81,7 @@ async function loopback(
     if (route(req, res) !== "hold") res.end();
   });
   servers.push(server);
-  await new Promise<void>((resolve) => {
-    server.listen(0, LOOPBACK, resolve);
-  });
+  await listenFetchable(server, LOOPBACK);
   const { port } = server.address() as AddressInfo;
   return {
     origin: `http://${LOOPBACK}:${port}`,

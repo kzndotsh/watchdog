@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import { Cause, Effect, Exit, Fiber, FiberMap, Layer } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { listenFetchable } from "@watchdog/test-kit";
 import {
   fetchUnshortenEffect,
   httpClientLayer,
@@ -55,9 +56,7 @@ async function hangingServer() {
     arrive();
   });
   servers.push(server);
-  await new Promise<void>((resolve) => {
-    server.listen(0, LOOPBACK, resolve);
-  });
+  await listenFetchable(server, LOOPBACK);
   const { port } = server.address() as AddressInfo;
   return {
     url: `http://${LOOPBACK}:${port}/hang`,

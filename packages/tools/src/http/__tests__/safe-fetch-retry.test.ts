@@ -4,6 +4,8 @@ import type { AddressInfo } from "node:net";
 import { fetch as undiciFetch } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { listenFetchable } from "@watchdog/test-kit";
+
 import { BlockedTargetError } from "../../errors/tagged-errors";
 import { createOutboundTransport, createSafeFetch } from "../safe-fetch";
 import {
@@ -44,10 +46,7 @@ describe("safeFetch protocol negotiation", () => {
       seen.push(req.httpVersion);
       res.end("hello");
     });
-    // oxlint-disable-next-line promise/avoid-new -- wraps the callback listen API
-    await new Promise<void>((resolve) => {
-      server.listen(0, TEST_SERVER_ADDRESS, resolve);
-    });
+    await listenFetchable(server, TEST_SERVER_ADDRESS);
     cleanups.push(async () => {
       server.closeAllConnections();
       // oxlint-disable-next-line promise/avoid-new -- wraps the callback close API
