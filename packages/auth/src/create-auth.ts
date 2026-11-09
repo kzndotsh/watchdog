@@ -26,6 +26,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { assertNoClientApiKeyWrite } from "./api-key-guard";
+import { logAuthHookFailure } from "./hook-failure-log";
 import {
   DISABLED_ACCOUNT_MESSAGE,
   instanceAdminAccess,
@@ -162,7 +163,12 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
             const organizationId = await resolveUserOrganizationId(
               db,
               created.userId
-            ).catch(() => null);
+            ).catch((error: unknown) => {
+              logAuthHookFailure("auth.session_create_before", error, {
+                userId: created.userId,
+              });
+              return null;
+            });
             return organizationId
               ? { data: { ...created, activeOrganizationId: organizationId } }
               : undefined;
@@ -170,8 +176,12 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
           after: async (created) => {
             try {
               await onAuthSessionCreated(db, created);
-            } catch {
-              // Org stamp / auth_event must not fail sign-in.
+            } catch (error) {
+              // Org stamp / auth_event must not fail sign-in, but must not vanish either.
+              logAuthHookFailure("auth.session_create_after", error, {
+                userId: created.userId,
+                sessionId: created.id,
+              });
             }
           },
         },
