@@ -2,7 +2,10 @@ import { Effect } from "effect";
 import type { z } from "zod";
 
 import type { DbExec, EvidenceRow } from "@watchdog/db";
-import type { evidenceSchema } from "@watchdog/schemas/evidence";
+import {
+  inlineImageMime,
+  type evidenceSchema,
+} from "@watchdog/schemas/evidence";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
   parseTrimmedUuid,
@@ -27,7 +30,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../errors/tagged-errors";
-import { createPresignedGetEffect, uploadArtifactEffect } from "../infra/blob";
+import {
+  createPresignedGetEffect,
+  createPresignedInlineImageEffect,
+  uploadArtifactEffect,
+} from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { transact } from "../infra/postgres-tx";
@@ -296,7 +303,11 @@ export function getEvidenceDownloadUrlEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
   evidenceId: string
-): Effect.Effect<{ url: string | null }, DomainTag, Db | BlobStore> {
+): Effect.Effect<
+  { url: string | null; previewUrl: string | null },
+  DomainTag,
+  Db | BlobStore
+> {
   return Effect.gen(function* getEvidenceDownloadUrlGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEvidenceId = yield* requireTrimmedGraphId(
@@ -309,10 +320,15 @@ export function getEvidenceDownloadUrlEffect(
     );
     const uri = row?.uri;
     if (uri === undefined || uri === null || uri === "") {
-      return { url: null };
+      return { url: null, previewUrl: null };
     }
     const url = yield* createPresignedGetEffect(uri);
-    return { url };
+    const image = inlineImageMime(row?.mime);
+    const previewUrl =
+      image === null
+        ? null
+        : yield* createPresignedInlineImageEffect(uri, image);
+    return { url, previewUrl };
   });
 }
 
