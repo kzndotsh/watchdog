@@ -145,7 +145,8 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
       reportWideEvent(ctx.event);
       otlp.exporter?.push(ctx.event);
       await fsDrain(ctx);
-      await privateDir.restrictNewFiles();
+      const fileWarning = await privateDir.restrictNewFiles();
+      if (fileWarning !== null) warnOnce("log-files", fileWarning);
     },
   });
 
@@ -156,4 +157,5 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
     );
   }
   if (otlp.warning !== null) warnOnce("otlp", otlp.warning);
+  if (privateDir.warning !== null) warnOnce("log-files", privateDir.warning);
 }

@@ -784,7 +784,7 @@ jobs:
         env:
           POSTGRES_DB: watchdog
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: smokeownerpw0123
         ports:
           - 5432:5432
         options: >-
@@ -865,7 +865,7 @@ jobs:
         env:
           WEB_IMAGE: watchdog-web:ci
           WORKER_IMAGE: watchdog-worker:ci
-          SMOKE_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
+          SMOKE_DATABASE_URL: postgresql://postgres:smokeownerpw0123@127.0.0.1:5432/watchdog
           SMOKE_S3_ENDPOINT: http://127.0.0.1:9100
         run: bash docker/smoke.sh
 

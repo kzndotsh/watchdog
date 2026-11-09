@@ -128,20 +128,24 @@ export function databaseUrlPassword(url: string): string | undefined {
 }
 
 /**
- * A connection URL whose password is not a placeholder or a shipped dev default when `NODE_ENV`
- * is production. Reuses `isPlaceholderSecret`; dev and test keep their short local passwords.
+ * True when `NODE_ENV` is production and the URL's password is a placeholder or a shipped dev
+ * default. The one check behind the `DATABASE_URL` / `DATABASE_URL_MIGRATE` refinement and the
+ * container migrator (`@watchdog/db` `migrate-cli`, which runs before the app validates anything).
  */
+export function isProductionDbPlaceholder(url: string): boolean {
+  const password = databaseUrlPassword(url);
+  return (
+    process.env.NODE_ENV === "production" &&
+    password !== undefined &&
+    (isPlaceholderSecret(password) ||
+      DEV_DB_PASSWORDS.has(password.trim().toLowerCase()))
+  );
+}
+
+/** Zod `refine` arguments for a connection URL; see `isProductionDbPlaceholder`. */
 export function refuseProductionDbPlaceholder(name: string) {
   return {
-    check: (url: string) => {
-      const password = databaseUrlPassword(url);
-      return !(
-        process.env.NODE_ENV === "production" &&
-        password !== undefined &&
-        (isPlaceholderSecret(password) ||
-          DEV_DB_PASSWORDS.has(password.trim().toLowerCase()))
-      );
-    },
+    check: (url: string) => !isProductionDbPlaceholder(url),
     params: {
       error: `${name} has a placeholder or development password, which is refused in production. Set a real one: ${GENERATE_SECRET_HINT}.`,
     },

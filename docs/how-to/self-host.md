@@ -86,14 +86,14 @@ Turning it on is a decision for you, the operator: you are responsible for a law
 
 The app refuses to start with a placeholder or weak secret and names the variable in its log (a web container answers 500 and reports unhealthy). `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`); `S3_SECRET_KEY` may not be a placeholder or the development default. Generate each with `openssl rand -base64 32`. The rules are listed in the [configuration reference](../reference/platform/configuration.md#how-to-read-it).
 
-In production the password in `DATABASE_URL` is held to the same list (a placeholder, or the development passwords `watchdog` and `postgres`, is refused). A process with `SKIP_ENV_VALIDATION=1` and `NODE_ENV=production` refuses to start: that switch turns every check off and is for lint and image builds only.
+In production the password in `DATABASE_URL` is held to the same list (a placeholder, or the development passwords `watchdog` and `postgres`, is refused). The migrator refuses the same in `DATABASE_URL_MIGRATE`, since the entrypoint runs it before the app validates anything. A process with `SKIP_ENV_VALIDATION=1` and `NODE_ENV=production` refuses to start: that switch turns every check off and is for lint and image builds only.
 
 ## Transport warnings at start
 
 A production `web` and `worker` log one warning at start for each setting that sends data or credentials without TLS. The warning names the variable, never its value; nothing stops the process.
 
 - `DATABASE_URL` on a non-local host without `sslmode` (or with `disable`, `allow` or `prefer`): add `sslmode=require` or `verify-full`.
-- `BETTER_AUTH_URL` or `S3_PUBLIC_URL` with an `http:` URL on a non-local host.
+- `BETTER_AUTH_URL`, `S3_ENDPOINT` or `S3_PUBLIC_URL` with an `http:` URL on a non-local host.
 - `WD_OTLP_ENDPOINT` or `WD_ERROR_REPORTING_DSN` with an `http:` URL on a non-local host.
 
 Local means `localhost`, `127.0.0.0/8`, `::1` and a name without a dot (a compose service such as `postgres`). A private IP such as `10.0.0.5` is not local: encrypt it or accept the warning.

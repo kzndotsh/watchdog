@@ -1,8 +1,11 @@
 import {
+  chmodSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -33,7 +36,9 @@ describe("createPrivateLogDir", () => {
     expect(mode(fresh)).toBe(0o700);
 
     const loose = path.join(root, "loose");
-    createPrivateLogDir(loose);
+    mkdirSync(loose);
+    chmodSync(loose, 0o755);
+    expect(mode(loose)).toBe(0o755);
     createPrivateLogDir(loose);
     expect(mode(loose)).toBe(0o700);
   });
@@ -54,6 +59,40 @@ describe("createPrivateLogDir", () => {
     now += 6000;
     await restrictNewFiles();
     expect(mode(second)).toBe(0o600);
+  });
+});
+
+describe("restrictNewFiles scope", () => {
+  it("never follows a symlink out of the directory and leaves subdirectories alone", async () => {
+    const dir = path.join(root, "logs");
+    const { restrictNewFiles } = createPrivateLogDir(dir);
+    const outside = path.join(root, "outside.txt");
+    writeFileSync(outside, "x", { mode: 0o644 });
+    symlinkSync(outside, path.join(dir, "link.jsonl"));
+    const sub = path.join(dir, "sub");
+    mkdirSync(sub);
+    chmodSync(sub, 0o755);
+    const file = path.join(dir, "2026-01-01.jsonl");
+    writeFileSync(file, "{}\n", { mode: 0o644 });
+
+    await restrictNewFiles();
+
+    expect(mode(file)).toBe(0o600);
+    expect(mode(outside)).toBe(0o644);
+    expect(mode(sub)).toBe(0o755);
+  });
+});
+
+describe("createPrivateLogDir failure", () => {
+  it("reports a directory it could not secure", () => {
+    const blocker = path.join(root, "blocker");
+    writeFileSync(blocker, "x");
+    const { warning } = createPrivateLogDir(path.join(blocker, "logs"));
+    expect(warning).toContain("0700");
+  });
+
+  it("reports no warning when it succeeds", () => {
+    expect(createPrivateLogDir(path.join(root, "ok")).warning).toBeNull();
   });
 });
 

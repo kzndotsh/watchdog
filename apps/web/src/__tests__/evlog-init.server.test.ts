@@ -2,6 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const initWatchdogLoggerMock = vi.hoisted(() => vi.fn());
 
+vi.mock("@watchdog/env/server", () => ({
+  errorReportingSettings: () => ({ dsn: undefined }),
+  otlpSettings: () => ({ endpoint: undefined }),
+  startupWarnings: () => ["DATABASE_URL test warning"],
+}));
+
 const logStartupWarningsMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@watchdog/log", () => ({
@@ -13,6 +19,7 @@ describe("evlog-init.server", () => {
   // The module initializes on import: re-evaluate it so each test (and repeat) sees its own call.
   beforeEach(() => {
     vi.resetModules();
+    logStartupWarningsMock.mockClear();
   });
 
   it("initializes the web service logger drain on import", async () => {
@@ -29,9 +36,9 @@ describe("evlog-init.server", () => {
   it("logs the transport warnings once at start", async () => {
     await import("../evlog-init.server.ts");
 
-    expect(logStartupWarningsMock).toHaveBeenCalledWith(
-      "startup-config",
-      expect.any(Array)
-    );
+    expect(logStartupWarningsMock).toHaveBeenCalledTimes(1);
+    expect(logStartupWarningsMock).toHaveBeenCalledWith("startup-config", [
+      "DATABASE_URL test warning",
+    ]);
   });
 });

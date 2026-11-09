@@ -74,6 +74,7 @@ export function transportWarnings(source: Source): string[] {
   return [
     ...databaseWarning(source.DATABASE_URL),
     ...plainHttp("BETTER_AUTH_URL", source.BETTER_AUTH_URL),
+    ...plainHttp("S3_ENDPOINT", source.S3_ENDPOINT),
     ...plainHttp("S3_PUBLIC_URL", source.S3_PUBLIC_URL),
     ...plainHttp("WD_OTLP_ENDPOINT", source.WD_OTLP_ENDPOINT),
     ...dsnWarning(source.WD_ERROR_REPORTING_DSN),

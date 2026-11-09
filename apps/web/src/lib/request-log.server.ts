@@ -60,6 +60,14 @@ export function requestLogFields(
   return fields;
 }
 
+async function startLoggerAtBoot(): Promise<void> {
+  try {
+    await import("../evlog-init.server");
+  } catch {
+    // Reported by the per-request import, with the 500.
+  }
+}
+
 async function emitRequestLog(
   fields: RequestLogFields,
   level: "debug" | "info"
@@ -93,6 +101,12 @@ async function emitSafely(
 export function createRequestLogMiddleware(
   emit: Emit = emitRequestLog
 ): ServerMiddleware {
+  // The production server builds this once at boot: start the process logger now, so the startup
+  // warnings (`evlog-init.server`) appear at start and not with the first request. A failing
+  // init (invalid env) is left to the per-request import, which reports it with the 500.
+  if (emit === emitRequestLog) {
+    void startLoggerAtBoot();
+  }
   return async (request, next) => {
     const started = performance.now();
     let status = 500;

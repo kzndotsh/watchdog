@@ -7,6 +7,7 @@ import {
   isLocalHost,
   transportWarnings,
 } from "../production-warnings";
+import { isProductionDbPlaceholder } from "../secrets";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -81,23 +82,25 @@ describe("transportWarnings", () => {
     }
   });
 
-  it.each(["BETTER_AUTH_URL", "S3_PUBLIC_URL", "WD_OTLP_ENDPOINT"])(
-    "warns about an http: %s on a non-local host only",
-    (name) => {
-      const warnings = transportWarnings({
-        ...prod,
-        [name]: "http://app.example.com/x",
-      });
-      expect(warnings).toHaveLength(1);
-      expect(warnings[0]).toContain(name);
-      expect(
-        transportWarnings({ ...prod, [name]: "https://app.example.com/x" })
-      ).toEqual([]);
-      expect(
-        transportWarnings({ ...prod, [name]: "http://127.0.0.1:3000" })
-      ).toEqual([]);
-    }
-  );
+  it.each([
+    "BETTER_AUTH_URL",
+    "S3_ENDPOINT",
+    "S3_PUBLIC_URL",
+    "WD_OTLP_ENDPOINT",
+  ])("warns about an http: %s on a non-local host only", (name) => {
+    const warnings = transportWarnings({
+      ...prod,
+      [name]: "http://app.example.com/x",
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(name);
+    expect(
+      transportWarnings({ ...prod, [name]: "https://app.example.com/x" })
+    ).toEqual([]);
+    expect(
+      transportWarnings({ ...prod, [name]: "http://127.0.0.1:3000" })
+    ).toEqual([]);
+  });
 
   it("warns about an http: error-reporting DSN without leaking its key", () => {
     const warnings = transportWarnings({
@@ -113,11 +116,12 @@ describe("transportWarnings", () => {
     const source = {
       DATABASE_URL: "postgres://app:pw@db.example.com/wd",
       BETTER_AUTH_URL: "http://wd.example.com",
+      S3_ENDPOINT: "http://s3-internal.example.com",
       S3_PUBLIC_URL: "http://s3.example.com",
       WD_OTLP_ENDPOINT: "http://otel.example.com",
       WD_ERROR_REPORTING_DSN: "http://k@errors.example.com/1",
     };
-    expect(transportWarnings({ ...prod, ...source })).toHaveLength(5);
+    expect(transportWarnings({ ...prod, ...source })).toHaveLength(6);
     expect(transportWarnings({ NODE_ENV: "development", ...source })).toEqual(
       []
     );
@@ -169,6 +173,24 @@ describe("production database and object-store secrets", () => {
     expect(
       dbErrors("postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog")
     ).toEqual([]);
+  });
+
+  it("exposes the one check the container migrator uses", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    expect(
+      isProductionDbPlaceholder(
+        "postgres://postgres:postgres@db.example.com/wd"
+      )
+    ).toBe(true);
+    expect(
+      isProductionDbPlaceholder(
+        "postgres://owner:q7Zk2mXv9Lp4@db.example.com/wd"
+      )
+    ).toBe(false);
+    vi.stubEnv("NODE_ENV", "development");
+    expect(
+      isProductionDbPlaceholder("postgres://postgres:postgres@127.0.0.1/wd")
+    ).toBe(false);
   });
 
   it("refuses the object-store dev secret and placeholders in production", () => {
