@@ -89,7 +89,7 @@ server {
     # Evidence files are uploaded in one request; nginx's default limit is 1 MB.
     client_max_body_size 0;
 
-    # Browsers must not guess a stored file's type (see "Evidence files are never rendered").
+    # Browsers must not guess a stored file's type (see "Evidence downloads and previews").
     add_header X-Content-Type-Options nosniff always;
 
     location / {
@@ -107,11 +107,11 @@ server {
 }
 ```
 
-### Evidence files are never rendered
+Do not add CORS headers in nginx or Caddy: the store answers the browser's preflight itself from the bucket rule below, and a second `Access-Control-Allow-Origin` makes browsers reject the response.
+
+### Evidence downloads and previews
 
 Evidence is whatever an investigator collected, so the object store may hold hostile HTML or SVG. Every Evidence download link Watchdog signs carries `Content-Disposition: attachment`, so the browser saves the file instead of opening it on `files.example.com`. Only the inline image preview is signed with `inline`, and only for PNG, JPEG, GIF, WebP and AVIF, with the response `Content-Type` forced to that image type. Keep `X-Content-Type-Options: nosniff` on the store's proxy, as in both examples above, so a browser never second-guesses those types.
-
-Do not add CORS headers in nginx or Caddy: the store answers the browser's preflight itself from the bucket rule below, and a second `Access-Control-Allow-Origin` makes browsers reject the response.
 
 ## CORS for browser uploads
 
