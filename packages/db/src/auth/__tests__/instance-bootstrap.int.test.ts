@@ -9,13 +9,15 @@ import { promoteFirstUserToInstanceAdmin } from "../instance-bootstrap";
 async function insertAuthUser(
   tx: Parameters<typeof promoteFirstUserToInstanceAdmin>[0],
   id: string,
-  email: string
+  email: string,
+  createdAt = new Date()
 ) {
   await tx.insert(user).values({
     id,
     name: "Bootstrap",
     email,
     emailVerified: false,
+    createdAt,
   });
 }
 
@@ -47,8 +49,18 @@ describe("promoteFirstUserToInstanceAdmin", () => {
       await emptyUsers(tx);
       const firstId = crypto.randomUUID();
       const secondId = crypto.randomUUID();
-      await insertAuthUser(tx, firstId, `${firstId}@example.test`);
-      await insertAuthUser(tx, secondId, `${secondId}@example.test`);
+      await insertAuthUser(
+        tx,
+        firstId,
+        `${firstId}@example.test`,
+        new Date("2026-01-01T00:00:00Z")
+      );
+      await insertAuthUser(
+        tx,
+        secondId,
+        `${secondId}@example.test`,
+        new Date("2026-01-01T00:00:01Z")
+      );
 
       expect(await promoteFirstUserToInstanceAdmin(tx, secondId)).toBe(false);
 
@@ -57,6 +69,24 @@ describe("promoteFirstUserToInstanceAdmin", () => {
         .from(user)
         .where(eq(user.id, secondId));
       expect(row?.role).not.toBe("admin");
+    });
+  });
+
+  it("promotes no one once an instance admin exists, even the oldest account", async () => {
+    await withTestTx(async (tx) => {
+      await emptyUsers(tx);
+      const oldestId = crypto.randomUUID();
+      const adminId = crypto.randomUUID();
+      await insertAuthUser(
+        tx,
+        oldestId,
+        `${oldestId}@example.test`,
+        new Date("2026-01-01T00:00:00Z")
+      );
+      await insertAuthUser(tx, adminId, `${adminId}@example.test`);
+      await tx.update(user).set({ role: "admin" }).where(eq(user.id, adminId));
+
+      expect(await promoteFirstUserToInstanceAdmin(tx, oldestId)).toBe(false);
     });
   });
 });

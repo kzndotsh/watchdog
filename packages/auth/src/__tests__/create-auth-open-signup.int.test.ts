@@ -60,3 +60,43 @@ describe("createAuth organization creation on an open-signup install", () => {
     expect(rows).toEqual([{ role: "owner" }]);
   });
 });
+
+describe("instance admin promotion on an open-signup install", () => {
+  it("promotes exactly one of several simultaneous first signups, and none after", async () => {
+    // Integration files run one at a time. Other suites' accounts are made to look newer and
+    // their admins ordinary, so this is a fresh install; `finally` puts them back.
+    const others =
+      await client`select id, role, created_at from auth."user" where email not like ${`%@${EMAIL_DOMAIN}`}`;
+    try {
+      await client`update auth."user" set role = 'user', created_at = '9999-01-01' where email not like ${`%@${EMAIL_DOMAIN}`}`;
+
+      const emails = Array.from(
+        { length: 5 },
+        () => `${crypto.randomUUID()}@${EMAIL_DOMAIN}`
+      );
+      await Promise.all(
+        emails.map((email) =>
+          auth.api.signUpEmail({
+            body: { email, password: PASSWORD, name: "Racer" },
+          })
+        )
+      );
+      const roles =
+        await client`select role from auth."user" where email in ${client(emails)}`;
+      expect(roles.filter((row) => row.role === "admin")).toHaveLength(1);
+
+      const late = `${crypto.randomUUID()}@${EMAIL_DOMAIN}`;
+      await auth.api.signUpEmail({
+        body: { email: late, password: PASSWORD, name: "Late" },
+      });
+      const [lateRow] =
+        await client`select role from auth."user" where email = ${late}`;
+      expect(lateRow?.role).not.toBe("admin");
+    } finally {
+      for (const row of others) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- restore one row at a time
+        await client`update auth."user" set role = ${row.role as string | null}, created_at = ${row.created_at as Date} where id = ${row.id as string}`;
+      }
+    }
+  });
+});
