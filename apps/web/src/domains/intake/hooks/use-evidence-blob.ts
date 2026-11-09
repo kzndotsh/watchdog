@@ -41,6 +41,7 @@ export function useEvidenceBlob(
       evidence,
       isBlobTextNeeded: needsBlobText,
       downloadUrl: downloadQuery.data?.url ?? null,
+      previewUrl: downloadQuery.data?.previewUrl ?? null,
       isLoadingUrl: listPending(downloadQuery, {
         isEnabled: downloadQueryEnabled,
       }),

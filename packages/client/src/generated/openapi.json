@@ -59632,10 +59632,21 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "previewUrl": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
-                    "url"
+                    "url",
+                    "previewUrl"
                   ]
                 }
               }
