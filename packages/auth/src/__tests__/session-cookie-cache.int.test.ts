@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { account, client, db, member, organization, user } from "@watchdog/db";
+import {
+  account,
+  client,
+  db,
+  invitation,
+  member,
+  organization,
+  user,
+} from "@watchdog/db";
 import {
   asOrganizationId,
   type OrganizationId,
@@ -333,6 +341,52 @@ describe("an organization change refreshes the cached session", () => {
         .activeOrganizationId
     ).toBe(response.id);
     await client`delete from auth.organization where slug = ${slug}`;
+  });
+
+  it("makes the joined organization the active one after accepting an invitation", async () => {
+    // Better Auth 1.7 sets the session row's `activeOrganizationId` on accept; the after hook
+    // expires the cached cookie so the next request reads it. A member who accepts while
+    // another organization is active must land in the one they joined (#654).
+    const invitee = await seedUser({ withOrg: true });
+    const inviter = await seedUser({ withOrg: true });
+    const jar = new Map<string, string>();
+    const headers = cookieHeader(await signIn(invitee.email), jar);
+    const { headers: activeHeaders } = await auth.api.setActiveOrganization({
+      headers,
+      body: { organizationId: invitee.organizationId },
+      returnHeaders: true,
+    });
+    const before = cookieHeader(activeHeaders.getSetCookie(), jar);
+    expect(
+      (await auth.api.getSession({ headers: before }))?.session
+        .activeOrganizationId
+    ).toBe(invitee.organizationId);
+
+    const joined = inviter.organizationId;
+    if (joined === null)
+      throw new Error("inviter seeded without an organization");
+    const invitationId = crypto.randomUUID();
+    await db.insert(invitation).values({
+      id: invitationId,
+      organizationId: joined,
+      email: invitee.email,
+      role: "member",
+      status: "pending",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      createdAt: new Date(),
+      inviterId: inviter.id,
+    });
+    const { headers: acceptHeaders } = await auth.api.acceptInvitation({
+      headers: before,
+      body: { invitationId },
+      returnHeaders: true,
+    });
+    const after = cookieHeader(acceptHeaders.getSetCookie(), jar);
+
+    expect(
+      (await auth.api.getSession({ headers: after }))?.session
+        .activeOrganizationId
+    ).toBe(joined);
   });
 });
 
