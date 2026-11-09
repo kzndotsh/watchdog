@@ -2,6 +2,8 @@ import { createServer, type Server } from "node:http";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { listenFetchable } from "@watchdog/test-kit";
+
 import { firstJson, runWd } from "../../__tests__/run-wd";
 
 // A developer `.env` above the checkout would otherwise be loaded into process.env.
@@ -17,9 +19,7 @@ async function serveWhoami(body: unknown, seen: string[]): Promise<string> {
     res.end(JSON.stringify(body));
   });
   const listening = server;
-  await new Promise<void>((resolve) => {
-    listening.listen(0, "127.0.0.1", resolve);
-  });
+  await listenFetchable(listening, "127.0.0.1");
   const address = listening.address();
   if (address === null || typeof address === "string") {
     throw new Error("stand-in API is not listening on a port");

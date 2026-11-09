@@ -11,9 +11,10 @@ import {
   type Http2SecureServer,
   type Http2ServerRequest,
 } from "node:http2";
-import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
+
+import { listenFetchable } from "@watchdog/test-kit";
 
 import { isBlockedAddress } from "../../blocked-address";
 import type { HostResolver, ResolvedAddress } from "../../outbound-policy";
@@ -161,45 +162,6 @@ export type Loopback = {
 
 type AnyServer = Server | Http2SecureServer;
 
-/**
- * Ports the fetch standard refuses to connect to ("bad port"). The OS can hand one out as an
- * ephemeral port, and then every request to that server fails before it reaches the wire.
- */
-const FETCH_BAD_PORTS: ReadonlySet<number> = new Set([
-  1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79,
-  87, 95, 101, 102, 103, 104, 109, 110, 111, 113, 115, 117, 119, 123, 135, 137,
-  139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526, 530, 531, 532,
-  540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993, 995, 1719, 1720, 1723,
-  2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667, 6668, 6669,
-  6679, 6697, 10_080,
-]);
-
-function listenOnce(server: AnyServer): Promise<number> {
-  // oxlint-disable-next-line promise/avoid-new -- wraps the callback listen API
-  return new Promise((resolve) => {
-    server.listen(0, TEST_SERVER_ADDRESS, () => {
-      resolve((server.address() as AddressInfo).port);
-    });
-  });
-}
-
-function unlisten(server: AnyServer): Promise<void> {
-  // oxlint-disable-next-line promise/avoid-new -- wraps the callback close API
-  return new Promise((resolve) => {
-    server.close(() => {
-      resolve();
-    });
-  });
-}
-
-/** Listens on a free loopback port that a fetch client is allowed to call. */
-async function listenOn(server: AnyServer): Promise<number> {
-  const port = await listenOnce(server);
-  if (!FETCH_BAD_PORTS.has(port)) return port;
-  await unlisten(server);
-  return listenOn(server);
-}
-
 function stopServer(server: AnyServer): Promise<void> {
   // oxlint-disable-next-line promise/avoid-new -- wraps the callback close API
   return new Promise((resolve) => {
@@ -216,7 +178,7 @@ export async function listenPlain(
   handler: (req: IncomingMessage, res: ServerResponse) => void
 ): Promise<{ server: Server; port: number }> {
   const server = createServer(handler);
-  return { server, port: await listenOn(server) };
+  return { server, port: await listenFetchable(server, TEST_SERVER_ADDRESS) };
 }
 
 export async function closePlain(server: Server): Promise<void> {
@@ -230,7 +192,7 @@ export async function listenProtocol(
 ): Promise<Loopback> {
   if (protocol === "http/1.1") {
     const server = createServer(handler);
-    const port = await listenOn(server);
+    const port = await listenFetchable(server, TEST_SERVER_ADDRESS);
     return {
       port,
       scheme: "http",
@@ -249,7 +211,7 @@ export async function listenProtocol(
     sessions.add(session);
     session.on("close", () => sessions.delete(session));
   });
-  const port = await listenOn(server);
+  const port = await listenFetchable(server, TEST_SERVER_ADDRESS);
   return {
     port,
     scheme: "https",
