@@ -42,6 +42,7 @@ vi.mock("@watchdog/env/server", () => ({
   },
   errorReportingSettings: () => ({ dsn: undefined }),
   otlpSettings: () => ({ endpoint: undefined }),
+  startupWarnings: () => [],
 }));
 
 vi.mock("evlog/toolkit", async () => {

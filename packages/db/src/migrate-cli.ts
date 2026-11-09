@@ -6,6 +6,8 @@
  */
 import path from "node:path";
 
+import { isProductionDbPlaceholder } from "@watchdog/env/secrets";
+
 import { APP_ROLE } from "./app-role";
 import { migrationFailureMessage, runMigrations } from "./migrate";
 
@@ -19,6 +21,14 @@ const url = envOr("DATABASE_URL_MIGRATE", envOr("DATABASE_URL", ""));
 if (url === "") {
   process.stderr.write(
     "migrate: DATABASE_URL_MIGRATE or DATABASE_URL is required\n"
+  );
+  process.exit(1);
+}
+
+// The owner's password never reaches the app's own check (the entrypoint unsets the URL first).
+if (isProductionDbPlaceholder(url)) {
+  process.stderr.write(
+    "migrate: the database password is a placeholder or a development default, which is refused in production\n"
   );
   process.exit(1);
 }

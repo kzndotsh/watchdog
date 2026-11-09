@@ -110,3 +110,44 @@ export function secretString(name: string, options: SecretOptions = {}) {
       }
     );
 }
+
+/**
+ * Database passwords the local dev stack ships (`scripts/init-env.sh`: `watchdog_app:watchdog`,
+ * `postgres:postgres`). Fine on a laptop, refused in production beside the placeholder list.
+ */
+const DEV_DB_PASSWORDS = new Set<string>(["watchdog", "postgres"]);
+
+/** The password in a Postgres connection URL, decoded; `undefined` when absent or unparsable. */
+export function databaseUrlPassword(url: string): string | undefined {
+  try {
+    const { password } = new URL(url);
+    return password === "" ? undefined : decodeURIComponent(password);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * True when `NODE_ENV` is production and the URL's password is a placeholder or a shipped dev
+ * default. The one check behind the `DATABASE_URL` / `DATABASE_URL_MIGRATE` refinement and the
+ * container migrator (`@watchdog/db` `migrate-cli`, which runs before the app validates anything).
+ */
+export function isProductionDbPlaceholder(url: string): boolean {
+  const password = databaseUrlPassword(url);
+  return (
+    process.env.NODE_ENV === "production" &&
+    password !== undefined &&
+    (isPlaceholderSecret(password) ||
+      DEV_DB_PASSWORDS.has(password.trim().toLowerCase()))
+  );
+}
+
+/** Zod `refine` arguments for a connection URL; see `isProductionDbPlaceholder`. */
+export function refuseProductionDbPlaceholder(name: string) {
+  return {
+    check: (url: string) => !isProductionDbPlaceholder(url),
+    params: {
+      error: `${name} has a placeholder or development password, which is refused in production. Set a real one: ${GENERATE_SECRET_HINT}.`,
+    },
+  };
+}

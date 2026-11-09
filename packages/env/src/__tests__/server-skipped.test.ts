@@ -1,9 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("server env entrypoint with validation skipped", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv("SKIP_ENV_VALIDATION", "1");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("refuses to load in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    await expect(import("../server")).rejects.toThrow(/SKIP_ENV_VALIDATION/);
   });
 
   it("still scrubs a configured secret the schema refuses", async () => {

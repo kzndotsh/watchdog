@@ -65,12 +65,16 @@ vi.mock("@watchdog/core/maintenance", async (importOriginal) => {
 // the fields set on it, so a test reads what the worker said under a scope.
 const logged = vi.hoisted(() => ({
   entries: [] as { scope: string; fields: Record<string, unknown> }[],
+  startup: [] as { scope: string; messages: readonly string[] }[],
 }));
 
 vi.mock("@watchdog/log", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/log")>();
   return {
     ...actual,
+    logStartupWarnings: (scope: string, messages: readonly string[]) => {
+      logged.startup.push({ scope, messages });
+    },
     createLogger: (init: { scope?: string }) => ({
       set: (fields: Record<string, unknown>) => {
         logged.entries.push({ scope: init.scope ?? "", fields });
@@ -112,6 +116,7 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/env/server")>();
   return {
     ...actual,
+    startupWarnings: () => ["DATABASE_URL test warning"],
     env: new Proxy(actual.env, {
       get: (target, key, receiver) =>
         laneEnv.read(key) ?? Reflect.get(target, key, receiver),
@@ -234,6 +239,7 @@ describe("bootWorkerEffect", () => {
 
   beforeEach(() => {
     logged.entries.length = 0;
+    logged.startup.length = 0;
     laneEnv.WD_WORKER_QUICK_CONCURRENCY = 2;
     workerMocks.runActivityConsumerEffect.mockClear();
     workerMocks.reconcileJobsEffect.mockClear();
@@ -282,6 +288,18 @@ describe("bootWorkerEffect", () => {
         }
         expect(workerMocks.runActivityConsumerEffect).toHaveBeenCalled();
       })
+  );
+
+  it.effect("logs the startup transport warnings once at boot", () =>
+    Effect.gen(function* bootWorkerWarningsTestGen() {
+      yield* startBoot(fakeDriver());
+      expect(logged.startup).toEqual([
+        {
+          scope: "startup-config",
+          messages: ["DATABASE_URL test warning"],
+        },
+      ]);
+    })
   );
 
   it.effect(

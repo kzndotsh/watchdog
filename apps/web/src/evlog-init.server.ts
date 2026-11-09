@@ -4,8 +4,12 @@
 
 import path from "node:path";
 
-import { errorReportingSettings, otlpSettings } from "@watchdog/env/server";
-import { initWatchdogLogger } from "@watchdog/log";
+import {
+  errorReportingSettings,
+  otlpSettings,
+  startupWarnings,
+} from "@watchdog/env/server";
+import { initWatchdogLogger, logStartupWarnings } from "@watchdog/log";
 
 initWatchdogLogger({
   service: "watchdog-web",
@@ -14,3 +18,4 @@ initWatchdogLogger({
   errorReporting: errorReportingSettings(),
   otlp: otlpSettings(),
 });
+logStartupWarnings("startup-config", startupWarnings());

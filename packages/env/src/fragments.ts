@@ -16,6 +16,7 @@ import { loadRepoEnv } from "./load";
 import type { EnvFieldMeta } from "./meta";
 import {
   MIN_SECRET_LENGTH,
+  refuseProductionDbPlaceholder,
   secretString,
   VAULT_ROTATION_NOTE,
 } from "./secrets";
@@ -27,6 +28,11 @@ const DEFAULT_AUTH_URL = "http://127.0.0.1:3000";
 const trimmedUrl = z.string().trim().pipe(z.url());
 const trimmedMin1 = z.string().trim().min(1);
 
+function databaseUrl(name: string) {
+  const { check, params } = refuseProductionDbPlaceholder(name);
+  return trimmedUrl.refine(check, params);
+}
+
 /**
  * Shared Zod field groups: compose per entrypoint `createEnv`. Every field ends
  * in `.meta({ description, sensitive, usedBy })` (see `./meta`); the metadata
@@ -37,22 +43,24 @@ const trimmedMin1 = z.string().trim().min(1);
 const meta = (value: EnvFieldMeta): EnvFieldMeta => value;
 
 export const databaseFields = {
-  DATABASE_URL: trimmedUrl.meta(
+  DATABASE_URL: databaseUrl("DATABASE_URL").meta(
     meta({
       description:
-        "Postgres connection URL of the application role (watchdog_app): data privileges only, no DDL, no ownership. The web app and worker connect with it. The password in it is a secret.",
+        "Postgres connection URL of the application role (watchdog_app): data privileges only, no DDL, no ownership. The web app and worker connect with it. The password in it is a secret; a placeholder or the development default is refused when NODE_ENV is production.",
       sensitive: true,
       usedBy: ["web", "worker", "migrate"],
     })
   ),
-  DATABASE_URL_MIGRATE: trimmedUrl.optional().meta(
-    meta({
-      description:
-        "Connection URL of the owner role, which owns the schema: migrations, the first-admin command and vault key rotation run as it. Falls back to DATABASE_URL, which then must own the schema (a single-role setup without the privilege split).",
-      sensitive: true,
-      usedBy: ["migrate"],
-    })
-  ),
+  DATABASE_URL_MIGRATE: databaseUrl("DATABASE_URL_MIGRATE")
+    .optional()
+    .meta(
+      meta({
+        description:
+          "Connection URL of the owner role, which owns the schema: migrations, the first-admin command and vault key rotation run as it. Falls back to DATABASE_URL, which then must own the schema (a single-role setup without the privilege split).",
+        sensitive: true,
+        usedBy: ["migrate"],
+      })
+    ),
 };
 
 export const authFields = {
@@ -127,6 +135,18 @@ export const smtpFields = {
           "SMTP port. The default 587 uses STARTTLS; 465 uses implicit TLS.",
         sensitive: false,
         usedBy: ["web"],
+      })
+    ),
+  SMTP_ALLOW_INSECURE: z
+    .stringbool()
+    .default(false)
+    .meta(
+      meta({
+        description:
+          "Allow mail without TLS. Off (the default), a port other than 465 must upgrade to TLS with STARTTLS and mail is not sent when the server does not offer it. Set 1 only for a relay on a trusted network.",
+        sensitive: false,
+        usedBy: ["web"],
+        example: "0",
       })
     ),
   SMTP_USER: trimmedMin1.optional().meta(
