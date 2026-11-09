@@ -20,6 +20,7 @@ const replayActivityEffectMock = vi.hoisted(() => vi.fn());
 /** The fake tailer a route subscribes to: tests play live entries through `listener`. */
 const tailerState = vi.hoisted(() => ({
   listener: undefined as ((entry: unknown) => void) | undefined,
+  scope: undefined as { organizationId: string } | undefined,
   unsubscribe: vi.fn(),
   subscribeFails: false,
   subscriptions: 0,
@@ -30,7 +31,8 @@ const ActivityTailerTag = await vi.hoisted(async () => {
     ActivityTailer,
     {
       readonly subscribe: (
-        listener: (entry: unknown) => void
+        listener: (entry: unknown) => void,
+        scope?: { organizationId: string }
       ) => Effect.Effect<() => void, Error>;
     }
   >()("test/ActivityTailer") {}
@@ -74,12 +76,13 @@ vi.mock("@watchdog/api", () => ({
   ) =>
     Effect.runPromise(
       Effect.provideService(effect, ActivityTailerTag, {
-        subscribe: (listener) =>
+        subscribe: (listener, scope) =>
           tailerState.subscribeFails
             ? Effect.fail(new Error("tailer down"))
             : Effect.sync(() => {
                 tailerState.subscriptions += 1;
                 tailerState.listener = listener;
+                tailerState.scope = scope;
                 return tailerState.unsubscribe;
               }),
       })
@@ -512,6 +515,7 @@ describe("api events route: activity log", () => {
     listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([caseId]));
     replayActivityEffectMock.mockReset();
     tailerState.listener = undefined;
+    tailerState.scope = undefined;
     tailerState.subscribeFails = false;
     tailerState.subscriptions = 0;
     tailerState.unsubscribe.mockClear();
@@ -589,6 +593,55 @@ describe("api events route: activity log", () => {
     );
     expect(afterRestore).toContain("id: 7:4\n");
     await response.body?.cancel();
+  });
+
+  it("subscribes to the caller's organization only, so another organization's entries never trigger a visibility read", async () => {
+    const response = await connect();
+    await readUntil(response, (text) => text.includes("connected"));
+
+    expect(tailerState.scope).toEqual({ organizationId: "org-1" });
+    await response.body?.cancel();
+  });
+
+  it("keeps a Case out when a visibility read that started before its deleted entry finishes after it", async () => {
+    vi.useFakeTimers();
+    try {
+      const other = testId(21);
+      listVisibleCaseIdsEffectMock.mockReturnValue(
+        Effect.succeed([caseId, other])
+      );
+      const response = await connect();
+      await readUntil(response, (text) => text.includes("connected"));
+
+      // The beat's read starts while the Case is still visible, and is held there.
+      let finishRead: (ids: string[]) => void = () => undefined;
+      listVisibleCaseIdsEffectMock.mockReturnValueOnce(
+        Effect.promise(
+          () =>
+            new Promise<string[]>((resolve) => {
+              finishRead = resolve;
+            })
+        )
+      );
+      await vi.advanceTimersByTimeAsync(25_000);
+      expect(listVisibleCaseIdsEffectMock).toHaveBeenCalledTimes(2);
+
+      // The delete commits and its entry arrives; then the stale read finishes.
+      listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([other]));
+      tailerState.listener?.({ ...entry(1), kind: "case", action: "deleted" });
+      await vi.advanceTimersByTimeAsync(0);
+      finishRead([caseId, other]);
+      await vi.advanceTimersByTimeAsync(0);
+
+      tailerState.listener?.(entry(2, caseId));
+      tailerState.listener?.(entry(3, other));
+      const text = await readUntil(response, (t) => t.includes("id: 7:3\n"));
+      expect(text).toContain("id: 7:1\n");
+      expect(text).not.toContain("id: 7:2\n");
+      await response.body?.cancel();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("does not announce a deleted Case this stream never saw (another organization's)", async () => {

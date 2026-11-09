@@ -284,6 +284,48 @@ describe("reconnect replay", () => {
     expect(new Set(connection2.map((entry) => entry.cursor)).size).toBe(4);
   });
 
+  it("delivers only the subscribed organization's entries to a scoped subscriber", async () => {
+    const own = await seedCase(db, { organizationId: TEST_ORGANIZATION_ID });
+    const foreign = await seedCase(db, {
+      name: "Foreign",
+      slug: "foreign-live",
+      organizationId: TEST_OTHER_ORGANIZATION_ID,
+    });
+    const scoped: ActivityEntry[] = [];
+    const unscoped: ActivityEntry[] = [];
+    const append = (caseId: CaseId, label: string) =>
+      activityLogRepo.append(db, {
+        caseId,
+        kind: "task",
+        action: "created",
+        label,
+      });
+
+    await runDomainWith(Db.layer)(
+      Effect.gen(function* scopedSubscriber() {
+        const tailer = yield* ActivityTailer;
+        const stopScoped = yield* tailer.subscribe(
+          (entry) => {
+            scoped.push(entry);
+          },
+          { organizationId: TEST_ORGANIZATION_ID }
+        );
+        const stopUnscoped = yield* tailer.subscribe((entry) => {
+          unscoped.push(entry);
+        });
+        yield* Effect.promise(() => append(foreign.id, "foreign"));
+        yield* Effect.promise(() => append(own.id, "own"));
+        yield* Effect.promise(() => waitFor(() => unscoped.length === 2));
+        yield* Effect.promise(() => waitFor(() => scoped.length === 1));
+        stopScoped();
+        stopUnscoped();
+      }).pipe(Effect.provide(TAILER_LAYER))
+    );
+
+    expect(scoped.map((entry) => entry.label)).toEqual(["own"]);
+    expect(unscoped.map((entry) => entry.label)).toEqual(["foreign", "own"]);
+  });
+
   it("asks for a resync when the cursor is ahead of the database", async () => {
     const cased = await seedCase(db);
     await runDomain(
