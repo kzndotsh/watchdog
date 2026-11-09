@@ -9,6 +9,7 @@ import { testCaseId } from "@watchdog/schemas/testing";
 import { InternalError } from "../../errors/tagged-errors";
 import {
   createPresignedGetEffect,
+  createPresignedInlineImageEffect,
   createPresignedPutEffect,
   sha256Hex,
   deleteCaseArtifactsEffect,
@@ -286,6 +287,43 @@ describe("blob operations over an alternate Layer", () => {
     const get = await provide(createPresignedGetEffect(put.uri), store);
     expect(get).toContain(put.uri);
     expect(store.calls).toHaveLength(0);
+  });
+
+  it("signs every download as an attachment, with the file name when one is given", async () => {
+    const store = recordingBlobStore();
+    const plain = new URL(
+      await provide(createPresignedGetEffect("case/a.html"), store)
+    );
+    expect(plain.searchParams.get("response-content-disposition")).toBe(
+      "attachment"
+    );
+    const named = new URL(
+      await provide(createPresignedGetEffect("case/a.zip", 60, "a.zip"), store)
+    );
+    expect(named.searchParams.get("response-content-disposition")).toBe(
+      'attachment; filename="a.zip"'
+    );
+    const hostile = new URL(
+      await provide(
+        createPresignedGetEffect("case/b.zip", 60, 'b".zip\r\nX: 1\\'),
+        store
+      )
+    );
+    expect(hostile.searchParams.get("response-content-disposition")).toBe(
+      'attachment; filename="b_.zip__X: 1_"'
+    );
+  });
+
+  it("signs an inline image preview with its content type forced", async () => {
+    const store = recordingBlobStore();
+    const url = new URL(
+      await provide(
+        createPresignedInlineImageEffect("case/a.png", "image/png"),
+        store
+      )
+    );
+    expect(url.searchParams.get("response-content-disposition")).toBe("inline");
+    expect(url.searchParams.get("response-content-type")).toBe("image/png");
   });
 
   it("signs presigned URLs for the public address and destroys both clients", async () => {

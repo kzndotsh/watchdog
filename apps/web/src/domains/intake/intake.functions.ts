@@ -13,13 +13,14 @@ import {
   presignUploadInputSchema,
   processEvidenceInputSchema,
   getEvidenceManyInputSchema,
+  type EvidenceDownloadUrls,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 import type { ListPage } from "@watchdog/schemas/shared";
 
 export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
   .validator(evidenceScopeInputSchema)
-  .handler(async ({ data, context }): Promise<{ url: string | null }> =>
+  .handler(async ({ data, context }): Promise<EvidenceDownloadUrls> =>
     orpcFromContext(context).evidence.downloadUrl({
       caseId: data.caseId,
       evidenceId: data.evidenceId,
