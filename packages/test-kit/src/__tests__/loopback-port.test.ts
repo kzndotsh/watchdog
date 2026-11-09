@@ -75,7 +75,7 @@ describe("listenFetchable", () => {
 });
 
 describe("test servers", () => {
-  it("never listen on an ephemeral port without listenFetchable", () => {
+  it("never call listen with port 0 (`listen(0, …)` or `listen({ port: 0 })`) outside listenFetchable", () => {
     const root = path.resolve(import.meta.dirname, "../../../..");
     const files = execFileSync(
       "git",
@@ -91,7 +91,7 @@ describe("test servers", () => {
     const offenders = files.filter(
       (file) =>
         !file.endsWith("loopback-port.test.ts") &&
-        /\.listen\(\s*0\s*[,)]/.test(
+        /\.listen\(\s*(?:0\s*[,)]|\{[^}]*\bport:\s*0\b)/.test(
           readFileSync(path.join(root, file), "utf-8")
         )
     );
