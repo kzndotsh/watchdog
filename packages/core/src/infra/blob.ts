@@ -255,6 +255,12 @@ function signGet(
   });
 }
 
+/** A file name safe inside a quoted `filename=` value: no quotes, backslashes or control characters. */
+function quotedFilename(name: string): string {
+  // oxlint-disable-next-line no-control-regex -- control characters are what this strips
+  return name.replaceAll(/["\\\u0000-\u001F\u007F]/g, "_");
+}
+
 /**
  * A short-lived GET URL that always makes the browser save the object
  * (`Content-Disposition: attachment`), whatever its stored content type: a stored HTML or SVG
@@ -269,7 +275,7 @@ export function createPresignedGetEffect(
     ResponseContentDisposition:
       filename === undefined
         ? "attachment"
-        : `attachment; filename="${filename}"`,
+        : `attachment; filename="${quotedFilename(filename)}"`,
   });
 }
 

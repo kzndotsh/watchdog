@@ -303,6 +303,15 @@ describe("blob operations over an alternate Layer", () => {
     expect(named.searchParams.get("response-content-disposition")).toBe(
       'attachment; filename="a.zip"'
     );
+    const hostile = new URL(
+      await provide(
+        createPresignedGetEffect("case/b.zip", 60, 'b".zip\r\nX: 1\\'),
+        store
+      )
+    );
+    expect(hostile.searchParams.get("response-content-disposition")).toBe(
+      'attachment; filename="b_.zip__X: 1_"'
+    );
   });
 
   it("signs an inline image preview with its content type forced", async () => {
