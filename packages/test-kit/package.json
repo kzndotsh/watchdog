@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "fast-check": "^4.10.2",
-    "msw": "^3.0.3",
+    "msw": "^3.0.4",
     "vitest": "catalog:"
   },
   "devDependencies": {
