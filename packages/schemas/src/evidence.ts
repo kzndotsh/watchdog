@@ -1,8 +1,10 @@
 export {
   evidenceDisplayLabel,
   evidenceTitleMapFromRows,
+  INLINE_IMAGE_MIMES,
+  inlineImageMime,
 } from "./evidence-display";
-export type { EvidenceTitleRow } from "./evidence-display";
+export type { EvidenceTitleRow, InlineImageMime } from "./evidence-display";
 export type { ConfirmFileUploadInput } from "./evidence-upload";
 export type { PresignUploadInput } from "./evidence-upload";
 export {
@@ -26,7 +28,9 @@ export {
 export type { EvidenceSnapshot } from "./evidence-snapshot";
 export { evidenceSnapshotSchema } from "./evidence-snapshot";
 export { evidenceList, getEvidenceManyInputSchema } from "./evidence-list";
+export type { EvidenceDownloadUrls } from "./evidence-records";
 export {
+  evidenceDownloadUrlsSchema,
   evidenceListPageSchema,
   evidencePickerItemSchema,
   evidencePickerPageSchema,

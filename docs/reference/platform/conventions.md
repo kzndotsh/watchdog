@@ -263,6 +263,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Never `log.set({ error })`; use `log.error(err)` or `{ name, message }`; auth denials are `warn` + `auth.denied` | log, worker, web | `docs/reference/contracts/evlog.md` Rules | guidance | guidance |
 | The vault master key is rotated with `vault-rekey` (all or nothing, old key from `WD_MASTER_VAULT_KEY_OLD` or stdin, never an argument), not replaced in place, once credentials are stored | core | `docs/how-to/backup-restore.md` Rotating the vault key | guidance | guidance |
 | An invitation accept URL never reaches a log (the line holds the invitation id, the organization id and a masked email) | auth | `docs/how-to/auth-setup.md` | `packages/auth/src/__tests__/send-invitation-email.test.ts` | enforced |
+| Every auth endpoint that creates an account or reads invitation details has an explicit production rate-limit rule | auth | `docs/how-to/auth-setup.md` | `packages/auth/src/__tests__/rate-limit-rules.test.ts` | enforced |
 | Never log secrets, Evidence bodies or Bearer / `x-api-key` plaintext (the redaction preset covers part) | repo | `docs/reference/contracts/evlog.md` Rules | guidance | guidance |
 | Process logs go through `@watchdog/log`; evlog is not Graph audit (`Job.logs`, `graph_writes` stay the custody SoT) | repo | `docs/reference/contracts/evlog.md` Rules | guidance | guidance |
 | evlog `redact.builtins` stays false; the FS drain stays compact NDJSON | log | `packages/log/AGENTS.md` Gotchas | guidance | guidance |

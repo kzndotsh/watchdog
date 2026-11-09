@@ -316,11 +316,11 @@ export const evidenceRepo = {
     exec: DbExec,
     caseId: CaseId,
     evidenceId: string
-  ): Promise<{ uri: string | null } | null> {
+  ): Promise<{ uri: string | null; mime: string | null } | null> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
     if (scoped === null) return null;
     const [row] = await exec
-      .select({ uri: evidence.uri })
+      .select({ uri: evidence.uri, mime: evidence.mime })
       .from(evidence)
       .where(
         and(

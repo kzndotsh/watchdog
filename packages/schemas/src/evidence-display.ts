@@ -41,3 +41,24 @@ export function evidenceTitleMapFromRows(
   }
   return map;
 }
+
+/**
+ * Image types the browser may show inline as an Evidence preview. SVG is left out: it can
+ * carry script. Anything else is only ever downloaded as a file.
+ */
+export const INLINE_IMAGE_MIMES = [
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+] as const;
+export type InlineImageMime = (typeof INLINE_IMAGE_MIMES)[number];
+
+/** The inline-previewable type an Evidence `mime` names, or null. Parameters and case are ignored. */
+export function inlineImageMime(
+  mime: string | null | undefined
+): InlineImageMime | null {
+  const bare = mime?.split(";", 1)[0]?.trim().toLowerCase() ?? "";
+  return INLINE_IMAGE_MIMES.find((allowed) => allowed === bare) ?? null;
+}

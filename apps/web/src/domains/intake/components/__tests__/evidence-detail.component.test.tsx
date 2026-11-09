@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
@@ -15,14 +15,19 @@ import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+const blobLinks = vi.hoisted(() => ({
+  downloadUrl: null as string | null,
+  previewUrl: null as string | null,
+}));
+
 vi.mock("@/domains/intake/hooks/use-evidence-blob", () => ({
   useEvidenceBlob: () => ({
-    isImage: false,
-    downloadUrl: null,
+    downloadUrl: blobLinks.downloadUrl,
+    previewUrl: blobLinks.previewUrl,
     loadingUrl: false,
-    resolvedText: "dump body",
+    resolvedText: blobLinks.previewUrl === null ? "dump body" : null,
     loadingBlob: false,
-    hasUri: false,
+    hasUri: blobLinks.downloadUrl !== null,
     blobPlaceholder: false,
   }),
 }));
@@ -73,6 +78,55 @@ function render(ui: ReactElement) {
 }
 
 describe("EvidenceDetail", () => {
+  afterEach(() => {
+    blobLinks.downloadUrl = null;
+    blobLinks.previewUrl = null;
+  });
+
+  it("shows an image from its inline preview link, never from the download link", () => {
+    blobLinks.downloadUrl = "https://files.test/a.png?download";
+    blobLinks.previewUrl = "https://files.test/a.png?inline";
+    render(
+      <EvidenceDetail
+        entityPort={emptyEntityPickerPort()}
+        evidence={evidence({
+          kind: "file",
+          mime: "image/png",
+          uri: "c/a",
+          text: null,
+        })}
+        caseId={testId(10)}
+        jobs={[]}
+        actions={intakeActions()}
+      />
+    );
+
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://files.test/a.png?inline"
+    );
+  });
+
+  it("renders no image for a file without a preview link, even an image type", () => {
+    blobLinks.downloadUrl = "https://files.test/a.svg?download";
+    render(
+      <EvidenceDetail
+        entityPort={emptyEntityPickerPort()}
+        evidence={evidence({
+          kind: "file",
+          mime: "image/svg+xml",
+          uri: "c/a",
+          text: null,
+        })}
+        caseId={testId(10)}
+        jobs={[]}
+        actions={intakeActions()}
+      />
+    );
+
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+
   it("shows empty detail copy when nothing is selected", () => {
     render(
       <EvidenceDetail
