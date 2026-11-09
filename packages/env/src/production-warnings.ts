@@ -21,6 +21,8 @@ export function isLocalHost(hostname: string): boolean {
   if (host === "") return true;
   if (host === "localhost" || host.endsWith(".localhost")) return true;
   if (host === "::1" || IPV4_LOOPBACK.test(host)) return true;
+  // An IPv4-mapped loopback (`::ffff:127.0.0.1`, which URL parsing writes `::ffff:7f00:1`).
+  if (/^::ffff:(?:127\.|7f[0-9a-f]{2}:)/.test(host)) return true;
   // A bare name resolves inside the compose network; an IPv4 literal has dots and is not local.
   return !host.includes(".") && !host.includes(":") && !IPV4_ANY.test(host);
 }

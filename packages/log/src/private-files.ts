@@ -30,9 +30,10 @@ export function createPrivateLogDir(
     restrictNewFiles: async () => {
       const at = now();
       if (at - lastScan < RESCAN_MS) return;
-      lastScan = at;
       try {
         const names = await readdir(dir);
+        // Only a scan that ran starts the quiet period; a failed one is retried on the next write.
+        lastScan = at;
         await Promise.allSettled(
           names.map(async (name) => {
             await chmod(path.join(dir, name), LOG_FILE_MODE);

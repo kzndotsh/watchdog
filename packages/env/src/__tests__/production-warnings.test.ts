@@ -22,18 +22,23 @@ describe("isLocalHost", () => {
     "127.4.5.6",
     "::1",
     "[::1]",
+    "::ffff:127.0.0.1",
+    "[::ffff:7f00:1]",
     "postgres",
     "seaweedfs",
   ])("treats %s as local", (host) => {
     expect(isLocalHost(host)).toBe(true);
   });
 
-  it.each(["db.example.com", "10.0.0.5", "192.168.1.2", "2001:db8::1"])(
-    "treats %s as non-local",
-    (host) => {
-      expect(isLocalHost(host)).toBe(false);
-    }
-  );
+  it.each([
+    "db.example.com",
+    "10.0.0.5",
+    "192.168.1.2",
+    "2001:db8::1",
+    "[::ffff:a00:5]",
+  ])("treats %s as non-local", (host) => {
+    expect(isLocalHost(host)).toBe(false);
+  });
 });
 
 describe("transportWarnings", () => {
