@@ -38,6 +38,8 @@ const created = {
 
 beforeEach(() => {
   logged.length = 0;
+  resolveUserOrganizationId.mockReset();
+  onAuthSessionCreated.mockReset();
 });
 
 describe("session create hooks", () => {
