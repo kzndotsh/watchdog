@@ -190,8 +190,7 @@ function EvidenceJobsTab({
 
 function evidenceContentBody({
   canEnrich,
-  isImage,
-  downloadUrl,
+  previewUrl,
   isLoadingBlob,
   resolvedText,
   mime,
@@ -199,8 +198,7 @@ function evidenceContentBody({
   hasUri,
 }: {
   canEnrich: boolean;
-  isImage: boolean;
-  downloadUrl: string | null;
+  previewUrl: string | null;
   isLoadingBlob: boolean;
   resolvedText: string | null;
   mime: string | null;
@@ -209,12 +207,12 @@ function evidenceContentBody({
 }): ArtifactPreviewBody {
   if (isLoadingBlob) return { kind: "loading" };
 
-  if (isImage && downloadUrl !== null && downloadUrl !== "") {
+  if (previewUrl !== null && previewUrl !== "") {
     return {
       kind: "custom",
       children: (
         <img
-          src={downloadUrl}
+          src={previewUrl}
           alt={title}
           className="border-border max-w-full rounded-md border"
         />
@@ -251,8 +249,7 @@ function evidenceContentBody({
 type EvidenceContentPanelProps = {
   evidence: EvidenceRecord;
   canEnrich: boolean;
-  isImage: boolean;
-  downloadUrl: string | null;
+  previewUrl: string | null;
   isLoadingBlob: boolean;
   resolvedText: string | null;
   hasUri: boolean;
@@ -263,8 +260,7 @@ type EvidenceContentPanelProps = {
 function EvidenceContentPanel({
   evidence,
   canEnrich,
-  isImage,
-  downloadUrl,
+  previewUrl,
   isLoadingBlob,
   resolvedText,
   hasUri,
@@ -311,8 +307,7 @@ function EvidenceContentPanel({
           }
           body={evidenceContentBody({
             canEnrich,
-            isImage,
-            downloadUrl,
+            previewUrl,
             isLoadingBlob,
             resolvedText,
             mime: evidence.mime,
@@ -410,7 +405,7 @@ export function EvidenceDetail({
   }, [tab, focusedJobId]);
 
   const {
-    isImage,
+    previewUrl,
     downloadUrl,
     loadingUrl,
     resolvedText,
@@ -484,8 +479,7 @@ export function EvidenceDetail({
               <EvidenceContentPanel
                 evidence={evidence}
                 canEnrich={canEnrich}
-                isImage={isImage}
-                downloadUrl={downloadUrl}
+                previewUrl={previewUrl}
                 isLoadingBlob={loadingBlob}
                 resolvedText={resolvedText}
                 hasUri={hasUri}

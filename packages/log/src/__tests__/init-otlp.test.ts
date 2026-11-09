@@ -7,6 +7,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createLogger } from "@watchdog/log";
+import { listenFetchable } from "@watchdog/test-kit";
 
 import { initWatchdogLogger } from "../init.ts";
 
@@ -31,9 +32,7 @@ describe("initWatchdogLogger with an OTLP receiver that hangs", () => {
       sockets.add(socket);
       socket.on("close", () => sockets.delete(socket));
     });
-    await new Promise<void>((resolve) => {
-      server.listen(0, "127.0.0.1", resolve);
-    });
+    await listenFetchable(server, "127.0.0.1");
     const address = server.address();
     if (address === null || typeof address === "string") {
       throw new Error("receiver has no port");

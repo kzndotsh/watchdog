@@ -8,6 +8,7 @@ import { asCaseId } from "@watchdog/schemas/shared";
 import {
   blobStoreLayer,
   createPresignedGetEffect,
+  createPresignedInlineImageEffect,
   deleteCaseArtifactsEffect,
   readArtifactBytesEffect,
   uploadArtifactEffect,
@@ -52,6 +53,31 @@ describe("blobStoreLayer (local S3)", () => {
       _tag: "InternalError",
       reason: "Failed to read the artifact",
     });
+  });
+
+  it("serves a stored HTML file as a download, and a preview only as the forced image type", async () => {
+    const caseId = asCaseId(randomUUID());
+    const uploaded = await runLive(
+      uploadArtifactEffect({
+        caseId,
+        bytes: new TextEncoder().encode("<script>alert(1)</script>"),
+        mime: "text/html",
+        name: "page.html",
+      })
+    );
+
+    const download = await fetch(
+      await runLive(createPresignedGetEffect(uploaded.uri))
+    );
+    expect(download.headers.get("content-disposition")).toBe("attachment");
+
+    const preview = await fetch(
+      await runLive(createPresignedInlineImageEffect(uploaded.uri, "image/png"))
+    );
+    expect(preview.headers.get("content-disposition")).toBe("inline");
+    expect(preview.headers.get("content-type")).toBe("image/png");
+
+    await runLive(deleteCaseArtifactsEffect(caseId));
   });
 
   it("refuses an artifact over the read limit and reads one at it", async () => {

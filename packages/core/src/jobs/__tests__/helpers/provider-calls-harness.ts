@@ -15,6 +15,7 @@ import {
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { seedJob } from "@watchdog/test-db";
+import { listenFetchable } from "@watchdog/test-kit";
 import { mapToolsCatch, type ToolsTag } from "@watchdog/tools/errors";
 import {
   Egress,
@@ -81,9 +82,7 @@ export async function startProvider(
     }
     route.handle(res);
   });
-  await new Promise<void>((resolve) => {
-    server.listen(0, LOOPBACK, resolve);
-  });
+  await listenFetchable(server, LOOPBACK);
   const { port } = server.address() as AddressInfo;
   return {
     origin: `http://${LOOPBACK}:${port}`,

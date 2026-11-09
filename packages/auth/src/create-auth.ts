@@ -26,11 +26,13 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { assertNoClientApiKeyWrite } from "./api-key-guard";
+import { logAuthHookFailure } from "./hook-failure-log";
 import {
   DISABLED_ACCOUNT_MESSAGE,
   instanceAdminAccess,
 } from "./instance-admin";
 import { inviteSignupPlugin } from "./invite-signup-plugin";
+import { AUTH_RATE_LIMIT_RULES } from "./rate-limit-rules";
 import { sendInvitationEmail } from "./send-invitation-email";
 import {
   needsAuthoritativeSession,
@@ -127,18 +129,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
       before: beforeHook,
       after: sessionCacheAfterHook,
     },
-    // Better Auth applies this in production only (per IP, in memory). Paths not listed keep
-    // its defaults (sign-in and password flows are already throttled).
-    rateLimit: {
-      customRules: {
-        "/sign-up/email": { window: 60 * 60, max: 10 },
-        "/organization/create": { window: 60 * 60, max: 5 },
-        "/organization/delete": { window: 60 * 60, max: 5 },
-        "/organization/update-member-role": { window: 60, max: 10 },
-        "/organization/remove-member": { window: 60, max: 20 },
-        "/organization/invite-member": { window: 60, max: 20 },
-      },
-    },
+    rateLimit: { customRules: { ...AUTH_RATE_LIMIT_RULES } },
     advanced: {
       database: {
         generateId: () => crypto.randomUUID(),
@@ -162,7 +153,12 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
             const organizationId = await resolveUserOrganizationId(
               db,
               created.userId
-            ).catch(() => null);
+            ).catch((error: unknown) => {
+              logAuthHookFailure("auth.session_create_before", error, {
+                userId: created.userId,
+              });
+              return null;
+            });
             return organizationId
               ? { data: { ...created, activeOrganizationId: organizationId } }
               : undefined;
@@ -170,8 +166,12 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
           after: async (created) => {
             try {
               await onAuthSessionCreated(db, created);
-            } catch {
-              // Org stamp / auth_event must not fail sign-in.
+            } catch (error) {
+              // Org stamp / auth_event must not fail sign-in, but must not vanish either.
+              logAuthHookFailure("auth.session_create_after", error, {
+                userId: created.userId,
+                sessionId: created.id,
+              });
             }
           },
         },

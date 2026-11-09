@@ -19,13 +19,14 @@ export function buildEvidenceBlobState(input: {
   evidence: EvidenceRecord | null;
   isBlobTextNeeded: boolean;
   downloadUrl: string | null;
+  previewUrl: string | null;
   isLoadingUrl: boolean;
   blobText: string | null;
   isLoadingBlob: boolean;
 }) {
   return {
-    isImage: input.evidence?.mime?.startsWith("image/") ?? false,
     downloadUrl: input.downloadUrl,
+    previewUrl: input.previewUrl,
     loadingUrl: input.isLoadingUrl,
     resolvedText:
       input.evidence?.text ?? (input.isBlobTextNeeded ? input.blobText : null),
