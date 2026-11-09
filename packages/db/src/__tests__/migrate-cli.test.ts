@@ -6,11 +6,13 @@ import { describe, expect, it } from "vitest";
 const cli = path.resolve(import.meta.dirname, "../migrate-cli.ts");
 
 function run(env: Record<string, string>) {
-  return spawnSync("pnpm", ["exec", "tsx", cli], {
+  // Node with the tsx loader (resolved from the repo root), not `pnpm exec`: no package-manager
+  // startup or environment in the way of what the migrator itself prints.
+  return spawnSync(process.execPath, ["--import", "tsx", cli], {
     cwd: path.resolve(import.meta.dirname, "../.."),
     env: { PATH: process.env.PATH, HOME: process.env.HOME, ...env },
     encoding: "utf-8",
-    timeout: 30_000,
+    timeout: 60_000,
   });
 }
 
@@ -20,7 +22,8 @@ describe("migrate-cli in production", () => {
       NODE_ENV: "production",
       DATABASE_URL_MIGRATE: "postgresql://postgres:postgres@127.0.0.1:1/wd",
     });
-    expect(result.status).toBe(1);
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(1);
     expect(result.stderr).toContain("placeholder or a development default");
   });
 
