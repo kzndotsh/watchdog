@@ -3,8 +3,8 @@ import { chmod, lstat, readdir } from "node:fs/promises";
 import path from "node:path";
 
 /** Owner-only: log events carry request and Job detail that other local users must not read. */
-export const LOG_DIR_MODE = 0o700;
-export const LOG_FILE_MODE = 0o600;
+const LOG_DIR_MODE = 0o700;
+const LOG_FILE_MODE = 0o600;
 
 /** Between directory scans after the first write: bounds the readdir cost to one every few seconds. */
 const RESCAN_MS = 5000;
