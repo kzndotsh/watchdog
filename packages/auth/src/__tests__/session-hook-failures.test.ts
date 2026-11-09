@@ -44,20 +44,34 @@ beforeEach(() => {
 
 describe("session create hooks", () => {
   it("logs a failed organization lookup with ids only, and still starts the session", async () => {
-    resolveUserOrganizationId.mockRejectedValue(new Error("db down"));
+    resolveUserOrganizationId.mockRejectedValue(
+      Object.assign(
+        new Error("Failed query: params 203.0.113.9,ada@example.test"),
+        {
+          code: "57P01",
+        }
+      )
+    );
 
     await expect(hooks?.before?.(created)).resolves.toBeUndefined();
 
     expect(logged).toEqual([
       {
-        fields: { scope: "auth.session_create_before", userId: "user-1" },
-        error: new Error("db down"),
+        fields: {
+          scope: "auth.session_create_before",
+          userId: "user-1",
+          errorName: "Error",
+          sqlState: "57P01",
+        },
+        error: new Error("auth.session_create_before failed"),
       },
     ]);
   });
 
   it("logs a failed session stamp with ids only, and does not fail sign-in", async () => {
-    onAuthSessionCreated.mockRejectedValue(new Error("stamp failed"));
+    onAuthSessionCreated.mockRejectedValue(
+      new Error("Failed query: params 203.0.113.9,Mozilla ada@example.test")
+    );
 
     await expect(hooks?.after?.(created)).resolves.toBeUndefined();
 
@@ -67,10 +81,17 @@ describe("session create hooks", () => {
           scope: "auth.session_create_after",
           userId: "user-1",
           sessionId: "session-1",
+          errorName: "Error",
+          sqlState: undefined,
         },
-        error: new Error("stamp failed"),
+        error: new Error("auth.session_create_after failed"),
       },
     ]);
-    expect(JSON.stringify(logged)).not.toContain("secret-token");
+    const text = JSON.stringify(logged, (_key, value: unknown) =>
+      value instanceof Error ? value.message : value
+    );
+    expect(text).not.toContain("secret-token");
+    expect(text).not.toContain("203.0.113.9");
+    expect(text).not.toContain("ada@example.test");
   });
 });
