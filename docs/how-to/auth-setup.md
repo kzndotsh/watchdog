@@ -23,7 +23,7 @@ The instance admin has `auth.user.role` `admin`. On an open-signup install the f
 
 Surfaces that show who acted use the user's handle (from `auth.user.name`, slugged; else email local-part), not the raw id. CLI/API-key runs store `api-key:<key name>` in `actor_label` for display and the key's id in `actor_key_id` on Graph history and Activity (the API tells a key from a session by the caller's credential, `{ kind: "session" } | { kind: "apiKey", keyId, scopes }`, never by the label); a Job and its Playbook run keep the key's id in `actor_key_id` too, and the Job's pre-flight cancels it when the key is deleted, disabled or expired, or when its creator left the organization or is banned (a deleted or banned user's queued work stops, not only new requests); vault and Graph still key off the **user** id. Caps never set actor.
 
-Sign-up, organization and invite actions are rate-limited in production only (`rateLimit.customRules` in `packages/auth/src/create-auth.ts`). The server core (`createAuth`, `createApiContext`, invite signup, instance admin) lives in `packages/auth`; `apps/web/src/auth/` keeps the client, views and routes.
+Sign-up, organization and invite actions are rate-limited in production only (`AUTH_RATE_LIMIT_RULES` in `packages/auth/src/rate-limit-rules.ts`, per IP). Every endpoint that creates an account (email sign-up, invite sign-up, admin create-user) or reads invitation details (preview, get, list) has an explicit rule; a test fails when one does not. The server core (`createAuth`, `createApiContext`, invite signup, instance admin) lives in `packages/auth`; `apps/web/src/auth/` keeps the client, views and routes.
 
 ## First-Case step
 
