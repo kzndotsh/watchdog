@@ -644,6 +644,48 @@ describe("api events route: activity log", () => {
     }
   });
 
+  it("keeps out a Case deleted before this stream first saw it, even when an older read includes it", async () => {
+    vi.useFakeTimers();
+    try {
+      const other = testId(21);
+      const fresh = testId(24);
+      listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([other]));
+      const response = await connect();
+      await readUntil(response, (text) => text.includes("connected"));
+
+      // A Case created after connect: the beat's read sees it and is held there.
+      let finishRead: (ids: string[]) => void = () => undefined;
+      listVisibleCaseIdsEffectMock.mockReturnValueOnce(
+        Effect.promise(
+          () =>
+            new Promise<string[]>((resolve) => {
+              finishRead = resolve;
+            })
+        )
+      );
+      await vi.advanceTimersByTimeAsync(25_000);
+
+      listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([other]));
+      tailerState.listener?.({
+        ...entry(1, fresh),
+        kind: "case",
+        action: "deleted",
+      });
+      await vi.advanceTimersByTimeAsync(0);
+      finishRead([fresh, other]);
+      await vi.advanceTimersByTimeAsync(0);
+
+      tailerState.listener?.(entry(2, fresh));
+      tailerState.listener?.(entry(3, other));
+      const text = await readUntil(response, (t) => t.includes("id: 7:3\n"));
+      expect(text).not.toContain("id: 7:1\n");
+      expect(text).not.toContain("id: 7:2\n");
+      await response.body?.cancel();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("does not announce a deleted Case this stream never saw (another organization's)", async () => {
     const response = await connect();
     await readUntil(response, (text) => text.includes("connected"));

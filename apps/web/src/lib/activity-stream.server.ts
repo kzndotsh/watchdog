@@ -236,10 +236,11 @@ export async function openActivityStream(request: Request): Promise<Response> {
           // The Case just left the visible set: tell this client once (other sessions refresh
           // their lists from it), then stop delivering its entries at once instead of at the
           // next heartbeat. A `restored` entry finds the Case missing and refreshes the set.
-          if (known.has(entry.caseId)) {
-            tombstone(entry.caseId);
-            sendEntry(entry);
-          }
+          // The tombstone is kept even for a Case never seen here: a read in flight may still
+          // include it.
+          const seen = known.has(entry.caseId);
+          tombstone(entry.caseId);
+          if (seen) sendEntry(entry);
           return;
         }
         if (!(await isVisible(entry.caseId))) return;
