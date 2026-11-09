@@ -351,16 +351,19 @@ describe("an organization change refreshes the cached session", () => {
     const inviter = await seedUser({ withOrg: true });
     const jar = new Map<string, string>();
     const headers = cookieHeader(await signIn(invitee.email), jar);
+    const left = invitee.organizationId;
+    if (left === null)
+      throw new Error("invitee seeded without an organization");
     const { headers: activeHeaders } = await auth.api.setActiveOrganization({
       headers,
-      body: { organizationId: invitee.organizationId },
+      body: { organizationId: left },
       returnHeaders: true,
     });
     const before = cookieHeader(activeHeaders.getSetCookie(), jar);
     expect(
       (await auth.api.getSession({ headers: before }))?.session
         .activeOrganizationId
-    ).toBe(invitee.organizationId);
+    ).toBe(left);
 
     const joined = inviter.organizationId;
     if (joined === null)
