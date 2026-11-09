@@ -35,7 +35,7 @@ function EvidencePreviewBody({
   caseId: string;
 }) {
   const {
-    isImage,
+    previewUrl,
     downloadUrl,
     loadingUrl,
     resolvedText,
@@ -113,11 +113,11 @@ function EvidencePreviewBody({
             </MetaRow>
           ) : null}
 
-          {isImage && downloadUrl !== null && downloadUrl !== "" ? (
+          {previewUrl !== null && previewUrl !== "" ? (
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs">Preview</span>
               <img
-                src={downloadUrl}
+                src={previewUrl}
                 alt={evidence.label ?? "evidence"}
                 className="max-w-full rounded-md border"
               />

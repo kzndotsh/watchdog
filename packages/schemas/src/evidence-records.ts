@@ -38,3 +38,13 @@ export const evidenceListPageSchema = listPageSchema(evidenceSchema);
 export const evidencePickerPageSchema = listPageSchema(
   evidencePickerItemSchema
 );
+
+/**
+ * Short-lived links to one Evidence file. `url` always downloads it as a file; `previewUrl`
+ * renders inline and is set only for an allowlisted image type (`INLINE_IMAGE_MIMES`).
+ */
+export const evidenceDownloadUrlsSchema = z.object({
+  url: z.string().nullable(),
+  previewUrl: z.string().nullable(),
+});
+export type EvidenceDownloadUrls = z.output<typeof evidenceDownloadUrlsSchema>;
