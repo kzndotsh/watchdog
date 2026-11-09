@@ -8,6 +8,7 @@ import {
   type DbExec,
 } from "@watchdog/db";
 import type { ActivityEntry } from "@watchdog/schemas/feed";
+import type { OrganizationId } from "@watchdog/schemas/shared";
 
 import { InternalError } from "../errors/tagged-errors";
 import { Db } from "../infra/db-service";
@@ -21,10 +22,12 @@ export type ActivityTailerApi = {
    * on. The first subscriber opens the process's single LISTEN connection and
    * the last one to leave closes it. The Effect completes once the cursor is
    * initialised (replay history only after that, with `createActivityGate`) and
-   * returns the unsubscribe function.
+   * returns the unsubscribe function. With `organizationId`, only that organization's
+   * entries reach the listener (an SSE stream); without it, every organization's do.
    */
   readonly subscribe: (
-    listener: (entry: ActivityEntry) => void
+    listener: (entry: ActivityEntry) => void,
+    scope?: { readonly organizationId: OrganizationId }
   ) => Effect.Effect<() => void, InternalError>;
 };
 
@@ -63,9 +66,14 @@ export function liveTailerOptions(
 
 function adapt(tailer: DbActivityTailer): ActivityTailerApi {
   return {
-    subscribe: (listener) =>
+    subscribe: (listener, scope) =>
       Effect.suspend(() => {
         const subscription = tailer.subscribe((row: ActivityRow) => {
+          if (
+            scope !== undefined &&
+            row.organizationId !== scope.organizationId
+          )
+            return;
           listener(toActivityEntry(row));
         });
         return Effect.tryPromise({

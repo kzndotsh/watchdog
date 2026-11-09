@@ -110,14 +110,32 @@ export async function openActivityStream(request: Request): Promise<Response> {
   // Every Case this stream has seen visible: a `deleted` entry is for those only (the Case is no
   // longer in anyone's visible set by then, so the set cannot say whose it was).
   const known = new Set<string>();
+  // Refreshes run concurrently (the heartbeat's is not on the entry chain), so each one is
+  // stamped when it starts. A result older than one already applied is dropped, and a Case
+  // tombstoned after a refresh started stays out of that refresh's result: the read may have
+  // seen it before the delete committed.
+  let clock = 0;
+  let appliedAt = 0;
+  const tombstonedAt = new Map<string, number>();
 
   async function refreshVisible(): Promise<void> {
+    clock += 1;
+    const startedAt = clock;
+    const ids = await runApp(listVisibleCaseIdsEffect(scopeOrganizationId));
+    if (startedAt < appliedAt) return;
+    appliedAt = startedAt;
     allowed = new Set(
-      await runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
+      ids.filter((id) => (tombstonedAt.get(id) ?? 0) < startedAt)
     );
     for (const id of allowed) known.add(id);
   }
   await refreshVisible();
+
+  function tombstone(eventCaseId: string): void {
+    clock += 1;
+    tombstonedAt.set(eventCaseId, clock);
+    allowed.delete(eventCaseId);
+  }
 
   async function isVisible(eventCaseId: string): Promise<boolean> {
     if (allowed.has(eventCaseId)) return true;
@@ -218,10 +236,11 @@ export async function openActivityStream(request: Request): Promise<Response> {
           // The Case just left the visible set: tell this client once (other sessions refresh
           // their lists from it), then stop delivering its entries at once instead of at the
           // next heartbeat. A `restored` entry finds the Case missing and refreshes the set.
-          if (known.has(entry.caseId)) {
-            allowed.delete(entry.caseId);
-            sendEntry(entry);
-          }
+          // The tombstone is kept even for a Case never seen here: a read in flight may still
+          // include it.
+          const seen = known.has(entry.caseId);
+          tombstone(entry.caseId);
+          if (seen) sendEntry(entry);
           return;
         }
         if (!(await isVisible(entry.caseId))) return;
@@ -234,7 +253,9 @@ export async function openActivityStream(request: Request): Promise<Response> {
         try {
           unsubscribe = await runApp(
             Effect.flatMap(Effect.service(ActivityTailer), (tailer) =>
-              tailer.subscribe(gate.live)
+              tailer.subscribe(gate.live, {
+                organizationId: scopeOrganizationId,
+              })
             )
           );
         } catch (error) {
