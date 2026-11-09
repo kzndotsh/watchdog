@@ -28,11 +28,16 @@ import {
   JOB_RECONCILE,
 } from "@watchdog/core/maintenance";
 import type { Vault } from "@watchdog/core/vault";
-import { errorReportingSettings, otlpSettings } from "@watchdog/env/server";
+import {
+  errorReportingSettings,
+  otlpSettings,
+  startupWarnings,
+} from "@watchdog/env/server";
 import {
   createLogger,
   initWatchdogLogger,
   jobWideEventFields,
+  logStartupWarnings,
 } from "@watchdog/log";
 import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
@@ -273,6 +278,7 @@ function initWorkerLogger(): void {
     errorReporting: errorReportingSettings(),
     otlp: otlpSettings(),
   });
+  logStartupWarnings("startup-config", startupWarnings());
 }
 
 /**

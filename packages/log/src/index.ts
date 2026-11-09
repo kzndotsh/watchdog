@@ -5,6 +5,7 @@ export { identifyUser, maskEmail } from "evlog/better-auth";
 export {
   flushWatchdogLogger,
   initWatchdogLogger,
+  logStartupWarnings,
   type InitWatchdogLoggerOptions,
 } from "./init";
 export {

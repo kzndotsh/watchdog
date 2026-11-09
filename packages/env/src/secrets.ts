@@ -110,3 +110,40 @@ export function secretString(name: string, options: SecretOptions = {}) {
       }
     );
 }
+
+/**
+ * Database passwords the local dev stack ships (`scripts/init-env.sh`: `watchdog_app:watchdog`,
+ * `postgres:postgres`). Fine on a laptop, refused in production beside the placeholder list.
+ */
+const DEV_DB_PASSWORDS = new Set<string>(["watchdog", "postgres"]);
+
+/** The password in a Postgres connection URL, decoded; `undefined` when absent or unparsable. */
+export function databaseUrlPassword(url: string): string | undefined {
+  try {
+    const { password } = new URL(url);
+    return password === "" ? undefined : decodeURIComponent(password);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * A connection URL whose password is not a placeholder or a shipped dev default when `NODE_ENV`
+ * is production. Reuses `isPlaceholderSecret`; dev and test keep their short local passwords.
+ */
+export function refuseProductionDbPlaceholder(name: string) {
+  return {
+    check: (url: string) => {
+      const password = databaseUrlPassword(url);
+      return !(
+        process.env.NODE_ENV === "production" &&
+        password !== undefined &&
+        (isPlaceholderSecret(password) ||
+          DEV_DB_PASSWORDS.has(password.trim().toLowerCase()))
+      );
+    },
+    params: {
+      error: `${name} has a placeholder or development password, which is refused in production. Set a real one: ${GENERATE_SECRET_HINT}.`,
+    },
+  };
+}

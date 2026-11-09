@@ -5,8 +5,13 @@ import { allEnvFields, createEnvOptions } from "./fragments";
 import { lenientEnv } from "./lenient";
 import { loadRepoEnv } from "./load";
 import { readFieldMeta } from "./meta";
+import {
+  assertValidationNotSkipped,
+  transportWarnings,
+} from "./production-warnings";
 
 loadRepoEnv();
+assertValidationNotSkipped(process.env);
 
 /**
  * Platform boot secrets for web / worker / db / core.
@@ -67,4 +72,19 @@ export function otlpSettings() {
     environment: env.NODE_ENV,
     secrets: sensitiveEnvValues(),
   };
+}
+
+/**
+ * One line per setting that sends data or credentials without TLS (production only; see
+ * `./production-warnings`). Web and worker log each at start, once.
+ */
+export function startupWarnings(): string[] {
+  return transportWarnings({
+    NODE_ENV: env.NODE_ENV,
+    DATABASE_URL: env.DATABASE_URL,
+    BETTER_AUTH_URL: env.BETTER_AUTH_URL,
+    S3_PUBLIC_URL: env.S3_PUBLIC_URL,
+    WD_OTLP_ENDPOINT: env.WD_OTLP_ENDPOINT,
+    WD_ERROR_REPORTING_DSN: env.WD_ERROR_REPORTING_DSN,
+  });
 }

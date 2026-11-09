@@ -118,7 +118,7 @@ function reference() {
     "- **Required** means startup fails without it. `web` and `worker` validate the same schema, so both containers need every required variable, even one only the web app uses.",
     "- **Secret** variables are written blank in `env.example` and must never be logged or committed.",
     "- **Used by** names the entrypoint that reads the variable: `web` (the app and API), `worker`, `cli` (`wd`), `migrate` (the container's migrator), `site` (the marketing site) or `compose` (only `docker-compose.prod.yml` reads it).",
-    "- **Placeholders and short secrets are refused at startup.** `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`, ...); `S3_SECRET_KEY` may not be a placeholder, nor the development default when `NODE_ENV` is `production`. The error names the variable. Generate a value with `openssl rand -base64 32`.",
+    "- **Placeholders and short secrets are refused at startup.** `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`, ...); `S3_SECRET_KEY` may not be a placeholder, nor the development default when `NODE_ENV` is `production`; the password in `DATABASE_URL` (and `DATABASE_URL_MIGRATE`) may not be a placeholder or a shipped development password (`watchdog`, `postgres`) when `NODE_ENV` is `production`. The error names the variable. Generate a value with `openssl rand -base64 32`.",
     "- An empty value counts as unset.",
   ];
   for (const group of groups) {

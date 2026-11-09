@@ -11,6 +11,7 @@ import {
   type OtlpExporter,
   type OtlpSettings,
 } from "./otlp-export";
+import { createPrivateLogDir } from "./private-files";
 import { createSentrySink } from "./sentry-sink";
 
 export type InitWatchdogLoggerOptions = {
@@ -98,6 +99,14 @@ function warnOnce(scope: string, message: string): void {
   void log.emit();
 }
 
+/** Log one warning per message under `scope` (startup checks: nothing here stops the process). */
+export function logStartupWarnings(
+  scope: string,
+  messages: readonly string[]
+): void {
+  for (const message of messages) warnOnce(scope, message);
+}
+
 /** Init process logger once (FS NDJSON + stdout). Safe to call again (HMR). */
 export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   if (initialized) return;
@@ -107,11 +116,13 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   // Console/stdout only; FS drain stays compact NDJSON for parsers.
   const consolePretty = options.pretty ?? !isProd;
 
+  const drainDir = resolveDrainDir(options.drainDir);
+  const privateDir = createPrivateLogDir(drainDir);
   const fsDrain = createFsDrain({
     pretty: false,
     maxFiles: 14,
     maxSizePerFile: 10 * 1024 * 1024,
-    dir: resolveDrainDir(options.drainDir),
+    dir: drainDir,
   });
   const dsnRejected = setUpErrorReporting(options);
   const otlp = setUpOtlpExport(options.otlp, options.service);
@@ -134,6 +145,7 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
       reportWideEvent(ctx.event);
       otlp.exporter?.push(ctx.event);
       await fsDrain(ctx);
+      await privateDir.restrictNewFiles();
     },
   });
 

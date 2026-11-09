@@ -86,6 +86,22 @@ Turning it on is a decision for you, the operator: you are responsible for a law
 
 The app refuses to start with a placeholder or weak secret and names the variable in its log (a web container answers 500 and reports unhealthy). `BETTER_AUTH_SECRET` and `WD_MASTER_VAULT_KEY` need at least 32 characters and may not be a known placeholder (`change-me...`, `secret`, `password`); `S3_SECRET_KEY` may not be a placeholder or the development default. Generate each with `openssl rand -base64 32`. The rules are listed in the [configuration reference](../reference/platform/configuration.md#how-to-read-it).
 
+In production the password in `DATABASE_URL` is held to the same list (a placeholder, or the development passwords `watchdog` and `postgres`, is refused). A process with `SKIP_ENV_VALIDATION=1` and `NODE_ENV=production` refuses to start: that switch turns every check off and is for lint and image builds only.
+
+## Transport warnings at start
+
+A production `web` and `worker` log one warning at start for each setting that sends data or credentials without TLS. The warning names the variable, never its value; nothing stops the process.
+
+- `DATABASE_URL` on a non-local host without `sslmode` (or with `disable`, `allow` or `prefer`): add `sslmode=require` or `verify-full`.
+- `BETTER_AUTH_URL` or `S3_PUBLIC_URL` with an `http:` URL on a non-local host.
+- `WD_OTLP_ENDPOINT` or `WD_ERROR_REPORTING_DSN` with an `http:` URL on a non-local host.
+
+Local means `localhost`, `127.0.0.0/8`, `::1` and a name without a dot (a compose service such as `postgres`). A private IP such as `10.0.0.5` is not local: encrypt it or accept the warning.
+
+SMTP on any port other than 465 must upgrade to TLS with STARTTLS; mail is not sent when the server does not offer it. `SMTP_ALLOW_INSECURE=1` opts out, for a relay on a trusted network.
+
+The NDJSON log directory is created owner-only (0700) and its files 0600.
+
 ## Migrations on start
 
 The entrypoint (`docker/entrypoint.sh`) runs `migrate.mjs` before the app starts. It applies the same migrations as `pnpm db:migrate` (same `drizzle` folder and bookkeeping table) without drizzle-kit, under a Postgres advisory lock, so two replicas starting together take turns: the second waits, then finds nothing to apply. A failing migration rolls back, prints `migrate: failed: ...` and exits non-zero **before the app listens**; with `restart: unless-stopped` the container retries until you fix it.

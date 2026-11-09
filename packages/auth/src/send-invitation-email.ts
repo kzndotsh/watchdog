@@ -43,6 +43,7 @@ export async function sendInvitationEmail(
       port: env.SMTP_PORT,
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
+      allowInsecure: env.SMTP_ALLOW_INSECURE,
       from,
       to: data.email,
       subject: `Join ${data.organization.name} on Watchdog`,
