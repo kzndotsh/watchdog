@@ -54,6 +54,9 @@ async function unlisten(server: ListenableServer): Promise<void> {
   });
 }
 
+/** Listens before giving up; the bad-port list is ~80 of 64k ports, so one retry is rare. */
+const MAX_ATTEMPTS = 20;
+
 /**
  * Listen on a free port of `host` that `fetch` will call, and return it. A test server must
  * use this instead of `listen(0)`: an ephemeral port on the fetch bad-port list fails every
@@ -63,11 +66,14 @@ export async function listenFetchable(
   server: ListenableServer,
   host = "127.0.0.1"
 ): Promise<number> {
-  for (;;) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- one port at a time until a usable one
     const port = await listenOnce(server, host);
     if (!FETCH_BAD_PORTS.has(port)) return port;
     // oxlint-disable-next-line eslint/no-await-in-loop -- free the bad port before the next try
     await unlisten(server);
   }
+  throw new Error(
+    `listenFetchable: every one of ${MAX_ATTEMPTS} ports the OS handed out is a fetch bad port`
+  );
 }

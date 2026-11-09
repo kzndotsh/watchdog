@@ -62,6 +62,11 @@ describe("listenFetchable", () => {
     expect(FETCH_BAD_PORTS.has(port)).toBe(false);
   });
 
+  it("fails after a bounded number of bad ports instead of hanging", async () => {
+    const { server } = scriptedServer(Array.from({ length: 30 }, () => 6000));
+    await expect(listenFetchable(server)).rejects.toThrow(/fetch bad port/);
+  });
+
   it("gives up each fetch bad port it is handed and listens again", async () => {
     const { server, calls } = scriptedServer([6000, 10_080, 41_234]);
     expect(await listenFetchable(server)).toBe(41_234);
@@ -78,9 +83,17 @@ describe("test servers", () => {
       { cwd: root, encoding: "utf-8" }
     )
       .split("\n")
-      .filter((file) => file !== "" && !file.endsWith("loopback-port.test.ts"));
-    const offenders = files.filter((file) =>
-      /\.listen\(\s*0\s*[,)]/.test(readFileSync(path.join(root, file), "utf-8"))
+      .filter((file) => file !== "");
+    // An empty listing would pass vacuously: this file itself must be among those scanned.
+    expect(files).toContain(
+      "packages/test-kit/src/__tests__/loopback-port.test.ts"
+    );
+    const offenders = files.filter(
+      (file) =>
+        !file.endsWith("loopback-port.test.ts") &&
+        /\.listen\(\s*0\s*[,)]/.test(
+          readFileSync(path.join(root, file), "utf-8")
+        )
     );
     expect(offenders).toEqual([]);
   });
