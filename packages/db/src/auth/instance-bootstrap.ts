@@ -45,11 +45,13 @@ export async function hasInstanceAdmin(exec: DbExec): Promise<boolean> {
  * enables/disables accounts). Later accounts are ordinary users; organizations
  * are created by users themselves (onboarding) or joined by invitation.
  *
- * Better Auth runs this after the signup commits, so concurrent signups all see each other.
- * Under the bootstrap advisory lock, the account is promoted only when no instance admin
- * exists yet and it is the oldest account (`created_at`, then id): at most one of any number
- * of simultaneous signups wins, and none does once an admin exists. Returns whether this
- * user was promoted.
+ * Better Auth runs this after the signup commits. Under the bootstrap advisory lock, the
+ * account is promoted only when no instance admin exists yet and it is the oldest account
+ * this check can see (`created_at`, then id). Every hook runs after its own commit, so of any
+ * number of simultaneous signups exactly one wins (not always the earliest created: a signup
+ * still committing is not visible yet), and none does once an admin exists. A later signup
+ * is promoted only when no other account exists, as before. Returns whether this user was
+ * promoted.
  */
 export async function promoteFirstUserToInstanceAdmin(
   exec: DbExec,

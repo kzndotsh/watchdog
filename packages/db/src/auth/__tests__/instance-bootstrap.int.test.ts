@@ -87,6 +87,15 @@ describe("promoteFirstUserToInstanceAdmin", () => {
       await tx.update(user).set({ role: "admin" }).where(eq(user.id, adminId));
 
       expect(await promoteFirstUserToInstanceAdmin(tx, oldestId)).toBe(false);
+
+      const roles = await tx
+        .select({ id: user.id, role: user.role })
+        .from(user)
+        .orderBy(user.createdAt);
+      expect(roles).toEqual([
+        { id: oldestId, role: "user" },
+        { id: adminId, role: "admin" },
+      ]);
     });
   });
 });
