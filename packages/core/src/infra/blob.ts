@@ -11,6 +11,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Effect } from "effect";
 
 import type { ArtifactReadLimit } from "@watchdog/caps/sdk";
+import type { InlineImageMime } from "@watchdog/schemas/evidence";
 import {
   MAX_UPLOAD_BYTES,
   sha256HexSchema,
@@ -234,29 +235,63 @@ export function readArtifactBytesEffect(
   });
 }
 
-export function createPresignedGetEffect(
+function signGet(
   uri: string,
-  expiresIn = 300,
-  /** Makes the download save as this file name (`Content-Disposition: attachment`). */
-  filename?: string
+  expiresIn: number,
+  response: {
+    ResponseContentDisposition: string;
+    ResponseContentType?: string;
+  }
 ): Effect.Effect<string, InternalError, BlobStore> {
-  return Effect.gen(function* createPresignedGetGen() {
+  return Effect.gen(function* signGetGen() {
     const { client, presignClient, bucket } = yield* BlobStore;
     return yield* blobTry("sign the download URL", () =>
       getSignedUrl(
         presignClient ?? client,
-        new GetObjectCommand({
-          Bucket: bucket,
-          Key: uri,
-          ...(filename === undefined
-            ? {}
-            : {
-                ResponseContentDisposition: `attachment; filename="${filename}"`,
-              }),
-        }),
+        new GetObjectCommand({ Bucket: bucket, Key: uri, ...response }),
         { expiresIn }
       )
     );
+  });
+}
+
+/** A file name safe inside a quoted `filename=` value: no quotes, backslashes or control characters. */
+function quotedFilename(name: string): string {
+  // oxlint-disable-next-line no-control-regex -- control characters are what this strips
+  return name.replaceAll(/["\\\u0000-\u001F\u007F]/g, "_");
+}
+
+/**
+ * A short-lived GET URL that always makes the browser save the object
+ * (`Content-Disposition: attachment`), whatever its stored content type: a stored HTML or SVG
+ * file never renders on the object store's origin. `filename` names the saved file.
+ */
+export function createPresignedGetEffect(
+  uri: string,
+  expiresIn = 300,
+  filename?: string
+): Effect.Effect<string, InternalError, BlobStore> {
+  return signGet(uri, expiresIn, {
+    ResponseContentDisposition:
+      filename === undefined
+        ? "attachment"
+        : `attachment; filename="${quotedFilename(filename)}"`,
+  });
+}
+
+/**
+ * A short-lived GET URL for an inline image preview: `Content-Disposition: inline` with the
+ * response `Content-Type` forced to an allowlisted image type, so the bytes are only ever
+ * read as that image.
+ */
+export function createPresignedInlineImageEffect(
+  uri: string,
+  contentType: InlineImageMime,
+  expiresIn = 300
+): Effect.Effect<string, InternalError, BlobStore> {
+  return signGet(uri, expiresIn, {
+    ResponseContentDisposition: "inline",
+    ResponseContentType: contentType,
   });
 }
 

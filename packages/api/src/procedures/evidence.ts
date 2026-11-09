@@ -32,6 +32,7 @@ import {
   evidenceListPageSchema,
   evidencePickerItemSchema,
   evidencePickerPageSchema,
+  evidenceDownloadUrlsSchema,
 } from "@watchdog/schemas/evidence";
 import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 import { jobSchema, providerCallListSchema } from "@watchdog/schemas/jobs";
@@ -318,7 +319,7 @@ export const downloadUrl = authed
     tags: ["evidence"],
   })
   .input(evidenceScopeInputSchema)
-  .output(z.object({ url: z.string().nullable() }))
+  .output(evidenceDownloadUrlsSchema)
   .handler(async ({ input, context }) =>
     runApp(
       getEvidenceDownloadUrlEffect(
