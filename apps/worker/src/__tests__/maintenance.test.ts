@@ -67,7 +67,7 @@ describe("maintenanceLoopEffect", () => {
 
   it.effect("runs at boot, then again every spacing", () =>
     Effect.gen(function* loopScheduleGen() {
-      const run = vi.fn(() => Effect.sync(() => undefined));
+      const run = vi.fn(() => Effect.undefined);
       yield* maintenanceLoopEffect(taskOf(run)).pipe(
         Effect.provide(services),
         Effect.forkChild
@@ -85,7 +85,7 @@ describe("maintenanceLoopEffect", () => {
 
   it.effect("waits one spacing before the first run when asked", () =>
     Effect.gen(function* loopDelayFirstGen() {
-      const run = vi.fn(() => Effect.sync(() => undefined));
+      const run = vi.fn(() => Effect.undefined);
       yield* maintenanceLoopEffect(
         taskOf(run, { every: "60 seconds", delayFirst: true })
       ).pipe(Effect.provide(services), Effect.forkChild);
@@ -107,7 +107,7 @@ describe("maintenanceLoopEffect", () => {
         const run = vi
           .fn<() => Run>()
           .mockReturnValueOnce(Effect.succeed({ message: "did 2", done: 2 }))
-          .mockReturnValue(Effect.sync(() => undefined));
+          .mockReturnValue(Effect.undefined);
         yield* maintenanceLoopEffect(taskOf(run)).pipe(
           Effect.provide(services),
           Effect.forkChild
@@ -176,8 +176,8 @@ describe("runMaintenanceOnceEffect", () => {
 describe("forkMaintenanceEffect", () => {
   it.effect("forks every task on its own spacing", () =>
     Effect.gen(function* forkAllGen() {
-      const hourly = vi.fn(() => Effect.sync(() => undefined));
-      const daily = vi.fn(() => Effect.sync(() => undefined));
+      const hourly = vi.fn(() => Effect.undefined);
+      const daily = vi.fn(() => Effect.undefined);
       yield* forkMaintenanceEffect([
         taskOf(hourly),
         taskOf(daily, { every: "24 hours" }),

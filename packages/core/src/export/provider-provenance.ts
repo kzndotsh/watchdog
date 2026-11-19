@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Stream } from "effect";
 import { strToU8 } from "fflate";
 
 import type { ProviderCallWithOutcome } from "@watchdog/db";
@@ -165,11 +165,11 @@ function writeRawBodiesEffect(
           })
         );
         if (response === null) continue;
-        yield* step("writing a provider response", (signal) =>
+        yield* step(
+          "writing a provider response",
           zip.addStream(
             `${caseSlug}/${providerResponsePath(callId)}`,
-            [response.bytes],
-            signal
+            Stream.make(response.bytes)
           )
         );
         written.add(callId);
@@ -262,11 +262,12 @@ function writeEnvelopesEffect(
         else if (row.outcome?.bodyState === "stored") storedWithheld += 1;
       }
       calls += kept.length;
-      yield* step("writing provider calls", (signal) =>
-        entry.push(strToU8(lines.join("")), signal)
+      yield* step(
+        "writing provider calls",
+        entry.push(strToU8(lines.join("")))
       );
     }
-    yield* step("writing provider calls", () => entry.end());
+    yield* step("writing provider calls", entry.end);
     return { calls, included, storedWithheld, capabilityIds };
   });
 }
@@ -302,18 +303,18 @@ export function writeProviderProvenanceEffect(
       bodies.written,
       exportedEvidence
     );
-    yield* step("writing ATTRIBUTION.md", (signal) =>
+    yield* step(
+      "writing ATTRIBUTION.md",
       zip.addText(
         `${caseSlug}/ATTRIBUTION.md`,
-        buildAttributionMarkdown(caseSlug, exportedAt, envelopes.capabilityIds),
-        signal
+        buildAttributionMarkdown(caseSlug, exportedAt, envelopes.capabilityIds)
       )
     );
-    yield* step("writing VERIFY.md", (signal) =>
+    yield* step(
+      "writing VERIFY.md",
       zip.addText(
         `${caseSlug}/VERIFY.md`,
-        buildVerifyMarkdown(caseSlug, breach),
-        signal
+        buildVerifyMarkdown(caseSlug, breach)
       )
     );
     return {

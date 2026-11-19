@@ -8,7 +8,7 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { Effect } from "effect";
+import { Effect, Stream } from "effect";
 
 import type { ArtifactReadLimit } from "@watchdog/caps/sdk";
 import type { InlineImageMime } from "@watchdog/schemas/evidence";
@@ -24,6 +24,7 @@ import {
   type DomainTag,
 } from "../errors/tagged-errors";
 import { BlobStore, type BlobStoreApi } from "./blob-store";
+import { readBoundedEffect } from "./read-bounded";
 
 const PRESIGN_EXPIRES_IN = 900;
 
@@ -166,34 +167,9 @@ export function createPresignedPutEffect(input: {
 }
 
 /**
- * Collect a body stream, stopping the moment it passes `maxBytes`: at most one chunk beyond the
- * limit is pulled. Leaving the loop early ends the stream (a Node stream is destroyed, a web
- * stream cancelled), and a Node stream is destroyed on every exit.
- */
-async function readBounded(
-  body: AsyncIterable<Uint8Array | string>,
-  { maxBytes, reason }: ArtifactReadLimit
-): Promise<Uint8Array> {
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  try {
-    for await (const chunk of body) {
-      const part = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
-      total += part.byteLength;
-      if (total > maxBytes) throw new InvalidError({ reason });
-      chunks.push(part);
-    }
-  } finally {
-    if (body instanceof Readable) body.destroy();
-  }
-  const joined = Buffer.concat(chunks);
-  return new Uint8Array(joined.buffer, joined.byteOffset, joined.byteLength);
-}
-
-/**
  * Read an artifact into memory. With `limit`, an object over `maxBytes` is refused without being
  * loaded: its declared `ContentLength` is checked before the body is touched, and a body of
- * unknown or understated length is read only up to the limit (`readBounded`). Without a limit
+ * unknown or understated length is read only up to the limit (`readBoundedEffect`). Without a limit
  * the whole object is read, so pass one wherever the artifact's size is not trusted.
  */
 export function readArtifactBytesEffect(
@@ -224,14 +200,14 @@ export function readArtifactBytesEffect(
     // Any body shape is read as a stream, so an object of unknown length is never loaded whole.
     const stream: AsyncIterable<Uint8Array | string> =
       body instanceof Readable ? body : body.transformToWebStream();
-    // The limit's `InvalidError` is the caller's input and passes through; a broken stream is not.
-    return yield* Effect.tryPromise({
-      try: () => readBounded(stream, limit),
-      catch: (cause) =>
-        cause instanceof InvalidError
-          ? cause
-          : storageFailure("read the artifact")(cause),
-    });
+    const bytes = yield* readBoundedEffect(
+      Stream.fromAsyncIterable(stream, storageFailure("read the artifact")),
+      limit.maxBytes
+    );
+    // Past the limit is the caller's input; a broken stream is the store's.
+    if (bytes === null)
+      return yield* new InvalidError({ reason: limit.reason });
+    return bytes;
   });
 }
 

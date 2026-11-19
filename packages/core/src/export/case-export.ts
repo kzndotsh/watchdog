@@ -1,5 +1,5 @@
 import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { Effect } from "effect";
+import { Effect, Stream } from "effect";
 import { strToU8 } from "fflate";
 
 import type { EvidenceRow } from "@watchdog/db";
@@ -15,6 +15,7 @@ import { BlobStore, type BlobStoreApi } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
 import { instanceCredentialFingerprint } from "../infra/credential-fingerprint";
 import type { Db } from "../infra/db-service";
+import { readBoundedEffect } from "../infra/read-bounded";
 import {
   casesRepoFxDb,
   entitiesRepoFxDb,
@@ -25,7 +26,6 @@ import {
   evidenceOriginsEffect,
   type EvidenceOrigin,
   newBreachExportNotes,
-  readBounded,
   redactBreachBody,
   type BreachExportNotes,
 } from "./breach-evidence";
@@ -43,7 +43,12 @@ import {
 } from "./provider-provenance";
 import { caseExportSettings, type CaseExportSettings } from "./settings";
 import { exportFailure, step } from "./zip-step";
-import { ZipWriter, type ZipEntryWriter, type ZipSink } from "./zip-writer";
+import {
+  makeZipWriter,
+  type ZipEntryWriter,
+  type ZipSink,
+  type ZipWriter,
+} from "./zip-writer";
 
 /** What a finished export contains, for the log and the Job's summary. */
 export type CaseExportStats = {
@@ -167,7 +172,8 @@ type EvidencePart =
   | {
       readonly kind: "blob";
       readonly path: string;
-      readonly body: AsyncIterable<Uint8Array>;
+      /** Pulled at most once; a read that fails halfway is the export's `InternalError`. */
+      readonly body: Stream.Stream<Uint8Array, InternalError>;
       readonly destroy: () => void;
       /** Set when a breach Cap's Job wrote this file and its credentials are to be redacted. */
       readonly breachCapabilityId?: string;
@@ -208,7 +214,10 @@ function openEvidenceEffect(
             ? { isProducerUnknown: true }
             : {}),
           path: evidenceZipPath(caseSlug, ev, "blob"),
-          body: body as AsyncIterable<Uint8Array>,
+          body: Stream.fromAsyncIterable(
+            body as AsyncIterable<Uint8Array>,
+            exportFailure("Couldn't read an Evidence file")
+          ),
           destroy: () => {
             if ("destroy" in body && typeof body.destroy === "function") {
               body.destroy();
@@ -228,18 +237,6 @@ function openEvidenceEffect(
     });
   }
   return Effect.succeed({ kind: "none" });
-}
-
-function counting(
-  body: AsyncIterable<Uint8Array>,
-  onBytes: (n: number) => void
-): AsyncIterable<Uint8Array> {
-  return (async function* countBytes() {
-    for await (const chunk of body) {
-      onBytes(chunk.byteLength);
-      yield chunk;
-    }
-  })();
 }
 
 /** What the Evidence batches added to the archive so far. */
@@ -278,10 +275,10 @@ function writeRedactedBreachEvidenceEffect(
       breach.withheld.push({ path: relative, reason: "producer_unknown" });
       return;
     }
-    const bytes = yield* Effect.tryPromise({
-      try: () => readBounded(part.body, BREACH_EVIDENCE_MAX_BYTES),
-      catch: exportFailure("Couldn't read an Evidence file"),
-    });
+    const bytes = yield* readBoundedEffect(
+      part.body,
+      BREACH_EVIDENCE_MAX_BYTES
+    );
     if (bytes === null) {
       breach.withheld.push({ path: relative, reason: "too_large" });
       return;
@@ -298,9 +295,7 @@ function writeRedactedBreachEvidenceEffect(
     tally.bytes += Buffer.byteLength(result.text, "utf-8");
     tally.included += 1;
     breach.redacted += 1;
-    yield* step("writing Evidence text", (signal) =>
-      zip.addText(part.path, result.text, signal)
-    );
+    yield* step("writing Evidence text", zip.addText(part.path, result.text));
   });
 }
 
@@ -343,8 +338,9 @@ function writeEvidenceBatchEffect(
           case "text": {
             tally.bytes += Buffer.byteLength(part.text, "utf-8");
             tally.included += 1;
-            yield* step("writing Evidence text", (signal) =>
-              zip.addText(part.path, part.text, signal)
+            yield* step(
+              "writing Evidence text",
+              zip.addText(part.path, part.text)
             );
             break;
           }
@@ -364,13 +360,15 @@ function writeEvidenceBatchEffect(
               break;
             }
             tally.included += 1;
-            yield* step("reading an Evidence file", (signal) =>
+            yield* step(
+              "reading an Evidence file",
               zip.addStream(
                 part.path,
-                counting(part.body, (n) => {
-                  tally.bytes += n;
-                }),
-                signal
+                Stream.tap(part.body, (chunk) =>
+                  Effect.sync(() => {
+                    tally.bytes += chunk.byteLength;
+                  })
+                )
               )
             );
             break;
@@ -411,24 +409,23 @@ function writeAttestationsEffect(
       if (entry === undefined) {
         const started = zip.startEntry(`${caseSlug}/evidence/attestations.md`);
         entry = started;
-        yield* step("writing attestations", (signal) =>
-          started.push(
-            strToU8(attestationsHeader(caseSlug, exportedAt)),
-            signal
-          )
+        yield* step(
+          "writing attestations",
+          started.push(strToU8(attestationsHeader(caseSlug, exportedAt)))
         );
       }
       const open = entry;
       for (const att of page) {
         count += 1;
-        yield* step("writing attestations", (signal) =>
-          open.push(strToU8(attestationSection(att)), signal)
+        yield* step(
+          "writing attestations",
+          open.push(strToU8(attestationSection(att)))
         );
       }
     }
     const done = entry;
     if (done !== undefined) {
-      yield* step("writing attestations", () => done.end());
+      yield* step("writing attestations", done.end);
     }
     return count;
   });
@@ -454,7 +451,7 @@ export function writeCaseExportZipEffect(
       return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
     const { slug: caseSlug } = caseRow;
-    const zip = new ZipWriter(sink);
+    const zip = makeZipWriter(sink);
 
     const peers = yield* entitiesRepoFxDb.listPeersForCase(caseId);
     const peerMap = new Map(peers.map((e) => [e.id, e]));
@@ -469,8 +466,9 @@ export function writeCaseExportZipEffect(
         if (note === null) continue;
         const path = `${note.kind}s/${note.entitySlug}.md`;
         entityPaths.push(path);
-        yield* step("writing a note", (signal) =>
-          zip.addText(`${caseSlug}/${path}`, note.markdown, signal)
+        yield* step(
+          "writing a note",
+          zip.addText(`${caseSlug}/${path}`, note.markdown)
         );
       }
     }
@@ -521,11 +519,11 @@ export function writeCaseExportZipEffect(
 
     const exportedAt = yield* nowIsoStringEffect;
     let markdownFiles = entityPaths.length + 1;
-    yield* step("writing CASE.md", (signal) =>
+    yield* step(
+      "writing CASE.md",
       zip.addText(
         `${caseSlug}/CASE.md`,
-        buildCaseMarkdown(caseRow, entityPaths, evidenceRows, exportedAt),
-        signal
+        buildCaseMarkdown(caseRow, entityPaths, evidenceRows, exportedAt)
       )
     );
     const attestationCount = yield* writeAttestationsEffect(
@@ -545,7 +543,7 @@ export function writeCaseExportZipEffect(
       exportedEvidence,
       breachNotes
     );
-    yield* step("finishing the archive", () => zip.finish());
+    yield* step("finishing the archive", zip.finish);
     return {
       markdownFiles,
       evidenceIncluded: tally.included,

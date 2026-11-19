@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { Data, Effect, Exit } from "effect";
+import { Data, Effect } from "effect";
 
 import { isSecretCredential } from "@watchdog/caps";
 import {
@@ -383,10 +383,8 @@ function runCapCollectEffect(
       Effect.provideService(Egress, egress),
       Effect.mapError(toDomainTag),
       // A failed or cancelled run saves what it can under a timeout; it never fails the stop.
-      Effect.onExit((exit) =>
-        Exit.isSuccess(exit)
-          ? Effect.void
-          : persistProviderCallsBestEffort(scope, () => ledger.drain())
+      Effect.onError(() =>
+        persistProviderCallsBestEffort(scope, () => ledger.drain())
       ),
       Effect.ensuring(
         Effect.sync(() => {

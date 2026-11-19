@@ -124,7 +124,7 @@ function presentCredentialNamesEffect(
         )
       ),
     { concurrency: "unbounded" }
-  ).pipe(Effect.map(() => present));
+  ).pipe(Effect.as(present));
 }
 
 /** The first step whose egress classes the Case does not allow: the Cap a blocked start names. */

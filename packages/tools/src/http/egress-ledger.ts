@@ -45,7 +45,7 @@ export type EgressLedgerOptions = {
    * instead of letting it go unrecorded; the call is marked failed and the rejection goes to the
    * Cap. Absent, nothing is saved here (the record stays in memory).
    */
-  readonly onCallStart?: (call: ProviderCall) => Promise<void>;
+  readonly onCallStart?: (call: ProviderCall) => Promise<unknown>;
   /** Wall clock in epoch milliseconds, for `startedAt`. Default: `Date.now`. */
   readonly now?: () => number;
   /** Monotonic milliseconds, for durations. Default: `performance.now`. */
@@ -238,7 +238,7 @@ type CallDeps = {
   readonly jobBudget: { used: number };
   readonly now: () => number;
   readonly tick: () => number;
-  readonly onCallStart: ((call: ProviderCall) => Promise<void>) | undefined;
+  readonly onCallStart: ((call: ProviderCall) => Promise<unknown>) | undefined;
 };
 
 type CallRecord = {
@@ -407,7 +407,7 @@ function createCallRecord(
   // Write-ahead: the request side is handed over before the door sends anything. A hook that
   // fails marks the call failed (it never went out) and the door gets the rejection.
   const saveRequestSide = async (
-    save: (call: ProviderCall) => Promise<void>
+    save: (call: ProviderCall) => Promise<unknown>
   ): Promise<void> => {
     try {
       await save(snapshot());

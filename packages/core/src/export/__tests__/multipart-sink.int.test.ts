@@ -43,11 +43,9 @@ describe("multipartSinkEffect (local S3)", () => {
         Effect.gen(function* upload() {
           const sink = yield* multipartSinkEffect(objectKey, "application/zip");
           for (let at = 0; at < written.byteLength; at += MIB) {
-            yield* Effect.promise(() =>
-              sink.write(written.subarray(at, at + MIB))
-            );
+            yield* sink.write(written.subarray(at, at + MIB));
           }
-          yield* Effect.promise(() => sink.end());
+          yield* sink.end;
         })
       ).pipe(Effect.provide(blobStoreLayer))
     );
@@ -66,9 +64,7 @@ describe("multipartSinkEffect (local S3)", () => {
       Effect.scoped(
         Effect.gen(function* abandon() {
           const sink = yield* multipartSinkEffect(objectKey, "application/zip");
-          yield* Effect.promise(() =>
-            sink.write(randomBytes(MULTIPART_PART_BYTES + 1))
-          );
+          yield* sink.write(randomBytes(MULTIPART_PART_BYTES + 1));
           // The scope ends here without `sink.end()`: a failed or cancelled export.
         })
       ).pipe(Effect.provide(blobStoreLayer))

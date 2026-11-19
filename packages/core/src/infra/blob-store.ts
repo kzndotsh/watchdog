@@ -226,3 +226,11 @@ export function recordingBlobStore(options: RecordingBlobStoreOptions = {}): {
   });
   return { layer, calls, objects, bucket, destroyed: () => destroyed };
 }
+
+/** Whether an S3 error says the object is not there (a HEAD's `NotFound`, a GET's `NoSuchKey`, a bare 404). */
+export function isMissingObject(error: unknown): boolean {
+  if (!Predicate.isObject(error)) return false;
+  if (error.name === "NotFound" || error.name === "NoSuchKey") return true;
+  const meta = error.$metadata;
+  return Predicate.isObject(meta) && meta.httpStatusCode === 404;
+}

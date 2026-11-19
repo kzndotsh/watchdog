@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { DateTime, Effect } from "effect";
 import type { z } from "zod";
 
 import type { caseCountsSchema } from "@watchdog/schemas/cases";
@@ -45,7 +45,11 @@ export function taskDueWindowEffect(
     const start = dayStart ?? utcDayStart(yield* nowDateEffect);
     return {
       dayStart: start,
-      soonEnd: new Date(start.getTime() + (TASK_DUE_SOON_DAYS + 1) * DAY_MS),
+      soonEnd: DateTime.toDate(
+        DateTime.add(DateTime.fromDateUnsafe(start), {
+          milliseconds: (TASK_DUE_SOON_DAYS + 1) * DAY_MS,
+        })
+      ),
     };
   });
 }

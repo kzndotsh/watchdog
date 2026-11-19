@@ -3,6 +3,7 @@ import { Effect, type Duration } from "effect";
 import { repairRestoredActivityXidsEffect } from "../activity/restore-check";
 import { pruneActivityEffect } from "../activity/retention";
 import { purgeExpiredCasesEffect } from "../case-deletion/purge";
+import type { DomainTag } from "../errors/tagged-errors";
 import { sweepAbandonedUploadsEffect } from "../evidence/upload-sweep";
 import { sweepExpiredCaseExportsEffect } from "../export/export-objects";
 import type { BlobStore } from "../infra/blob-store";
@@ -42,11 +43,11 @@ export type MaintenanceCheck = {
   readonly failureMessage: string;
   readonly run: Effect.Effect<
     MaintenanceReport | undefined,
-    unknown,
+    DomainTag,
     MaintenanceServices
   >;
   /** The core Effect `run` calls, kept so a test can prove the registration. */
-  readonly source: () => Effect.Effect<unknown, unknown, MaintenanceServices>;
+  readonly source: () => Effect.Effect<unknown, DomainTag, MaintenanceServices>;
   /** The pure mapping from the source's result to the report (`reports.ts`). */
   readonly report: (result: never) => MaintenanceReport | undefined;
 };
@@ -56,7 +57,7 @@ export type MaintenanceCheck = {
  * is the Effect that runs; `Effect.suspend` re-reads the clock on every run.
  */
 function runOf<A>(
-  source: () => Effect.Effect<A, unknown, MaintenanceServices>,
+  source: () => Effect.Effect<A, DomainTag, MaintenanceServices>,
   report: (result: A) => MaintenanceReport | undefined
 ) {
   return {
