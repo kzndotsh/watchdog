@@ -120,10 +120,8 @@ describe("cases procedures", () => {
 
     const failure = await createClient()
       .create({ name: "Beta" })
-      .then(
-        () => undefined,
-        (error: unknown) => error
-      );
+      .then(() => undefined)
+      .catch((error: unknown) => error);
 
     expect(failure).toMatchObject({
       code: "INTERNAL_SERVER_ERROR",

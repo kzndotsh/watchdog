@@ -504,10 +504,9 @@ describe("listing a row's history", () => {
           rowId: entity.id,
           limit: 10,
         })
-      ).then(
-        () => "listed",
-        (error: unknown) => (isDomainTag(error) ? error.code : "other")
-      );
+      )
+        .then(() => "listed")
+        .catch((error: unknown) => (isDomainTag(error) ? error.code : "other"));
     // another organization, even with the right Case id
     expect(await failure(TEST_OTHER_ORGANIZATION_ID, cased.id)).toBe(
       "not_found"

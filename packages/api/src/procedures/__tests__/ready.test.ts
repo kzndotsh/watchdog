@@ -101,10 +101,10 @@ describe("ready procedure", () => {
       { ready: makeReady(runnerFor(up, down)) },
       { context }
     );
-    const failure = await client.ready().then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    const failure = await client
+      .ready()
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     expect(failure).toBeInstanceOf(ORPCError);
     expect(failure).toMatchObject({
       code: "SERVICE_UNAVAILABLE",

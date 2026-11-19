@@ -9,10 +9,8 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
-    createFileRoute: () => (options: Record<string, unknown>) => ({
-      options,
-      useSearch: () => ({ q: "acme" }),
-    }),
+    createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    getRouteApi: () => ({ useSearch: () => ({ q: "acme" }) }),
     useNavigate: () => vi.fn(),
   };
 });

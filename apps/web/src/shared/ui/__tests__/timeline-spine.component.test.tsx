@@ -21,7 +21,7 @@ describe("TimelineSpine", () => {
 describe("TimelineDot", () => {
   const dot = () => {
     const el = document.querySelector('[data-slot="timeline-dot"]');
-    if (!(el instanceof HTMLElement)) throw new Error("no dot rendered");
+    if (!(el instanceof HTMLElement)) throw new TypeError("no dot rendered");
     return el;
   };
 

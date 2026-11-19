@@ -1,6 +1,6 @@
 import { useAuth, useRevokeSession, useSession } from "@better-auth-ui/react";
 import type { Session } from "better-auth";
-import Bowser from "bowser";
+import { parse as parseUserAgent } from "bowser";
 import { LogOut, Monitor, Smartphone, X } from "lucide-react";
 
 import { firstNonEmpty } from "@/lib/utils";
@@ -37,7 +37,7 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
   );
 
   const isCurrentSession = activeSession.token === session?.session.token;
-  const ua = Bowser.parse(activeSession.userAgent ?? "");
+  const ua = parseUserAgent(activeSession.userAgent ?? "");
   const isMobile =
     ua.platform.type === "mobile" || ua.platform.type === "tablet";
 

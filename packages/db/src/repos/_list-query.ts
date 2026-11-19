@@ -326,7 +326,9 @@ export function defineListRepo<
   const filterOn = <K extends FilterKey<Def>>(
     key: K,
     value: ListQuery<Def>["filters"][K]
-  ): SQL | undefined => binding.filters[key](value);
+  ): SQL | undefined =>
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment -- false positive in oxlint-tsgolint 7.0.2007: no enum here (`key` is a filter-name string)
+    binding.filters[key](value);
 
   const labelMatches = (q: string): SQL[] =>
     labelColumns.flatMap(([key, column]) => {

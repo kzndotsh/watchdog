@@ -13,8 +13,8 @@
     "typecheck": "tsc --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
-    "fast-check": "^4.10.2",
-    "msw": "^3.0.3",
+    "fast-check": "^4.10.3",
+    "msw": "^3.0.7",
     "vitest": "catalog:"
   },
   "devDependencies": {

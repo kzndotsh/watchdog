@@ -224,10 +224,10 @@ describe("the outbound pools are a scoped resource", () => {
   it("aborts a request still in flight once the grace period ends", async () => {
     const server = await loopback(() => "hold");
     const transport = createOutboundTransport(loopbackDeps);
-    const pending = transport.fetch(`${server.origin}/stuck`).then(
-      () => "answered",
-      () => "failed"
-    );
+    const pending = transport
+      .fetch(`${server.origin}/stuck`)
+      .then(() => "answered")
+      .catch(() => "failed");
     const seen = await server.arrived("/stuck");
 
     const started = Date.now();

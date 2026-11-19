@@ -205,10 +205,9 @@ describe("getPlaybookRunForCaseEffect (#354)", () => {
       caseId: Cased["id"],
       id: string
     ) =>
-      runDomain(getPlaybookRunForCaseEffect(caseId, organizationId, id)).then(
-        () => "read",
-        (error: unknown) => (isDomainTag(error) ? error.code : "other")
-      );
+      runDomain(getPlaybookRunForCaseEffect(caseId, organizationId, id))
+        .then(() => "read")
+        .catch((error: unknown) => (isDomainTag(error) ? error.code : "other"));
 
     expect(await failure(TEST_OTHER_ORGANIZATION_ID, cased.id, runId)).toBe(
       "not_found"

@@ -77,7 +77,7 @@ function executionTimeOf(rows: readonly unknown[]): number {
     typeof entry === "object" && entry !== null && "Execution Time" in entry
       ? entry["Execution Time"]
       : undefined;
-  if (typeof time !== "number") throw new Error("EXPLAIN gave no time");
+  if (typeof time !== "number") throw new TypeError("EXPLAIN gave no time");
   return time;
 }
 

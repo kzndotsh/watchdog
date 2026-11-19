@@ -144,10 +144,9 @@ async function run(
 }
 
 async function failureOf(input: Record<string, unknown>): Promise<unknown> {
-  return run(input).then(
-    () => undefined,
-    (error: unknown) => error
-  );
+  return run(input)
+    .then(() => undefined)
+    .catch((error: unknown) => error);
 }
 
 describe("archive.page.history run", () => {
@@ -374,10 +373,9 @@ describe("archive.page.history run", () => {
     const harness = createCapRunHarness({ input: parsed });
     const failure = await runCap(
       runPageHistory(harness.ctx, { delayMs: 0, timeoutMs: 0 })
-    ).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    )
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     expect(seen.captureUrls).toHaveLength(0);
     expect(failure).toBeInstanceOf(ValidationVendorError);
     expect(String((failure as ValidationVendorError).cause)).toContain(

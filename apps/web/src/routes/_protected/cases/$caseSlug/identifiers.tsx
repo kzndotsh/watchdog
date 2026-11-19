@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
 import { warmIdentifiersQueries } from "@/domains/entities/lib/prefetch-identifiers";
@@ -8,8 +8,10 @@ import { identifierList } from "@watchdog/schemas/graph";
 /** The Identifiers table's view (ADR-0007): filters, `q` and sort, a bad value dropped. */
 const identifiersSearchSchema = identifierList.searchWith({});
 
+const routeApi = getRouteApi("/_protected/cases/$caseSlug/identifiers");
+
 function IdentifiersRoute() {
-  const search = Route.useSearch();
+  const search = routeApi.useSearch();
   const onSearchChange = usePatchSearch();
   return <IdentifiersPage search={search} onSearchChange={onSearchChange} />;
 }

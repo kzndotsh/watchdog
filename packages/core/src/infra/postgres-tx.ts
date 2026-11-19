@@ -114,6 +114,7 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
           }
           return exit.value;
         })
+        // oxlint-disable-next-line promise/prefer-catch -- two arms on purpose: a `.catch` would also see a throw from the success arm and `resume` twice
         .then(
           (value) => {
             resume(Effect.succeed(value));

@@ -186,10 +186,9 @@ describe("getEntityByCaseSlug", () => {
     const cased = await seedCase(db);
     const failure: unknown = await runDomain(
       getEntityByCaseSlugEffect(cased.id, TEST_ORGANIZATION_ID, slug)
-    ).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    )
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     if (!(failure instanceof NotFoundError)) {
       expect.unreachable("expected NotFoundError");
     }

@@ -1,4 +1,9 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  getRouteApi,
+  Link,
+  redirect,
+} from "@tanstack/react-router";
 
 import { requireSession } from "@/app/require-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
@@ -20,9 +25,11 @@ function readRole(user: object): string | null {
   return "role" in user && typeof user.role === "string" ? user.role : null;
 }
 
+const routeApi = getRouteApi("/onboarding");
+
 function OnboardingPage() {
   const reloadIntoOrganization = useReloadIntoOrganization();
-  const { canCreate, step } = Route.useRouteContext();
+  const { canCreate, step } = routeApi.useRouteContext();
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center px-4 py-10">
