@@ -95,7 +95,7 @@
     "cn": "catalog:",
     "effect": "catalog:",
     "happy-dom": "^21.0.4",
-    "jsdom": "^30.1.3",
+    "jsdom": "^31.0.1",
     "knip": "^6.45.1",
     "lefthook": "2.2.2",
     "oxc-parser": "catalog:",
