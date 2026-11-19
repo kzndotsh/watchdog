@@ -79,16 +79,18 @@ export const snusbase = defineProvider({
 });
 
 /**
- * emailosint.org/legal/terms (updated 2026-04-26) license use "for your own lawful purposes",
- * bar reselling accounts and FCRA use, and say nothing explicit on commercial use; the API needs
- * a Business plan. No operating company is named.
+ * emailosint.org/legal/terms (updated 2026-04-26) license use "for your own lawful purposes" and
+ * bar FCRA uses, reselling account access, building a competing product and bulk redistribution
+ * of outputs; the API needs a Business plan, and the plans are sold "For SOC, fraud and trust &
+ * safety teams". No operating company is named. The privacy policy (2026-09-25) keeps every
+ * searched address and its results, de-identified, indefinitely.
  */
 export const emailosint = defineProvider({
   name: "EmailOSINT",
   url: "https://emailosint.org",
   termsUrl: "https://emailosint.org/legal/terms",
   tier: "paid",
-  commercialUse: "unknown",
+  commercialUse: "restricted",
   hosts: {
     // The terms bar users to "resell, sublicense, or redistribute the Service or its outputs in
     // bulk"; whether one result may go to a client in an Export is not stated.

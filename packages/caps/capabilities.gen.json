@@ -3535,7 +3535,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "1aa0b874ca07",
+    "version": "135450619379",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -3629,7 +3629,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "ace6154b5075",
+    "version": "3f8087e10447",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "2c3f85772cf0",
+    "version": "61f44e82daad",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "3e169bdf60e5",
+    "version": "37b41b9e350b",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -3917,7 +3917,7 @@
   },
   {
     "id": "breach.leakradar.lookup",
-    "version": "ce853a08d19a",
+    "version": "1e00bee24ee8",
     "title": "LeakRadar lookup",
     "provider": {
       "name": "LeakRadar",
@@ -4062,14 +4062,14 @@
   },
   {
     "id": "breach.emailosint.lookup",
-    "version": "a04134b353d7",
+    "version": "5b77e157ef06",
     "title": "EmailOSINT lookup",
     "provider": {
       "name": "EmailOSINT",
       "url": "https://emailosint.org",
       "termsUrl": "https://emailosint.org/legal/terms",
       "tier": "paid",
-      "commercialUse": "unknown"
+      "commercialUse": "restricted"
     },
     "egress": [
       "account_lookup"
@@ -4113,7 +4113,7 @@
         "email"
       ]
     },
-    "description": "Reverse-look up an email address on EmailOSINT: the services it is registered on (with any username, display name and profile link the vendor found), the breaches it appeared in (name and date only) and how many infostealer logs hold it (origin host only). No password, hash or login is stored, and the vendor's AI summary is turned off. The vendor warns results may be incomplete or mis-attributed.",
+    "description": "Reverse-look up an email address on EmailOSINT: the services it is registered on (with any username, display name and profile link the vendor found), the breaches it appeared in (name and date only) and how many infostealer logs hold it (origin host only). No password, hash or login is stored, and the vendor's AI summary is turned off. The vendor warns results may be incomplete or mis-attributed, keeps every address searched and its results indefinitely, and shares the address with its own data providers.",
     "dataSource": "api.emailosint.org",
     "kind": "collect",
     "flags": [

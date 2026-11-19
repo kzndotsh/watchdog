@@ -16,7 +16,7 @@ export const emailosintLookup = defineCollectCap({
   provider: emailosint,
   title: "EmailOSINT lookup",
   description:
-    "Reverse-look up an email address on EmailOSINT: the services it is registered on (with any username, display name and profile link the vendor found), the breaches it appeared in (name and date only) and how many infostealer logs hold it (origin host only). No password, hash or login is stored, and the vendor's AI summary is turned off. The vendor warns results may be incomplete or mis-attributed.",
+    "Reverse-look up an email address on EmailOSINT: the services it is registered on (with any username, display name and profile link the vendor found), the breaches it appeared in (name and date only) and how many infostealer logs hold it (origin host only). No password, hash or login is stored, and the vendor's AI summary is turned off. The vendor warns results may be incomplete or mis-attributed, keeps every address searched and its results indefinitely, and shares the address with its own data providers.",
   dataSource: "api.emailosint.org",
   input: emailosintLookupInput,
   timeoutMs: 60_000,
