@@ -1,3 +1,4 @@
+import type postgres from "postgres";
 import { expect } from "vitest";
 
 import { client } from "@watchdog/db";
@@ -11,7 +12,8 @@ import {
   type PlanNode,
 } from "./query-shape.ts";
 
-type Param = NonNullable<Parameters<typeof client.unsafe>[1]>[number];
+// v4 overloads `unsafe` (values, or options alone), so the value type comes from its export.
+type Param = postgres.ParameterOrJSON<never>;
 
 /** One SQL statement as postgres.js sent it: drizzle's text with `$n` placeholders, and its values. */
 export type CapturedStatement = {

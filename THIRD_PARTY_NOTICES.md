@@ -856,4 +856,4 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 ## Unlicense (2)
 
 - isbot 5.2.2 (<https://isbot.js.org>)
-- postgres 3.4.9 (<https://github.com/porsager/postgres>)
+- postgres 4.1.1 (<https://github.com/porsager/postgres#readme>)
