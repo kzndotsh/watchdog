@@ -77,6 +77,33 @@ describe("interpret", () => {
     expect(claimText(result, 1)).toMatch(/no accounts or exposure reported/);
   });
 
+  it("falls back to the service slug and the listed sources when counts are missing", () => {
+    const text = claimText(
+      interpret({
+        ...report,
+        accounts: [
+          { ...report.accounts[0]!, serviceName: null, service: "gitlab" },
+        ],
+        registeredOn: [],
+        breachSourceCount: null,
+        breachSources: [{ name: "Canva", date: null }],
+      }),
+      1
+    );
+    expect(text).toMatch(/registered on gitlab/);
+    expect(text).toMatch(
+      /6 breach record\(s\) from 1 source\(s\): Canva$|from 1 source\(s\): Canva;/
+    );
+  });
+
+  it("states a breach total without source names", () => {
+    const text = claimText(
+      interpret({ ...report, breachSources: [], breachSourceCount: 2 }),
+      1
+    );
+    expect(text).toMatch(/6 breach record\(s\) from 2 source\(s\);/);
+  });
+
   it("says when the vendor redacted results", () => {
     expect(
       claimText(interpret({ ...report, resultsRedacted: true }), 1)

@@ -12,6 +12,9 @@ import {
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   EMAILOSINT_MAX_ACCOUNTS,
+  EMAILOSINT_MAX_BREACH_SOURCES,
+  EMAILOSINT_MAX_SITES,
+  EMAILOSINT_MAX_STEALER_HOSTS,
   fetchEmailosintLookupEffect,
   parseEmailosintBody,
 } from "../emailosint";
@@ -118,6 +121,89 @@ describe("parseEmailosintBody", () => {
     });
     expect(snap.accounts).toHaveLength(EMAILOSINT_MAX_ACCOUNTS);
     expect(snap.isTruncated).toBe(true);
+  });
+
+  it("drops malformed values instead of failing the snapshot", () => {
+    const long = "x".repeat(301);
+    const snap = parseEmailosintBody(EMAIL, AT, {
+      accounts: [
+        {},
+        {
+          module: { name: long, id: "abc" },
+          data: {
+            fields: [
+              { key: "username", value: long },
+              {
+                key: "profile_url",
+                value: `https://h.test/${"p".repeat(2100)}`,
+              },
+              { key: "profile_url", value: "https://ignored.test/dup" },
+            ],
+          },
+        },
+        {
+          module: { id: "noprofile" },
+          data: { fields: [{ key: "profile_url", value: "not a url" }] },
+        },
+      ],
+      validator: { registered: [{}, { name: "loom" }] },
+      data_breaches: {
+        amount: -1,
+        sources: 2.5,
+        results: [
+          {},
+          { source: {} },
+          { source: { name: "Adobe", date: long } },
+        ],
+      },
+      stealer_logs: {
+        count: "3",
+        results: [
+          { origin: `https://${"a".repeat(250)}.${"b".repeat(60)}.test/` },
+          { login: "x" },
+        ],
+      },
+    });
+    expect(
+      snap.accounts.map((a) => [a.service, a.username, a.profileUrl])
+    ).toEqual([
+      ["abc", null, null],
+      ["noprofile", null, null],
+    ]);
+    expect(snap.registeredOn).toEqual(["loom"]);
+    expect(snap.breachTotal).toBeNull();
+    expect(snap.breachSourceCount).toBeNull();
+    expect(snap.breachSources).toEqual([{ name: "Adobe", date: null }]);
+    expect(snap.stealerLogCount).toBe(3);
+    expect(snap.stealerOriginHosts).toEqual([]);
+  });
+
+  it("cuts long site, breach and host lists and flags the cut", () => {
+    const many = (n: number, make: (i: number) => unknown) =>
+      Array.from({ length: n }, (_, i) => make(i));
+    const snap = parseEmailosintBody(EMAIL, AT, {
+      validator: {
+        registered: many(EMAILOSINT_MAX_SITES + 1, (i) => ({ name: `s${i}` })),
+      },
+      data_breaches: {
+        results: many(EMAILOSINT_MAX_BREACH_SOURCES + 1, (i) => ({
+          source: { name: `b${i}` },
+        })),
+      },
+      stealer_logs: {
+        results: many(EMAILOSINT_MAX_STEALER_HOSTS + 1, (i) => ({
+          origin: `https://h${i}.test/`,
+        })),
+      },
+    });
+    expect(snap.registeredOn).toHaveLength(EMAILOSINT_MAX_SITES);
+    expect(snap.breachSources).toHaveLength(EMAILOSINT_MAX_BREACH_SOURCES);
+    expect(snap.stealerOriginHosts).toHaveLength(EMAILOSINT_MAX_STEALER_HOSTS);
+    expect(snap.isTruncated).toBe(true);
+  });
+
+  it("refuses a body that is not an object", () => {
+    expect(() => parseEmailosintBody(EMAIL, AT, [])).toThrow();
   });
 
   it("reads an empty body as no findings", () => {
