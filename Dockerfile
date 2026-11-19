@@ -10,7 +10,7 @@
 # Base image: Node 22 (the major CI and the nix shell use), Alpine, pinned by digest. The digest
 # is the multi-arch index; Dependabot's docker entry bumps tag and digest together. This is the
 # only line that names the base: every other stage builds on `node-base`.
-FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS node-base
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS node-base
 
 # ---- build: toolchain and the full dependency tree (never shipped) ----
 FROM node-base AS build
