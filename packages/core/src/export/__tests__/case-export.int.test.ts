@@ -17,18 +17,20 @@ import {
   measureCaseExportEffect,
   writeCaseExportZipEffect,
 } from "../case-export";
-import type { ZipSink } from "../zip-writer";
+import { zipSinkFromPromises, type ZipSink } from "../zip-writer";
 import { MIB, SETTINGS, upload } from "./helpers/case-export-fixtures";
 
 /** A sink that keeps everything, for tests that open the archive. */
 function collectingSink(): ZipSink & { archive: () => Uint8Array } {
   const chunks: Uint8Array[] = [];
   return {
-    write: (chunk) => {
-      chunks.push(chunk);
-      return Promise.resolve();
-    },
-    end: () => Promise.resolve(),
+    ...zipSinkFromPromises({
+      write: (chunk) => {
+        chunks.push(chunk);
+        return Promise.resolve();
+      },
+      end: () => Promise.resolve(),
+    }),
     archive: () => Buffer.concat(chunks),
   };
 }

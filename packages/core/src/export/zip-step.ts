@@ -6,13 +6,12 @@ export function exportFailure(what: string) {
   return (cause: unknown) => new InternalError({ reason: what, cause });
 }
 
-/** One zip operation as an Effect: a failure is the export's own, with the step named. */
-export function step(
+/** One zip operation: a failure is the export's own, with the step named and the cause kept. */
+export function step<E>(
   what: string,
-  run: (signal: AbortSignal) => Promise<void>
-) {
-  return Effect.tryPromise({
-    try: run,
-    catch: exportFailure(`Case export failed: ${what}`),
-  });
+  run: Effect.Effect<void, E>
+): Effect.Effect<void, InternalError> {
+  return run.pipe(
+    Effect.mapError(exportFailure(`Case export failed: ${what}`))
+  );
 }

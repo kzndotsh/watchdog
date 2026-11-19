@@ -5,7 +5,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { InternalError } from "../errors/tagged-errors";
 import { CASE_EXPORT_PREFIX, deleteObjectKeysEffect } from "../infra/blob";
-import { BlobStore } from "../infra/blob-store";
+import { BlobStore, isMissingObject } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
 import { caseExportSettings, type CaseExportSettings } from "./settings";
 
@@ -41,28 +41,21 @@ export function archiveStoredAtEffect(
   return Effect.gen(function* archiveStoredAtGen() {
     const { client, bucket } = yield* BlobStore;
     return yield* Effect.tryPromise({
-      try: async () => {
-        try {
-          const head = await client.send(
-            new HeadObjectCommand({ Bucket: bucket, Key: key })
-          );
-          return head.LastModified ?? null;
-        } catch (error) {
-          if (
-            error instanceof Error &&
-            (error.name === "NotFound" || error.name === "NoSuchKey")
-          ) {
-            return null;
-          }
-          throw error;
-        }
-      },
+      try: () =>
+        client.send(new HeadObjectCommand({ Bucket: bucket, Key: key })),
       catch: (cause) =>
         new InternalError({
           reason: "Couldn't read the export archive",
           cause,
         }),
-    });
+    }).pipe(
+      Effect.map((head) => head.LastModified ?? null),
+      // Not there is an answer, not a failure: the archive was swept or never finished.
+      Effect.catchIf(
+        (error) => isMissingObject(error.cause),
+        () => Effect.succeed(null)
+      )
+    );
   });
 }
 

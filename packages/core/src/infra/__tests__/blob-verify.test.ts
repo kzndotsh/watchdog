@@ -1,6 +1,7 @@
+import { once } from "node:events";
 import { Readable } from "node:stream";
 
-import { Effect } from "effect";
+import { Deferred, Effect, Exit, Fiber } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { MAX_UPLOAD_BYTES } from "@watchdog/schemas/shared";
@@ -109,6 +110,132 @@ describe("verifyUploadedObjectEffect", () => {
     await expect(verify(store)).resolves.toMatchObject({
       _tag: "InvalidError",
       reason: expect.stringContaining("size"),
+    });
+  });
+
+  it("destroys the body it stopped reading past the declared size", async () => {
+    const body = Readable.from([BYTES, BYTES, BYTES]);
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: body },
+    });
+    await verify(store);
+    expect(body.destroyed).toBe(true);
+  });
+
+  it("destroys the body when the verification is interrupted while it reads", async () => {
+    await Effect.runPromise(
+      Effect.gen(function* interruptVerify() {
+        const reading = yield* Deferred.make<undefined>();
+        // A body that never sends a byte: it says when the hash starts pulling from it.
+        const body = new Readable({
+          read: () => {
+            Deferred.doneUnsafe(reading, Exit.succeed(undefined));
+          },
+        });
+        const store = recordingBlobStore({
+          respond: ({ command }) =>
+            command === "HeadObjectCommand"
+              ? { ContentLength: BYTES.byteLength }
+              : { Body: body },
+        });
+        const fiber = yield* Effect.forkChild(
+          verifyUploadedObjectEffect({
+            uri: URI,
+            sha256: SHA,
+            mime: "text/plain",
+            byteLength: BYTES.byteLength,
+          }).pipe(Effect.provide(store.layer))
+        );
+        yield* Deferred.await(reading);
+        yield* Fiber.interrupt(fiber);
+        expect(body.destroyed).toBe(true);
+      })
+    );
+  });
+
+  it("destroys the body when the interruption lands as GetObject answers, before any read", async () => {
+    let pulls = 0;
+    const body = new Readable({
+      read: () => {
+        pulls += 1;
+      },
+    });
+    const fiberRef: { current?: Fiber.Fiber<unknown, unknown> } = {};
+    const store = recordingBlobStore({
+      respond: ({ command }) => {
+        if (command === "HeadObjectCommand") {
+          return { ContentLength: BYTES.byteLength };
+        }
+        // The answer is on its way: the interruption is requested before the fiber resumes.
+        queueMicrotask(() => {
+          fiberRef.current?.interruptUnsafe();
+        });
+        return { Body: body };
+      },
+    });
+    await Effect.runPromise(
+      Effect.gen(function* interruptOnAnswer() {
+        const fiber = yield* Effect.forkChild(
+          verifyUploadedObjectEffect({
+            uri: URI,
+            sha256: SHA,
+            mime: "text/plain",
+            byteLength: BYTES.byteLength,
+          }).pipe(Effect.provide(store.layer))
+        );
+        fiberRef.current = fiber;
+        yield* Effect.exit(Fiber.join(fiber));
+      })
+    );
+    // The answer lands after the abort, so the body is released as it lands, not before the
+    // fiber ends: wait for it (a body never destroyed times the test out).
+    await once(body, "close");
+    expect(pulls).toBe(0);
+    expect(body.destroyed).toBe(true);
+  });
+
+  it("refuses a body that is not a readable stream", async () => {
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: BYTES },
+    });
+    await expect(verify(store)).resolves.toMatchObject({
+      _tag: "InvalidError",
+      reason: "Uploaded object could not be read",
+    });
+  });
+
+  it("refuses a stream that yields something other than bytes or text", async () => {
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: Readable.from([{ not: "bytes" }]) },
+    });
+    await expect(verify(store)).resolves.toMatchObject({
+      _tag: "InvalidError",
+      reason: "Uploaded object could not be read",
+    });
+  });
+
+  it("reports a stream that breaks halfway as an internal failure", async () => {
+    async function* broken(): AsyncGenerator<Uint8Array> {
+      yield BYTES.subarray(0, 4);
+      throw new Error("socket hang up");
+    }
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: Readable.from(broken()) },
+    });
+    await expect(verify(store)).resolves.toMatchObject({
+      _tag: "InternalError",
     });
   });
 

@@ -1,9 +1,15 @@
 import { randomBytes } from "node:crypto";
 
+import { Deferred, Effect, Exit, Fiber, Stream } from "effect";
 import { unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 
-import { ZipWriter, type ZipSink } from "../zip-writer";
+import { InternalError } from "../../errors/tagged-errors";
+import {
+  makeZipWriter,
+  zipSinkFromPromises,
+  type ZipSink,
+} from "../zip-writer";
 
 function collect(): ZipSink & {
   archive: () => Uint8Array;
@@ -12,33 +18,43 @@ function collect(): ZipSink & {
   const chunks: Uint8Array[] = [];
   let ended = false;
   return {
-    write: (chunk) => {
-      chunks.push(chunk);
-      return Promise.resolve();
-    },
-    end: () => {
-      ended = true;
-      return Promise.resolve();
-    },
+    ...zipSinkFromPromises({
+      write: (chunk) => {
+        chunks.push(chunk);
+        return Promise.resolve();
+      },
+      end: () => {
+        ended = true;
+        return Promise.resolve();
+      },
+    }),
     archive: () => Buffer.concat(chunks),
     ended: () => ended,
   };
 }
 
-function* chunked(parts: readonly string[]): Generator<Uint8Array> {
-  for (const part of parts) yield new TextEncoder().encode(part);
+/** One chunk per pull, as a Node stream delivers them. */
+function chunked(parts: readonly string[]): Stream.Stream<Uint8Array> {
+  return Stream.fromIterable(
+    parts.map((part) => new TextEncoder().encode(part)),
+    { chunkSize: 1 }
+  );
 }
 
 describe("ZipWriter", () => {
   it("writes text and streamed entries into one readable archive, and ends the sink", async () => {
     const sink = collect();
-    const zip = new ZipWriter(sink);
-    await zip.addText("case/CASE.md", "# Case");
-    await zip.addStream(
-      "case/evidence/a.txt",
-      chunked(["hello ", "stream", "ed"])
+    const zip = makeZipWriter(sink);
+    await Effect.runPromise(
+      Effect.gen(function* writeArchive() {
+        yield* zip.addText("case/CASE.md", "# Case");
+        yield* zip.addStream(
+          "case/evidence/a.txt",
+          chunked(["hello ", "stream", "ed"])
+        );
+        yield* zip.finish;
+      })
     );
-    await zip.finish();
 
     expect(sink.ended()).toBe(true);
     const files = unzipSync(sink.archive());
@@ -55,11 +71,11 @@ describe("ZipWriter", () => {
     let pulled = 0;
     const aheadAtWrite: number[] = [];
     const sink: ZipSink = {
-      write: () => {
-        aheadAtWrite.push(pulled);
-        return Promise.resolve();
-      },
-      end: () => Promise.resolve(),
+      write: () =>
+        Effect.sync(() => {
+          aheadAtWrite.push(pulled);
+        }),
+      end: Effect.void,
     };
     function* source(): Generator<Uint8Array> {
       for (let i = 0; i < 6; i += 1) {
@@ -67,7 +83,12 @@ describe("ZipWriter", () => {
         yield randomBytes(256 * 1024);
       }
     }
-    await new ZipWriter(sink).addStream("big.bin", source());
+    await Effect.runPromise(
+      makeZipWriter(sink).addStream(
+        "big.bin",
+        Stream.fromIterable(source(), { chunkSize: 1 })
+      )
+    );
     expect(pulled).toBe(6);
     // The k-th write (1-based) sees at most k + 1 pulls: a source drained up front would show 6.
     expect(aheadAtWrite.length).toBeGreaterThan(1);
@@ -76,36 +97,74 @@ describe("ZipWriter", () => {
     }
   });
 
-  it("stops an entry at the next chunk once its signal aborts", async () => {
-    const controller = new AbortController();
-    const zip = new ZipWriter(collect());
-    async function* source(): AsyncGenerator<Uint8Array> {
-      yield new Uint8Array(10);
-      controller.abort();
-      yield new Uint8Array(10);
-    }
-    await expect(
-      zip.addStream("a.bin", source(), controller.signal)
-    ).rejects.toThrow();
+  it("stops an entry at the chunk in flight once it is interrupted, and pulls no more", async () => {
+    let pulled = 0;
+    const exit = await Effect.runPromise(
+      Effect.gen(function* interruptEntry() {
+        const firstWrite = yield* Deferred.make<undefined>();
+        const sink: ZipSink = {
+          // The first write never completes: the export is waiting on a slow reader.
+          write: () =>
+            Deferred.succeed(firstWrite, undefined).pipe(
+              Effect.andThen(Effect.never)
+            ),
+          end: Effect.void,
+        };
+        const source = Stream.fromIterable(
+          Array.from({ length: 4 }, () => randomBytes(256 * 1024)),
+          { chunkSize: 1 }
+        ).pipe(
+          Stream.tap(() =>
+            Effect.sync(() => {
+              pulled += 1;
+            })
+          )
+        );
+        const fiber = yield* Effect.forkChild(
+          makeZipWriter(sink).addStream("a.bin", source)
+        );
+        yield* Deferred.await(firstWrite);
+        yield* Fiber.interrupt(fiber);
+        return yield* Effect.exit(Fiber.join(fiber));
+      })
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+    expect(pulled).toBeLessThan(4);
   });
 
   it("takes no more chunks once the compressor has failed, and writes none of its output", async () => {
     const written: Uint8Array[] = [];
     const sink: ZipSink = {
-      write: (chunk) => {
-        written.push(chunk);
-        return Promise.resolve();
-      },
-      end: () => Promise.resolve(),
+      write: (chunk) =>
+        Effect.sync(() => {
+          written.push(chunk);
+        }),
+      end: Effect.void,
     };
-    const zip = new ZipWriter(sink);
-    const entry = zip.startEntry("a.bin");
-    // The compressor reports an error through its callback.
-    Reflect.set(zip, "failure", new Error("compressor failed"));
+    const entry = makeZipWriter(sink).startEntry("a.bin");
+    await Effect.runPromise(entry.end);
+    written.length = 0;
 
-    await expect(entry.push(randomBytes(300_000))).rejects.toThrow(
-      "compressor failed"
+    // A push to a finished entry is an error fflate reports through its callback.
+    const failure = await Effect.runPromise(
+      Effect.flip(entry.push(randomBytes(300_000)))
     );
+    expect(failure).toBeInstanceOf(InternalError);
     expect(written).toEqual([]);
+  });
+
+  it("turns a rejected write or end of a promise writer into the sink's InternalError", async () => {
+    const sink = zipSinkFromPromises({
+      write: () => Promise.reject(new Error("client went away")),
+      end: () => Promise.reject(new Error("already closed")),
+    });
+    const written = await Effect.runPromise(
+      Effect.flip(sink.write(new Uint8Array(1)))
+    );
+    const ended = await Effect.runPromise(Effect.flip(sink.end));
+    expect(written).toBeInstanceOf(InternalError);
+    expect(written.cause).toEqual(new Error("client went away"));
+    expect(ended).toBeInstanceOf(InternalError);
+    expect(ended.cause).toEqual(new Error("already closed"));
   });
 });

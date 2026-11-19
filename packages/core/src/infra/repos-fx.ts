@@ -52,7 +52,7 @@ export const casesRepoFx = repoFx(() => casesRepo);
 export const casesRepoFxDb = repoFxDb(casesRepoFx);
 export const claimsRepoFx = repoFx(() => claimsRepo);
 export const claimsRepoFxDb = repoFxDb(claimsRepoFx);
-const credentialsRepoFx = repoFx(() => credentialsRepo);
+export const credentialsRepoFx = repoFx(() => credentialsRepo);
 export const credentialsRepoFxDb = repoFxDb(credentialsRepoFx);
 export const edgesRepoFx = repoFx(() => edgesRepo);
 export const edgesRepoFxDb = repoFxDb(edgesRepoFx);

@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
+import { InternalError } from "../../errors/tagged-errors";
 import { recordingBlobStore } from "../../infra/blob-store";
 import { MULTIPART_PART_BYTES, multipartSinkEffect } from "../multipart-sink";
 
@@ -24,20 +25,15 @@ describe("multipartSinkEffect (recorded store)", () => {
             "exports/c/j.zip",
             "application/zip"
           );
-          return yield* Effect.promise(async () => {
-            try {
-              await sink.write(new Uint8Array(MULTIPART_PART_BYTES));
-              return null;
-            } catch (error) {
-              return error;
-            }
-          });
+          return yield* sink
+            .write(new Uint8Array(MULTIPART_PART_BYTES))
+            .pipe(Effect.flip);
         })
       ).pipe(Effect.provide(layer))
     );
 
-    expect(failure).toBeInstanceOf(Error);
-    expect(String(failure)).toContain("no ETag");
+    expect(failure).toBeInstanceOf(InternalError);
+    expect(failure.reason).toContain("no ETag");
     const commands = store.calls.map((call) => call.command);
     expect(commands).toContain("UploadPartCommand");
     // The scope closed on the failure: the upload was aborted, never completed.

@@ -36,7 +36,7 @@ import {
   type CaseExportOptions,
 } from "../provider-body-policy";
 import type { CaseExportSettings } from "../settings";
-import type { ZipSink } from "../zip-writer";
+import { zipSinkFromPromises, type ZipSink } from "../zip-writer";
 
 /*
  * What the Export carries of the provider calls behind its Evidence (#499): an envelope per
@@ -83,14 +83,16 @@ function collectingSink(
   const chunks: Uint8Array[] = [];
   let isFirst = true;
   return {
-    write: async (chunk) => {
-      if (isFirst) {
-        isFirst = false;
-        await onFirstWrite?.();
-      }
-      chunks.push(chunk);
-    },
-    end: () => Promise.resolve(),
+    ...zipSinkFromPromises({
+      write: async (chunk) => {
+        if (isFirst) {
+          isFirst = false;
+          await onFirstWrite?.();
+        }
+        chunks.push(chunk);
+      },
+      end: () => Promise.resolve(),
+    }),
     archive: () => Buffer.concat(chunks),
   };
 }

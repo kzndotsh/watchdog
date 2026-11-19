@@ -18,18 +18,20 @@ import {
   measureCaseExportEffect,
   writeCaseExportZipEffect,
 } from "../case-export";
-import type { ZipSink } from "../zip-writer";
+import { zipSinkFromPromises, type ZipSink } from "../zip-writer";
 import { MIB, SETTINGS, upload } from "./helpers/case-export-fixtures";
 
 /** A sink that keeps nothing: it counts, so the test measures the export and not its output. */
 function countingSink(): ZipSink & { bytes: () => number } {
   let written = 0;
   return {
-    write: (chunk) => {
-      written += chunk.byteLength;
-      return Promise.resolve();
-    },
-    end: () => Promise.resolve(),
+    ...zipSinkFromPromises({
+      write: (chunk) => {
+        written += chunk.byteLength;
+        return Promise.resolve();
+      },
+      end: () => Promise.resolve(),
+    }),
     bytes: () => written,
   };
 }

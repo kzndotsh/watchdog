@@ -86,10 +86,9 @@ function requestRow(
 export function providerCallWriter(
   db: DbExec,
   scope: ProviderCallScope
-): (call: ProviderCall) => Promise<void> {
-  return async (call) => {
-    await providerCallsRepo.insertRequest(db, requestRow(scope, call));
-  };
+): (call: ProviderCall) => Promise<unknown> {
+  // The ledger's hook is promise-typed (tools runs it inside its fetch door); the row is the point.
+  return (call) => providerCallsRepo.insertRequest(db, requestRow(scope, call));
 }
 
 const OUTCOMES: Record<ProviderCall["outcome"], ProviderCallOutcome> = {

@@ -21,7 +21,7 @@ import { runDomainWith } from "../../infra/run-domain";
 import { writeCaseExportZipEffect } from "../case-export";
 import { NO_OPT_INS, type CaseExportOptions } from "../provider-body-policy";
 import type { CaseExportSettings } from "../settings";
-import type { ZipSink } from "../zip-writer";
+import { zipSinkFromPromises, type ZipSink } from "../zip-writer";
 
 /*
  * Breach Evidence in a Case Export: credential fields are cut to attributes unless an owner or
@@ -154,7 +154,7 @@ async function exportCase(
 ) {
   const chunks: Uint8Array[] = [];
   let isFirst = true;
-  const sink: ZipSink = {
+  const sink: ZipSink = zipSinkFromPromises({
     write: async (chunk) => {
       if (isFirst) {
         isFirst = false;
@@ -163,7 +163,7 @@ async function exportCase(
       chunks.push(chunk);
     },
     end: () => Promise.resolve(),
-  };
+  });
   const stats = await run(
     writeCaseExportZipEffect(caseId, sink, SETTINGS, options)
   );
