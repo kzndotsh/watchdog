@@ -42,9 +42,12 @@ function summarize(
     HANDLE_LIMIT
   ).trim();
   if (primaryNote !== "") bits.push(primaryNote.replaceAll(/^\(|\)$/g, ""));
-  if (proofHandleTotal > HANDLE_LIMIT) {
-    bits.push(`showing ${HANDLE_LIMIT} of ${proofHandleTotal} proof handles`);
-  }
+  const proofNote = identifierTruncationNote(
+    proofHandleTotal,
+    HANDLE_LIMIT,
+    "proof handles"
+  ).trim();
+  if (proofNote !== "") bits.push(proofNote.replaceAll(/^\(|\)$/g, ""));
   const urlNote = identifierTruncationNote(urlTotal, URL_LIMIT).trim();
   if (urlNote !== "") bits.push(urlNote.replaceAll(/^\(|\)$/g, ""));
   if (report.pgpFingerprints.length > 5) {

@@ -51,6 +51,8 @@ describe("interpret", () => {
         (p) => p.resource === "identifier" && p.data.type === "domain"
       )
     ).toHaveLength(80);
-    expect(String(result.summary)).toMatch(/showing 80 of 85 in Identifiers/);
+    expect(String(result.summary)).toMatch(
+      /proposed 80 of 85; the rest are only in the Job report/
+    );
   });
 });

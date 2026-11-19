@@ -223,7 +223,9 @@ describe("interpret", () => {
     const result = interpretPgpLookupReport(report({ keys }), {
       input: { query: "alice@example.com", entityId },
     });
-    expect(String(result.summary)).toMatch(/showing 20 of 25 in Identifiers/);
+    expect(String(result.summary)).toMatch(
+      /proposed 20 of 25; the rest are only in the Job report/
+    );
     const pgps = result.patch.filter(
       (p) => p.resource === "identifier" && p.data.type === "pgp"
     );

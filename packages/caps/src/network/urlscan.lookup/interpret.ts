@@ -27,10 +27,10 @@ function summarize(report: UrlscanLookupSnapshot): string {
   const domainTotal = eligibleDomainCount(
     withSeedHost(report.host, report.domains)
   );
-  const urlNote =
-    urlTotal > URL_IDENTIFIER_BATCH_LIMIT
-      ? `showing ${URL_IDENTIFIER_BATCH_LIMIT} of ${urlTotal} URL(s)`
-      : `${urlTotal} URL(s)`;
+  const urlNote = `${urlTotal} URL(s)${identifierTruncationNote(
+    urlTotal,
+    URL_IDENTIFIER_BATCH_LIMIT
+  )}`;
   const domainNote = identifierTruncationNote(
     domainTotal,
     DOMAIN_IDENTIFIER_BATCH_LIMIT

@@ -7,6 +7,7 @@ import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifi
 import {
   domainValuesBatch,
   hashSeedBatch,
+  identifierTruncationNote,
   ipValuesBatch,
   querySeedBatches,
   urlValuesBatch,
@@ -52,7 +53,7 @@ function summarize(
   });
   const shownNote =
     proposed < eligibleTotal
-      ? `showing ${proposed} of ${eligibleTotal}`
+      ? `${eligibleTotal} IOC(s)${identifierTruncationNote(eligibleTotal, proposed)}`
       : `${eligibleTotal} IOC(s)`;
   return `ThreatFox (abuse.ch) for ${report.query}: ${shownNote} — ${top.join("; ")}`;
 }

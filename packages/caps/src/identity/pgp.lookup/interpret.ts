@@ -76,10 +76,11 @@ function flagsNote(keys: readonly PgpKeyHit[]): string {
 
 function summarize(report: PgpLookupSnapshot, emailCount: number): string {
   const keysNote = identifierTruncationNote(report.keys.length, PGP_KEY_LIMIT);
-  const emailNote =
-    emailCount > EMAIL_IDENTIFIER_BATCH_LIMIT
-      ? ` (showing ${EMAIL_IDENTIFIER_BATCH_LIMIT} of ${emailCount} emails in Identifiers)`
-      : "";
+  const emailNote = identifierTruncationNote(
+    emailCount,
+    EMAIL_IDENTIFIER_BATCH_LIMIT,
+    "emails"
+  );
   return `PGP for ${report.query}: ${report.keys.length} key(s) (${serversNote(report)})${flagsNote(report.keys)}${keysNote}${emailNote}`;
 }
 

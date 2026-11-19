@@ -37,11 +37,11 @@ function summarize(
   bits.push(`accounts=${report.accounts.length}`);
   const emailNote = identifierTruncationNote(emailTotal, EMAIL_LIMIT).trim();
   if (emailNote !== "") bits.push(emailNote.replaceAll(/^\(|\)$/g, ""));
-  if (handleTotal > HANDLE_LIMIT) {
-    bits.push(`showing ${HANDLE_LIMIT} of ${handleTotal} handles`);
-  }
-  if (urlTotal > URL_LIMIT) {
-    bits.push(`showing ${URL_LIMIT} of ${urlTotal} urls`);
+  for (const note of [
+    identifierTruncationNote(handleTotal, HANDLE_LIMIT, "handles"),
+    identifierTruncationNote(urlTotal, URL_LIMIT, "urls"),
+  ]) {
+    if (note !== "") bits.push(note.trim().replaceAll(/^\(|\)$/g, ""));
   }
   return `Gravatar for ${report.email}: ${bits.join("; ")}`;
 }

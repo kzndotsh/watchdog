@@ -51,7 +51,9 @@ describe("interpret", () => {
       { ...fixture, hostnames },
       { input: { ip: "8.8.8.8", entityId } }
     );
-    expect(String(result.summary)).toMatch(/showing 80 of 81/);
+    expect(String(result.summary)).toMatch(
+      /proposed 80 of 81; the rest are only in the Job report/
+    );
   });
 
   it("summarizes not-indexed hosts separately from empty hits", () => {

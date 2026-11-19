@@ -233,7 +233,7 @@ describe("interpret", () => {
       ].sort((a, b) => a.localeCompare(b))
     );
     expect(claimText(result, ips.length)).toMatch(/5 IOC\(s\)/);
-    expect(claimText(result, ips.length)).not.toMatch(/showing 5 of 50/);
+    expect(claimText(result, ips.length)).not.toMatch(/proposed 5 of 50/);
   });
 
   it("seeds hash queries as other Identifiers", () => {

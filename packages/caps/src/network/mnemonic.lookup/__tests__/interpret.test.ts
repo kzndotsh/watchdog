@@ -115,7 +115,9 @@ describe("interpret", () => {
         (p) => p.resource === "identifier" && p.data.type === "domain"
       )
     ).toHaveLength(80);
-    expect(String(result.summary)).toMatch(/showing 80 of 85 in Identifiers/);
+    expect(String(result.summary)).toMatch(
+      /proposed 80 of 85; the rest are only in the Job report/
+    );
   });
 
   it("notes related-ip truncation in the claim when PDNS IPs exceed the cap", () => {
@@ -134,7 +136,7 @@ describe("interpret", () => {
       )
     ).toHaveLength(81);
     expect(String(result.summary)).toMatch(
-      /85 related IP\(s\).*showing 80 of 85/
+      /85 related IP\(s\).*proposed 80 of 85/
     );
   });
 
