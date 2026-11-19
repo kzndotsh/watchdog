@@ -9,6 +9,17 @@ Element.prototype.getAnimations = () => [];
 Element.prototype.scrollIntoView = () => {
   // No layout in happy-dom: nothing to scroll.
 };
+// Shiki 4.6 inflates its inlined Oniguruma wasm with `Response#bytes()`, which browsers and
+// Node have and happy-dom's `Response` lacks. Revisit (remove) when happy-dom implements it.
+if (!("bytes" in Response.prototype)) {
+  Object.defineProperty(Response.prototype, "bytes", {
+    configurable: true,
+    writable: true,
+    async value(this: Response): Promise<Uint8Array> {
+      return new Uint8Array(await this.arrayBuffer());
+    },
+  });
+}
 
 afterEach(() => {
   cleanup();
