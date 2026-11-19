@@ -257,7 +257,7 @@
   },
   {
     "id": "network.ipctl.lookup",
-    "version": "f382086ab0e8",
+    "version": "f6ef80f99d84",
     "title": "ipctl IP lookup",
     "provider": {
       "name": "ipctl",
@@ -348,7 +348,7 @@
   },
   {
     "id": "network.ipinfo.lookup",
-    "version": "d6718ce6f819",
+    "version": "f3bee39e0c08",
     "title": "IPinfo lookup",
     "provider": {
       "name": "IPinfo",
@@ -441,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "0801354518a0",
+    "version": "60a272f9cafc",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "07931060d900",
+    "version": "d3960e404726",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
@@ -606,7 +606,7 @@
   },
   {
     "id": "network.whoxy.lookup",
-    "version": "b43178e14354",
+    "version": "c0e7bd9888d3",
     "title": "Whoxy lookup",
     "provider": {
       "name": "Whoxy",
@@ -1145,7 +1145,7 @@
   },
   {
     "id": "network.urlscan.lookup",
-    "version": "620f8d7d373e",
+    "version": "7f5718ee13dd",
     "title": "URLScan search",
     "provider": {
       "name": "urlscan.io",
@@ -1232,7 +1232,7 @@
   },
   {
     "id": "network.urlscan.submit",
-    "version": "bc3bd1f655bf",
+    "version": "f9236131b44c",
     "title": "URLScan submit",
     "provider": {
       "name": "urlscan.io",
@@ -1646,7 +1646,7 @@
   },
   {
     "id": "network.shodan.lookup",
-    "version": "255645931960",
+    "version": "f22021930740",
     "title": "Shodan lookup",
     "provider": {
       "name": "Shodan",
@@ -1739,7 +1739,7 @@
   },
   {
     "id": "network.censys.lookup",
-    "version": "63fa158a0a63",
+    "version": "0bcca9614d08",
     "title": "Censys lookup",
     "provider": {
       "name": "Censys",
@@ -1839,7 +1839,7 @@
   },
   {
     "id": "network.leakix.lookup",
-    "version": "dfd330291378",
+    "version": "7f5c32388756",
     "title": "LeakIX lookup",
     "provider": {
       "name": "LeakIX",
@@ -2017,7 +2017,7 @@
   },
   {
     "id": "network.tranco.lookup",
-    "version": "b405de8818bc",
+    "version": "18ab4ef7688c",
     "title": "Tranco top-sites rank",
     "provider": {
       "name": "Tranco",
@@ -3040,7 +3040,7 @@
   },
   {
     "id": "identity.emailrep.lookup",
-    "version": "93d02286796f",
+    "version": "5aed4441c532",
     "title": "EmailRep lookup",
     "provider": {
       "name": "EmailRep",
@@ -3246,7 +3246,7 @@
   },
   {
     "id": "identity.github.lookup",
-    "version": "0bcac66a582d",
+    "version": "b6645579de3a",
     "title": "GitHub lookup",
     "provider": {
       "name": "GitHub",
@@ -3340,7 +3340,7 @@
   },
   {
     "id": "identity.keybase.lookup",
-    "version": "04ae63451bff",
+    "version": "e7bfa47d1428",
     "title": "Keybase lookup",
     "provider": {
       "name": "Keybase",
@@ -3443,7 +3443,7 @@
   },
   {
     "id": "identity.gravatar.lookup",
-    "version": "b829a1ad3e8d",
+    "version": "1bdcf353dffb",
     "title": "Gravatar lookup",
     "provider": {
       "name": "Gravatar",
@@ -3535,7 +3535,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "65a74b46e8b3",
+    "version": "135450619379",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -3629,7 +3629,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "397574d25139",
+    "version": "3f8087e10447",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "46ec537e27c9",
+    "version": "145f8879867b",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "e7139ef189d2",
+    "version": "a2e8fa323521",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -3917,7 +3917,7 @@
   },
   {
     "id": "breach.leakradar.lookup",
-    "version": "2db94f9ea52c",
+    "version": "1e00bee24ee8",
     "title": "LeakRadar lookup",
     "provider": {
       "name": "LeakRadar",
@@ -4061,8 +4061,99 @@
     ]
   },
   {
+    "id": "breach.emailosint.lookup",
+    "version": "1c4ff4cd7a04",
+    "title": "EmailOSINT lookup",
+    "provider": {
+      "name": "EmailOSINT",
+      "url": "https://emailosint.org",
+      "termsUrl": "https://emailosint.org/legal/terms",
+      "tier": "paid",
+      "commercialUse": "restricted"
+    },
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.emailosint.org",
+        "access": "keyed"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "Email",
+          "type": "string",
+          "minLength": 1
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "email"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "Email",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "email"
+      ]
+    },
+    "description": "Reverse-look up an email address on EmailOSINT: the services it is registered on (with any username, display name and profile link the vendor found), the breaches it appeared in (name and date only) and how many infostealer logs hold it (origin host only). No password, hash or login is stored, and the vendor's AI summary is turned off. The vendor warns results may be incomplete or mis-attributed, keeps every address searched and its results indefinitely, and shares the address with its own data providers.",
+    "dataSource": "api.emailosint.org",
+    "kind": "collect",
+    "flags": [
+      "needs_key",
+      "third_party",
+      "breach"
+    ],
+    "consumes": [
+      {
+        "kind": "identifier",
+        "type": "email"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
+      }
+    ],
+    "useCases": [
+      "Passive",
+      "Footprint"
+    ],
+    "timeoutMs": 60000,
+    "jobPolicy": {
+      "cacheTtlMs": 3600000
+    },
+    "credentials": [
+      {
+        "name": "EMAILOSINT_API_KEY"
+      }
+    ]
+  },
+  {
     "id": "threat.virustotal.lookup",
-    "version": "4fa53a5cb42b",
+    "version": "fddaade8ae9d",
     "title": "VirusTotal lookup",
     "provider": {
       "name": "VirusTotal",
@@ -4158,7 +4249,7 @@
   },
   {
     "id": "threat.abuseipdb.lookup",
-    "version": "f8fe38e9bb13",
+    "version": "c5020ae6793c",
     "title": "AbuseIPDB lookup",
     "provider": {
       "name": "AbuseIPDB",
@@ -4251,7 +4342,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "84635b4482a7",
+    "version": "12410f6106fa",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4351,7 +4442,7 @@
   },
   {
     "id": "threat.urlhaus.lookup",
-    "version": "a46d06baf824",
+    "version": "d32285ef03d5",
     "title": "URLhaus lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4458,7 +4549,7 @@
   },
   {
     "id": "threat.malwarebazaar.lookup",
-    "version": "1dd559161b9e",
+    "version": "5886da6c9330",
     "title": "MalwareBazaar lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4636,7 +4727,7 @@
   },
   {
     "id": "threat.greynoise.lookup",
-    "version": "66e8b4e7581c",
+    "version": "bc1a14200920",
     "title": "GreyNoise Community",
     "provider": {
       "name": "GreyNoise",
@@ -4725,7 +4816,7 @@
   },
   {
     "id": "threat.hashlookup.lookup",
-    "version": "c15467c9e1ac",
+    "version": "fe483b19cbaf",
     "title": "CIRCL hashlookup",
     "provider": {
       "name": "CIRCL",
@@ -4899,7 +4990,7 @@
   },
   {
     "id": "threat.dshield.lookup",
-    "version": "fa4278cd9d38",
+    "version": "e20c475a97d3",
     "title": "SANS ISC DShield",
     "provider": {
       "name": "SANS ISC DShield",
@@ -5150,7 +5241,7 @@
   },
   {
     "id": "threat.otx.lookup",
-    "version": "51e3a24b9102",
+    "version": "c3528be690bd",
     "title": "OTX lookup",
     "provider": {
       "name": "AlienVault OTX",
@@ -5253,7 +5344,7 @@
   },
   {
     "id": "threat.safebrowsing.lookup",
-    "version": "525c940acea7",
+    "version": "55146a597991",
     "title": "Google Safe Browsing lookup",
     "provider": {
       "name": "Google Safe Browsing",
@@ -5541,7 +5632,7 @@
   },
   {
     "id": "threat.honeydb.lookup",
-    "version": "877de6e0a931",
+    "version": "6cb791fe2ffb",
     "title": "HoneyDB lookup",
     "provider": {
       "name": "HoneyDB",

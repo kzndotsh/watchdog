@@ -27,6 +27,7 @@ describe("breach category", () => {
     );
     expect([...breach].sort()).toEqual([
       "breach.dehashed.lookup",
+      "breach.emailosint.lookup",
       "breach.hibp.lookup",
       "breach.hudsonrock.lookup",
       "breach.leakradar.lookup",

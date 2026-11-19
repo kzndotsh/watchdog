@@ -71,6 +71,7 @@ const BREACH_KEYS = [
   "DEHASHED_API_KEY",
   "SNUSBASE_API_KEY",
   "LEAKRADAR_API_KEY",
+  "EMAILOSINT_API_KEY",
 ];
 
 async function storeBreachKeys() {
@@ -152,6 +153,7 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
       ["breach.dehashed.lookup", { query: EMAIL }],
       ["breach.snusbase.lookup", { query: EMAIL }],
       ["breach.leakradar.lookup", { query: EMAIL }],
+      ["breach.emailosint.lookup", { email: EMAIL }],
     ])("refuses to queue %s and leaves no Job behind", async (id, input) => {
       const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
       await storeBreachKeys();

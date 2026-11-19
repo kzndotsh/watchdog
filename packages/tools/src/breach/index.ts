@@ -63,3 +63,8 @@ export {
   type LeakradarLookupSnapshot,
   type LeakradarRecord,
 } from "./leakradar";
+export {
+  emailosintLookupSnapshotSchema,
+  fetchEmailosintLookupEffect,
+  type EmailosintLookupSnapshot,
+} from "./emailosint";

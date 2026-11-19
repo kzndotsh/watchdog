@@ -7,6 +7,7 @@ import type { ToolsTag } from "../errors/tagged-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 import { fetchJsonObjectEffect } from "./fetch-json";
+import type { OutboundLimits } from "./safe-fetch";
 
 /**
  * Where a provider's key goes. `basic` takes the secret as `user:password`.
@@ -25,6 +26,8 @@ export type JsonRequest = {
   method?: "GET" | "POST";
   headers?: Record<string, string>;
   body?: string | URLSearchParams;
+  /** Per-call bounds when the defaults do not fit (a vendor that answers slowly). */
+  limits?: OutboundLimits;
 };
 
 export type JsonProviderContext<S, O> = {
@@ -76,7 +79,7 @@ function keyedRequest(
   placement: KeyPlacement | undefined,
   key: string,
   userAgent: string
-): { url: string | URL; init: RequestInit } {
+): { url: string | URL; init: RequestInit; limits?: OutboundLimits } {
   const headers: Record<string, string> = {
     Accept: "application/json",
     ...request.headers,
@@ -98,7 +101,9 @@ function keyedRequest(
   }
   const init: RequestInit = { method: request.method ?? "GET", headers };
   if (request.body !== undefined) init.body = request.body;
-  return { url, init };
+  return request.limits === undefined
+    ? { url, init }
+    : { url, init, limits: request.limits };
 }
 
 function runJsonProvider<
@@ -120,7 +125,7 @@ function runJsonProvider<
       try: () => spec.normalize(raw),
       catch: mapToolsCatch,
     });
-    const { url, init } = yield* Effect.try({
+    const { url, init, limits } = yield* Effect.try({
       try: () =>
         keyedRequest(
           spec.request(subject, options),
@@ -134,6 +139,7 @@ function runJsonProvider<
       url,
       init,
       signal,
+      ...(limits === undefined ? {} : { limits }),
       service: spec.service,
       subject: subjectLabel(subject),
       acceptStatus: (code) =>
