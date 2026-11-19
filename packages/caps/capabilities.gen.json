@@ -4062,7 +4062,7 @@
   },
   {
     "id": "breach.emailosint.lookup",
-    "version": "e03e01b32877",
+    "version": "a04134b353d7",
     "title": "EmailOSINT lookup",
     "provider": {
       "name": "EmailOSINT",

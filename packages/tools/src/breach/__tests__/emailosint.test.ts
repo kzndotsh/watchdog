@@ -76,7 +76,24 @@ describe("parseEmailosintBody", () => {
     ]);
     expect(snap.stealerLogCount).toBe(2);
     expect(snap.stealerOriginHosts).toEqual(["login.shop.test"]);
+    expect(snap.resultsRedacted).toBe(false);
     expect(snap.isTruncated).toBe(false);
+  });
+
+  it("names a service by its slug, not the opaque module id", () => {
+    const snap = parseEmailosintBody(EMAIL, AT, {
+      accounts: [
+        { module: { id: "6abe1784436bf40124c43b1d", name: "gitlab" } },
+      ],
+    });
+    expect(snap.accounts[0]?.service).toBe("gitlab");
+  });
+
+  it("reads the vendor's redacted flags", () => {
+    const snap = parseEmailosintBody(EMAIL, AT, {
+      data_breaches: { amount: 4, redacted: true },
+    });
+    expect(snap.resultsRedacted).toBe(true);
   });
 
   it("never copies a credential, phone, IP or AI text", () => {

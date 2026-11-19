@@ -22,6 +22,7 @@ const report: EmailosintLookupSnapshot = {
   completed: true,
   timedOut: false,
   cloaked: false,
+  resultsRedacted: false,
   accounts: [
     {
       service: "github",
@@ -74,6 +75,12 @@ describe("interpret", () => {
     });
     expectProposesIdentifier(result, { type: "email", value: EMAIL });
     expect(claimText(result, 1)).toMatch(/no accounts or exposure reported/);
+  });
+
+  it("says when the vendor redacted results", () => {
+    expect(
+      claimText(interpret({ ...report, resultsRedacted: true }), 1)
+    ).toMatch(/results redacted by the vendor/);
   });
 
   it("flags a partial or truncated result", () => {

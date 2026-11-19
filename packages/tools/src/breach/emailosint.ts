@@ -30,7 +30,7 @@ const MAX_TEXT = 300;
 const text = z.string().min(1).max(MAX_TEXT);
 
 export const emailosintAccountSchema = z.strictObject({
-  /** The vendor's module id, e.g. `github`. */
+  /** The vendor's module slug (`module.name`, e.g. `github`); `module.id` is opaque. */
   service: text,
   /** Display name of the service, e.g. `GitHub`. */
   serviceName: text.nullable(),
@@ -63,6 +63,8 @@ export const emailosintLookupSnapshotSchema = z.strictObject({
   timedOut: z.boolean(),
   /** The vendor redacted results (free plan); always false on a paid API key. */
   cloaked: z.boolean(),
+  /** The vendor marked the breach or infostealer results redacted (counts may be hidden). */
+  resultsRedacted: z.boolean(),
   accounts: z.array(emailosintAccountSchema).max(EMAILOSINT_MAX_ACCOUNTS),
   /** Services where the address is registered (validator modules, no account detail). */
   registeredOn: z.array(text).max(EMAILOSINT_MAX_SITES),
@@ -118,7 +120,7 @@ function fieldValues(data: unknown): Map<string, unknown> {
 
 function readAccount(row: Record<string, unknown>): EmailosintAccount | null {
   const mod = isRecord(row.module) ? row.module : {};
-  const service = shortText(mod.id) ?? shortText(mod.name);
+  const service = shortText(mod.name) ?? shortText(mod.id);
   if (service === null) return null;
   const fields = fieldValues(row.data);
   return {
@@ -215,6 +217,8 @@ export function parseEmailosintBody(
     completed: asBool(meta.completed) ?? false,
     timedOut: asBool(meta.timed_out) ?? false,
     cloaked: asBool(body.cloaked) ?? false,
+    resultsRedacted:
+      asBool(breaches.redacted) === true || asBool(stealers.redacted) === true,
     accounts: accounts.rows,
     registeredOn: registered.rows,
     notRegisteredCount: siteNames(validator.unregistered).length,

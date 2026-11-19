@@ -41,6 +41,9 @@ function summarize(report: EmailosintLookupSnapshot): string {
     parts.push(`${report.stealerLogCount} infostealer log(s)`);
   }
   if (parts.length === 0) parts.push("no accounts or exposure reported");
+  if (report.cloaked || report.resultsRedacted) {
+    parts.push("results redacted by the vendor");
+  }
   if (report.timedOut || !report.completed) parts.push("partial result");
   if (report.isTruncated) parts.push("lists truncated");
   return `EmailOSINT for ${report.email}: ${parts.join("; ")}`;
