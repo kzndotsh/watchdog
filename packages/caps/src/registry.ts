@@ -6,6 +6,7 @@ import { urlSubmit } from "./archive/url.submit/cap";
 import { waybackFetch } from "./archive/wayback.fetch/cap";
 import { waybackLookup } from "./archive/wayback.lookup/cap";
 import { dehashedLookup } from "./breach/dehashed.lookup/cap";
+import { emailosintLookup } from "./breach/emailosint.lookup/cap";
 import { hibpLookup } from "./breach/hibp.lookup/cap";
 import { hudsonrockLookup } from "./breach/hudsonrock.lookup/cap";
 import { leakradarLookup } from "./breach/leakradar.lookup/cap";
@@ -119,6 +120,7 @@ const REGISTERED = [
   dehashedLookup,
   snusbaseLookup,
   leakradarLookup,
+  emailosintLookup,
   virusTotalLookup,
   abuseIpdbLookup,
   threatfoxLookup,

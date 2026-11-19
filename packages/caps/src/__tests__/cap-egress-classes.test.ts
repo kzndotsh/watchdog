@@ -23,6 +23,7 @@ const EXPECTED: Record<string, EgressClass[]> = {
   "archive.wayback.fetch": PUBLIC,
   "archive.wayback.lookup": PUBLIC,
   "breach.dehashed.lookup": ACCOUNT,
+  "breach.emailosint.lookup": ACCOUNT,
   "breach.hibp.lookup": ACCOUNT,
   "breach.hudsonrock.lookup": ACCOUNT,
   "breach.snusbase.lookup": ACCOUNT,

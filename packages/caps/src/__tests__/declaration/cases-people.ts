@@ -54,6 +54,7 @@ export const PEOPLE_CASES: readonly DeclarationCase[] = [
   },
   { id: "archive.wayback.lookup", inputs: [{ url: PAGE_URL }] },
   { id: "breach.dehashed.lookup", inputs: [{ query: EMAIL }] },
+  { id: "breach.emailosint.lookup", inputs: [{ email: EMAIL }] },
   { id: "breach.hibp.lookup", inputs: [{ email: EMAIL }] },
   { id: "breach.hudsonrock.lookup", inputs: [{ query: EMAIL }] },
   { id: "breach.snusbase.lookup", inputs: [{ query: EMAIL }] },

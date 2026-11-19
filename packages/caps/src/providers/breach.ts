@@ -77,3 +77,21 @@ export const snusbase = defineProvider({
     "api.snusbase.com": "forbidden",
   },
 });
+
+/**
+ * emailosint.org/legal/terms (updated 2026-04-26) license use "for your own lawful purposes",
+ * bar reselling accounts and FCRA use, and say nothing explicit on commercial use; the API needs
+ * a Business plan. No operating company is named.
+ */
+export const emailosint = defineProvider({
+  name: "EmailOSINT",
+  url: "https://emailosint.org",
+  termsUrl: "https://emailosint.org/legal/terms",
+  tier: "paid",
+  commercialUse: "unknown",
+  hosts: {
+    // The terms bar users to "resell, sublicense, or redistribute the Service or its outputs in
+    // bulk"; whether one result may go to a client in an Export is not stated.
+    "api.emailosint.org": "unknown",
+  },
+});

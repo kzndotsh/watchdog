@@ -1,0 +1,121 @@
+{
+  "email": "alex.morgan@mailhost.test",
+  "cloaked": false,
+  "accounts": [
+    {
+      "module": {
+        "id": "github",
+        "name": "github",
+        "name_formatted": "GitHub",
+        "domain": "github.com",
+        "type": 1,
+        "type_name": "Developer"
+      },
+      "data": {
+        "fields": [
+          {
+            "key": "username",
+            "label": "Username",
+            "value": "alex",
+            "type": "text"
+          },
+          {
+            "key": "name",
+            "label": "Name",
+            "value": "Alex Morgan",
+            "type": "text"
+          },
+          {
+            "key": "profile_url",
+            "label": "Profile",
+            "value": "https://github.com/alex",
+            "type": "url"
+          },
+          {
+            "key": "phone_numbers",
+            "label": "Phones",
+            "value": [{ "number": "+15550100" }],
+            "type": "list"
+          }
+        ]
+      }
+    },
+    {
+      "module": { "name": "spotify", "name_formatted": "Spotify" },
+      "data": {
+        "fields": [
+          {
+            "key": "profile_url",
+            "label": "Profile",
+            "value": "javascript:alert(1)",
+            "type": "url"
+          }
+        ]
+      }
+    },
+    { "module": {}, "data": { "fields": [] } }
+  ],
+  "validator": {
+    "registered": [
+      { "name": "github", "name_formatted": "GitHub" },
+      { "name": "github", "name_formatted": "GitHub" },
+      { "name": "adobe", "name_formatted": "Adobe" }
+    ],
+    "unregistered": [
+      { "name": "spotify", "name_formatted": "Spotify" },
+      { "name": "twitter", "name_formatted": "X" }
+    ]
+  },
+  "data_breaches": {
+    "amount": 6,
+    "sources": 3,
+    "compromised": true,
+    "results": [
+      {
+        "email": "a***@mailhost.test",
+        "source": { "name": "Adobe", "date": "2013-10-04" },
+        "username": "alexm",
+        "password": "hunter2",
+        "hash": "5f4dcc3b5aa765d61d8327deb882cf99",
+        "ip_address": "192.0.2.10",
+        "phone_number": "+15550100"
+      },
+      {
+        "email": "a***@mailhost.test",
+        "source": { "name": "Adobe", "date": "2013-10-04" }
+      },
+      { "email": "a***@mailhost.test", "source": { "name": "Canva" } }
+    ]
+  },
+  "stealer_logs": {
+    "count": 2,
+    "results": [
+      {
+        "origin": "https://login.shop.test/account?session=abc",
+        "login": "alex.morgan@mailhost.test",
+        "password": "hunter2",
+        "data_type": "stealerlog"
+      },
+      {
+        "origin": "not a url",
+        "login": "alex",
+        "password": "x",
+        "data_type": "combo"
+      }
+    ]
+  },
+  "ai_summary": {
+    "headline": "Likely Alex Morgan; medium exposure.",
+    "bullets": ["Active GitHub account."],
+    "risk": "medium",
+    "risk_reason": "Old credentials present in known dumps."
+  },
+  "meta": {
+    "duration_ms": 4271,
+    "module_timeout_ms": 15000,
+    "completed": true,
+    "timed_out": false,
+    "version": 1,
+    "lookup_id": "65fa0b1c2c4a8e0d1c8b2a3f"
+  }
+}

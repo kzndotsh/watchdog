@@ -3535,7 +3535,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "65a74b46e8b3",
+    "version": "1aa0b874ca07",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -3629,7 +3629,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "397574d25139",
+    "version": "ace6154b5075",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3733,7 +3733,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "46ec537e27c9",
+    "version": "2c3f85772cf0",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3825,7 +3825,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "e7139ef189d2",
+    "version": "3e169bdf60e5",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -3917,7 +3917,7 @@
   },
   {
     "id": "breach.leakradar.lookup",
-    "version": "2db94f9ea52c",
+    "version": "ce853a08d19a",
     "title": "LeakRadar lookup",
     "provider": {
       "name": "LeakRadar",
@@ -4057,6 +4057,97 @@
     "credentials": [
       {
         "name": "LEAKRADAR_API_KEY"
+      }
+    ]
+  },
+  {
+    "id": "breach.emailosint.lookup",
+    "version": "e03e01b32877",
+    "title": "EmailOSINT lookup",
+    "provider": {
+      "name": "EmailOSINT",
+      "url": "https://emailosint.org",
+      "termsUrl": "https://emailosint.org/legal/terms",
+      "tier": "paid",
+      "commercialUse": "unknown"
+    },
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.emailosint.org",
+        "access": "keyed"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "Email",
+          "type": "string",
+          "minLength": 1
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "email"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "Email",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "email"
+      ]
+    },
+    "description": "Reverse-look up an email address on EmailOSINT: the services it is registered on (with any username, display name and profile link the vendor found), the breaches it appeared in (name and date only) and how many infostealer logs hold it (origin host only). No password, hash or login is stored, and the vendor's AI summary is turned off. The vendor warns results may be incomplete or mis-attributed.",
+    "dataSource": "api.emailosint.org",
+    "kind": "collect",
+    "flags": [
+      "needs_key",
+      "third_party",
+      "breach"
+    ],
+    "consumes": [
+      {
+        "kind": "identifier",
+        "type": "email"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
+      }
+    ],
+    "useCases": [
+      "Passive",
+      "Footprint"
+    ],
+    "timeoutMs": 60000,
+    "jobPolicy": {
+      "cacheTtlMs": 3600000
+    },
+    "credentials": [
+      {
+        "name": "EMAILOSINT_API_KEY"
       }
     ]
   },

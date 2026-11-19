@@ -63,3 +63,18 @@ export {
   type LeakradarLookupSnapshot,
   type LeakradarRecord,
 } from "./leakradar";
+export {
+  EMAILOSINT_MAX_ACCOUNTS,
+  EMAILOSINT_MAX_BREACH_SOURCES,
+  EMAILOSINT_MAX_SITES,
+  EMAILOSINT_MAX_STEALER_HOSTS,
+  EMAILOSINT_MODULE_TIMEOUT_MS,
+  emailosintAccountSchema,
+  emailosintBreachSourceSchema,
+  emailosintLookupSnapshotSchema,
+  fetchEmailosintLookupEffect,
+  parseEmailosintBody,
+  type EmailosintAccount,
+  type EmailosintBreachSource,
+  type EmailosintLookupSnapshot,
+} from "./emailosint";
