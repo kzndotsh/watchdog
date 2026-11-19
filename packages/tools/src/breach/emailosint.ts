@@ -26,6 +26,7 @@ export const EMAILOSINT_MODULE_TIMEOUT_MS = 15_000;
 /** Whole-call deadline: the vendor answers once every module has finished or timed out. */
 const EMAILOSINT_CALL_TIMEOUT_MS = 45_000;
 const MAX_TEXT = 300;
+const MAX_URL = 2048;
 
 const text = z.string().min(1).max(MAX_TEXT);
 
@@ -39,7 +40,7 @@ export const emailosintAccountSchema = z.strictObject({
   category: text.nullable(),
   username: text.nullable(),
   displayName: text.nullable(),
-  profileUrl: z.url().max(2048).nullable(),
+  profileUrl: z.url().max(MAX_URL).nullable(),
 });
 
 export const emailosintBreachSourceSchema = z.strictObject({
@@ -93,13 +94,20 @@ function shortText(value: unknown): string | null {
   return s === null || s.length > MAX_TEXT ? null : s;
 }
 
+/**
+ * An http(s) profile link cut to origin plus path: a link with userinfo is refused, and the query
+ * and fragment (where session tokens ride) are dropped. The bound is checked on the serialized
+ * form, since serializing can percent-encode it past the input length.
+ */
 function httpUrl(value: unknown): string | null {
   const s = asString(value);
-  if (s === null || s.length > 2048 || !URL.canParse(s)) return null;
+  if (s === null || !URL.canParse(s)) return null;
   const url = new URL(s);
-  return url.protocol === "https:" || url.protocol === "http:"
-    ? url.href
-    : null;
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (url.username !== "" || url.password !== "") return null;
+  url.search = "";
+  url.hash = "";
+  return url.href.length > MAX_URL ? null : url.href;
 }
 
 function nonNegativeInt(value: unknown): number | null {

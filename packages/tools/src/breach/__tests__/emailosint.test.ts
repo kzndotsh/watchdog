@@ -202,6 +202,25 @@ describe("parseEmailosintBody", () => {
     expect(snap.isTruncated).toBe(true);
   });
 
+  it("keeps a profile link as origin plus path only", () => {
+    const urls = (value: string) =>
+      parseEmailosintBody(EMAIL, AT, {
+        accounts: [
+          {
+            module: { name: "github" },
+            data: { fields: [{ key: "profile_url", value }] },
+          },
+        ],
+      }).accounts[0]?.profileUrl;
+    expect(urls("https://github.com/alex?session=abc#frag")).toBe(
+      "https://github.com/alex"
+    );
+    expect(urls("https://alex:pw@github.com/alex")).toBeNull();
+    expect(urls("https://alex@github.com/alex")).toBeNull();
+    expect(urls(`https://h.test/${"é".repeat(400)}`)).toBeNull();
+    expect(urls("https://github.com/alex")).toBe("https://github.com/alex");
+  });
+
   it("refuses a body that is not an object", () => {
     expect(() => parseEmailosintBody(EMAIL, AT, [])).toThrow();
   });
