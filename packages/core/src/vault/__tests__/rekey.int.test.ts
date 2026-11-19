@@ -3,12 +3,21 @@ import { describe, expect, it } from "vitest";
 import { credentials, credentialsRepo, db, type DbTx } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
+import { Db } from "../../infra/db-service";
+import { runDomainWith } from "../../infra/run-domain";
 import {
   openSecret,
   openSecretWithMaster,
   sealSecretWithMaster,
 } from "../../infra/vault-crypto";
-import { rekeyVault } from "../rekey";
+import { rekeyVaultEffect, type RekeyResult } from "../rekey";
+
+function rekeyVault(
+  tx: DbTx,
+  keys: { readonly oldKey: string; readonly newKey: string }
+): Promise<RekeyResult> {
+  return runDomainWith(Db.layerOf(tx))(rekeyVaultEffect(keys));
+}
 
 /** What an old install has: a placeholder key that the new secrets check would refuse. */
 const OLD_KEY = "change-me-to-a-long-random-string-at-least-32";
@@ -59,7 +68,7 @@ async function snapshot(tx: DbTx): Promise<string[]> {
     .sort();
 }
 
-describe("rekeyVault", () => {
+describe("rekeyVaultEffect", () => {
   it("re-encrypts every credential: opens under the new key, not the old one", async () => {
     await withEmptyVault(async (tx) => {
       await seedUnderOldKey(tx);

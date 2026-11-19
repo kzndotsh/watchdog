@@ -35,6 +35,7 @@ import {
   requireBreachCredentialOptInEffect,
   requireRawBodyOptInEffect,
   writeCaseExportZipEffect,
+  zipSinkFromPromises,
   type CaseExportOptions,
   type ZipSink,
 } from "@watchdog/core/export";
@@ -75,10 +76,10 @@ function exportBody(): ExportBody {
   const writer = writable.getWriter();
   return {
     readable,
-    sink: {
+    sink: zipSinkFromPromises({
       write: async (chunk) => writer.write(chunk),
       end: async () => writer.close(),
-    },
+    }),
     abort: async (reason) => {
       try {
         await writer.abort(reason);

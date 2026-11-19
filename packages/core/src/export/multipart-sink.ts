@@ -35,54 +35,74 @@ function concat(chunks: readonly Uint8Array[], length: number): Uint8Array {
   return out;
 }
 
+function uploadFailure(reason: string) {
+  return (cause: unknown) => new InternalError({ reason, cause });
+}
+
 function sinkFor(upload: Upload): ZipSink {
   let buffered: Uint8Array[] = [];
   let bufferedBytes = 0;
 
-  async function sendPart(body: Uint8Array): Promise<void> {
-    const partNumber = upload.parts.length + 1;
-    const sent = await upload.store.client.send(
-      new UploadPartCommand({
-        Bucket: upload.store.bucket,
-        Key: upload.key,
-        UploadId: upload.uploadId,
-        PartNumber: partNumber,
-        Body: body,
-        ContentLength: body.byteLength,
-      })
-    );
-    // A part with no ETag cannot be completed: refuse it now, not after gigabytes more.
-    if (sent.ETag === undefined || sent.ETag === "") {
-      throw new Error(`UploadPart ${partNumber} returned no ETag`);
-    }
-    upload.parts.push({ ETag: sent.ETag, PartNumber: partNumber });
-  }
+  const sendPart = (body: Uint8Array): Effect.Effect<void, InternalError> =>
+    Effect.gen(function* sendPartGen() {
+      const partNumber = upload.parts.length + 1;
+      const sent = yield* Effect.tryPromise({
+        try: () =>
+          upload.store.client.send(
+            new UploadPartCommand({
+              Bucket: upload.store.bucket,
+              Key: upload.key,
+              UploadId: upload.uploadId,
+              PartNumber: partNumber,
+              Body: body,
+              ContentLength: body.byteLength,
+            })
+          ),
+        catch: uploadFailure(`Couldn't upload export part ${partNumber}`),
+      });
+      // A part with no ETag cannot be completed: refuse it now, not after gigabytes more.
+      if (sent.ETag === undefined || sent.ETag === "") {
+        return yield* new InternalError({
+          reason: `UploadPart ${partNumber} returned no ETag`,
+        });
+      }
+      upload.parts.push({ ETag: sent.ETag, PartNumber: partNumber });
+    });
 
-  async function sendBuffered(): Promise<void> {
+  const sendBuffered = Effect.suspend(() => {
     const body = concat(buffered, bufferedBytes);
     buffered = [];
     bufferedBytes = 0;
-    await sendPart(body);
-  }
+    return sendPart(body);
+  });
 
   return {
-    write: async (chunk) => {
-      buffered.push(chunk);
-      bufferedBytes += chunk.byteLength;
-      if (bufferedBytes >= MULTIPART_PART_BYTES) await sendBuffered();
-    },
-    end: async () => {
-      if (bufferedBytes > 0 || upload.parts.length === 0) await sendBuffered();
-      await upload.store.client.send(
-        new CompleteMultipartUploadCommand({
-          Bucket: upload.store.bucket,
-          Key: upload.key,
-          UploadId: upload.uploadId,
-          MultipartUpload: { Parts: upload.parts },
-        })
-      );
+    write: (chunk) =>
+      Effect.suspend(() => {
+        buffered.push(chunk);
+        bufferedBytes += chunk.byteLength;
+        return bufferedBytes >= MULTIPART_PART_BYTES
+          ? sendBuffered
+          : Effect.void;
+      }),
+    end: Effect.gen(function* endGen() {
+      if (bufferedBytes > 0 || upload.parts.length === 0) {
+        yield* sendBuffered;
+      }
+      yield* Effect.tryPromise({
+        try: () =>
+          upload.store.client.send(
+            new CompleteMultipartUploadCommand({
+              Bucket: upload.store.bucket,
+              Key: upload.key,
+              UploadId: upload.uploadId,
+              MultipartUpload: { Parts: upload.parts },
+            })
+          ),
+        catch: uploadFailure("Couldn't complete the export upload"),
+      });
       upload.completed = true;
-    },
+    }),
   };
 }
 
@@ -99,31 +119,33 @@ export function multipartSinkEffect(
     const store = yield* BlobStore;
     const upload = yield* Effect.acquireRelease(
       Effect.tryPromise({
-        try: async (): Promise<Upload> => {
-          const created = await store.client.send(
+        try: () =>
+          store.client.send(
             new CreateMultipartUploadCommand({
               Bucket: store.bucket,
               Key: key,
               ContentType: contentType,
             })
-          );
-          if (created.UploadId === undefined) {
-            throw new Error("the store returned no upload id");
-          }
-          return {
-            store,
-            key,
-            uploadId: created.UploadId,
-            parts: [],
-            completed: false,
-          };
-        },
-        catch: (cause) =>
-          new InternalError({
-            reason: "Couldn't start the export upload",
-            cause,
-          }),
-      }),
+          ),
+        catch: uploadFailure("Couldn't start the export upload"),
+      }).pipe(
+        Effect.flatMap((created) =>
+          created.UploadId === undefined
+            ? Effect.fail(
+                new InternalError({
+                  reason: "Couldn't start the export upload",
+                  cause: new Error("the store returned no upload id"),
+                })
+              )
+            : Effect.succeed<Upload>({
+                store,
+                key,
+                uploadId: created.UploadId,
+                parts: [],
+                completed: false,
+              })
+        )
+      ),
       (started) =>
         started.completed
           ? Effect.void

@@ -7,13 +7,16 @@
  */
 import { readFileSync } from "node:fs";
 
+import { Effect } from "effect";
+
 // The process entry owns its connection through `withPool` (acquire, then end with the bounded
 // timeout), like the worker and web do through `Db.owned`: this file is not a service.
 // oxlint-disable-next-line eslint/no-restricted-imports -- process entry, see above
 import { withPool } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
-import { rekeyVault } from "./vault/rekey";
+import { Db } from "./infra/db-service";
+import { rekeyVaultEffect } from "./vault/rekey";
 import {
   OLD_KEY_ENV,
   parseRekeyArgs,
@@ -47,10 +50,12 @@ async function main(): Promise<void> {
 
   // oxlint-disable-next-line effecttsgo/async-function -- process entry: `withPool` takes a promise callback and ends the pool after it
   await withPool(async ({ db }) => {
-    const result = await rekeyVault(db, {
-      oldKey: old.key,
-      newKey: env.WD_MASTER_VAULT_KEY,
-    });
+    const result = await Effect.runPromise(
+      rekeyVaultEffect({
+        oldKey: old.key,
+        newKey: env.WD_MASTER_VAULT_KEY,
+      }).pipe(Effect.provide(Db.layerOf(db)))
+    );
     switch (result.status) {
       case "rotated": {
         out(

@@ -111,27 +111,3 @@ export function redactBreachBody(
     ? { kind: "withheld", reason: "unreadable" }
     : { kind: "redacted", text };
 }
-
-/**
- * Read a body into memory, up to `maxBytes`. Returns null past the limit (the rest is not read),
- * so a huge file costs a bounded read, not its size.
- */
-export async function readBounded(
-  body: AsyncIterable<Uint8Array>,
-  maxBytes: number
-): Promise<Uint8Array | null> {
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for await (const chunk of body) {
-    total += chunk.byteLength;
-    if (total > maxBytes) return null;
-    chunks.push(chunk);
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}

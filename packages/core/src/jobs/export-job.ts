@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { DateTime, Effect } from "effect";
 import { z } from "zod";
 
 import type {
@@ -298,7 +298,7 @@ export function caseExportLinkEffect(
     if (storedAt === null || isArchiveExpired(storedAt, settings, now)) {
       return {
         kind: "expired" as const,
-        expiredAt: new Date(expiresAtMs).toISOString(),
+        expiredAt: DateTime.formatIso(DateTime.makeUnsafe(expiresAtMs)),
       };
     }
     const filename = `${activeCase.slug}-${job.finishedAt
@@ -322,7 +322,7 @@ export function caseExportLinkEffect(
       kind: "ready" as const,
       url,
       filename,
-      expiresAt: new Date(expiresAtMs).toISOString(),
+      expiresAt: DateTime.formatIso(DateTime.makeUnsafe(expiresAtMs)),
     };
   });
 }

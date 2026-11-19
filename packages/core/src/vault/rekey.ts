@@ -1,5 +1,12 @@
-import { credentialsRepo, lockVaultRekey, type DbExec } from "@watchdog/db";
+import { Effect } from "effect";
 
+import { lockVaultRekey } from "@watchdog/db";
+
+import { InternalError, type DomainTag } from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import { credentialsRepoFx } from "../infra/repos-fx";
 import {
   openSecretWithMaster,
   sealSecretWithMaster,
@@ -39,50 +46,55 @@ function opens(master: string, userId: string, blob: Buffer): boolean {
  * is never returned or logged. The keys are taken as given (trimmed like the vault does):
  * the old one may be a placeholder or short, which is why it is not validated as a secret.
  *
- * Call it with the process connection and run it once, from the rotation command: the server
- * keeps reading the key from its environment, so restart web and worker after a rotation.
+ * Run it once, from the rotation command, over the process connection (`Db.layerOf(db)`): the
+ * server keeps reading the key from its environment, so restart web and worker after a rotation.
  */
-export async function rekeyVault(
-  exec: DbExec,
-  keys: { readonly oldKey: string; readonly newKey: string }
-): Promise<RekeyResult> {
+export function rekeyVaultEffect(keys: {
+  readonly oldKey: string;
+  readonly newKey: string;
+}): Effect.Effect<RekeyResult, DomainTag, Db> {
   const oldKey = keys.oldKey.trim();
   const newKey = keys.newKey.trim();
-  if (oldKey === newKey) return { status: "same-key" };
+  if (oldKey === newKey) return Effect.succeed({ status: "same-key" });
 
-  return exec.transaction(async (tx): Promise<RekeyResult> => {
-    await lockVaultRekey(tx);
-    const rows = await credentialsRepo.listAllCiphertexts(tx);
-    if (rows.length === 0) return { status: "empty" };
+  return transact((tx) =>
+    Effect.gen(function* rekeyVaultGen() {
+      yield* tryDb(() => lockVaultRekey(tx));
+      const rows = yield* credentialsRepoFx.listAllCiphertexts(tx);
+      if (rows.length === 0) return { status: "empty" } as const;
 
-    const failed = rows.filter(
-      (row) => !opens(oldKey, row.userId, row.ciphertext)
-    ).length;
-    if (failed > 0) {
-      const rerun = rows.every((row) =>
-        opens(newKey, row.userId, row.ciphertext)
-      );
-      return rerun
-        ? { status: "already-rotated", rows: rows.length }
-        : { status: "undecryptable", failed, total: rows.length };
-    }
+      const failed = rows.filter(
+        (row) => !opens(oldKey, row.userId, row.ciphertext)
+      ).length;
+      if (failed > 0) {
+        const rerun = rows.every((row) =>
+          opens(newKey, row.userId, row.ciphertext)
+        );
+        return rerun
+          ? ({ status: "already-rotated", rows: rows.length } as const)
+          : ({ status: "undecryptable", failed, total: rows.length } as const);
+      }
 
-    for (const row of rows) {
-      const plaintext = openSecretWithMaster(
-        oldKey,
-        row.userId,
-        row.ciphertext
-      );
       // Rows are independent and written inside one transaction: a sequence keeps one
       // plaintext in memory at a time.
-      // oxlint-disable-next-line eslint/no-await-in-loop -- one plaintext at a time, one transaction
-      const written = await credentialsRepo.setCiphertext(
-        tx,
-        row.id,
-        sealSecretWithMaster(newKey, row.userId, plaintext)
-      );
-      if (!written) throw new Error("a credential disappeared during rotation");
-    }
-    return { status: "rotated", rows: rows.length };
-  });
+      for (const row of rows) {
+        const plaintext = openSecretWithMaster(
+          oldKey,
+          row.userId,
+          row.ciphertext
+        );
+        const written = yield* credentialsRepoFx.setCiphertext(
+          tx,
+          row.id,
+          sealSecretWithMaster(newKey, row.userId, plaintext)
+        );
+        if (!written) {
+          return yield* new InternalError({
+            reason: "a credential disappeared during rotation",
+          });
+        }
+      }
+      return { status: "rotated", rows: rows.length } as const;
+    })
+  );
 }

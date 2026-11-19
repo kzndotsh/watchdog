@@ -114,6 +114,9 @@ const effectRunEdges = [
   "packages/core/src/infra/postgres-tx.ts",
   // `runCap`, the Promise edge for Cap `run()` tests.
   "packages/caps/src/sdk/run.ts",
+  // Process: the vault rekey command, over the connection it owns (`Db.layerOf(db)`). Not
+  // `runDomain`: its service Layer would bundle the S3 and outbound clients the command never uses.
+  "packages/core/src/vault-rekey-cli.ts",
 ];
 
 /**

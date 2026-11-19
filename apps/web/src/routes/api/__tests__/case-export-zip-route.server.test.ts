@@ -65,7 +65,11 @@ vi.mock("@watchdog/api", () => ({
       : null,
 }));
 
-vi.mock("@watchdog/core/export", () => ({
+vi.mock("@watchdog/core/export", async (importOriginal) => ({
+  // The real adapter: the route's response body is what is under test.
+  zipSinkFromPromises: (
+    await importOriginal<typeof import("@watchdog/core/export")>()
+  ).zipSinkFromPromises,
   caseExportSettings: () => ({}),
   requireRawBodyOptInEffect: optInMock,
   requireBreachCredentialOptInEffect: breachOptInMock,
@@ -173,10 +177,10 @@ describe("case export zip route", () => {
       })
     );
     writeZipMock.mockImplementationOnce((_caseId: string, sink: ZipSink) =>
-      Effect.promise(async () => {
-        await sink.write(new Uint8Array([1, 2]));
-        await sink.write(new Uint8Array([3]));
-        await sink.end();
+      Effect.gen(function* writeZip() {
+        yield* sink.write(new Uint8Array([1, 2]));
+        yield* sink.write(new Uint8Array([3]));
+        yield* sink.end;
         return { markdownFiles: 1, evidenceIncluded: 0, evidenceSkipped: 0 };
       })
     );
@@ -344,9 +348,9 @@ describe("case export zip route", () => {
       })
     );
     writeZipMock.mockImplementationOnce((_caseId: string, sink: ZipSink) =>
-      Effect.promise(async () => {
-        await sink.write(new Uint8Array([1]));
-        throw new Error("read failed halfway");
+      Effect.gen(function* writeZip() {
+        yield* sink.write(new Uint8Array([1]));
+        return yield* Effect.die(new Error("read failed halfway"));
       })
     );
 
