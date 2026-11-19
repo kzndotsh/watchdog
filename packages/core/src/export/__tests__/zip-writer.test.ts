@@ -152,4 +152,19 @@ describe("ZipWriter", () => {
     expect(failure).toBeInstanceOf(InternalError);
     expect(written).toEqual([]);
   });
+
+  it("turns a rejected write or end of a promise writer into the sink's InternalError", async () => {
+    const sink = zipSinkFromPromises({
+      write: () => Promise.reject(new Error("client went away")),
+      end: () => Promise.reject(new Error("already closed")),
+    });
+    const written = await Effect.runPromise(
+      Effect.flip(sink.write(new Uint8Array(1)))
+    );
+    const ended = await Effect.runPromise(Effect.flip(sink.end));
+    expect(written).toBeInstanceOf(InternalError);
+    expect(written.cause).toEqual(new Error("client went away"));
+    expect(ended).toBeInstanceOf(InternalError);
+    expect(ended.cause).toEqual(new Error("already closed"));
+  });
 });

@@ -112,6 +112,60 @@ describe("verifyUploadedObjectEffect", () => {
     });
   });
 
+  it("destroys the body it stopped reading past the declared size", async () => {
+    const body = Readable.from([BYTES, BYTES, BYTES]);
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: body },
+    });
+    await verify(store);
+    expect(body.destroyed).toBe(true);
+  });
+
+  it("refuses a body that is not a readable stream", async () => {
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: BYTES },
+    });
+    await expect(verify(store)).resolves.toMatchObject({
+      _tag: "InvalidError",
+      reason: "Uploaded object could not be read",
+    });
+  });
+
+  it("refuses a stream that yields something other than bytes or text", async () => {
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: Readable.from([{ not: "bytes" }]) },
+    });
+    await expect(verify(store)).resolves.toMatchObject({
+      _tag: "InvalidError",
+      reason: "Uploaded object could not be read",
+    });
+  });
+
+  it("reports a stream that breaks halfway as an internal failure", async () => {
+    async function* broken(): AsyncGenerator<Uint8Array> {
+      yield BYTES.subarray(0, 4);
+      throw new Error("socket hang up");
+    }
+    const store = recordingBlobStore({
+      respond: ({ command }) =>
+        command === "HeadObjectCommand"
+          ? { ContentLength: BYTES.byteLength }
+          : { Body: Readable.from(broken()) },
+    });
+    await expect(verify(store)).resolves.toMatchObject({
+      _tag: "InternalError",
+    });
+  });
+
   it("refuses a stored Content-Type that differs from the declared one", async () => {
     const store = recordingBlobStore({
       objects: new Map([[URI, BYTES]]),
