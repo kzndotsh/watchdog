@@ -136,8 +136,10 @@ export function verifyUploadedObjectEffect(input: {
     const declaredSha256 = parsedSha256.data;
     const { client, bucket } = yield* BlobStore;
     const head = yield* Effect.tryPromise({
-      try: () =>
-        client.send(new HeadObjectCommand({ Bucket: bucket, Key: input.uri })),
+      try: (signal) =>
+        client.send(new HeadObjectCommand({ Bucket: bucket, Key: input.uri }), {
+          abortSignal: signal,
+        }),
       catch: storeFailure("inspect the uploaded object"),
     });
     if (
@@ -161,8 +163,11 @@ export function verifyUploadedObjectEffect(input: {
     }
 
     const res = yield* Effect.tryPromise({
-      try: () =>
-        client.send(new GetObjectCommand({ Bucket: bucket, Key: input.uri })),
+      // Interrupting the verification aborts the request, so no socket waits on a dropped body.
+      try: (signal) =>
+        client.send(new GetObjectCommand({ Bucket: bucket, Key: input.uri }), {
+          abortSignal: signal,
+        }),
       catch: storeFailure("read the uploaded object"),
     });
     const read = yield* hashObjectBodyEffect(res.Body, input.byteLength);
