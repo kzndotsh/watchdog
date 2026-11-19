@@ -148,6 +148,13 @@
       "when": 1794074210963,
       "tag": "0020_graph_history_row_index_order",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795118955393,
+      "tag": "0021_claims_retracted_index",
+      "breakpoints": true
     }
   ]
 }

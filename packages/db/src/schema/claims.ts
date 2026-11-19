@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -50,6 +51,11 @@ export const claims = pgTable(
     index("claims_entity_created_idx").on(t.entityId, t.createdAt, t.id),
     // The Claim list (ADR-0007): the Case's Claims by `created`, and `q` over the text (`pg_trgm`).
     index("claims_case_created_idx").on(t.caseId, t.createdAt, t.id),
+    // The retracted view (`retracted` filter): index-ordered however few Claims are retracted.
+    // Without it the planner reads every Claim of the Case and sorts the matches when they are rare.
+    index("claims_case_retracted_created_idx")
+      .on(t.caseId, t.createdAt, t.id)
+      .where(sql`${t.retracted}`),
     index("claims_text_trgm_idx").using("gin", t.text.op("gin_trgm_ops")),
     foreignKey({
       name: "claims_entity_id_case_id_fk",
