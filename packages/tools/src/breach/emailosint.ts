@@ -1,12 +1,8 @@
-import { Effect } from "effect";
-import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-catch";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { ValidationVendorError } from "../errors/tagged-errors";
 import { parseVendorError } from "../errors/vendor-errors";
-import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { nowIsoStringEffect } from "../infra/clock";
+import { defineJsonProvider } from "../http/define-json-provider";
 import { normalizeEmail } from "../normalize";
 import {
   asBool,
@@ -22,15 +18,18 @@ export const EMAILOSINT_MAX_SITES = 500;
 export const EMAILOSINT_MAX_BREACH_SOURCES = 100;
 export const EMAILOSINT_MAX_STEALER_HOSTS = 50;
 /** Per-module timeout sent to the vendor (its default; range 5000–60000). */
-export const EMAILOSINT_MODULE_TIMEOUT_MS = 15_000;
-/** Whole-call deadline: the vendor answers once every module has finished or timed out. */
-const EMAILOSINT_CALL_TIMEOUT_MS = 45_000;
+const EMAILOSINT_MODULE_TIMEOUT_MS = 15_000;
+/**
+ * Per-attempt deadline: the vendor answers once every module has finished or timed out (about
+ * 16 s live). Two attempts plus the shared 5 s 429 wait still fit the Cap's 60 s timeout.
+ */
+const EMAILOSINT_CALL_TIMEOUT_MS = 25_000;
 const MAX_TEXT = 300;
 const MAX_URL = 2048;
 
 const text = z.string().min(1).max(MAX_TEXT);
 
-export const emailosintAccountSchema = z.strictObject({
+const emailosintAccountSchema = z.strictObject({
   /** The vendor's module slug (`module.name`, e.g. `github`); `module.id` is opaque. */
   service: text,
   /** Display name of the service, e.g. `GitHub`. */
@@ -43,7 +42,7 @@ export const emailosintAccountSchema = z.strictObject({
   profileUrl: z.url().max(MAX_URL).nullable(),
 });
 
-export const emailosintBreachSourceSchema = z.strictObject({
+const emailosintBreachSourceSchema = z.strictObject({
   name: text,
   date: text.nullable(),
 });
@@ -81,10 +80,8 @@ export const emailosintLookupSnapshotSchema = z.strictObject({
   isTruncated: z.boolean(),
 });
 
-export type EmailosintAccount = z.infer<typeof emailosintAccountSchema>;
-export type EmailosintBreachSource = z.infer<
-  typeof emailosintBreachSourceSchema
->;
+type EmailosintAccount = z.infer<typeof emailosintAccountSchema>;
+type EmailosintBreachSource = z.infer<typeof emailosintBreachSourceSchema>;
 export type EmailosintLookupSnapshot = z.infer<
   typeof emailosintLookupSnapshotSchema
 >;
@@ -251,57 +248,45 @@ type EmailosintOptions = {
  * `fetchJson*`, then fails as `RateLimitedError`.
  * @see https://emailosint.org/docs
  */
+const lookupEmailosint = defineJsonProvider({
+  service: "EmailOSINT",
+  schema: emailosintLookupSnapshotSchema,
+  key: "bearer",
+  normalize: (raw) => normalizeEmail(raw).email,
+  request: (email, _options: EmailosintOptions) => ({
+    url: "https://api.emailosint.org/v1/lookup/email",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      module_timeout_ms: EMAILOSINT_MODULE_TIMEOUT_MS,
+      disable_ai_summary: true,
+    }),
+    limits: { timeoutMs: EMAILOSINT_CALL_TIMEOUT_MS },
+  }),
+  // 401 and 402 are the vendor refusing the key or plan: fixed caller-visible failures.
+  notFoundStatuses: [401, 402],
+  notFound: ({ status }) => {
+    if (status === 401) {
+      throw new ValidationVendorError({
+        message: "EmailOSINT API key invalid",
+        cause: "HTTP 401",
+      });
+    }
+    throw new ValidationVendorError({
+      message: "EmailOSINT API access needs a Business plan or higher",
+      cause: "HTTP 402",
+    });
+  },
+  toSnapshot: ({ subject: email, queriedAt, body }) =>
+    parseEmailosintBody(email, queriedAt, body),
+});
+
 export function fetchEmailosintLookupEffect(
   emailRaw: string,
   key: string,
   signal: AbortSignal,
   options: EmailosintOptions
-): Effect.Effect<EmailosintLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
-  return Effect.gen(function* fetchEmailosintLookupGen() {
-    const queriedAt = yield* nowIsoStringEffect;
-    const email = yield* Effect.try({
-      try: () => normalizeEmail(emailRaw).email,
-      catch: mapToolsCatch,
-    });
-    const { status, body } = yield* fetchJsonObjectEffect({
-      url: "https://api.emailosint.org/v1/lookup/email",
-      signal,
-      service: "EmailOSINT",
-      subject: email,
-      limits: { timeoutMs: EMAILOSINT_CALL_TIMEOUT_MS },
-      // 401 and 402 are the vendor refusing the key or plan: fixed caller-visible failures.
-      acceptStatus: (code) =>
-        (code >= 200 && code < 300) || code === 401 || code === 402,
-      init: {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-          "User-Agent": options.userAgent,
-        },
-        body: JSON.stringify({
-          email,
-          module_timeout_ms: EMAILOSINT_MODULE_TIMEOUT_MS,
-          disable_ai_summary: true,
-        }),
-      },
-    });
-    if (status === 401) {
-      return yield* new ValidationVendorError({
-        message: "EmailOSINT API key invalid",
-        cause: "HTTP 401",
-      });
-    }
-    if (status === 402) {
-      return yield* new ValidationVendorError({
-        message: "EmailOSINT API access needs a Business plan or higher",
-        cause: "HTTP 402",
-      });
-    }
-    return yield* Effect.try({
-      try: () => parseEmailosintBody(email, queriedAt, body),
-      catch: mapToolsCatch,
-    });
-  });
+) {
+  return lookupEmailosint(emailRaw, key, signal, options);
 }

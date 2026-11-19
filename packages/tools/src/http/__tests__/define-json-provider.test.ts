@@ -197,6 +197,35 @@ describe("defineJsonProvider key placement", () => {
       expect(JSON.parse(request.body)).toEqual({ id: "q" });
     }).pipe(provided)
   );
+
+  it.effect("applies the request's own limits to the call", () =>
+    Effect.gen(function* limitsGen() {
+      stubFetch(
+        () => new Response(JSON.stringify({ score: 1, pad: "x".repeat(500) }))
+      );
+      const bounded = defineJsonProvider({
+        service: "Example",
+        schema,
+        normalize: (raw) => raw,
+        request: (id, _options: typeof options) => ({
+          url: `https://example.com/api/${id}`,
+          limits: { maxBytes: 64 },
+        }),
+        toSnapshot: ({ subject, queriedAt }) => ({
+          id: subject,
+          queriedAt,
+          found: true,
+          score: null,
+        }),
+      });
+      const failure = yield* bounded(
+        "q",
+        AbortSignal.timeout(5000),
+        options
+      ).pipe(Effect.flip);
+      expect(failure._tag).toBe("OutboundLimitError");
+    }).pipe(provided)
+  );
 });
 
 describe("defineJsonProvider statuses", () => {
