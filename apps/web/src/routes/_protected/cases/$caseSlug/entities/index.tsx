@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
 import { EntityTable } from "@/domains/entities/components/entity-table";
 import { warmEntitiesQueries } from "@/domains/entities/lib/prefetch-entities";
@@ -8,8 +8,10 @@ import { entityList } from "@watchdog/schemas/graph";
 /** The Entities table's view (ADR-0007): the Kind filter, `q` and sort, a bad value dropped. */
 const entitiesSearchSchema = entityList.searchWith({});
 
+const routeApi = getRouteApi("/_protected/cases/$caseSlug/entities/");
+
 function EntitiesRoute() {
-  const search = Route.useSearch();
+  const search = routeApi.useSearch();
   const onSearchChange = usePatchSearch();
   return <EntityTable search={search} onSearchChange={onSearchChange} />;
 }

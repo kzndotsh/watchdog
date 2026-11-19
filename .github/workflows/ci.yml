@@ -557,7 +557,7 @@ jobs:
             -p 9100:8333 \
             -e AWS_ACCESS_KEY_ID=watchdog \
             -e AWS_SECRET_ACCESS_KEY=watchdog-dev-secret \
-            chrislusf/seaweedfs:4.48 mini -dir=/data
+            chrislusf/seaweedfs:4.53 mini -dir=/data
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:9100/healthz && exit 0
             sleep 2
@@ -666,7 +666,7 @@ jobs:
             -p 9100:8333 \
             -e AWS_ACCESS_KEY_ID=watchdog \
             -e AWS_SECRET_ACCESS_KEY=watchdog-dev-secret \
-            chrislusf/seaweedfs:4.48 mini -dir=/data
+            chrislusf/seaweedfs:4.53 mini -dir=/data
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:9100/healthz && exit 0
             sleep 2
@@ -848,7 +848,7 @@ jobs:
             -p 9100:8333 \
             -e AWS_ACCESS_KEY_ID=watchdog \
             -e AWS_SECRET_ACCESS_KEY=watchdog-smoke-secret \
-            chrislusf/seaweedfs:4.48@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d mini -dir=/data
+            chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0 mini -dir=/data
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:9100/healthz && exit 0
             sleep 2

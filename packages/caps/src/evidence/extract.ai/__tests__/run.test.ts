@@ -72,10 +72,9 @@ describe("evidence.extract.ai run", () => {
     });
     const failure: unknown = await runCap(
       extractAi.run({ ...harness.ctx, input: { evidenceId: testId(41) } })
-    ).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    )
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     if (!(failure instanceof ValidationVendorError)) {
       expect.unreachable("expected ValidationVendorError");
     }

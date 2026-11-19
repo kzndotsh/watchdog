@@ -71,10 +71,9 @@ async function refusal(
   call: Promise<unknown>,
   ...forbidden: string[]
 ): Promise<string | undefined> {
-  const error = await call.then(
-    () => undefined,
-    (error: unknown) => error
-  );
+  const error = await call
+    .then(() => undefined)
+    .catch((error: unknown) => error);
   expect(error).toBeInstanceOf(BlockedTargetError);
   if (!(error instanceof BlockedTargetError)) return undefined;
   for (const text of forbidden) expect(error.message).not.toContain(text);

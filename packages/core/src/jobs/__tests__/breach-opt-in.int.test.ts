@@ -163,10 +163,9 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
           actorId: TEST_ACTOR_ID,
           input,
         })
-      ).then(
-        () => null,
-        (error: unknown) => error
-      );
+      )
+        .then(() => null)
+        .catch((error: unknown) => error);
       expect(isDomainTag(error) && error.code).toBe("forbidden");
       expect(String(isDomainTag(error) && error.message)).toMatch(
         /WD_BREACH_CAPS/
@@ -264,10 +263,9 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
             actorId: TEST_ACTOR_ID,
             seed: { email: EMAIL },
           })
-        ).then(
-          () => null,
-          (error: unknown) => error
-        );
+        )
+          .then(() => null)
+          .catch((error: unknown) => error);
         expect(isDomainTag(error) && error.code).toBe("forbidden");
         expect(String(isDomainTag(error) && error.message)).toMatch(
           /WD_BREACH_CAPS/

@@ -125,10 +125,8 @@ describe("evidence.extract.ai goes through the Job's model door", () => {
 
     const failure: unknown = await recorded
       .run(extractAi.run(harness.ctx))
-      .then(
-        () => undefined,
-        (error: unknown) => error
-      );
+      .then(() => undefined)
+      .catch((error: unknown) => error);
 
     expect(failure).toMatchObject({
       _tag: "BlockedTargetError",

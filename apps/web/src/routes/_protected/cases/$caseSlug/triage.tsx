@@ -1,12 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
 import { Triage } from "@/domains/triage/components/triage";
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
 import { triageSearchSchema } from "@/domains/triage/lib/triage-search";
 import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
 
+const routeApi = getRouteApi("/_protected/cases/$caseSlug/triage");
+
 function TriageRoute() {
-  const search = Route.useSearch();
+  const search = routeApi.useSearch();
   const onSearchChange = usePatchSearch();
   return <Triage search={search} onSearchChange={onSearchChange} />;
 }

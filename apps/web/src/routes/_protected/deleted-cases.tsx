@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
 import { DeletedCasesPage } from "@/domains/cases/components/deleted-cases-page";
 import { warmDeletedCases } from "@/domains/cases/lib/prefetch-deleted-cases";
@@ -9,8 +9,10 @@ import { deletedCaseList } from "@watchdog/schemas/cases";
 /** The Deleted Cases view (ADR-0007): filters, `q` and sort, a bad value dropped. */
 const deletedCasesSearchSchema = deletedCaseList.searchWith({});
 
+const routeApi = getRouteApi("/_protected/deleted-cases");
+
 function DeletedCasesRoute() {
-  const search = Route.useSearch();
+  const search = routeApi.useSearch();
   const onSearchChange = usePatchSearch();
   return <DeletedCasesPage search={search} onSearchChange={onSearchChange} />;
 }

@@ -116,12 +116,11 @@ describe("transact", () => {
     vi.spyOn(db, "transaction").mockImplementation(((...args: unknown[]) =>
       // The real transaction rolls back, but the driver then rejects with its
       // own error instead of the body's rejection.
-      transaction(...args).then(
-        (value) => value,
-        () => {
+      transaction(...args)
+        .then((value) => value)
+        .catch(() => {
           throw new Error("rollback failed: connection lost");
-        }
-      )) as typeof db.transaction);
+        })) as typeof db.transaction);
     const error = new ConflictError({ reason: "taken" });
     const failure = await runDomain(
       Effect.flip(transact(() => Effect.fail(error)))

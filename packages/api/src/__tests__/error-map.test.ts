@@ -29,10 +29,8 @@ describe("input validation errors", () => {
     const failure = await client.cases
       // `JSON.parse` is the wire: its untyped result stands in for a malformed request body.
       .create(JSON.parse('{"name":5}'))
-      .then(
-        () => undefined,
-        (error: unknown) => error
-      );
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     expect(failure).toBeInstanceOf(ORPCError);
     expect(failure).toMatchObject({
       code: "BAD_REQUEST",

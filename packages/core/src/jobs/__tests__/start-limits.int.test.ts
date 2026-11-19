@@ -89,10 +89,9 @@ function usage(organizationId: OrganizationId, actorKeyId?: string) {
 }
 
 async function refusalOf(run: Promise<unknown>): Promise<JobStartLimitError> {
-  const error = await run.then(
-    () => undefined,
-    (error: unknown) => error
-  );
+  const error = await run
+    .then(() => undefined)
+    .catch((error: unknown) => error);
   if (!(error instanceof JobStartLimitError)) {
     throw new TypeError(`expected a JobStartLimitError, got ${String(error)}`);
   }
@@ -387,10 +386,9 @@ describe("Job start limits", () => {
   it("does not hide a refusal behind another error tag", async () => {
     const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
     await setOrganizationLimit(0);
-    const error = await startDns(cased.id).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    const error = await startDns(cased.id)
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     expect(isDomainTag(error)).toBe(true);
   });
 });

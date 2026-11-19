@@ -230,9 +230,12 @@ export function GraphCanvas({
     [nodes]
   );
 
-  useLayoutEffect(() => {
+  // A new layout drops the drag overrides in the same render, not an effect later.
+  const [overridesLayoutKey, setOverridesLayoutKey] = useState(nodeLayoutKey);
+  if (overridesLayoutKey !== nodeLayoutKey) {
+    setOverridesLayoutKey(nodeLayoutKey);
     setPositionOverrides({});
-  }, [nodeLayoutKey]);
+  }
 
   const displayNodes = useMemo(
     () =>

@@ -26,12 +26,9 @@ const URL_WITH_SECRET = "https://example.com/page?token=SECRET123";
 
 async function failureOf(input: { url: string; timestamp?: string }) {
   const harness = createCapRunHarness({ input });
-  const failure: unknown = await runCap(
-    waybackFetch.run({ ...harness.ctx })
-  ).then(
-    () => undefined,
-    (error: unknown) => error
-  );
+  const failure: unknown = await runCap(waybackFetch.run({ ...harness.ctx }))
+    .then(() => undefined)
+    .catch((error: unknown) => error);
   if (!(failure instanceof ValidationVendorError)) {
     expect.unreachable("expected ValidationVendorError");
   }

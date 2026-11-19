@@ -174,14 +174,13 @@ export async function serveCaseExport(
   ]) {
     if (gate === null) continue;
     // oxlint-disable-next-line eslint/no-await-in-loop -- the first refusal ends the request
-    const refused = await runApp(gate).then(
-      () => null,
-      (error: unknown) => {
+    const refused = await runApp(gate)
+      .then(() => null)
+      .catch((error: unknown) => {
         const response = refusalResponse(error);
         if (response === null) throw error;
         return response;
-      }
-    );
+      });
     if (refused !== null) return refused;
   }
   const measured = await runApp(

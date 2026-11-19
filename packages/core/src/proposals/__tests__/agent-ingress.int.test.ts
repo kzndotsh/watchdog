@@ -234,10 +234,9 @@ describe("createAgentProposalEffect", () => {
           buildEntityCreateOp("Host A", "host-a", "person", { id: testId(91) }),
         ],
       })
-    ).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    )
+      .then(() => undefined)
+      .catch((error: unknown) => error);
 
     expect(failure).toMatchObject({
       _tag: "InternalError",

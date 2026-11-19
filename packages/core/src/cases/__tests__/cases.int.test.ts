@@ -292,10 +292,9 @@ describe("getCaseBySlug", () => {
   ])("echoes a bounded id for %s", async (_name, slug) => {
     const failure: unknown = await runDomain(
       getCaseBySlugEffect(slug, TEST_ORGANIZATION_ID)
-    ).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    )
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     if (!(failure instanceof NotFoundError)) {
       expect.unreachable("expected NotFoundError");
     }

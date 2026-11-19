@@ -166,10 +166,9 @@ describe("Graph history edge cases", () => {
           limit: 10,
           cursor,
         })
-      ).then(
-        () => "listed",
-        (error: unknown) => (isDomainTag(error) ? error.code : "other")
-      );
+      )
+        .then(() => "listed")
+        .catch((error: unknown) => (isDomainTag(error) ? error.code : "other"));
     expect(await outcome()).toBe("not_found");
     // a cursor of this list is for one row (its view's fingerprint): a made-up one never lists
     expect(await outcome("1")).toBe("invalid");

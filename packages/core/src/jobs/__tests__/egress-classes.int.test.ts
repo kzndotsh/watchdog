@@ -50,10 +50,9 @@ function start(caseId: CaseId, capabilityId: string, input: JsonObject) {
 }
 
 async function refusalOf(attempt: Promise<unknown>) {
-  const error = await attempt.then(
-    () => null,
-    (error_: unknown) => error_
-  );
+  const error = await attempt
+    .then(() => null)
+    .catch((error_: unknown) => error_);
   expect(isDomainTag(error) && error.code).toBe("forbidden");
   return String(isDomainTag(error) && error.message);
 }

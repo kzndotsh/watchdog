@@ -30,12 +30,9 @@ describe("web.media.oembed fetch failure", () => {
     const harness = createCapRunHarness({
       input: { url: "https://youtu.be/x" },
     });
-    const failure: unknown = await runCap(
-      mediaOembed.run({ ...harness.ctx })
-    ).then(
-      () => undefined,
-      (error: unknown) => error
-    );
+    const failure: unknown = await runCap(mediaOembed.run({ ...harness.ctx }))
+      .then(() => undefined)
+      .catch((error: unknown) => error);
     if (!(failure instanceof ValidationVendorError)) {
       expect.unreachable("expected ValidationVendorError");
     }

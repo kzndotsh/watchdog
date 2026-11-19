@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { transformSync } from "@babel/core";
 import { describe, expect, it } from "vitest";
@@ -72,20 +73,38 @@ function eventReason(event: CompilerEvent): string {
   );
 }
 
-/** The compiler plugin and options inside the app's preset, so the check compiles with the shipped config. */
-function compilerPlugin(): { pluginPath: string; options: object } {
+/**
+ * The compiler plugin and options inside the app's preset, so the check compiles with the shipped config.
+ * Since @vitejs/plugin-react 6.3 the preset is `[presetModulePath, options]`, loadable in a worker.
+ */
+async function loadCompilerPlugin(): Promise<{
+  pluginPath: string;
+  options: object;
+}> {
   const { preset } = reactCompilerBabelPreset("infer");
-  const plugin = typeof preset === "function" ? preset({}).plugins?.[0] : null;
-  if (Array.isArray(plugin) && typeof plugin[0] === "string") {
-    return { pluginPath: plugin[0], options: plugin[1] ?? {} };
+  if (Array.isArray(preset) && typeof preset[0] === "string") {
+    const presetModule: unknown = await import(pathToFileURL(preset[0]).href);
+    const build =
+      typeof presetModule === "object" &&
+      presetModule !== null &&
+      "default" in presetModule &&
+      typeof presetModule.default === "function"
+        ? presetModule.default
+        : null;
+    const plugin: unknown = build?.({}, preset[1]).plugins?.[0];
+    if (Array.isArray(plugin) && typeof plugin[0] === "string") {
+      return { pluginPath: plugin[0], options: plugin[1] ?? {} };
+    }
   }
   throw new Error("The React Compiler preset no longer exposes its Babel plugin");
 }
 
+const compilerPlugin = await loadCompilerPlugin();
+
 /** Compile one file the way the app does and say whether `component` came out memoized. */
 function compileOutcome(filePath: string, component: string): Outcome {
   const events: CompilerEvent[] = [];
-  const { pluginPath, options } = compilerPlugin();
+  const { pluginPath, options } = compilerPlugin;
   const source = readFileSync(filePath, "utf8");
   transformSync(source, {
     filename: filePath,
