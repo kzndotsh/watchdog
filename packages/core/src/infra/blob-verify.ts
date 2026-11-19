@@ -162,15 +162,30 @@ export function verifyUploadedObjectEffect(input: {
       });
     }
 
-    const res = yield* Effect.tryPromise({
-      // Interrupting the verification aborts the request, so no socket waits on a dropped body.
-      try: (signal) =>
-        client.send(new GetObjectCommand({ Bucket: bucket, Key: input.uri }), {
-          abortSignal: signal,
-        }),
-      catch: storeFailure("read the uploaded object"),
-    });
-    const read = yield* hashObjectBodyEffect(res.Body, input.byteLength);
+    // The request stays interruptible (aborting it frees the socket); once a response exists its
+    // body is destroyed however the read ends, interruption between the two included.
+    const read = yield* Effect.uninterruptibleMask((restore) =>
+      restore(
+        Effect.tryPromise({
+          try: (signal) =>
+            client.send(
+              new GetObjectCommand({ Bucket: bucket, Key: input.uri }),
+              { abortSignal: signal }
+            ),
+          catch: storeFailure("read the uploaded object"),
+        })
+      ).pipe(
+        Effect.flatMap((res) =>
+          restore(hashObjectBodyEffect(res.Body, input.byteLength)).pipe(
+            Effect.ensuring(
+              Effect.sync(() => {
+                if (res.Body instanceof Readable) res.Body.destroy();
+              })
+            )
+          )
+        )
+      )
+    );
     if (!read.ok) {
       return yield* new InvalidError({ reason: read.reason });
     }

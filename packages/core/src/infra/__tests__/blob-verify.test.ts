@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 
-import { Effect } from "effect";
+import { Deferred, Effect, Exit, Fiber } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { MAX_UPLOAD_BYTES } from "@watchdog/schemas/shared";
@@ -122,6 +122,37 @@ describe("verifyUploadedObjectEffect", () => {
     });
     await verify(store);
     expect(body.destroyed).toBe(true);
+  });
+
+  it("destroys the body when the verification is interrupted while it reads", async () => {
+    await Effect.runPromise(
+      Effect.gen(function* interruptVerify() {
+        const reading = yield* Deferred.make<undefined>();
+        // A body that never sends a byte: it says when the hash starts pulling from it.
+        const body = new Readable({
+          read: () => {
+            Deferred.doneUnsafe(reading, Exit.succeed(undefined));
+          },
+        });
+        const store = recordingBlobStore({
+          respond: ({ command }) =>
+            command === "HeadObjectCommand"
+              ? { ContentLength: BYTES.byteLength }
+              : { Body: body },
+        });
+        const fiber = yield* Effect.forkChild(
+          verifyUploadedObjectEffect({
+            uri: URI,
+            sha256: SHA,
+            mime: "text/plain",
+            byteLength: BYTES.byteLength,
+          }).pipe(Effect.provide(store.layer))
+        );
+        yield* Deferred.await(reading);
+        yield* Fiber.interrupt(fiber);
+        expect(body.destroyed).toBe(true);
+      })
+    );
   });
 
   it("refuses a body that is not a readable stream", async () => {
