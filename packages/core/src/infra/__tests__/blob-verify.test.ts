@@ -1,3 +1,4 @@
+import { once } from "node:events";
 import { Readable } from "node:stream";
 
 import { Deferred, Effect, Exit, Fiber } from "effect";
@@ -153,6 +154,47 @@ describe("verifyUploadedObjectEffect", () => {
         expect(body.destroyed).toBe(true);
       })
     );
+  });
+
+  it("destroys the body when the interruption lands as GetObject answers, before any read", async () => {
+    let pulls = 0;
+    const body = new Readable({
+      read: () => {
+        pulls += 1;
+      },
+    });
+    const fiberRef: { current?: Fiber.Fiber<unknown, unknown> } = {};
+    const store = recordingBlobStore({
+      respond: ({ command }) => {
+        if (command === "HeadObjectCommand") {
+          return { ContentLength: BYTES.byteLength };
+        }
+        // The answer is on its way: the interruption is requested before the fiber resumes.
+        queueMicrotask(() => {
+          fiberRef.current?.interruptUnsafe();
+        });
+        return { Body: body };
+      },
+    });
+    await Effect.runPromise(
+      Effect.gen(function* interruptOnAnswer() {
+        const fiber = yield* Effect.forkChild(
+          verifyUploadedObjectEffect({
+            uri: URI,
+            sha256: SHA,
+            mime: "text/plain",
+            byteLength: BYTES.byteLength,
+          }).pipe(Effect.provide(store.layer))
+        );
+        fiberRef.current = fiber;
+        yield* Effect.exit(Fiber.join(fiber));
+      })
+    );
+    // The answer lands after the abort, so the body is released as it lands, not before the
+    // fiber ends: wait for it (a body never destroyed times the test out).
+    await once(body, "close");
+    expect(pulls).toBe(0);
+    expect(body.destroyed).toBe(true);
   });
 
   it("refuses a body that is not a readable stream", async () => {

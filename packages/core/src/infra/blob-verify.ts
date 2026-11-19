@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
   HeadObjectCommand,
   type GetObjectCommandOutput,
+  type S3Client,
 } from "@aws-sdk/client-s3";
 import { Effect, Stream } from "effect";
 
@@ -111,6 +112,42 @@ function hashObjectBodyEffect(
   });
 }
 
+function destroyBody(body: GetObjectCommandOutput["Body"]): void {
+  if (body instanceof Readable) body.destroy();
+}
+
+/**
+ * GetObject for verification, handing the response to `arrived` as soon as it lands. Interrupting
+ * it aborts the request; a response that lands after the interruption (the abort raced it) is
+ * destroyed here, since no fiber will read it.
+ */
+function getObjectEffect(
+  client: S3Client,
+  bucket: string,
+  key: string,
+  arrived: (res: GetObjectCommandOutput) => void
+): Effect.Effect<GetObjectCommandOutput, InvalidError | InternalError> {
+  return Effect.callback((resume, signal) => {
+    void client
+      .send(new GetObjectCommand({ Bucket: bucket, Key: key }), {
+        abortSignal: signal,
+      })
+      // oxlint-disable-next-line promise/prefer-catch -- two arms on purpose: a `.catch` would also see a throw from the success arm and resume twice
+      .then(
+        (res) => {
+          arrived(res);
+          if (signal.aborted) destroyBody(res.Body);
+          else resume(Effect.succeed(res));
+          return null;
+        },
+        (error: unknown) => {
+          resume(Effect.fail(storeFailure("read the uploaded object")(error)));
+          return null;
+        }
+      );
+  });
+}
+
 /**
  * Establish what is really stored at `uri` before it becomes Evidence (#305). The object must
  * exist and its size must equal the declared size (checked by HEAD first, so an oversized or
@@ -164,25 +201,23 @@ export function verifyUploadedObjectEffect(input: {
 
     // The request stays interruptible (aborting it frees the socket); once a response exists its
     // body is destroyed however the read ends, interruption between the two included.
+    // The request stays interruptible (aborting it frees the socket). A response that arrived is
+    // destroyed however the verification ends: read through, failed, or interrupted at any point,
+    // the moment its answer was being handed over included.
+    let response: GetObjectCommandOutput | undefined;
     const read = yield* Effect.uninterruptibleMask((restore) =>
       restore(
-        Effect.tryPromise({
-          try: (signal) =>
-            client.send(
-              new GetObjectCommand({ Bucket: bucket, Key: input.uri }),
-              { abortSignal: signal }
-            ),
-          catch: storeFailure("read the uploaded object"),
+        getObjectEffect(client, bucket, input.uri, (res) => {
+          response = res;
         })
       ).pipe(
         Effect.flatMap((res) =>
-          restore(hashObjectBodyEffect(res.Body, input.byteLength)).pipe(
-            Effect.ensuring(
-              Effect.sync(() => {
-                if (res.Body instanceof Readable) res.Body.destroy();
-              })
-            )
-          )
+          restore(hashObjectBodyEffect(res.Body, input.byteLength))
+        ),
+        Effect.ensuring(
+          Effect.sync(() => {
+            destroyBody(response?.Body);
+          })
         )
       )
     );
