@@ -16,7 +16,11 @@ import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
-import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  patchOpResource,
+  patchOpVerb,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Collapsible,
@@ -128,8 +132,9 @@ function PatchOpRow({
   isInvalid,
   choice,
 }: PatchOpRowProps) {
-  const meta = PATCH_RESOURCE_META[op.resource];
-  const summary = summarizePatchOpData(op.resource, op.data);
+  const resource = patchOpResource(op);
+  const meta = PATCH_RESOURCE_META[resource];
+  const summary = summarizePatchOpData(resource, op.data);
   const isSkipped = choice?.kind === "choosing" && choice.skipped.has(op.id);
 
   return (
@@ -150,7 +155,7 @@ function PatchOpRow({
             }}
           />
         ) : null}
-        <PatchOpBadge op={op.op} />
+        <PatchOpBadge op={patchOpVerb(op)} />
         <span className="text-foreground text-xs">{meta.label}</span>
         {isColliding ? <Chip size="sm">On another Entity</Chip> : null}
         {isInvalid ? <Chip size="sm">Invalid value</Chip> : null}

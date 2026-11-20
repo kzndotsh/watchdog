@@ -15,9 +15,12 @@ describe("acceptGate", () => {
         patch: [
           {
             id: "op-1",
-            op: "create",
-            resource: "identifier",
-            data: { type: "email", value: "not-an-email" },
+            kind: "identifier.create",
+            data: {
+              entityId: "00000000-0000-4000-8000-000000000001",
+              type: "email",
+              value: "not-an-email",
+            },
           },
         ],
       })

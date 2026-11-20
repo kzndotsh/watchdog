@@ -66,7 +66,7 @@ describe("suppressKnownFindingsEffect", () => {
     );
     expect(result.suppressed).toBe(1);
     expect(result.kept).toHaveLength(1);
-    expect(result.kept[0]?.data.text).toBe("Fresh");
+    expect(result.kept[0]).toMatchObject({ data: { text: "Fresh" } });
   });
 
   it("drops a claim that already exists on the Graph", async () => {
@@ -117,31 +117,7 @@ describe("suppressKnownFindingsEffect", () => {
     expect(result.suppressed).toBe(1);
   });
 
-  it("drops a claim with padded entityId that already exists on the Graph", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, { id: testId(23) });
-    await runDomain(
-      createClaimEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        entityId: entity.id,
-        text: "Ada observed a host",
-        confidence: "unverified",
-        class: "observation",
-      })
-    );
-    const result = await runDomain(
-      suppressKnownFindingsEffect(cased.id, [
-        buildClaimCreateOp(`  ${entity.id}  `, "Ada observed a host", {
-          id: testId(34),
-        }),
-      ])
-    );
-    expect(result.kept).toHaveLength(0);
-    expect(result.suppressed).toBe(1);
-  });
-
-  it("drops an entity op when slug normalizes to an existing Graph slug", async () => {
+  it("drops an entity op whose slug already exists on the Graph", async () => {
     const cased = await seedCase(db);
     await seedEntity(db, cased.id, {
       id: testId(24),
@@ -150,7 +126,7 @@ describe("suppressKnownFindingsEffect", () => {
     });
     const result = await runDomain(
       suppressKnownFindingsEffect(cased.id, [
-        buildEntityCreateOp("Alpha Corp", "  Alpha Corp  ", "org", {
+        buildEntityCreateOp("Alpha Corp", "alpha-corp", "org", {
           id: testId(35),
         }),
       ])
@@ -159,7 +135,7 @@ describe("suppressKnownFindingsEffect", () => {
     expect(result.suppressed).toBe(1);
   });
 
-  it("drops an identifier op with padded type that already exists on the Graph", async () => {
+  it("drops an identifier op that already exists on the Graph", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(25) });
     await runDomain(
@@ -175,9 +151,8 @@ describe("suppressKnownFindingsEffect", () => {
     );
     const result = await runDomain(
       suppressKnownFindingsEffect(cased.id, [
-        buildIdentifierCreateOp(entity.id, "  email  ", "ada@mailhost.test", {
+        buildIdentifierCreateOp(entity.id, "email", "Ada@MailHost.test", {
           id: testId(36),
-          data: { platform: "" },
         }),
       ])
     );

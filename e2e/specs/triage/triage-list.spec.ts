@@ -25,8 +25,7 @@ test.describe("Triage queue", () => {
           summary,
           patch: [
             {
-              op: "create",
-              resource: "claim",
+              kind: "claim.create",
               id: testId(60 + n),
               data: {
                 entityId: entity.id,

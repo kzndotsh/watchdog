@@ -49,8 +49,7 @@ describe("graph procedures", () => {
         caseId: "00000000-0000-4000-8000-000000000001",
         patch: [
           {
-            op: "create",
-            resource: "entity",
+            kind: "entity.create",
             id: "00000000-0000-4000-8000-000000000010",
             data: { kind: "person", name: "Alice", slug: "alice" },
           },

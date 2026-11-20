@@ -1,17 +1,9 @@
 import { Data, Effect } from "effect";
 
-import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import {
-  CLAIM_CLASSES,
-  EDGE_PREDICATES,
-  ENTITY_KINDS,
-  IDENTIFIER_STATUSES,
-  IDENTIFIER_TYPES,
   parseGraphUuidList,
-  entitySlugSchema,
-  trimmedUuidSchema,
   type ConfidenceTier,
-  type JsonValue,
 } from "@watchdog/schemas/shared";
 
 import { confirmedEvidenceViolation } from "./confirmed-evidence";
@@ -30,370 +22,46 @@ export type PatchGateOpts = {
   sharedEvidenceIds?: string[];
 };
 
-export function requireString(
-  data: Record<string, JsonValue>,
-  key: string
-): string {
-  const v = data[key];
-  if (typeof v !== "string" || !v.trim()) {
-    throw new CustodyViolationError({ reason: `${key} is required` });
-  }
-  return v.trim();
+/** Whether any of `ids` is a real Evidence id; `null` when one of them is not a UUID. */
+function citesEvidence(ids: readonly string[]): boolean | null {
+  if (!ids.some((id) => id.trim() !== "")) return false;
+  const parsed = parseGraphUuidList([...ids]);
+  return parsed === null ? null : parsed.length > 0;
 }
 
-/** Trim + validate a UUID field on patch op data. */
-export function requireUuid(
-  data: Record<string, JsonValue>,
-  key: string
-): string {
-  const v = data[key];
-  if (typeof v !== "string" || !v.trim()) {
-    throw new CustodyViolationError({ reason: `${key} is required` });
+function confidenceViolation(
+  patch: readonly PatchOp[],
+  opts: PatchGateOpts
+): string | null {
+  if (patchNeedsConfidence(patch) && !opts.confidence) {
+    return "confidence is required for this Proposal";
   }
-  const parsed = trimmedUuidSchema.safeParse(v);
-  if (!parsed.success) {
-    throw new CustodyViolationError({ reason: `${key} must be a valid UUID` });
+  if (opts.confidence !== "confirmed") return null;
+  let anyEvidence = false;
+  for (const op of patch) {
+    const cites = citesEvidence(op.evidenceIds ?? []);
+    if (cites === null) return "patch op evidenceIds contains an invalid UUID";
+    anyEvidence ||= cites;
   }
-  return parsed.data;
-}
-
-/** Trim + slugify an entity/case slug on patch op data. */
-export function requireEntitySlug(data: Record<string, JsonValue>): string {
-  const raw = requireString(data, "slug");
-  const parsed = entitySlugSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new CustodyViolationError({ reason: "entity slug is required" });
-  }
-  return parsed.data;
-}
-
-export function isOneOf<T extends string>(
-  value: string,
-  allowed: readonly T[]
-): value is T {
-  const widened: readonly string[] = allowed;
-  return widened.includes(value);
-}
-
-export function requireEnum<T extends string>(
-  value: string,
-  allowed: readonly T[],
-  label: string
-): T {
-  const normalized = value.toLowerCase();
-  if (isOneOf(normalized, allowed)) {
-    return normalized;
-  }
-  throw new CustodyViolationError({ reason: `Invalid ${label}: ${value}` });
-}
-
-function assertClaimOpShape(op: PatchOp): void {
-  if (op.resource !== "claim" || op.op !== "create") {
-    throw new CustodyViolationError({ reason: "claim only supports create" });
-  }
-  requireUuid(op.data, "entityId");
-  requireString(op.data, "text");
-  if ("class" in op.data) {
-    requireEnum(requireString(op.data, "class"), CLAIM_CLASSES, "claim class");
-  }
-}
-
-function assertEventOpShape(op: PatchOp): void {
-  if (op.resource !== "event" || op.op !== "create") {
-    throw new CustodyViolationError({ reason: "event only supports create" });
-  }
-  requireUuid(op.data, "entityId");
-  requireString(op.data, "when");
-  requireString(op.data, "what");
-}
-
-function assertQuestionOpShape(op: PatchOp): void {
-  if (op.resource !== "question" || op.op !== "create") {
-    throw new CustodyViolationError({
-      reason: "question only supports create",
-    });
-  }
-  requireUuid(op.data, "entityId");
-  requireString(op.data, "text");
-}
-
-function isNullableStringField(
-  data: Record<string, unknown>,
-  key: string
-): boolean {
-  if (!(key in data)) return false;
-  const value = data[key];
-  return value === null || typeof value === "string";
-}
-
-const ENTITY_CREATE_FIELDS = new Set([
-  "kind",
-  "name",
-  "slug",
-  "summary",
-  "notes",
-]);
-const ENTITY_UPDATE_FIELDS = new Set(["name", "summary", "notes"]);
-
-function assertEntityNullableTextField(
-  data: Record<string, unknown>,
-  key: "summary" | "notes"
-): void {
-  if (key in data && !isNullableStringField(data, key)) {
-    throw new CustodyViolationError({
-      reason: `entity ${key} must be a string or null`,
-    });
-  }
-}
-
-function assertEntityOpShape(op: PatchOp): void {
-  if (op.resource !== "entity") {
-    throw new CustodyViolationError({ reason: "expected entity patch op" });
-  }
-  if (op.op === "create" || op.op === "upsert") {
-    for (const key of Object.keys(op.data)) {
-      if (!ENTITY_CREATE_FIELDS.has(key)) {
-        throw new CustodyViolationError({
-          reason: `entity create does not support field: ${key}`,
-        });
-      }
-    }
-    requireEnum(requireString(op.data, "kind"), ENTITY_KINDS, "entity kind");
-    requireString(op.data, "name");
-    requireEntitySlug(op.data);
-    assertEntityNullableTextField(op.data, "summary");
-    assertEntityNullableTextField(op.data, "notes");
-    return;
-  }
-  if (op.op === "update") {
-    for (const key of Object.keys(op.data)) {
-      if (!ENTITY_UPDATE_FIELDS.has(key)) {
-        throw new CustodyViolationError({
-          reason: `entity update does not support field: ${key}`,
-        });
-      }
-    }
-    const hasName =
-      typeof op.data.name === "string" && op.data.name.trim() !== "";
-    const hasSummary = isNullableStringField(op.data, "summary");
-    const hasNotes = isNullableStringField(op.data, "notes");
-    if ("summary" in op.data && !hasSummary) {
-      throw new CustodyViolationError({
-        reason: "entity summary must be a string or null",
-      });
-    }
-    if ("notes" in op.data && !hasNotes) {
-      throw new CustodyViolationError({
-        reason: "entity notes must be a string or null",
-      });
-    }
-    if ("name" in op.data && typeof op.data.name !== "string") {
-      throw new CustodyViolationError({
-        reason: "entity name must be a string",
-      });
-    }
-    if (!hasName && !hasSummary && !hasNotes) {
-      throw new CustodyViolationError({
-        reason: "entity update requires at least one field",
-      });
-    }
-    return;
-  }
-  throw new CustodyViolationError({
-    reason: `entity does not support op: ${JSON.stringify(op.op)}`,
-  });
-}
-
-function assertIdentifierOpStructure(op: PatchOp): void {
-  if (op.resource !== "identifier") {
-    throw new CustodyViolationError({ reason: "expected identifier patch op" });
-  }
-  if (op.op !== "create" && op.op !== "upsert") {
-    throw new CustodyViolationError({
-      reason: "identifier supports create/upsert",
-    });
-  }
-  requireUuid(op.data, "entityId");
-  requireEnum(
-    requireString(op.data, "type"),
-    IDENTIFIER_TYPES,
-    "identifier type"
-  );
-  requireString(op.data, "value");
-  if ("status" in op.data) {
-    requireEnum(
-      requireString(op.data, "status"),
-      IDENTIFIER_STATUSES,
-      "identifier status"
-    );
-  }
-}
-
-function assertIdentifierOpShape(op: PatchOp): void {
-  assertIdentifierOpStructure(op);
-}
-
-function assertIdentifierWriteGate(op: PatchOp): void {
-  if (op.resource !== "identifier") return;
-  if (op.op !== "create" && op.op !== "upsert") return;
-
-  const type = requireEnum(
-    requireString(op.data, "type"),
-    IDENTIFIER_TYPES,
-    "identifier type"
-  );
-  const value = requireString(op.data, "value");
-  const platform = typeof op.data.platform === "string" ? op.data.platform : "";
-  const written = validateIdentifierWrite({ type, value, platform });
-  if (!written.ok) {
-    throw new CustodyViolationError({ reason: written.message });
-  }
-}
-
-function assertEdgeOpShape(op: PatchOp): void {
-  if (op.resource !== "edge") {
-    throw new CustodyViolationError({ reason: "expected edge patch op" });
-  }
-  if (op.op !== "create" && op.op !== "upsert") {
-    throw new CustodyViolationError({ reason: "edge supports create/upsert" });
-  }
-  const fromId = requireUuid(op.data, "fromId");
-  const toId = requireUuid(op.data, "toId");
-  if (fromId === toId) {
-    throw new CustodyViolationError({
-      reason: "Edge cannot link an Entity to itself",
-    });
-  }
-  const predicate = requireEnum(
-    requireString(op.data, "predicate"),
-    EDGE_PREDICATES,
-    "edge predicate"
-  );
-  const notes = typeof op.data.notes === "string" ? op.data.notes : null;
-  if (predicate === "related_to" && (notes === null || notes.trim() === "")) {
-    throw new CustodyViolationError({ reason: "related_to requires notes" });
-  }
-}
-
-const OP_SHAPE_ASSERTERS: Record<PatchOp["resource"], (op: PatchOp) => void> = {
-  claim: assertClaimOpShape,
-  event: assertEventOpShape,
-  question: assertQuestionOpShape,
-  entity: assertEntityOpShape,
-  identifier: assertIdentifierOpShape,
-  edge: assertEdgeOpShape,
-};
-
-function assertNoSmuggledConfidence(op: PatchOp): void {
-  if ("confidence" in op.data) {
-    throw new CustodyViolationError({
-      reason:
-        "op.data.confidence is forbidden — confidence is chosen at Inbox Accept",
-    });
-  }
-}
-
-function assertOpId(op: PatchOp): void {
-  const parsed = trimmedUuidSchema.safeParse(op.id);
-  if (!parsed.success) {
-    throw new CustodyViolationError({
-      reason: "patch op id must be a valid UUID",
-    });
-  }
-}
-
-function assertOpShape(op: PatchOp): void {
-  assertOpId(op);
-  assertNoSmuggledConfidence(op);
-  OP_SHAPE_ASSERTERS[op.resource](op);
-}
-
-function runGate(body: () => void): Effect.Effect<void, CustodyViolationError> {
-  return Effect.try({
-    try: body,
-    catch: (error) => {
-      if (error instanceof CustodyViolationError) {
-        return error;
-      }
-      return new CustodyViolationError({
-        reason: error instanceof Error ? error.message : String(error),
-      });
-    },
+  const shared = citesEvidence(opts.sharedEvidenceIds ?? []);
+  if (shared === null) return "sharedEvidenceIds contains an invalid UUID";
+  return confirmedEvidenceViolation({
+    confidence: opts.confidence,
+    evidenceCount: anyEvidence || shared ? 1 : 0,
   });
 }
 
 /**
- * Shape-only validation (resource/op/required fields). No confidence gate and
- * no identifier value write gate — caps may propose imprecise identifier ops;
- * `assertPatchGates` enforces `validateIdentifierWrite` at Accept / apply time.
- */
-export function assertPatchShape(
-  patch: PatchOp[]
-): Effect.Effect<void, CustodyViolationError> {
-  return runGate(() => {
-    for (const op of patch) {
-      assertOpShape(op);
-    }
-  });
-}
-
-/**
- * Pure Accept policies — no DB. Call before applying PatchOps so machines and
- * UI can fail closed without a Postgres round-trip.
+ * The Accept rules that span a patch's ops (no DB): the confidence a patch needs, and the
+ * Evidence a `confirmed` Accept needs across its ops and the shared ids. The shape of each op
+ * is the patch op schema's (`@watchdog/schemas/graph`), refused where the Proposal is created.
  */
 export function assertPatchGates(
-  patch: PatchOp[],
+  patch: readonly PatchOp[],
   opts: PatchGateOpts = {}
 ): Effect.Effect<void, CustodyViolationError> {
-  return Effect.gen(function* assertPatchGatesGen() {
-    yield* runGate(() => {
-      if (patchNeedsConfidence(patch) && !opts.confidence) {
-        throw new CustodyViolationError({
-          reason: "confidence is required for this Proposal",
-        });
-      }
-      if (opts.confidence === "confirmed") {
-        let anyEvidence = false;
-        for (const op of patch) {
-          const raw = op.evidenceIds ?? [];
-          const hasNonEmpty = raw.some(
-            (id) => typeof id === "string" && id.trim() !== ""
-          );
-          if (!hasNonEmpty) continue;
-          const parsed = parseGraphUuidList(raw);
-          if (parsed === null) {
-            throw new CustodyViolationError({
-              reason: "patch op evidenceIds contains an invalid UUID",
-            });
-          }
-          if (parsed.length > 0) anyEvidence = true;
-        }
-        const sharedParsed = parseGraphUuidList(opts.sharedEvidenceIds ?? []);
-        if (
-          sharedParsed === null &&
-          (opts.sharedEvidenceIds ?? []).some(
-            (id) => typeof id === "string" && id.trim() !== ""
-          )
-        ) {
-          throw new CustodyViolationError({
-            reason: "sharedEvidenceIds contains an invalid UUID",
-          });
-        }
-        const shared = (sharedParsed ?? []).length > 0;
-        const violation = confirmedEvidenceViolation({
-          confidence: opts.confidence,
-          evidenceCount: anyEvidence || shared ? 1 : 0,
-        });
-        if (violation !== null) {
-          throw new CustodyViolationError({ reason: violation });
-        }
-      }
-    });
-    yield* runGate(() => {
-      for (const op of patch) {
-        assertIdentifierWriteGate(op);
-      }
-    });
-    yield* assertPatchShape(patch);
-  });
+  const reason = confidenceViolation(patch, opts);
+  return reason === null
+    ? Effect.void
+    : Effect.fail(new CustodyViolationError({ reason }));
 }

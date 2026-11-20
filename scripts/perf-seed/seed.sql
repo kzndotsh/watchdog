@@ -210,7 +210,7 @@ FROM cases c CROSS JOIN LATERAL generate_series(1, :writes) AS n ORDER BY c.slug
 -- (`confidence` is chosen at Accept, so it is not part of an op).
 INSERT INTO proposals (id, case_id, status, patch, summary, created_by, created_at, updated_at)
 SELECT pg_temp.uid('prop-' || c.slug || '-' || n), c.id, (ARRAY['pending','pending','accepted','rejected'])[1 + n % 4],
-       (SELECT jsonb_agg(jsonb_build_object('op', 'create', 'resource', 'claim',
+       (SELECT jsonb_agg(jsonb_build_object('kind', 'claim.create',
                  'id', pg_temp.uid('op-' || c.slug || '-' || n || '-' || e.slug),
                  'data', jsonb_build_object('entityId', e.id, 'class', 'observation',
                    'text', repeat('Synthetic proposed claim text. ', 6))) ORDER BY e.slug)

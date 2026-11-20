@@ -35,8 +35,7 @@ export function interpretObservationClaim(opts: {
     summary: text,
     patch: [
       {
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: randomUUID(),
         data: {
           entityId,

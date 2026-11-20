@@ -1,20 +1,33 @@
 import { expect } from "vitest";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  isPatchOpOf,
+  type PatchOp,
+  type PatchOpOf,
+  type PatchResource,
+} from "@watchdog/schemas/graph";
 
 import type { CapInterpretResult } from "../sdk";
 
-function expectPatchCreates(
+/** An op's data read by field name, for assertions across kinds (`{}` when there is no op). */
+export function dataOf(
+  op: PatchOp | undefined
+): Readonly<Record<string, unknown>> {
+  return op?.data ?? {};
+}
+
+function expectPatchCreates<R extends PatchResource>(
   patch: PatchOp[],
-  resource: PatchOp["resource"],
+  resource: R,
   dataMatch: Record<string, unknown>
-): PatchOp {
-  const hit = patch.find((op) => {
-    if (op.resource !== resource) return false;
-    return Object.entries(dataMatch).every(([key, value]) =>
-      Object.is(op.data[key], value)
-    );
-  });
+): PatchOpOf<R> {
+  const hit = patch.find(
+    (op): op is PatchOpOf<R> =>
+      isPatchOpOf(op, resource) &&
+      Object.entries(dataMatch).every(([key, value]) =>
+        Object.is(dataOf(op)[key], value)
+      )
+  );
   expect(
     hit,
     `expected ${resource} op matching ${JSON.stringify(dataMatch)}`
@@ -22,26 +35,25 @@ function expectPatchCreates(
   if (hit === undefined) {
     throw new TypeError("expected a matching create op");
   }
-  expect(hit.op).toBe("create");
+  expect(hit.kind).toBe(`${resource}.create`);
   return hit;
 }
 
 export function expectProposesIdentifier(
   result: CapInterpretResult,
   match: { type: string; value: string }
-): PatchOp {
+): PatchOpOf<"identifier"> {
   return expectPatchCreates(result.patch, "identifier", match);
 }
 
 export function expectProposesClaim(
   result: CapInterpretResult,
   opts: { textMatches: RegExp | string; class?: string }
-): PatchOp {
-  const claims = result.patch.filter((op) => op.resource === "claim");
+): PatchOpOf<"claim"> {
+  const claims = result.patch.filter((op) => isPatchOpOf(op, "claim"));
   expect(claims.length).toBeGreaterThan(0);
   const hit = claims.find((op) => {
-    const text = op.data.text;
-    if (typeof text !== "string") return false;
+    const { text } = op.data;
     if (typeof opts.textMatches === "string") {
       return text.includes(opts.textMatches);
     }
@@ -58,7 +70,7 @@ export function expectProposesClaim(
 }
 
 export function claimText(result: CapInterpretResult, index = 0): string {
-  const text = result.patch[index]?.data.text;
+  const text = dataOf(result.patch[index]).text;
   expect(typeof text).toBe("string");
   if (typeof text !== "string") {
     throw new TypeError("expected claim text");

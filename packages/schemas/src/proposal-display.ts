@@ -1,5 +1,9 @@
 import type { PatchOp } from "./patch";
-import { patchEntityOpDisplayLabel, patchOpRelatedEntityIds } from "./patch";
+import {
+  isPatchOpOf,
+  patchEntityOpDisplayLabel,
+  patchOpRelatedEntityIds,
+} from "./patch";
 import { entityDisplayLabel } from "./vocab";
 
 /** First cited entity id that has display maps, else first cited id in the patch. */
@@ -10,7 +14,7 @@ export function proposalEntityId(opts: {
 }): string | null {
   let firstCited: string | null = null;
   for (const op of opts.patch) {
-    if (op.resource === "entity") {
+    if (isPatchOpOf(op, "entity")) {
       firstCited ??= op.id;
       const name = opts.entityNames?.[op.id];
       const slug = opts.entitySlugs?.[op.id];
@@ -18,7 +22,7 @@ export function proposalEntityId(opts: {
       if (patchEntityOpDisplayLabel(op) !== null) return op.id;
     }
     for (const entityId of patchOpRelatedEntityIds(op)) {
-      if (op.resource === "entity" && entityId === op.id) continue;
+      if (isPatchOpOf(op, "entity") && entityId === op.id) continue;
       firstCited ??= entityId;
       const name = opts.entityNames?.[entityId];
       const slug = opts.entitySlugs?.[entityId];
@@ -50,7 +54,7 @@ export function proposalEntityName(opts: {
     const entityOpLabel = patchEntityOpDisplayLabel(op);
     if (entityOpLabel !== null) return entityOpLabel;
     for (const entityId of patchOpRelatedEntityIds(op)) {
-      if (op.resource === "entity" && entityId === op.id) continue;
+      if (isPatchOpOf(op, "entity") && entityId === op.id) continue;
       const name = opts.entityNames?.[entityId];
       const slug = opts.entitySlugs?.[entityId];
       if (name === undefined && slug === undefined) continue;

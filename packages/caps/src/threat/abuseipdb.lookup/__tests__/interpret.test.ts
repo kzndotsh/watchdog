@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { abuseIpdbLookup } from "../cap.ts";
 import { interpretAbuseIpdbLookupReport } from "../interpret.ts";
 
@@ -30,12 +30,12 @@ describe("interpret", () => {
     const result = interpretAbuseIpdbLookupReport(fixture, {
       input: { ip: "203.0.113.10", entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("203.0.113.10");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
-    expect(result.patch[2]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("203.0.113.10");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
+    expect(result.patch[2]?.kind).toBe("claim.create");
     expect(claimText(result, 2)).toMatch(/confidence=42%/);
     expect(claimText(result, 2)).toMatch(/reports=15/);
     expect(claimText(result, 2)).toMatch(/isp=Example ISP/);
@@ -46,13 +46,15 @@ describe("interpret", () => {
       { ...fixture, domain: null },
       { input: { ip: "203.0.113.10", entityId } }
     );
-    expect(result.patch.filter((op) => op.resource === "identifier")).toEqual([
+    expect(
+      result.patch.filter((op) => op.kind === "identifier.create")
+    ).toEqual([
       expect.objectContaining({
-        resource: "identifier",
+        kind: "identifier.create",
         data: { type: "ip", value: "203.0.113.10", entityId },
       }),
     ]);
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[1]?.kind).toBe("claim.create");
     expect(claimText(result, 1)).toMatch(/confidence=42%/);
   });
 

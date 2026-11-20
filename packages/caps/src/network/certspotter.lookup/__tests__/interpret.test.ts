@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { certspotterLookup } from "../cap.ts";
 import { interpretCertspotterLookupReport } from "../interpret.ts";
 
@@ -31,8 +31,8 @@ describe("interpret", () => {
       input: { host: "example.com", entityId },
     });
     expect(result.patch.length).toBe(3);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("domain");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("domain");
     expect(claimText(result, 2)).toMatch(/Cert Spotter/);
   });
 
@@ -51,12 +51,15 @@ describe("interpret", () => {
       { input: { host: "example.com", entityId } }
     );
     const domains = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "domain"
+      (p) => p.kind === "identifier.create" && dataOf(p).type === "domain"
     );
     expect(domains).toHaveLength(2);
     expect(
       domains
-        .map((p) => (typeof p.data.value === "string" ? p.data.value : ""))
+        .map((p) => {
+          const { value } = dataOf(p);
+          return typeof value === "string" ? value : "";
+        })
         .sort((a, b) => a.localeCompare(b))
     ).toEqual(["example.com", "www.example.com"]);
   });

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { pageEnrich } from "../cap.ts";
 import { interpretPageEnrichReport } from "../interpret.ts";
 
@@ -31,10 +31,10 @@ describe("interpret", () => {
     const result = interpretPageEnrichReport(fixture, {
       input: { url: "https://example.com/", entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("url");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("url");
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && dataOf(p).type === "url"
     );
     expect(urls).toHaveLength(1);
     expect(claimText(result, 1)).toMatch(/Example/);
@@ -50,7 +50,7 @@ describe("interpret", () => {
       { input: { url: "https://example.com/", entityId } }
     );
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && dataOf(p).type === "url"
     );
     expect(urls).toHaveLength(2);
   });
@@ -65,11 +65,14 @@ describe("interpret", () => {
       { input: { url: "https://t.co/abc", entityId } }
     );
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && dataOf(p).type === "url"
     );
     expect(
       urls
-        .map((p) => (typeof p.data.value === "string" ? p.data.value : ""))
+        .map((p) => {
+          const { value } = dataOf(p);
+          return typeof value === "string" ? value : "";
+        })
         .sort((a, b) => a.localeCompare(b))
     ).toEqual(["https://example.com/landing", "https://t.co/abc"]);
   });

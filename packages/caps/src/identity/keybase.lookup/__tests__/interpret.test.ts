@@ -53,7 +53,7 @@ describe("interpret", () => {
       type: "url",
       value: "https://github.com/malgorithms",
     });
-    expect(result.patch.some((p) => p.resource === "claim")).toBeTruthy();
+    expect(result.patch.some((p) => p.kind === "claim.create")).toBeTruthy();
     expectNoConfidenceOnPatch(result);
   });
 
@@ -71,7 +71,7 @@ describe("interpret", () => {
     );
     expectProposesIdentifier(result, { type: "handle", value: "chris" });
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && p.data.type === "url"
     );
     expect(urls).toHaveLength(0);
   });
@@ -92,7 +92,7 @@ describe("interpret", () => {
     );
     expectProposesIdentifier(result, { type: "domain", value: "keybase.io" });
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && p.data.type === "url"
     );
     expect(urls).toHaveLength(0);
   });
@@ -117,7 +117,7 @@ describe("interpret", () => {
       /proposed 39 of 41 proof handles; the rest are only in the Job report/
     );
     const handles = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "handle"
+      (p) => p.kind === "identifier.create" && p.data.type === "handle"
     );
     expect(handles).toHaveLength(40);
   });

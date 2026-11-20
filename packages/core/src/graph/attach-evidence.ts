@@ -1,4 +1,8 @@
-import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  CONFIDENCE_GATED_RESOURCES,
+  patchOpResource,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 export type AttachEvidenceResult =
@@ -40,11 +44,7 @@ export function attachEvidenceIds(
 
   const merged: PatchOp[] = [];
   for (const op of patch) {
-    if (
-      op.resource === "claim" ||
-      op.resource === "identifier" ||
-      op.resource === "edge"
-    ) {
+    if (CONFIDENCE_GATED_RESOURCES.has(patchOpResource(op))) {
       const evidenceIdsForOp = mergeEvidenceIds(op.evidenceIds ?? [], shared);
       if (evidenceIdsForOp === null) {
         return {

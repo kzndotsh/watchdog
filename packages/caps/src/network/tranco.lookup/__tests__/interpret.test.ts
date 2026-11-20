@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { trancoLookup } from "../cap.ts";
 import { interpretTrancoLookupReport } from "../interpret.ts";
 
@@ -33,10 +33,10 @@ describe("interpret", () => {
     const result = interpretTrancoLookupReport(foundFixture, {
       input: { host: foundFixture.domain, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("domain");
-    expect(result.patch[0]?.data.value).toBe("example.com");
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("domain");
+    expect(dataOf(result.patch[0]).value).toBe("example.com");
+    expect(result.patch[1]?.kind).toBe("claim.create");
     expect(claimText(result, 1)).toMatch(/rank 12345/);
   });
 
@@ -44,7 +44,7 @@ describe("interpret", () => {
     const result = interpretTrancoLookupReport(notFoundFixture, {
       input: { host: notFoundFixture.domain, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
     expect(claimText(result, 1)).toMatch(/not in the top-1M/);
   });
 

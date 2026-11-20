@@ -325,8 +325,7 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           caseId,
           patch: [
             {
-              op: "create",
-              resource: "question",
+              kind: "question.create",
               id: testId(402),
               data: { entityId: ids.entityA, text: "planted" },
             },
@@ -343,8 +342,7 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           userOverride: true,
           patch: [
             {
-              op: "update",
-              resource: "entity",
+              kind: "entity.update",
               id: ids.entityA,
               data: { name: "Hijack" },
             },
@@ -359,8 +357,7 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           userOverride: true,
           patch: [
             {
-              op: "upsert",
-              resource: "entity",
+              kind: "entity.upsert",
               id: ids.entityA,
               data: { kind: "person", name: "Hijack", slug: "hijack" },
             },
@@ -375,8 +372,7 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           userOverride: true,
           patch: [
             {
-              op: "create",
-              resource: "claim",
+              kind: "claim.create",
               id: testId(403),
               data: { entityId: ids.entityA, text: "planted" },
             },

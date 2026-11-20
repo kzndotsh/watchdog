@@ -413,8 +413,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           caseId,
           patch: [
             {
-              op: "create",
-              resource: "question",
+              kind: "question.create",
               id: testId(400),
               data: { entityId: ids.entityA, text: "planted" },
             },
@@ -440,8 +439,7 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
           userOverride: true,
           patch: [
             {
-              op: "create",
-              resource: "question",
+              kind: "question.create",
               id: testId(401),
               data: { entityId: ids.entityA, text: "planted" },
             },

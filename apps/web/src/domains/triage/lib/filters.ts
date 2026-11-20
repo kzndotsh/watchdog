@@ -3,7 +3,11 @@ import type {
   ProposalQueueItem,
   ProposalRecord,
 } from "@watchdog/core/proposals";
-import { patchOpHeadline, type PatchOp } from "@watchdog/schemas/graph";
+import {
+  patchOpHeadline,
+  type PatchOp,
+  type PatchResource,
+} from "@watchdog/schemas/graph";
 import {
   proposalEntityName as coreProposalEntityName,
   proposalEntitySlug as coreProposalEntitySlug,
@@ -58,7 +62,7 @@ export function proposalTitle(row: ProposalTitleSource): string {
 
 /** Compact “2 Claims, 1 Connection” summary of patch ops. */
 function patchResourceCountLabel(
-  resource: PatchOp["resource"],
+  resource: PatchResource,
   count: number
 ): string {
   const label = PATCH_RESOURCE_META[resource].label;
@@ -67,7 +71,7 @@ function patchResourceCountLabel(
   return `${label}s`;
 }
 
-function isPatchResource(resource: string): resource is PatchOp["resource"] {
+function isPatchResource(resource: string): resource is PatchResource {
   return resource in PATCH_RESOURCE_META;
 }
 

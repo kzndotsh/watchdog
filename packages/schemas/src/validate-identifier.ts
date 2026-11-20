@@ -1,7 +1,7 @@
 import { identifierTypeEntry } from "./identifier-types";
 import type { ValidateIdentifierResult } from "./identifier-validators";
 import { normalizeIdentifierValue } from "./normalize-identifier";
-import type { PatchOp } from "./patch";
+import { type PatchOp, isPatchOpOf } from "./patch";
 import { normalizeIdentifierPlatform } from "./platforms";
 import { trimmedOrUndefined } from "./primitives";
 import { IDENTIFIER_TYPES, type IdentifierType } from "./vocab";
@@ -88,19 +88,9 @@ export function listInvalidIdentifierOps(
 ): InvalidIdentifierOp[] {
   const out: InvalidIdentifierOp[] = [];
   for (const op of patch ?? []) {
-    if (op.resource !== "identifier") continue;
-    if (op.op !== "create" && op.op !== "upsert") continue;
-
-    const type =
-      typeof op.data.type === "string"
-        ? normalizeIdentifierTypeInput(op.data.type)
-        : "";
-    const value =
-      typeof op.data.value === "string"
-        ? (trimmedOrUndefined(op.data.value) ?? "")
-        : "";
-    const platform =
-      typeof op.data.platform === "string" ? op.data.platform.trim() : "";
+    if (!isPatchOpOf(op, "identifier")) continue;
+    const { type, value } = op.data;
+    const platform = op.data.platform ?? "";
     const written = validateIdentifierWrite({ type, value, platform });
     if (!written.ok) {
       out.push({

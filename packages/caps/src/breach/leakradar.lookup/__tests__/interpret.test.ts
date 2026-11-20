@@ -81,8 +81,7 @@ describe("interpret", () => {
     const result = interpret(emailReport);
     expect(result.patch).toHaveLength(1);
     expect(result.patch[0]).toMatchObject({
-      op: "create",
-      resource: "claim",
+      kind: "claim.create",
       data: { entityId, class: "observation" },
     });
     const text = claimText(result, 0);
@@ -99,7 +98,7 @@ describe("interpret", () => {
   it("proposes only the Claim: no Identifier and no confirmed class", () => {
     for (const report of [emailReport, domainReport]) {
       const result = interpret(report);
-      expect(result.patch.every((op) => op.resource === "claim")).toBe(true);
+      expect(result.patch.every((op) => op.kind === "claim.create")).toBe(true);
       expect(JSON.stringify(result.patch)).not.toMatch(/confirmed/);
     }
   });

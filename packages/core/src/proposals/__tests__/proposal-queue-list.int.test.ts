@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import { proposalList } from "@watchdog/schemas/jobs";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -30,11 +31,13 @@ describe("listProposalQueueEffect", () => {
     await resetTestDb();
   });
 
-  const claimOp = (n: number) => ({
-    op: "create" as const,
-    resource: "claim" as const,
+  const claimOp = (n: number): PatchOp => ({
+    kind: "claim.create",
     id: `00000000-0000-4000-8000-0000000001${String(n).padStart(2, "0")}`,
-    data: { text: `claim ${String(n)} `.repeat(50) },
+    data: {
+      entityId: "00000000-0000-4000-8000-000000000099",
+      text: `claim ${String(n)} `.repeat(50),
+    },
   });
 
   it("answers the list's rows in the list's order with a row's fields and no patch", async () => {

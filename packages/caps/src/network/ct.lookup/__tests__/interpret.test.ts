@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 import {
+  dataOf,
   expectNoConfidenceOnPatch,
   expectProposesIdentifier,
 } from "../../../testing";
@@ -43,9 +44,11 @@ describe("interpretCtReport", () => {
       value: "api.example.com",
     });
     expect(
-      result.patch.filter((p) => p.resource === "identifier")
+      result.patch.filter((p) => p.kind === "identifier.create")
     ).toHaveLength(3);
-    expect(result.patch.filter((p) => p.resource === "claim")).toHaveLength(1);
+    expect(result.patch.filter((p) => p.kind === "claim.create")).toHaveLength(
+      1
+    );
     expectNoConfidenceOnPatch(result);
   });
 
@@ -54,9 +57,9 @@ describe("interpretCtReport", () => {
       { ...fixture, domains: ["example.com", "example.com", "EXAMPLE.COM"] },
       { input: { host: "example.com", entityId } }
     );
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(ids).toHaveLength(1);
-    expect(ids[0]?.data.value).toBe("example.com");
+    expect(dataOf(ids[0]).value).toBe("example.com");
   });
 
   it("drops wildcard domains from identifier proposals", () => {
@@ -67,7 +70,7 @@ describe("interpretCtReport", () => {
       },
       { input: { host: "example.com", entityId } }
     );
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(ids).toHaveLength(2);
     expect(
       ids
@@ -83,7 +86,7 @@ describe("interpretCtReport", () => {
       { input: { host: "example.com", entityId } }
     );
     expect(
-      result.patch.filter((p) => p.resource === "identifier")
+      result.patch.filter((p) => p.kind === "identifier.create")
     ).toHaveLength(80);
     expect(String(result.summary)).toMatch(
       /proposed 80 of 86; the rest are only in the Job report/

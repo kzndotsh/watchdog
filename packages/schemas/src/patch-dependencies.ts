@@ -1,21 +1,7 @@
-import type { PatchOp } from "./patch";
-
-function collectStrings(value: unknown, into: Set<string>): void {
-  if (typeof value === "string") {
-    into.add(value);
-    return;
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) collectStrings(item, into);
-    return;
-  }
-  if (value !== null && typeof value === "object") {
-    for (const item of Object.values(value)) collectStrings(item, into);
-  }
-}
+import { type PatchOp, patchOpRelatedEntityIds } from "./patch";
 
 /**
- * The ops of the same patch each op needs: another op whose `id` appears anywhere in its `data`
+ * The ops of the same patch each op needs: another op whose `id` its `data` names as an Entity
  * (an Identifier, Claim or Connection on an Entity the patch creates). A patch op's `id` is the
  * row's, so applying an op without the one it names would point at a row that is not there.
  */
@@ -25,8 +11,7 @@ export function patchOpDependencies(
   const ids = new Set(patch.map((op) => op.id));
   const deps = new Map<string, string[]>();
   for (const op of patch) {
-    const named = new Set<string>();
-    collectStrings(op.data, named);
+    const named = patchOpRelatedEntityIds(op);
     // Two ops may share an id (nothing in the patch schema refuses it): an id needs what any of
     // its ops names, so choosing it never applies one of them without its Entity.
     const needs = new Set(deps.get(op.id));

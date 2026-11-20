@@ -30,7 +30,7 @@ export type ApplyPatchTx = DbTx;
 
 export type ApplyPatchOpts = {
   caseId: CaseId;
-  patch: PatchOp[];
+  patch: readonly PatchOp[];
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
   /**
@@ -72,35 +72,33 @@ function applyOpEffect(
   return Effect.gen(function* applyOpGen() {
     const evidenceIds = yield* evidenceIdsForOp(op, sharedEvidenceIds);
 
-    switch (op.resource) {
-      case "claim": {
-        yield* applyClaimOpEffect(w, op, confidence, evidenceIds);
-        return;
+    switch (op.kind) {
+      case "claim.create": {
+        return yield* applyClaimOpEffect(w, op, confidence, evidenceIds);
       }
-      case "event": {
-        yield* applyEventOpEffect(w, op);
-        return;
+      case "event.create": {
+        return yield* applyEventOpEffect(w, op);
       }
-      case "question": {
-        yield* applyQuestionOpEffect(w, op);
-        return;
+      case "question.create": {
+        return yield* applyQuestionOpEffect(w, op);
       }
-      case "entity": {
-        yield* applyEntityOpEffect(w, op);
-        return;
+      case "entity.create":
+      case "entity.upsert":
+      case "entity.update": {
+        return yield* applyEntityOpEffect(w, op);
       }
-      case "identifier": {
-        yield* applyIdentifierOpEffect(w, op, confidence, evidenceIds);
-        return;
+      case "identifier.create":
+      case "identifier.upsert": {
+        return yield* applyIdentifierOpEffect(w, op, confidence, evidenceIds);
       }
-      case "edge": {
-        yield* applyEdgeOpEffect(w, op, confidence, evidenceIds);
-        return;
+      case "edge.create":
+      case "edge.upsert": {
+        return yield* applyEdgeOpEffect(w, op, confidence, evidenceIds);
       }
       default: {
-        const _exhaustive: never = op.resource;
+        op satisfies never;
         return yield* new InvalidError({
-          reason: `Unhandled resource: ${String(_exhaustive)}`,
+          reason: "Unhandled patch op kind",
         });
       }
     }
@@ -108,7 +106,7 @@ function applyOpEffect(
 }
 
 function collectPatchEvidenceIds(
-  patch: PatchOp[],
+  patch: readonly PatchOp[],
   sharedEvidenceIds: string[]
 ): string[] | null {
   const combined: string[] = [...sharedEvidenceIds];

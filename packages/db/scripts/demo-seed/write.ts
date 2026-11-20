@@ -789,8 +789,7 @@ export function identifierOp(input: {
   evidenceIds?: string[];
 }): PatchOp {
   return {
-    op: "create",
-    resource: "identifier",
+    kind: "identifier.create",
     id: crypto.randomUUID(),
     data: {
       entityId: input.entityId,
@@ -813,8 +812,7 @@ export function claimOp(input: {
   evidenceIds?: string[];
 }): PatchOp {
   return {
-    op: "create",
-    resource: "claim",
+    kind: "claim.create",
     id: crypto.randomUUID(),
     data: {
       entityId: input.entityId,
@@ -834,8 +832,7 @@ export function entityOp(input: {
   summary?: string;
 }): PatchOp {
   return {
-    op: "create",
-    resource: "entity",
+    kind: "entity.create",
     id: crypto.randomUUID(),
     data: {
       kind: input.kind,
@@ -853,8 +850,7 @@ export function edgeOp(input: {
   notes?: string;
 }): PatchOp {
   return {
-    op: "create",
-    resource: "edge",
+    kind: "edge.create",
     id: crypto.randomUUID(),
     data: {
       fromId: input.fromId,
@@ -867,8 +863,7 @@ export function edgeOp(input: {
 
 export function questionOp(input: { entityId: string; text: string }): PatchOp {
   return {
-    op: "create",
-    resource: "question",
+    kind: "question.create",
     id: crypto.randomUUID(),
     data: {
       entityId: input.entityId,

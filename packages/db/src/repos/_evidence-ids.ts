@@ -43,7 +43,7 @@ export const proposalEvidenceCount = sql<number>`(
 export const proposalOpCounts = sql<Record<string, number>>`coalesce((
   select jsonb_object_agg(op.resource, op.n)
   from (
-    select elem->>'resource' as resource, count(*)::int as n
+    select split_part(elem->>'kind', '.', 1) as resource, count(*)::int as n
     from jsonb_array_elements(${proposals.patch}) as elem
     group by 1
   ) as op

@@ -5,23 +5,24 @@ import {
   PATCH_GROUP_OPEN_MAX,
 } from "@/domains/triage/lib/patch-op-groups";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { IdentifierType } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit";
 
-function identifier(n: number, type: string, value: string): PatchOp {
+const ENTITY = testId(500);
+
+function identifier(n: number, type: IdentifierType, value: string): PatchOp {
   return {
     id: testId(n),
-    op: "create",
-    resource: "identifier",
-    data: { type, value },
+    kind: "identifier.create",
+    data: { entityId: ENTITY, type, value },
   };
 }
 
 function claim(n: number): PatchOp {
   return {
     id: testId(n),
-    op: "create",
-    resource: "claim",
-    data: { text: "CT for acme.test" },
+    kind: "claim.create",
+    data: { entityId: ENTITY, text: "CT for acme.test" },
   };
 }
 
@@ -65,29 +66,5 @@ describe("groupPatchOps", () => {
     expect(group?.ops).toHaveLength(20);
     expect(group?.flaggedCount).toBe(1);
     expect(group?.isOpenByDefault).toBe(true);
-  });
-
-  it("groups an Identifier op without a known type under Identifier", () => {
-    const [group] = groupPatchOps(
-      [
-        {
-          id: testId(1),
-          op: "update",
-          resource: "identifier",
-          data: { notes: "x" },
-        },
-      ],
-      new Set()
-    );
-    expect(group?.label).toBe("Identifier");
-  });
-
-  it("never reads a label off an inherited key such as constructor", () => {
-    const [group] = groupPatchOps(
-      [identifier(1, "constructor", "x")],
-      new Set()
-    );
-    expect(group?.label).toBe("Identifier");
-    expect(group?.key).toBe("identifier");
   });
 });

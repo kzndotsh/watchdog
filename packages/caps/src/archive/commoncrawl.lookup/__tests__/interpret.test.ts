@@ -34,11 +34,11 @@ describe("interpret", () => {
     const result = interpretCommoncrawlLookupReport(fixture, {
       input: { host: "example.com", entityId },
     });
-    expect(result.patch.filter((p) => p.resource === "identifier").length).toBe(
-      3
-    );
+    expect(
+      result.patch.filter((p) => p.kind === "identifier.create").length
+    ).toBe(3);
     expectProposesIdentifier(result, { type: "domain", value: "example.com" });
-    expect(result.patch.at(-1)?.resource).toBe("claim");
+    expect(result.patch.at(-1)?.kind).toBe("claim.create");
     expectNoConfidenceOnPatch(result);
   });
 

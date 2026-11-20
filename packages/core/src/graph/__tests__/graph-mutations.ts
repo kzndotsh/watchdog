@@ -541,8 +541,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
-        op: "create",
-        resource: "entity",
+        kind: "entity.create",
         id: NEW_ID,
         data: { kind: "person", name: "Grace Hopper", slug: "grace" },
       }),
@@ -554,8 +553,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: (fx) => fx.entityId,
     run: (fx) =>
       patch(fx, {
-        op: "upsert",
-        resource: "entity",
+        kind: "entity.upsert",
         id: fx.entityId,
         data: { kind: "person", name: "Ada King", slug: "ada" },
       }),
@@ -567,8 +565,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: (fx) => fx.entityId,
     run: (fx) =>
       patch(fx, {
-        op: "update",
-        resource: "entity",
+        kind: "entity.update",
         id: fx.entityId,
         data: { summary: "Patched" },
       }),
@@ -580,8 +577,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: NEW_ID,
         data: { entityId: fx.entityId, text: "Patched claim" },
       }),
@@ -593,8 +589,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
-        op: "create",
-        resource: "edge",
+        kind: "edge.create",
         id: NEW_ID,
         data: {
           fromId: fx.otherEntityId,
@@ -611,8 +606,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: (fx) => fx.edgeId,
     run: (fx) =>
       patch(fx, {
-        op: "upsert",
-        resource: "edge",
+        kind: "edge.upsert",
         id: NEW_ID,
         data: {
           fromId: fx.entityId,
@@ -629,8 +623,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
-        op: "create",
-        resource: "identifier",
+        kind: "identifier.create",
         id: NEW_ID,
         data: {
           entityId: fx.entityId,
@@ -646,8 +639,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: (fx) => fx.identifierId,
     run: (fx) =>
       patch(fx, {
-        op: "upsert",
-        resource: "identifier",
+        kind: "identifier.upsert",
         id: NEW_ID,
         data: {
           entityId: fx.entityId,
@@ -664,8 +656,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
-        op: "create",
-        resource: "event",
+        kind: "event.create",
         id: NEW_ID,
         data: { entityId: fx.entityId, when: "1840", what: "Patched event" },
       }),
@@ -677,8 +668,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
-        op: "create",
-        resource: "question",
+        kind: "question.create",
         id: NEW_ID,
         data: { entityId: fx.entityId, text: "Patched question?" },
       }),
