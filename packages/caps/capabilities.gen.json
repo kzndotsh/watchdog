@@ -3130,7 +3130,7 @@
   },
   {
     "id": "identity.pgp.lookup",
-    "version": "89b7125c9f9b",
+    "version": "e62ba2ad02ed",
     "title": "PGP lookup",
     "provider": {
       "name": "PGP keyservers",
@@ -3340,7 +3340,7 @@
   },
   {
     "id": "identity.keybase.lookup",
-    "version": "6bee59922c43",
+    "version": "e23c7a3e40e3",
     "title": "Keybase lookup",
     "provider": {
       "name": "Keybase",
@@ -3443,7 +3443,7 @@
   },
   {
     "id": "identity.gravatar.lookup",
-    "version": "bed76cb68992",
+    "version": "f7731e340bd0",
     "title": "Gravatar lookup",
     "provider": {
       "name": "Gravatar",
@@ -4342,7 +4342,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "41dcf360e0ba",
+    "version": "a6509f0bc8a9",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",

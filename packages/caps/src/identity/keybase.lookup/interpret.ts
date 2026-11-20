@@ -7,6 +7,7 @@ import {
   HANDLE_IDENTIFIER_BATCH_LIMIT,
   URL_IDENTIFIER_BATCH_LIMIT,
   domainValuesBatch,
+  eligibleUrlCount,
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
@@ -20,7 +21,7 @@ const HANDLE_LIMIT = HANDLE_IDENTIFIER_BATCH_LIMIT;
 
 function summarize(
   report: KeybaseLookupSnapshot,
-  proofHandleTotal: number,
+  proofs: { total: number; budget: number },
   primaryHandleTotal: number,
   urlTotal: number
 ): string {
@@ -42,9 +43,10 @@ function summarize(
     HANDLE_LIMIT
   ).trim();
   if (primaryNote !== "") bits.push(primaryNote.replaceAll(/^\(|\)$/g, ""));
+  // Primary handles take their slots first; proofs get what is left of the limit.
   const proofNote = identifierTruncationNote(
-    proofHandleTotal,
-    HANDLE_LIMIT,
+    proofs.total,
+    proofs.budget,
     "proof handles"
   ).trim();
   if (proofNote !== "") bits.push(proofNote.replaceAll(/^\(|\)$/g, ""));
@@ -131,9 +133,9 @@ export function interpretKeybaseLookupReport(
     ],
     claimText: summarize(
       report,
-      proofHandleCandidates.length,
+      { total: proofHandleCandidates.length, budget: proofHandleBudget },
       primaryHandleValues.length,
-      urlValues.length
+      eligibleUrlCount(urlValues)
     ),
     noEntitySummary: "Keybase lookup captured; no Entity to attach Identifiers",
   });

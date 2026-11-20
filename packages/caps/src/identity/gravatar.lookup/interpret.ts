@@ -9,6 +9,7 @@ import {
   URL_IDENTIFIER_BATCH_LIMIT,
   emailValuesBatch,
   eligibleEmailCount,
+  eligibleUrlCount,
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
@@ -59,7 +60,7 @@ export function interpretGravatarLookupReport(
     (value): value is string =>
       value !== null && value !== undefined && value !== ""
   );
-  const urlTotal = urlValues.length;
+  const urlTotal = eligibleUrlCount(urlValues);
   const emailCandidates = report.found
     ? [report.email, ...report.emails]
     : [report.email];

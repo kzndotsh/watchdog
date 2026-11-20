@@ -8,6 +8,7 @@ import {
 } from "../../lib/collect/interpret-identifier-batches";
 import {
   EMAIL_IDENTIFIER_BATCH_LIMIT,
+  emailValuesBatch,
   identifierTruncationNote,
   querySeedBatches,
 } from "../../lib/collect/query-seed-batches";
@@ -74,14 +75,45 @@ function flagsNote(keys: readonly PgpKeyHit[]): string {
   return parts.length === 0 ? "" : `; ${parts.join("; ")}`;
 }
 
-function summarize(report: PgpLookupSnapshot, emailCount: number): string {
+function summarize(
+  report: PgpLookupSnapshot,
+  emailCount: { total: number; proposed: number }
+): string {
   const keysNote = identifierTruncationNote(report.keys.length, PGP_KEY_LIMIT);
   const emailNote = identifierTruncationNote(
-    emailCount,
-    EMAIL_IDENTIFIER_BATCH_LIMIT,
+    emailCount.total,
+    emailCount.proposed,
     "emails"
   );
   return `PGP for ${report.query}: ${report.keys.length} key(s) (${serversNote(report)})${flagsNote(report.keys)}${keysNote}${emailNote}`;
+}
+
+/**
+ * The emails the Claim counts: every distinct valid one (the seed email included), and how many
+ * are proposed. The seed batch proposes the query email first, and the email batch skips it
+ * without spending its limit, so the seed adds to what is proposed rather than taking a slot.
+ */
+function emailCounts(
+  seeds: readonly IdentifierBatch[],
+  emails: readonly string[]
+): { total: number; proposed: number } {
+  const seedEmails = new Set(
+    seeds.flatMap((batch) =>
+      batch.type === "email"
+        ? batch.values.filter(
+            (value): value is string => typeof value === "string"
+          )
+        : []
+    )
+  );
+  const uidEmails = emailValuesBatch(emails)[0]?.values ?? [];
+  const rest = uidEmails.filter(
+    (value) => typeof value === "string" && !seedEmails.has(value)
+  ).length;
+  return {
+    total: seedEmails.size + rest,
+    proposed: seedEmails.size + Math.min(rest, EMAIL_IDENTIFIER_BATCH_LIMIT),
+  };
 }
 
 /**
@@ -101,10 +133,11 @@ export function interpretPgpLookupReport(
       )
     ),
   ];
+  const seeds = seedBatches(report);
   return interpretIdentifierBatches({
     entityId: opts.input.entityId,
     batches: [
-      ...seedBatches(report),
+      ...seeds,
       { type: "email", values: emails },
       {
         type: "pgp",
@@ -112,7 +145,7 @@ export function interpretPgpLookupReport(
         limit: PGP_KEY_LIMIT,
       },
     ],
-    claimText: summarize(report, emails.length),
+    claimText: summarize(report, emailCounts(seeds, emails)),
     noEntitySummary: "PGP lookup captured; no Entity to attach Identifiers",
   });
 }

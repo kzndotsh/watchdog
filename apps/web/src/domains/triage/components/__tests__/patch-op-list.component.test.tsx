@@ -118,4 +118,25 @@ describe("PatchOpList", () => {
     expect(rows[0]).toHaveTextContent("Domain: h15.acme.test");
     expect(screen.getByText("On another Entity")).toBeInTheDocument();
   });
+
+  it("opens a collapsed group when one of its ops becomes flagged", () => {
+    const patch = Array.from({ length: 30 }, (_, i) => ({
+      id: testId(10 + i),
+      op: "create" as const,
+      resource: "identifier" as const,
+      data: { type: "domain", value: `h${i}.acme.test` },
+    }));
+    const { rerender } = render(<PatchOpList patch={patch} />);
+    const name = "Domain Identifiers (30)";
+    expect(screen.getByRole("button", { name })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+
+    rerender(<PatchOpList patch={patch} collidingOpIds={[testId(12)]} />);
+    expect(screen.getByRole("button", { name })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+  });
 });

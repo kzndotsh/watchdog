@@ -259,7 +259,10 @@ export function PatchOpList({
       <div className="border-border overflow-hidden rounded-md border">
         {groups.map((group) => (
           <PatchOpGroupSection
-            key={group.key}
+            // The open state starts from `isOpenByDefault`; keying on whether the group holds a
+            // flagged op remounts it when a flag arrives (or clears), so a newly flagged group
+            // opens. Toggles are kept while the flagged state stays the same.
+            key={`${group.key}:${group.flaggedCount > 0 ? "flagged" : "clear"}`}
             group={group}
             sharedEvidenceIds={sharedEvidenceIds}
             bundleSet={bundleSet}

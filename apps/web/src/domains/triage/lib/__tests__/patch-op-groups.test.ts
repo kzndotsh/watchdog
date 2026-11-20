@@ -81,4 +81,13 @@ describe("groupPatchOps", () => {
     );
     expect(group?.label).toBe("Identifier");
   });
+
+  it("never reads a label off an inherited key such as constructor", () => {
+    const [group] = groupPatchOps(
+      [identifier(1, "constructor", "x")],
+      new Set()
+    );
+    expect(group?.label).toBe("Identifier");
+    expect(group?.key).toBe("identifier");
+  });
 });

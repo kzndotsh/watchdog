@@ -1,4 +1,8 @@
-import { patchResourceLabel, type PatchOp } from "@watchdog/schemas/graph";
+import {
+  identifierTypeEntry,
+  patchResourceLabel,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
 import { IDENTIFIER_TYPE_LABELS } from "@watchdog/schemas/shared";
 
 /** A group at or under this size starts open; a bigger one starts collapsed behind its count. */
@@ -20,8 +24,11 @@ const identifierTypeLabels: Readonly<Record<string, string>> =
 function groupOf(op: PatchOp): { key: string; label: string } {
   if (op.resource === "identifier") {
     const type = op.data.type;
+    // Only a known type has a label: `identifierTypeEntry` refuses "constructor" and the like.
     const typeLabel =
-      typeof type === "string" ? identifierTypeLabels[type] : undefined;
+      typeof type === "string" && identifierTypeEntry(type) !== undefined
+        ? identifierTypeLabels[type]
+        : undefined;
     if (typeof type === "string" && typeLabel !== undefined) {
       return { key: `identifier:${type}`, label: `${typeLabel} Identifiers` };
     }
