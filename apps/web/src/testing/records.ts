@@ -403,6 +403,7 @@ export const buildProposalQueueItem = (
   summary: "dns",
   capabilityId: "network.dns.lookup",
   playbookId: null,
+  playbookRun: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   opCounts: { claim: 1 },
   evidenceCount: 1,

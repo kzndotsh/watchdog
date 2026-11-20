@@ -10,6 +10,8 @@ import {
   resetTestDb,
   seedCase,
   seedEvidence,
+  seedJob,
+  seedPlaybookRun,
   seedProposal,
   testDb,
 } from "@watchdog/test-db";
@@ -95,6 +97,7 @@ describe("listProposalQueueEffect", () => {
       "id",
       "opCounts",
       "playbookId",
+      "playbookRun",
       "status",
       "summary",
     ]);
@@ -112,13 +115,80 @@ describe("listProposalQueueEffect", () => {
     );
   });
 
+  it("gives a run's Proposals the run's counts over every status and page", async () => {
+    const theCase = await seedCase(testDb, {
+      name: "Queue runs",
+      slug: "queue-runs",
+      organizationId: TEST_ORGANIZATION_ID,
+    });
+    const playbookRun = await seedPlaybookRun(testDb, theCase.id, {
+      playbookId: "domain-recon",
+    });
+    const step = (n: number) =>
+      seedJob(testDb, theCase.id, {
+        playbookRunId: playbookRun.id,
+        playbookStep: n,
+        status: "succeeded",
+      });
+    const [first, second, third] = [
+      await step(0),
+      await step(1),
+      await step(2),
+    ];
+    await seedProposal(testDb, theCase.id, [claimOp(1)], { jobId: first.id });
+    await seedProposal(testDb, theCase.id, [claimOp(2)], { jobId: second.id });
+    await seedProposal(testDb, theCase.id, [claimOp(3)], {
+      jobId: third.id,
+      status: "rejected",
+    });
+    const lone = await seedJob(testDb, theCase.id, { status: "succeeded" });
+    const off = await seedProposal(testDb, theCase.id, [claimOp(4)], {
+      jobId: lone.id,
+    });
+
+    const page = await runDomainWith(Db.layer)(
+      listProposalQueueEffect(
+        theCase.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({
+          caseId: theCase.id,
+          status: ["pending"],
+          limit: 2,
+        })
+      )
+    );
+    const runRows = page.items.filter((item) => item.id !== off.id);
+    expect(runRows.length).toBeGreaterThan(0);
+    for (const row of runRows) {
+      expect(row).toMatchObject({
+        playbookId: "domain-recon",
+        playbookRun: { id: playbookRun.id, proposalCount: 3, pendingCount: 2 },
+      });
+    }
+    const all = await runDomainWith(Db.layer)(
+      listProposalQueueEffect(
+        theCase.id,
+        TEST_ORGANIZATION_ID,
+        proposalList.input.parse({ caseId: theCase.id })
+      )
+    );
+    expect(all.items.find((item) => item.id === off.id)?.playbookRun).toBe(
+      null
+    );
+  });
+
   it("reads the Case guard and one page, through indexes", async () => {
     const theCase = await seedCase(testDb, {
       name: "Queue plan",
       slug: "queue-plan",
       organizationId: TEST_ORGANIZATION_ID,
     });
-    await seedProposal(testDb, theCase.id, [claimOp(1)]);
+    const playbookRun = await seedPlaybookRun(testDb, theCase.id);
+    const job = await seedJob(testDb, theCase.id, {
+      playbookRunId: playbookRun.id,
+      playbookStep: 0,
+    });
+    await seedProposal(testDb, theCase.id, [claimOp(1)], { jobId: job.id });
     const { statements } = await captureStatements(() =>
       runDomainWith(Db.layer)(
         listProposalQueueEffect(

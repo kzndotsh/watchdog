@@ -160,6 +160,7 @@ function queueRowOf(row: ProposalRecord): ProposalQueueItem {
     summary: row.summary,
     capabilityId: row.capabilityId,
     playbookId: row.playbookId,
+    playbookRun: null,
     createdAt: row.createdAt,
     opCounts: { claim: row.patch.length },
     evidenceCount: row.evidenceIds.length,

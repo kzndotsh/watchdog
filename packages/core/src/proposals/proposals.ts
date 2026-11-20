@@ -259,6 +259,14 @@ function queueItems(
       summary: row.summary,
       capabilityId: row.capabilityId ?? null,
       playbookId: row.playbookId ?? null,
+      playbookRun:
+        row.playbookRunId === null
+          ? null
+          : {
+              id: row.playbookRunId,
+              proposalCount: row.runProposalCount ?? 0,
+              pendingCount: row.runPendingCount ?? 0,
+            },
       createdAt: row.createdAt.toISOString(),
       opCounts: row.opCounts,
       evidenceCount: row.evidenceCount,
