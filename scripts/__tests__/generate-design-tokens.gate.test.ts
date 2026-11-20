@@ -100,4 +100,16 @@ describe("generate-design-tokens", () => {
     expect(res.code).toBe(1);
     expect(res.output).toContain("--text-2xs is not declared");
   });
+
+  it("fails cleanly on a circular var() reference", () => {
+    const repo = fixture();
+    const theme = read(repo, `${STYLES}/wd-theme.css`).replace(
+      /--text-2xs:[^;]+;/,
+      "--text-2xs: var(--text-2xs);"
+    );
+    repo.write(`${STYLES}/wd-theme.css`, theme);
+    const res = repo.run(SCRIPT);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("circular var() reference: --text-2xs");
+  });
 });

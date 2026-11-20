@@ -138,16 +138,21 @@ const problems = [];
  * A variable's value with `var()` references followed, looked up in `scopes` in order.
  * @param {string} name
  * @param {Map<string, string>[]} scopes
+ * @param {ReadonlySet<string>} [visiting] names already on this chain, to stop a cycle
  * @returns {string}
  */
-function resolve(name, scopes) {
+function resolve(name, scopes, visiting = new Set()) {
+  if (visiting.has(name)) {
+    problems.push(`circular var() reference: ${name}`);
+    return "";
+  }
   const raw = scopes.find((scope) => scope.has(name))?.get(name);
   if (raw === undefined) {
     problems.push(`${name} is not declared`);
     return "";
   }
   const ref = /^var\((--[\w-]+)\)$/.exec(raw);
-  return ref ? resolve(ref[1], scopes) : raw;
+  return ref?.[1] ? resolve(ref[1], scopes, new Set([...visiting, name])) : raw;
 }
 
 /**
