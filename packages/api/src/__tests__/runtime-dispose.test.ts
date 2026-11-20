@@ -6,14 +6,19 @@ import {
   JobQueue,
   makeJobQueueLayers,
   type BossDriver,
+  type QueueTx,
 } from "@watchdog/core/jobs";
 import { OutboundClient, outboundClientLayer } from "@watchdog/tools/http";
 
 import { makeAppLive, makeAppRuntime } from "../runtime";
 
+/** A producing transaction the fake driver never runs SQL on. */
+const TX: QueueTx = { executeSql: async () => ({ rows: [] }) };
+
 const SEND = Effect.gen(function* sendGen() {
   const queue = yield* JobQueue;
   yield* queue.send(
+    TX,
     { jobId: "11111111-1111-4111-8111-000000000001" },
     { lane: "quick", expireInSeconds: 60, singletonKey: "k" }
   );

@@ -24,23 +24,19 @@ export function reconcileReport(
     ran,
     stale,
     accessRevoked,
+    undelivered,
     stuckPlaybooks,
-    orphanedQueued,
     collectQueueRebuilt,
   } = result;
   const changed =
-    stale +
-    accessRevoked +
-    stuckPlaybooks +
-    orphanedQueued +
-    collectQueueRebuilt;
+    stale + accessRevoked + undelivered + stuckPlaybooks + collectQueueRebuilt;
   if (!ran || changed === 0) return undefined;
   return {
-    message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${stuckPlaybooks} stuck playbook run(s), ${orphanedQueued} orphaned queued re-enqueued, ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
+    message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${undelivered} queued without a delivery failed, ${stuckPlaybooks} stuck playbook run(s), ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
     stale,
     accessRevoked,
+    undelivered,
     stuckPlaybooks,
-    orphanedQueued,
     collectQueueRebuilt,
   };
 }

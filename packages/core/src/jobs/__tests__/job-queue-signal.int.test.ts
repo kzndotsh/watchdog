@@ -2,7 +2,7 @@ import { Effect, Layer, Predicate } from "effect";
 import { PgBoss } from "pg-boss";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobsRepo } from "@watchdog/db";
+import { db, jobQueueTx, jobsRepo } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 import { createLogger } from "@watchdog/log";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
@@ -19,9 +19,16 @@ import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";
 import { Db } from "../../infra/db-service.ts";
+import { transact } from "../../infra/postgres-tx.ts";
 import { vaultLayer } from "../../infra/vault.ts";
 import { JobFibers } from "../job-fibers.ts";
-import { JobQueue, JobQueueWorker, jobQueueWorkerLayer } from "../job-queue.ts";
+import {
+  JobQueue,
+  JobQueueWorker,
+  jobQueueWorkerLayer,
+  type CapJobPayload,
+  type QueueSendOptions,
+} from "../job-queue.ts";
 import { interruptOnQueueSignal } from "../queue-signal.ts";
 import { executeJobOnMap } from "../run-job.ts";
 
@@ -68,6 +75,14 @@ const services = Layer.mergeAll(
 );
 const live = Layer.mergeAll(services, jobQueueWorkerLayer);
 
+/** Send one delivery with the given options, committed in its own transaction. */
+function sendCommitted(payload: CapJobPayload, options: QueueSendOptions) {
+  return Effect.gen(function* sendCommittedGen() {
+    const queue = yield* JobQueue;
+    yield* transact((tx) => queue.send(jobQueueTx(tx), payload, options));
+  });
+}
+
 const WORK = {
   lane: "quick",
   localConcurrency: 1,
@@ -106,7 +121,6 @@ describe("pg-boss job.signal reaches the Job fiber (#397)", () => {
 
     await Effect.gen(function* signalGen() {
       const worker = yield* JobQueueWorker;
-      const queue = yield* JobQueue;
       const context = yield* Effect.context<
         Db | JobFibers | JobQueue | Layer.Success<typeof services>
       >();
@@ -124,11 +138,11 @@ describe("pg-boss job.signal reaches the Job fiber (#397)", () => {
         )
       );
       // The hung Job is delivered first and holds the only slot (concurrency 1).
-      yield* queue.send(
+      yield* sendCommitted(
         { jobId: hung.id },
         { lane: "quick", expireInSeconds: 1, singletonKey: hung.id }
       );
-      yield* queue.send(
+      yield* sendCommitted(
         { jobId: normal.id },
         { lane: "quick", expireInSeconds: 60, singletonKey: normal.id }
       );
@@ -164,7 +178,6 @@ describe("pg-boss job.signal reaches the Job fiber (#397)", () => {
     try {
       await Effect.gen(function* warningGen() {
         const worker = yield* JobQueueWorker;
-        const queue = yield* JobQueue;
         // A handler that ignores `job.signal`: pg-boss fails the delivery at
         // its expiry and warns that the handler still holds the worker. The
         // handler returns once the test has seen the warning.
@@ -173,7 +186,7 @@ describe("pg-boss job.signal reaches the Job fiber (#397)", () => {
           release = resolve;
         });
         yield* worker.work(WORK, () => gate);
-        yield* queue.send(
+        yield* sendCommitted(
           { jobId },
           { lane: "quick", expireInSeconds: 1, singletonKey: jobId }
         );

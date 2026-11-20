@@ -42,11 +42,11 @@ import type { Db } from "../infra/db-service";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
+import { enqueueCapJobEffect } from "./boss";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import type { SystemJobContext, SystemJobFinish } from "./lifecycle/run";
 import { underJobTimer } from "./lifecycle/timer";
-import { enqueueCreatedJobEffect } from "./start-job";
 import { takeJobStartEffect } from "./start-limits";
 import { CASE_EXPORT_JOB, systemJobTimeoutMs } from "./system-jobs";
 
@@ -167,14 +167,11 @@ export function startCaseExportJobEffect(
         yield* appendJobActivityEffect(tx, made, "queued");
         // Only a new export is a start: joining the open one above took nothing.
         yield* takeJobStartEffect(tx, input);
+        yield* enqueueCapJobEffect(tx, made.id, CASE_EXPORT_JOB);
         return { row: made, created: true };
       })
     );
-    if (!created) {
-      return { jobId: row.id, status: row.status, created: false };
-    }
-    yield* enqueueCreatedJobEffect(caseId, row, CASE_EXPORT_JOB);
-    return { jobId: row.id, status: row.status, created: true };
+    return { jobId: row.id, status: row.status, created };
   });
 }
 

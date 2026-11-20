@@ -8,7 +8,7 @@ import {
   predecessorFromJob,
   seedValuesFromJson,
 } from "@watchdog/caps";
-import type { DbExec, JobRow } from "@watchdog/db";
+import type { DbTx, JobRow } from "@watchdog/db";
 import {
   isJsonObject,
   parseTrimmedUuid,
@@ -28,30 +28,9 @@ import { parseValidatedCapInputEffect } from "../cap-input";
 import { appendJobActivityEffect } from "../job-activity";
 import type { JobQueue } from "../job-queue";
 
-type ReleasedJob = {
-  id: string;
-  capabilityId: string;
-};
-
-type AdvanceOutcome = {
-  jobs: ReleasedJob[];
-};
-
-function enqueueReleasedEffect(
-  released: ReleasedJob[]
-): Effect.Effect<void, never, JobQueue> {
-  if (released.length === 0) return Effect.void;
-  return Effect.gen(function* enqueueReleasedGen() {
-    yield* Effect.forEach(
-      released,
-      (row) => enqueueCapJobEffect(row.id, row.capabilityId).pipe(Effect.orDie),
-      { concurrency: "unbounded" }
-    );
-  });
-}
-
+/** Create and queue a step's missing Jobs, each in the advance's transaction `tx` (#721). */
 function enqueueStepJobsEffect(opts: {
-  tx: DbExec;
+  tx: DbTx;
   run: {
     caseId: CaseId;
     actorId: string;
@@ -63,11 +42,10 @@ function enqueueStepJobsEffect(opts: {
   step: number;
   capabilityId: string;
   inputs: JsonObject[];
-}): Effect.Effect<ReleasedJob[], DomainTag> {
+}): Effect.Effect<void, DomainTag, JobQueue> {
   const { tx, run, playbookRunId, jobs, step, capabilityId, inputs } = opts;
   const cap = requireCapability(capabilityId);
   return Effect.gen(function* enqueueStepJobsGen() {
-    const created: ReleasedJob[] = [];
     yield* Effect.forEach(
       inputs.map((jobInput, fanIndex) => ({ jobInput, fanIndex })),
       ({ jobInput, fanIndex }) =>
@@ -100,11 +78,10 @@ function enqueueStepJobsEffect(opts: {
               )
             );
           yield* appendJobActivityEffect(tx, row, "queued");
-          created.push({ id: row.id, capabilityId: row.capabilityId });
+          yield* enqueueCapJobEffect(tx, row.id, row.capabilityId);
         }),
-      { concurrency: 1 }
+      { concurrency: 1, discard: true }
     );
-    return created;
   });
 }
 
@@ -114,14 +91,10 @@ export function advancePlaybookRunEffect(input: {
   const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;
   return Effect.gen(function* advancePlaybookRunGen() {
-    const outcome = yield* transact((tx) =>
+    yield* transact((tx) =>
       Effect.gen(function* advancePlaybookTx() {
         const run = yield* playbookRunsRepoFx.lock(tx, playbookRunId);
-        if (!run || run.status !== "running") {
-          return {
-            jobs: [] as ReleasedJob[],
-          } satisfies AdvanceOutcome;
-        }
+        if (!run || run.status !== "running") return;
 
         const playbook = requirePlaybook(run.playbookId);
         const seed = isJsonObject(run.seed) ? seedValuesFromJson(run.seed) : {};
@@ -146,9 +119,7 @@ export function advancePlaybookRunEffect(input: {
 
         switch (decision.kind) {
           case "wait": {
-            return {
-              jobs: [],
-            } satisfies AdvanceOutcome;
+            return;
           }
           case "finish": {
             const finishedAt = yield* nowDateEffect;
@@ -167,13 +138,11 @@ export function advancePlaybookRunEffect(input: {
               actorKeyId: finished.actorKeyId,
               toValue: decision.outcome,
             });
-            return {
-              jobs: [],
-            } satisfies AdvanceOutcome;
+            return;
           }
           case "enqueue": {
             const def = normalizePlaybookStep(playbook.steps[decision.step]);
-            const created = yield* enqueueStepJobsEffect({
+            yield* enqueueStepJobsEffect({
               tx,
               run,
               playbookRunId,
@@ -182,9 +151,7 @@ export function advancePlaybookRunEffect(input: {
               capabilityId: def.capabilityId,
               inputs: decision.inputs,
             });
-            return {
-              jobs: created,
-            } satisfies AdvanceOutcome;
+            return;
           }
           default: {
             const _exhaustive: never = decision;
@@ -193,7 +160,5 @@ export function advancePlaybookRunEffect(input: {
         }
       })
     );
-
-    yield* enqueueReleasedEffect(outcome.jobs);
   });
 }

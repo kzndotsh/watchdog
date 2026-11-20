@@ -31,8 +31,8 @@ const QUIET = {
   ran: true,
   stale: 0,
   accessRevoked: 0,
+  undelivered: 0,
   stuckPlaybooks: 0,
-  orphanedQueued: 0,
   collectQueueRebuilt: 0,
 };
 
@@ -120,8 +120,8 @@ describe("maintenance reports", () => {
     for (const counter of [
       "stale",
       "accessRevoked",
+      "undelivered",
       "stuckPlaybooks",
-      "orphanedQueued",
       "collectQueueRebuilt",
     ] as const) {
       expect(reconcileReport({ ...QUIET, [counter]: 2 })).toMatchObject({

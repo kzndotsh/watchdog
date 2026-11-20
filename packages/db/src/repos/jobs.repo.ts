@@ -1,15 +1,4 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  ilike,
-  inArray,
-  isNull,
-  lt,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 
 import {
   type CaseId,
@@ -275,26 +264,6 @@ export const jobsRepo = {
       })
       .from(jobs)
       .where(eq(jobs.status, "running"));
-  },
-
-  async listQueuedStale(
-    exec: DbExec,
-    updatedBefore: Date
-  ): Promise<{ id: string; capabilityId: string }[]> {
-    return exec
-      .select({
-        id: jobs.id,
-        capabilityId: jobs.capabilityId,
-      })
-      .from(jobs)
-      .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
-      .where(
-        and(
-          eq(jobs.status, "queued"),
-          lt(jobs.updatedAt, updatedBefore),
-          or(isNull(jobs.playbookRunId), eq(playbookRuns.status, "running"))
-        )
-      );
   },
 
   async listActiveForCapability(

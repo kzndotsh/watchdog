@@ -21,6 +21,8 @@ export {
 } from "./auth/instance-bootstrap";
 export { lockVaultRekey } from "./vault-lock";
 export { tryLockJobReconcile } from "./job-reconcile-lock";
+export { jobQueueTx } from "./job-queue-tx";
+export { listQueuedJobsWithoutDelivery } from "./job-deliveries";
 export {
   findCollectQueueDrift,
   rebuildCollectQueue,

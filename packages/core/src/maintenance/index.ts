@@ -76,8 +76,8 @@ export type MaintenanceTask = MaintenanceCheck & {
 };
 
 /**
- * Reconcile Jobs: stale Jobs, the Case access recheck, stuck playbook runs,
- * orphaned queued Jobs, drifted Collect queue Cases, under an advisory lock (a
+ * Reconcile Jobs: stale Jobs, the Case access recheck, queued Jobs without a
+ * pending delivery, stuck playbook runs, drifted Collect queue Cases, under an advisory lock (a
  * tick another worker holds the lock for does nothing). Boot runs one tick
  * itself, before the queue handler registers; the loop then waits a spacing
  * before each tick.

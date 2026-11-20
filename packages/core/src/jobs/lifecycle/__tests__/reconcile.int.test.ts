@@ -1,11 +1,13 @@
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { Db, runDomainWith } from "@watchdog/core/infra";
+import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { db, jobsRepo, tryLockJobReconcile } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   backdateJob,
+  countJobDeliveries,
+  deleteJobDeliveries,
   listAllActivity,
   removeOrganizationMember,
   resetActorAccess,
@@ -14,10 +16,12 @@ import {
   seedJob,
   seedOrganizationMember,
   seedPlaybookRun,
+  setJobDeliveryState,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
-import { recordingJobQueue } from "../../job-queue.ts";
+import { enqueueCapJobEffect } from "../../boss.ts";
+import { jobQueueProducerLayer, recordingJobQueue } from "../../job-queue.ts";
 import { reconcileJobsEffect } from "../reconcile.ts";
 
 const DAY = 24 * 3_600_000;
@@ -25,6 +29,21 @@ const DAY = 24 * 3_600_000;
 function tickWith(queue: ReturnType<typeof recordingJobQueue>) {
   const run = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
   return () => run(reconcileJobsEffect());
+}
+
+/** Seed a queued Job with a real pg-boss delivery, committed together as a start would. */
+async function seedQueuedWithDelivery(caseId: Parameters<typeof seedJob>[1]) {
+  const job = await seedJob(db, caseId, {
+    capabilityId: "network.dns.lookup",
+    status: "queued",
+  });
+  await Effect.runPromise(
+    transact((tx) => enqueueCapJobEffect(tx, job.id, job.capabilityId)).pipe(
+      Effect.provide(Layer.mergeAll(Db.layer, jobQueueProducerLayer))
+    )
+  );
+  expect(await countJobDeliveries(db, job.id)).toBe(1);
+  return job;
 }
 
 let seededEntries = 0;
@@ -192,7 +211,7 @@ describe("reconcileJobsEffect", () => {
     });
   });
 
-  describe("stuck playbook runs and orphaned queued Jobs", () => {
+  describe("stuck playbook runs", () => {
     it("enqueues the next step when advance was skipped after success", async () => {
       const cased = await seedCase(db);
       const run = await seedPlaybookRun(db, cased.id, {
@@ -234,22 +253,57 @@ describe("reconcileJobsEffect", () => {
       const result = await tickWith(recordingJobQueue())();
       expect(result.stuckPlaybooks).toBe(0);
     });
+  });
 
-    it("re-enqueues a queued Job past the grace window and leaves its status", async () => {
+  describe("queued Jobs whose delivery ended or is gone", () => {
+    it("fails a queued Job whose delivery failed, completed, was cancelled or is missing, once", async () => {
       const cased = await seedCase(db);
-      const job = await seedJob(db, cased.id, { status: "queued" });
-      await backdateJob(db, job.id, {
-        updatedAt: new Date(Date.now() - 3 * 60_000),
-      });
+      const failed = await seedQueuedWithDelivery(cased.id);
+      const completed = await seedQueuedWithDelivery(cased.id);
+      const cancelled = await seedQueuedWithDelivery(cased.id);
+      const missing = await seedQueuedWithDelivery(cased.id);
+      await setJobDeliveryState(db, failed.id, "failed");
+      await setJobDeliveryState(db, completed.id, "completed");
+      await setJobDeliveryState(db, cancelled.id, "cancelled");
+      await deleteJobDeliveries(db, missing.id);
+      await markEntries();
+      const tick = tickWith(recordingJobQueue());
+
+      const first = await tick();
+      expect(first.undelivered).toBe(4);
+      for (const job of [failed, completed, cancelled, missing]) {
+        // oxlint-disable-next-line no-await-in-loop -- four reads, one after the other
+        const row = await jobsRepo.get(db, job.id);
+        expect(row).toMatchObject({ status: "failed", errorCode: "orphaned" });
+        expect(row?.error).toMatch(/delivery/);
+        expect(row?.finishedAt).not.toBeNull();
+      }
+      expect(await jobEntryCount()).toBe(4);
+
+      const second = await tick();
+      expect(second.undelivered).toBe(0);
+      expect(await jobEntryCount()).toBe(4);
+    }, 30_000);
+
+    it("leaves a queued Job with a pending delivery alone, and never sends", async () => {
+      const cased = await seedCase(db);
+      const created = await seedQueuedWithDelivery(cased.id);
+      const retry = await seedQueuedWithDelivery(cased.id);
+      const active = await seedQueuedWithDelivery(cased.id);
+      await setJobDeliveryState(db, retry.id, "retry");
+      await setJobDeliveryState(db, active.id, "active");
       await markEntries();
       const queue = recordingJobQueue();
 
       const result = await tickWith(queue)();
 
-      expect(result.orphanedQueued).toBe(1);
-      expect(queue.sends.map((s) => s.payload.jobId)).toEqual([job.id]);
-      expect((await jobsRepo.get(db, job.id))?.status).toBe("queued");
+      expect(result.undelivered).toBe(0);
+      expect(queue.sends).toHaveLength(0);
+      for (const job of [created, retry, active]) {
+        // oxlint-disable-next-line no-await-in-loop -- three reads, one after the other
+        expect((await jobsRepo.get(db, job.id))?.status).toBe("queued");
+      }
       expect(await jobEntryCount()).toBe(0);
-    });
+    }, 30_000);
   });
 });

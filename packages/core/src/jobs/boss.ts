@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 
+import { jobQueueTx, type DbTx } from "@watchdog/db";
 import { parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { InternalError } from "../errors/tagged-errors";
@@ -19,8 +20,13 @@ export function isCapJobPayload(value: unknown): value is CapJobPayload {
   return parseTrimmedUuid(jobId) !== null;
 }
 
-/** Single enqueue path: Cap-derived expire; the queue comes from the `JobQueue` service. */
+/**
+ * Single enqueue path: Cap-derived expire; the queue comes from the `JobQueue` service. `tx` is
+ * the transaction that inserted the Job row: the delivery commits with it, so a Job is queued
+ * exactly when it is saved, and a rollback leaves neither (#721).
+ */
 export function enqueueCapJobEffect(
+  tx: DbTx,
   jobId: string,
   capabilityId: string
 ): Effect.Effect<void, InternalError | InvalidError, JobQueue> {
@@ -31,6 +37,7 @@ export function enqueueCapJobEffect(
     }
     const queue = yield* JobQueue;
     yield* queue.send(
+      jobQueueTx(tx),
       { jobId: normalizedJobId },
       {
         lane: jobLane(capabilityId),

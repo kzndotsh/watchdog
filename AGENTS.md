@@ -136,7 +136,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Cancel Jobs inside the caller's transaction (API cancel, Case delete; `afterCommit` aborts fibers and advances runs) | `packages/core/src/jobs/lifecycle/cancel.ts` | `cancelWithin` |
 | Stop Jobs from outside a transaction (abort, timeout, access loss) | `packages/core/src/jobs/lifecycle/stop.ts` | `stop` |
 | The worker's one Job settle (claim, preflight, Cap body, release from the Exit) | `packages/core/src/jobs/lifecycle/run.ts` | `run` |
-| Worker reconcile tick (stale, access-lost, stuck and orphaned Jobs; drifted Collect queue Cases) | `packages/core/src/jobs/lifecycle/reconcile.ts` | `reconcileJobsEffect` |
+| Worker reconcile tick (stale, access-lost and undelivered Jobs, stuck Playbook runs; drifted Collect queue Cases) | `packages/core/src/jobs/lifecycle/reconcile.ts` | `reconcileJobsEffect` |
 | Two-writer race with controlled interleaving (writer A runs to a named point, B runs or blocks on A's lock, A continues; read the activity log with `listAllActivity`, never the commit-safe `drain`) | `packages/test-db/src/db/two-writers.ts` | `twoWriters` |
 | Collect's queue projection in a rolled-back test (runs the flush the COMMIT would; the `seed*` helpers call it) | `packages/test-db/src/db/collect-queue.ts` | `flushCollectQueue` |
 | Collect's queue rules in TypeScript (the oracle for the SQL projection, held to it by the 12-case fixture and the stateful model) and the 12-case fixture | `packages/schemas/src/testing/collect-queue-reference.ts` | `collectQueueReference` |

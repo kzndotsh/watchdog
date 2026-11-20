@@ -1,5 +1,5 @@
 import { Context, Effect, Layer, Semaphore } from "effect";
-import { PgBoss } from "pg-boss";
+import { PgBoss, type Db as BossDb } from "pg-boss";
 
 import { JOB_LANES, type JobLane } from "@watchdog/caps/sdk";
 import { env } from "@watchdog/env/server";
@@ -24,6 +24,12 @@ export type CapJobPayload = {
 };
 
 export type BossRole = "producer" | "worker";
+
+/**
+ * The producing transaction as pg-boss runs SQL on it (`jobQueueTx(tx)` from `@watchdog/db`):
+ * a send inserts its delivery there, so it commits or rolls back with the Job row (#721).
+ */
+export type QueueTx = BossDb;
 
 const QUEUE_RETRY_LIMIT = 1;
 const QUEUE_HEARTBEAT_SECONDS = 60;
@@ -52,7 +58,9 @@ export type BossDriver = {
   readonly stop: (options: BossStopOptions) => Promise<unknown>;
   /** Create (if missing) and update every lane's queue with the shared options. */
   readonly ensureQueue: () => Promise<unknown>;
+  /** Insert one delivery on `tx` (pg-boss's `db` send option), never on the boss's own pool. */
   readonly send: (
+    tx: QueueTx,
     payload: CapJobPayload,
     options: QueueSendOptions
   ) => Promise<unknown>;
@@ -113,8 +121,8 @@ function pgBossDriver(role: BossRole): BossDriver {
           .then(() => boss.updateQueue(name, opts));
       return Promise.all(JOB_LANES.map((lane) => ensure(laneQueueName(lane))));
     },
-    send: (payload, { lane, ...options }) =>
-      boss.send(laneQueueName(lane), payload, options),
+    send: (tx, payload, { lane, ...options }) =>
+      boss.send(laneQueueName(lane), payload, { ...options, db: tx }),
     work: ({ lane, ...options }, handler) =>
       boss.work(laneQueueName(lane), options, handler),
   };
@@ -122,8 +130,12 @@ function pgBossDriver(role: BossRole): BossDriver {
 
 export type JobQueueApi = {
   readonly role: BossRole;
-  /** Send one Cap Job delivery; fails with `InternalError` after the scope closed. */
+  /**
+   * Send one Cap Job delivery inside the producing transaction `tx`; fails with
+   * `InternalError` after the scope closed.
+   */
   readonly send: (
+    tx: QueueTx,
     payload: CapJobPayload,
     options: QueueSendOptions
   ) => Effect.Effect<void, InternalError>;
@@ -148,12 +160,12 @@ function sendThrough(
   isOpen: () => boolean,
   beforeSend: Effect.Effect<void, InternalError>
 ): JobQueueApi["send"] {
-  return (payload, options) =>
+  return (tx, payload, options) =>
     Effect.gen(function* sendGen() {
       if (!isOpen()) return yield* closedError();
       yield* beforeSend;
       yield* Effect.tryPromise({
-        try: () => driver.send(payload, options),
+        try: () => driver.send(tx, payload, options),
         catch: mapBossCatch,
       });
     });
@@ -330,7 +342,7 @@ export function recordingJobQueue(): {
     JobQueue,
     JobQueue.of({
       role: "producer",
-      send: (payload, options) =>
+      send: (_tx, payload, options) =>
         Effect.sync(() => {
           sends.push({ payload, options });
         }),

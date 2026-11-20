@@ -37,6 +37,10 @@ pg-boss in its scope and releases it on scope close; the producer Layer does
 not provide `JobQueueWorker`, so worker-only code cannot type-check against
 it. The playbook chain enqueues through the worker's own `JobQueue`. After
 release a send fails as `InternalError`; a blank job id is `InvalidError`.
+Every send takes the producing transaction (`enqueueCapJobEffect(tx, ...)`;
+the driver passes it to pg-boss as `{ db: jobQueueTx(tx) }`), so the delivery
+commits or rolls back with the Job row (#721); a failed send fails the
+`transact`.
 Lanes (#478): one pg-boss queue per lane (`quick`, `heavy`, `act`;
 `jobs/lanes.ts`), each worked with its own `localConcurrency`
 (`WD_WORKER_*_CONCURRENCY`) by `workLanesEffect`; `enqueueCapJobEffect` routes
@@ -93,7 +97,8 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `JobFibers.attemptFor(jobId).settled` and `executeJobOnMap` reads it after
   `Fiber.await`. Acquire is uninterruptible, so an interrupt during preflight
   lands at the start of the body. A fiber interrupted before it starts claims
-  nothing (the Job stays queued for the orphan reconcile).
+  nothing (the Job stays `queued`; pg-boss retries the delivery, and once no
+  delivery is pending, reconcile fails the Job `orphaned`, never re-sending it).
 - Log lines (#479): `lifecycle/run.ts` wraps each body in `withLogFlusher` (`jobs/job-log.ts`): a child fiber saves new `jobLog` lines every `WD_JOB_LOG_FLUSH_MS`, and an `ensuring` stops it and saves once more before the settle, on every exit (finish, failure, interrupt). The lines are bounded in `createJobLog`.
 - Collect yields `cap.run(ctx)` under `httpClientLayer` over the worker's
   `OutboundClient` (no `runCap` in the worker path; `OutboundClient` is in
@@ -115,8 +120,9 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   (`apps/worker/src/maintenance.ts`, task `JOB_RECONCILE`) catches and
   logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
   core never forks a loop.
-- Playbook advance is `advancePlaybookRunEffect`. FiberMap-owned enqueue
-  tails may `orDie` (`enqueueCapJobEffect` inside `enqueueReleasedEffect`).
+- Playbook advance is `advancePlaybookRunEffect`: each step Job is created and
+  enqueued in the advance's transaction, so a failed send rolls the advance
+  back; the tail logs it and the stuck-run reconcile advances the run again.
 
 ## Status lifecycle
 
@@ -170,8 +176,8 @@ There is no `blocked` job status. `TASK_STATUSES.blocked` (kanban column) is unr
   caller's `Db` (the fiber outlives the caller).
 - Every path that inserts a Job row for a person's request ends its `transact`
   with `takeJobStartEffect(tx, { organizationId, actorKeyId })`
-  (`jobs/start-limits.ts`), as the last step: the counter row is held to
+  (`jobs/start-limits.ts`), as the last lock it takes: the counter row is held to
   commit, so taking it after the Case and Playbook-run locks fixes the lock
   order. A refusal is `JobStartLimitError` (`job_start_limited`, HTTP 429), never
-  `InvalidError`, and rolls the start back. Chain steps and worker re-queues are
-  not starts (`docs/how-to/job-start-limits.md`).
+  `InvalidError`, and rolls the start back. The enqueue follows it, still in the
+  transaction. Chain steps are not starts (`docs/how-to/job-start-limits.md`).
