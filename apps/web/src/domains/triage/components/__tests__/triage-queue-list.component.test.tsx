@@ -69,14 +69,26 @@ describe("TriageQueueList", () => {
     expect(onSelect).toHaveBeenCalledWith(testId(2));
   });
 
-  it("opens the run holding the selected Proposal", () => {
-    render(
+  it("opens the run when the selection moves onto one of its Proposals", () => {
+    const { rerender } = render(
       <TriageQueueList
-        proposals={[member(1), member(2)]}
+        proposals={[member(1), member(2), PROPOSAL]}
+        selectedId={PROPOSAL.id}
+        onSelect={vi.fn()}
+      />
+    );
+    expect(screen.queryByText("step 2")).not.toBeInTheDocument();
+
+    rerender(
+      <TriageQueueList
+        proposals={[member(1), member(2), PROPOSAL]}
         selectedId={testId(2)}
         onSelect={vi.fn()}
       />
     );
+    expect(
+      screen.getByRole("button", { name: /run: 5 Proposals/ })
+    ).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("option", { selected: true })).toHaveTextContent(
       "step 2"
     );
