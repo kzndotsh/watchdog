@@ -21,6 +21,7 @@ Server core is [`@watchdog/auth`](../../../packages/auth/AGENTS.md) (`createAuth
 | Start `requireAuth` (global `functionMiddleware`) | ServerFn data gate; throws `UnauthorizedError` |
 | `/api/auth/$` | Cookies and sessions |
 | `createCsrfMiddleware({ filter: serverFn })` | CSRF, after evlog in `src/start.ts` `requestMiddleware` |
+| `/api/rpc` (`SimpleCsrfProtectionHandlerPlugin`) | CSRF header on every browser oRPC call; the router's `authed` builders gate the data |
 
 ## Server boundary
 
@@ -34,7 +35,8 @@ Server core is [`@watchdog/auth`](../../../packages/auth/AGENTS.md) (`createAuth
 
 ## oRPC wiring
 
-- Web UI: ServerFns call an in-process `createRouterClient`; there is no browser HTTP oRPC mount. The client injects the ALS `log` from Start middleware.
+- Web UI (#725, moving domain by domain; Claims first): a domain calls the router through `@/lib/orpc-client` (`orpc`, oRPC's TanStack Query utils over one isomorphic client). In the browser it is an `RPCLink` to `/api/rpc` with the session cookie and the CSRF header of `SimpleCsrfProtectionLinkPlugin`; on the server (SSR, loaders) it calls the router in process (`lib/orpc-in-process.server.ts`, imported lazily inside `createIsomorphicFn().server()`, so the router stays off the browser graph), resolving the caller from the request with `createApiContext`. Domains not moved yet still go through ServerFns, which call an in-process `createRouterClient` (`orpcFromContext`) with the ALS `log` from Start middleware.
+- RPC: `src/routes/api/rpc.$.ts` mounts an oRPC `RPCHandler` at `/api/rpc` (`lib/rpc-handler.server.ts`) for this app's browser only (no CORS): the same `createApiContext` and `responsePlugins()` as `/api/v1`, plus `SimpleCsrfProtectionHandlerPlugin` (a call without the `x-csrf-token` header is a 403) and the default `StrictGetMethodPlugin`. The Better Auth cookies are `SameSite=Lax` explicitly (`createAuth`). Tested by `lib/__tests__/rpc-handler.server.test.ts`.
 - OpenAPI: `src/routes/api/v1.ts` + `v1.$.ts` mount an `OpenAPIHandler` at `/api/v1` (Bearer, `x-api-key`, or session); spec at `/api/v1/spec.json`.
 - Auth context: Better Auth session to `ApiActor` (`@watchdog/auth` `createApiContext`, bound to the app's `auth` in `src/auth/api-context.server.ts`).
 - Case Export zip/md are authenticated file routes (API key OK), not oRPC. `export.zip` takes `?rawBodies=1` to add raw provider responses; that opt-in is for a signed-in owner or admin only, so a key gets the `forbidden` error; `?breachCredentials=1` keeps the passwords and hashes in breach Evidence (same gate, and only while `WD_BREACH_CAPS=full`; otherwise breach Evidence is cut to present, kind, length and fingerprint) ([`jobs-orpc`](../platform/jobs-orpc.md#system-jobs-and-case-export)).

@@ -12,7 +12,7 @@
     "prepare": "pnpm run generate"
   },
   "dependencies": {
-    "@orpc/client": "^1.16.3",
+    "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi-client": "^1.16.3"
   },

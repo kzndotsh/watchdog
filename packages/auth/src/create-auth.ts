@@ -134,6 +134,9 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
       database: {
         generateId: () => crypto.randomUUID(),
       },
+      // Explicit, not Better Auth's default: a cross-site POST never carries the session, which
+      // the browser's oRPC calls (`/api/rpc`, CSRF header besides) rely on.
+      defaultCookieAttributes: { sameSite: "lax" },
     },
     databaseHooks: {
       user: {

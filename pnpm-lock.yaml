@@ -18,6 +18,9 @@ catalogs:
     '@fontsource-variable/geist-mono':
       specifier: ^5.3.0
       version: 5.3.0
+    '@orpc/client':
+      specifier: ^1.16.3
+      version: 1.16.3
     '@orpc/contract':
       specifier: ^1.16.3
       version: 1.16.3
@@ -322,6 +325,9 @@ importers:
       '@fontsource-variable/geist-mono':
         specifier: 'catalog:'
         version: 5.3.0
+      '@orpc/client':
+        specifier: 'catalog:'
+        version: 1.16.3(@opentelemetry/api@1.9.1)
       '@orpc/json-schema':
         specifier: 1.16.3
         version: 1.16.3(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.23.0)
@@ -331,6 +337,9 @@ importers:
       '@orpc/server':
         specifier: 'catalog:'
         version: 1.16.3(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.23.0)
+      '@orpc/tanstack-query':
+        specifier: 1.16.3
+        version: 1.16.3(@opentelemetry/api@1.9.1)(@orpc/client@1.16.3(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.108.0)
       '@orpc/zod':
         specifier: 'catalog:'
         version: 1.16.3(@opentelemetry/api@1.9.1)(@orpc/contract@1.16.3(@opentelemetry/api@1.9.1))(@orpc/server@1.16.3(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.23.0))(crossws@0.3.5)(ws@8.23.0)(zod@4.6.7)
@@ -707,7 +716,7 @@ importers:
   packages/client:
     dependencies:
       '@orpc/client':
-        specifier: ^1.16.3
+        specifier: 'catalog:'
         version: 1.16.3(@opentelemetry/api@1.9.1)
       '@orpc/contract':
         specifier: 'catalog:'
@@ -2771,6 +2780,12 @@ packages:
 
   '@orpc/standard-server@1.16.3':
     resolution: {integrity: sha512-fgEJKwXu8o2ULCJr3kTuQMvxi+0kaFmm4yj/5jcukCM0le0GqX+5PrWZRcdjLEd9Ltfe1XlFW2GO4AnYt7DIWA==}
+
+  '@orpc/tanstack-query@1.16.3':
+    resolution: {integrity: sha512-XPAoD0LYNgxBlBAZA6Uz+iCyk5n7ZUihr9vdNJb8DN0DzltMqhQxfb89ZIWngSZf6VobYoypioWuQ2ThKl2xlw==}
+    peerDependencies:
+      '@orpc/client': 1.16.3
+      '@tanstack/query-core': '>=5.80.2'
 
   '@orpc/zod@1.16.3':
     resolution: {integrity: sha512-IT3yMSl0bIMb23P/+ID/tv9x2bH3kpc4frWBuGHAvHOhzWMG2xYu+VJQpzwz+gVUBrspi02sgmdzvCgkysO+cg==}
@@ -9975,6 +9990,14 @@ snapshots:
   '@orpc/standard-server@1.16.3(@opentelemetry/api@1.9.1)':
     dependencies:
       '@orpc/shared': 1.16.3(@opentelemetry/api@1.9.1)
+    transitivePeerDependencies:
+      - '@opentelemetry/api'
+
+  '@orpc/tanstack-query@1.16.3(@opentelemetry/api@1.9.1)(@orpc/client@1.16.3(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.108.0)':
+    dependencies:
+      '@orpc/client': 1.16.3(@opentelemetry/api@1.9.1)
+      '@orpc/shared': 1.16.3(@opentelemetry/api@1.9.1)
+      '@tanstack/query-core': 5.108.0
     transitivePeerDependencies:
       - '@opentelemetry/api'
 

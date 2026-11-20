@@ -1,5 +1,9 @@
 import { authQueryKeys } from "@better-auth-ui/core";
-import type { Query, QueryClient } from "@tanstack/react-query";
+import {
+  partialMatchKey,
+  type Query,
+  type QueryClient,
+} from "@tanstack/react-query";
 
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
@@ -30,22 +34,18 @@ type EntityChangedOpts = {
 
 type QueryKey = readonly unknown[];
 
-function startsWith(key: QueryKey, prefix: QueryKey): boolean {
-  return (
-    key.length >= prefix.length &&
-    prefix.every((part, index) => part === key[index])
-  );
-}
-
-/** Drops a key that another key in the list already covers (TanStack matches by prefix). */
+/**
+ * Drops a key that another key in the list already covers, by TanStack's own partial match (a
+ * prefix of segments, or a partial oRPC input): a strictly wider key, or an equal one earlier.
+ */
 function withoutCovered(keys: readonly QueryKey[]): QueryKey[] {
   return keys.filter(
     (key, index) =>
       !keys.some(
         (other, otherIndex) =>
           otherIndex !== index &&
-          startsWith(key, other) &&
-          (other.length < key.length || otherIndex < index)
+          partialMatchKey(key, other) &&
+          (!partialMatchKey(other, key) || otherIndex < index)
       )
   );
 }

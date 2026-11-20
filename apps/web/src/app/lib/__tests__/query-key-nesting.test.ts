@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { partialMatchKey } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 
 import { activityKeys, activityListView } from "@/domains/activity/queries";
@@ -211,11 +212,9 @@ const listViews: readonly (readonly [string, Key, Key])[] = [
   ],
 ];
 
+/** Whether invalidating `prefix` reaches `key`: TanStack's own partial match (segments or oRPC input). */
 function startsWith(key: Key, prefix: Key): boolean {
-  return (
-    key.length >= prefix.length &&
-    prefix.every((part, index) => part === key[index])
-  );
+  return partialMatchKey(key, prefix);
 }
 
 describe("Query key nesting", () => {

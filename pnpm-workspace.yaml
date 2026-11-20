@@ -12,6 +12,7 @@ catalog:
   "@better-auth/api-key": "1.7.25"
   "@fontsource-variable/geist": "^5.3.0"
   "@fontsource-variable/geist-mono": "^5.3.0"
+  "@orpc/client": "^1.16.3"
   "@orpc/contract": "^1.16.3"
   "@orpc/openapi": "^1.16.3"
   "@orpc/server": "^1.16.3"

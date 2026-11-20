@@ -1,32 +1,22 @@
-import {
-  createClaimFn,
-  retractClaimFn,
-  updateClaimFn,
-} from "@/domains/entities/claims/claims.functions";
 import type { ClaimFormValues } from "@/domains/entities/claims/types";
 import { defineGraphChildMutation } from "@/domains/entities/hooks/use-graph-child-mutation";
 import type { EntityScope } from "@/domains/entities/types";
-import {
-  createClaimInputSchema,
-  retractClaimInputSchema,
-  updateClaimInputSchema,
-} from "@watchdog/schemas/graph";
+import { orpc } from "@/lib/orpc-client";
 import type { RetractKind } from "@watchdog/schemas/shared";
 
 export type CreateClaimVariables = EntityScope & { value: ClaimFormValues };
 
 /** Add a Claim to an Entity. */
 export const useCreateClaim = defineGraphChildMutation({
-  fn: createClaimFn,
-  parse: ({ caseId, entityId, value }: CreateClaimVariables) =>
-    createClaimInputSchema.parse({
-      caseId,
-      entityId,
-      text: value.text,
-      class: value.claimClass,
-      confidence: value.confidence,
-      evidenceIds: value.evidenceIds,
-    }),
+  call: orpc.claims.create.call,
+  parse: ({ caseId, entityId, value }: CreateClaimVariables) => ({
+    caseId,
+    entityId,
+    text: value.text,
+    class: value.claimClass,
+    confidence: value.confidence,
+    evidenceIds: value.evidenceIds,
+  }),
   success: "Claim saved",
   verb: "save",
   noun: "claim",
@@ -41,17 +31,21 @@ export type UpdateClaimVariables = EntityScope & {
 
 /** Edit a Claim. */
 export const useUpdateClaim = defineGraphChildMutation({
-  fn: updateClaimFn,
-  parse: ({ caseId, claimId, expectedVersion, value }: UpdateClaimVariables) =>
-    updateClaimInputSchema.parse({
-      caseId,
-      claimId,
-      expectedVersion,
-      text: value.text,
-      class: value.claimClass,
-      confidence: value.confidence,
-      evidenceIds: value.evidenceIds,
-    }),
+  call: orpc.claims.update.call,
+  parse: ({
+    caseId,
+    claimId,
+    expectedVersion,
+    value,
+  }: UpdateClaimVariables) => ({
+    caseId,
+    claimId,
+    expectedVersion,
+    text: value.text,
+    class: value.claimClass,
+    confidence: value.confidence,
+    evidenceIds: value.evidenceIds,
+  }),
   success: "Claim updated",
   verb: "update",
   noun: "claim",
@@ -71,9 +65,13 @@ const RETRACT_SUCCESS: Record<RetractKind, string> = {
 
 /** Contest, disprove or retract a Claim; the toast names which. */
 export const useRetractClaim = defineGraphChildMutation({
-  fn: retractClaimFn,
-  parse: ({ caseId, claimId, kind, reason }: RetractClaimVariables) =>
-    retractClaimInputSchema.parse({ caseId, claimId, kind, reason }),
+  call: orpc.claims.retract.call,
+  parse: ({ caseId, claimId, kind, reason }: RetractClaimVariables) => ({
+    caseId,
+    claimId,
+    kind,
+    reason,
+  }),
   success: ({ kind }: RetractClaimVariables) => RETRACT_SUCCESS[kind],
   verb: "retract",
   noun: "claim",

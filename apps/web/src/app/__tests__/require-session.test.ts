@@ -21,6 +21,10 @@ vi.mock("@/domains/organization/organization.functions", () => ({
   getOrganizationStateFn: getOrganizationState,
 }));
 vi.mock("@/auth/client", () => ({ authClient: {} }));
+// The `createIsomorphicFn` stand-in above would make the oRPC client a promise.
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { redirectIfSignedIn, requireSession } from "@/app/require-session";
 

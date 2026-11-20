@@ -162,7 +162,7 @@ Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `
 ## Quick example
 
 ```ts
-// domains/entities/claims/types.ts
+// packages/schemas/src/claim-create.ts
 import { z } from "zod";
 
 import {
@@ -188,7 +188,7 @@ export type CreateClaimParsed = z.output<typeof createClaimInputSchema>;
 ```
 
 ```ts
-// claims.functions.ts
-.validator(createClaimInputSchema)
-// handler data: CreateClaimParsed → createClaim(data)
+// packages/api/src/procedures/claims.ts: the procedure parses it (CreateClaimParsed)
+.input(createClaimInputSchema.extend({ userOverride: userOverrideSchema }))
+// web: orpc.claims.create.call(input), input typed CreateClaimInput (the wire shape)
 ```
