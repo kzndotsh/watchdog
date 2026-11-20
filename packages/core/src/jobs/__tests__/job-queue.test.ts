@@ -7,6 +7,7 @@ import {
   JobQueue,
   JobQueueWorker,
   makeJobQueueLayers,
+  queueAbortOf,
   type BossDriver,
   type QueueTx,
 } from "../job-queue";
@@ -26,9 +27,10 @@ function fakeDriver() {
   const stop = vi.fn(async () => {});
   const ensureQueue = vi.fn(async () => {});
   const send = vi.fn(async () => {});
+  const cancel = vi.fn(async () => {});
   const work = vi.fn(async () => {});
-  const driver: BossDriver = { start, stop, ensureQueue, send, work };
-  return { driver, start, stop, ensureQueue, send, work };
+  const driver: BossDriver = { start, stop, ensureQueue, send, cancel, work };
+  return { driver, start, stop, ensureQueue, send, cancel, work };
 }
 
 /** Build a Layer in an explicit scope so the test controls when it closes. */
@@ -78,6 +80,35 @@ describe("JobQueue producer Layer", () => {
       expect(fake.send).toHaveBeenCalledWith(TX, { jobId: JOB_ID }, options);
       yield* built.close;
     })
+  );
+
+  it.effect(
+    "cancels on the caller's transaction, one call per queue, starting the boss first",
+    () =>
+      Effect.gen(function* producerCancelGen() {
+        const fake = fakeDriver();
+        const built = yield* build(
+          makeJobQueueLayers(() => fake.driver).producerLayer
+        );
+        const queue = Context.get(built.context, JobQueue);
+        yield* queue.cancel(TX, []);
+        expect(fake.start).not.toHaveBeenCalled();
+        yield* queue.cancel(TX, [
+          { id: "d1", queue: "watchdog.cap-jobs.quick" },
+          { id: "d2", queue: "watchdog.cap-jobs.heavy" },
+          { id: "d3", queue: "watchdog.cap-jobs.quick" },
+        ]);
+        expect(fake.start).toHaveBeenCalledTimes(1);
+        expect(fake.cancel.mock.calls).toEqual([
+          [TX, "watchdog.cap-jobs.quick", ["d1", "d3"]],
+          [TX, "watchdog.cap-jobs.heavy", ["d2"]],
+        ]);
+        yield* built.close;
+        const closed = yield* Effect.flip(
+          queue.cancel(TX, [{ id: "d4", queue: "watchdog.cap-jobs.quick" }])
+        );
+        expect(closed).toBeInstanceOf(InternalError);
+      })
   );
 
   it.effect(
@@ -396,4 +427,43 @@ describe("JobQueue worker Layer", () => {
       yield* built.close;
     })
   );
+});
+
+describe("queueAbortOf: pg-boss's abort reason", () => {
+  it("a reason given by the heartbeat is a lost claim", () => {
+    const controller = new AbortController();
+    controller.abort(
+      new Error("job x is no longer active under this worker's claim")
+    );
+    const reason = controller.signal.reason;
+    expect(queueAbortOf(reason, { stopping: false, pastExpiry: false })).toBe(
+      "claim_lost"
+    );
+    expect(queueAbortOf(reason, { stopping: true, pastExpiry: false })).toBe(
+      "claim_lost"
+    );
+  });
+
+  it("a reasonless abort is an expiry, or a stop giving up while the queue stops", () => {
+    const controller = new AbortController();
+    controller.abort();
+    const reason = controller.signal.reason;
+    expect(queueAbortOf(reason, { stopping: false, pastExpiry: true })).toBe(
+      "expired"
+    );
+    expect(queueAbortOf(reason, { stopping: true, pastExpiry: false })).toBe(
+      "stopping"
+    );
+  });
+
+  it("an attempt past its expiry stays an expiry while the queue stops", () => {
+    const controller = new AbortController();
+    controller.abort();
+    expect(
+      queueAbortOf(controller.signal.reason, {
+        stopping: true,
+        pastExpiry: true,
+      })
+    ).toBe("expired");
+  });
 });

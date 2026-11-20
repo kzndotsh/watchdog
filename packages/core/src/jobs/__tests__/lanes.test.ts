@@ -70,6 +70,7 @@ describe("worker lanes", () => {
           stop: async () => {},
           ensureQueue: async () => {},
           send: async () => {},
+          cancel: async () => {},
           work,
         };
         const handler = async () => {};

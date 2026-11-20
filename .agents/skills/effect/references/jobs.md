@@ -11,7 +11,7 @@ package AGENTS.md files link here.
   FiberMap **and** each attempt's stop slot), `Db.owned` (the pool's owner, released last), and the worker queue
   Layer.
 - Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
-  fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the
+  fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (LISTEN stream); the
   queue Layer releases with `boss.stop({ graceful: true, timeout:
   gracefulStopTimeoutMs() })` so in-flight Cap Jobs finish; then `JobFibers`
   interrupts leftovers; then core's services (vault, blob store, outbound client); then `Db`. The queue Layer must stay innermost in
@@ -48,35 +48,43 @@ by `jobLane` (the Cap's `capLane`, heavy for a system Job), so a send carries
 `lane` and a work registration does too.
 Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 
-## Dual cancel SoT
+## Cancel and abort
 
 1. Product: `jobs.status = cancelled` (authoritative).
-2. Runtime: `cancelPollLoopEffect` (`findCancelledJobIdsEffect`, spacing
-   `CANCEL_POLL_SPACING` in `apps/worker/src/cancel-poll.ts`, first tick
-   immediate) finds cancelled ids → `JobFibers.abort(id, { cause:
-   "user_cancelled" })` offers the stop to the attempt's stop slot **then**
-   `Fiber.interrupt`s. The stop is stored before the interrupt, never
-   recovered from `Cause`.
+2. Delivery (#722): `cancelWithin` cancels the cancelled Jobs' pending pg-boss
+   deliveries in the same transaction: `listPendingJobDeliveries(tx, ids)`
+   (`@watchdog/db`, by `singleton_key` = Job id, states `created`, `retry`,
+   `active`) then `JobQueue.cancel(jobQueueTx(tx), deliveries)`, which runs
+   `boss.cancel(queue, ids, { db })` per queue. A rollback leaves the delivery
+   pending; a queued delivery is never fetched; a running attempt's fenced
+   heartbeat (`heartbeatRefreshSeconds: QUEUE_HEARTBEAT_REFRESH_SECONDS`, 2 s,
+   set by the driver's `work`) finds the claim gone and aborts its
+   `job.signal`. Measured: about 2 s from commit to the attempt's fiber ending.
+   There is no cancel poll. A cancel in the process that runs the fiber also
+   aborts it at once through `afterCommit`.
 3. Cap `ctx.signal` = fiber `Effect.abortSignal` (one timeout sleeper in
    `capBody`, which offers `cap_timeout` to the slot before it interrupts).
    **Not** a collect-local `AbortController`.
-4. pg-boss `job.signal` **is** bridged (#397), through the same path:
-   `interruptOnQueueSignal` (`jobs/queue-signal.ts`, wrapped around
-   `executeJobOnMap` in the worker's `executeCapJobPayloadEffect`) forks a
-   watcher that waits for the signal and calls `JobFibers.abort`. pg-boss aborts
-   the signal when the handler outlives the job's `expireInSeconds` (it then
-   fails the delivery and holds the worker slot until the handler returns), when
-   a heartbeat finds the claim gone, and when a graceful stop gives up. An abort
-   at or after the expiry offers `cap_timeout` with the text
-   `Timed out after <expiry>` (`timedOutMessage`, e.g. `Timed out after 1m 30s`);
-   an earlier abort offers `queue_aborted` (`aborted`). The text is the stop's
-   `detail` and `stopMessage` is the one place that turns a stop into the Job's
-   `error`. The Cap's own timer (collect only) offers `Timed out after
-   <timeoutMs>` the same way. The first offer to the slot wins (races between
-   sources record the first one's cause in `error_code`); the slot is the
-   attempt's, dropped by `executeJobOnMap` when its fiber ends. The
-   expiry is the Cap's `timeoutMs` plus `POST_RUN_SLACK_MS`, so it mostly fires
-   for post-collect stages or a Cap that ignores its signal.
+4. pg-boss `job.signal` is bridged (#397) by `interruptOnQueueSignal`
+   (`jobs/queue-signal.ts`, wrapped around `executeJobOnMap` in the worker's
+   `executeCapJobPayloadEffect`): a watcher waits for the signal, then calls
+   `stop`, which offers the stop to the attempt's stop slot **then**
+   `Fiber.interrupt`s (the stop is stored before the interrupt, never
+   recovered from `Cause`). The cause is pg-boss's abort reason, mapped by
+   the driver (`queueAbortOf`, `QueuedJob.abortReason`), never recomputed
+   from a clock of ours: pg-boss aborts with no reason when the handler
+   outlives `expireInSeconds` (`expired` → `cap_timeout`, `Timed out after
+   <expiry>` from `timedOutMessage`) or when a graceful stop gives up
+   (`stopping`, known because the driver's `stop` ran → `worker_shutdown`);
+   it aborts with an `Error` when the heartbeat finds the claim gone
+   (`claim_lost` → `queue_aborted`; after a cancel the Job is already
+   `cancelled`, so the release settles nothing). The text is the stop's
+   `detail` and `stopMessage` is the one place that turns a stop into the
+   Job's `error`. The Cap's own timer (collect only) offers `Timed out after
+   <timeoutMs>` the same way. The first offer to the slot wins; the slot is
+   the attempt's, dropped by `executeJobOnMap` when its fiber ends. The
+   expiry is the Cap's `timeoutMs` plus `POST_RUN_SLACK_MS`, so it mostly
+   fires for post-collect stages or a Cap that ignores its signal.
 
 ## Job pipeline
 
@@ -139,7 +147,7 @@ settles through it (finish, failure, defect, interrupt, a preflight stop that
 wrote a status, `reclaim_converged`) runs `advancePlaybookTailEffect` after the
 status commit, and a success (a reclaimed one too) stores the Cap cache
 (`capCacheKey`, under the Job row's `cap_version`, stamped at claim, never the running code's) and stamps the source Evidence. Reconcile (`reconcileJobsEffect`) repairs through
-`settleJobEffect` and the same tail. A stop that finds the Job already terminal (the cancel poll
+`settleJobEffect` and the same tail. A stop that finds the Job already terminal (pg-boss's heartbeat
 aborting a Job cancelled elsewhere) moves nothing and advances nothing: the writer that ended the
 Job owns the advance.
 
@@ -148,21 +156,24 @@ Stop sources, one entry point each:
 - `stop(selector, cause, detail?)` (`lifecycle/stop.ts`; selector `job` or
   `running`) is for a source with no transaction open: it offers the cause to
   the attempt's stop slot and interrupts the fiber (`JobFibers.abort`), and the
-  release of `run` settles and advances. The pg-boss signal, the cancel poll
-  and graceful shutdown use it. The `JobFibers` layer's finalizer stops every
+  release of `run` settles and advances. The pg-boss signal and graceful
+  shutdown use it. The `JobFibers` layer's finalizer stops every
   fiber still running with `worker_shutdown`, so those Jobs end `failed`, not
-  `cancelled` (the pg-boss signal that fires when graceful stop gives up still
-  says `queue_aborted`).
-- `cancelWithin(tx, selector, cause)` (`lifecycle/cancel.ts`; selector `job`,
-  `case` or `playbookRun`; cause `user_cancelled` or `case_deleted`) is for the
-  API cancel (`cancelJobEffect`, `cancelPlaybookRunEffect` in
-  `jobs/cancel-jobs.ts`) and Case delete (`tombstoneInTx`). Inside the caller's
-  transaction it settles each open Job with a `cancel` event and returns
+  `cancelled` (the pg-boss signal that fires when graceful stop gives up says
+  `worker_shutdown` too).
+- `cancelWithin(tx, selector, cause, error?)` (`lifecycle/cancel.ts`; selector
+  `job`, `case` or `playbookRun`; cause `user_cancelled`, `case_deleted` or
+  `access_revoked`) is for the API cancel (`cancelJobEffect`,
+  `cancelPlaybookRunEffect` in `jobs/cancel-jobs.ts`), Case delete
+  (`tombstoneInTx`) and reconcile's access check. Inside the caller's
+  transaction it settles each open Job with a `cancel` event, cancels their
+  pg-boss deliveries (above) and returns
   `{ cancelled, afterCommit }`. Run `afterCommit` only after the commit: it
-  aborts a fiber this process runs for each cancelled Job (other workers see
-  the row through the cancel poll) and advances each Playbook run once. A
+  aborts a fiber this process runs for each cancelled Job (a worker elsewhere
+  is aborted by pg-boss) and advances each Playbook run once. A
   rolled-back transaction never yields it, so nothing is advanced or aborted.
-  Its `R` is `Db | JobQueue` (the advance may enqueue); `JobFibers` is optional,
+  `cancelWithin` needs `JobQueue`, and `afterCommit` `Db | JobQueue` (the
+  advance may enqueue); `JobFibers` is optional,
   because the API process runs no Job fibers. `jobsRepo.listIdsInStatuses`
   only names the candidates, with the statuses taken from the table.
 There is no `blocked` job status. `TASK_STATUSES.blocked` (kanban column) is unrelated.

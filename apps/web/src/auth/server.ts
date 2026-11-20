@@ -14,12 +14,13 @@ export const auth = createAuth({
   db: authDb,
   trailingPlugins: [tanstackStartCookies()],
   // Cases reference organizations by soft id: delete them (graph, artifacts, export
-  // dir) first, so removing an organization never orphans evidence.
+  // dir) first, so removing an organization never orphans evidence. The API runtime, because
+  // the delete cancels the Cases' Jobs' pg-boss deliveries through its queue.
   beforeDeleteOrganization: async ({ organizationId, actorId }) => {
     const { deleteOrganizationCasesEffect } =
       await import("@watchdog/core/case-deletion");
-    const { runDomain } = await import("@watchdog/core/infra");
-    await runDomain(deleteOrganizationCasesEffect(organizationId, { actorId }));
+    const { runApp } = await import("@watchdog/api");
+    await runApp(deleteOrganizationCasesEffect(organizationId, { actorId }));
   },
 });
 

@@ -392,16 +392,6 @@ export const jobsRepo = {
       .orderBy(asc(jobs.createdAt), asc(jobs.id));
   },
 
-  async findCancelledJobIds(exec: DbExec, jobIds: string[]): Promise<string[]> {
-    const normalized = normalizeUuidList(jobIds);
-    if (normalized.length === 0) return [];
-    const rows = await exec
-      .select({ id: jobs.id })
-      .from(jobs)
-      .where(and(eq(jobs.status, "cancelled"), inArray(jobs.id, normalized)));
-    return rows.map((r) => r.id);
-  },
-
   async update(
     exec: DbExec,
     jobId: string,

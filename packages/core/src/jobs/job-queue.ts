@@ -8,13 +8,18 @@ import { InternalError } from "../errors/tagged-errors";
 import { logProcessWarning, logSwallowed } from "../infra/process-log";
 import {
   JobQueueWorker,
+  queueAbortOf,
   type QueueWorkHandler,
   type QueueWorkOptions,
 } from "./job-queue-worker";
 import { laneQueueName } from "./lanes";
 import { queueExpireSeconds, gracefulStopTimeoutMs } from "./timeouts";
 
-export { JobQueueWorker, type QueuedJob } from "./job-queue-worker";
+export {
+  JobQueueWorker,
+  queueAbortOf,
+  type QueuedJob,
+} from "./job-queue-worker";
 
 /** pg-boss queue of the quick lane (see `laneQueueName`). */
 export const CAP_JOB_QUEUE = laneQueueName("quick");
@@ -33,6 +38,13 @@ export type QueueTx = BossDb;
 
 const QUEUE_RETRY_LIMIT = 1;
 const QUEUE_HEARTBEAT_SECONDS = 60;
+/**
+ * How often a worker refreshes the heartbeat of each delivery it runs. The refresh is fenced to
+ * the worker's claim, so it is also how a cancel reaches a running attempt: the first refresh
+ * after the cancel commits finds the delivery gone and aborts `job.signal` (#722). One small
+ * UPDATE per running delivery per refresh.
+ */
+const QUEUE_HEARTBEAT_REFRESH_SECONDS = 2;
 const QUEUE_WARNING_SIZE = 100;
 /** A producer holds no handlers to drain: only in-flight sends settle. */
 const PRODUCER_STOP_TIMEOUT_MS = 5000;
@@ -42,6 +54,12 @@ export type QueueSendOptions = {
   readonly lane: JobLane;
   readonly expireInSeconds: number;
   readonly singletonKey: string;
+};
+
+/** A pending delivery to cancel: its pg-boss id and queue (`listPendingJobDeliveries`). */
+export type QueueDelivery = {
+  readonly id: string;
+  readonly queue: string;
 };
 
 export type BossStopOptions = {
@@ -63,6 +81,12 @@ export type BossDriver = {
     tx: QueueTx,
     payload: CapJobPayload,
     options: QueueSendOptions
+  ) => Promise<unknown>;
+  /** Cancel deliveries of one queue on `tx` (pg-boss's `db` option), with the cancel's own write. */
+  readonly cancel: (
+    tx: QueueTx,
+    queue: string,
+    ids: readonly string[]
   ) => Promise<unknown>;
   readonly work: (
     options: QueueWorkOptions,
@@ -107,9 +131,15 @@ function pgBossDriver(role: BossRole): BossDriver {
   boss.on("warning", (warn) => {
     logProcessWarning(`pg-boss:${role}`, warn.message, { data: warn.data });
   });
+  // Set before `boss.stop`. A reasonless abort while stopping is the stop giving up only before
+  // the attempt's own expiry (`queueAbortOf`); past it, it stays an expiry.
+  let stopping = false;
   return {
     start: () => boss.start(),
-    stop: (options) => boss.stop(options),
+    stop: (options) => {
+      stopping = true;
+      return boss.stop(options);
+    },
     ensureQueue: () => {
       const opts = queueOptions();
       const ensure = (name: string) =>
@@ -123,8 +153,32 @@ function pgBossDriver(role: BossRole): BossDriver {
     },
     send: (tx, payload, { lane, ...options }) =>
       boss.send(laneQueueName(lane), payload, { ...options, db: tx }),
+    cancel: (tx, queue, ids) => boss.cancel(queue, [...ids], { db: tx }),
     work: ({ lane, ...options }, handler) =>
-      boss.work(laneQueueName(lane), options, handler),
+      boss.work(
+        laneQueueName(lane),
+        {
+          ...options,
+          heartbeatRefreshSeconds: QUEUE_HEARTBEAT_REFRESH_SECONDS,
+        },
+        (jobs) => {
+          const startedAt = performance.now();
+          return handler(
+            jobs.map((job) => ({
+              id: job.id,
+              data: job.data,
+              expireInSeconds: job.expireInSeconds,
+              signal: job.signal,
+              abortReason: () =>
+                queueAbortOf(job.signal.reason, {
+                  stopping,
+                  pastExpiry:
+                    performance.now() - startedAt >= job.expireInSeconds * 1000,
+                }),
+            }))
+          );
+        }
+      ),
   };
 }
 
@@ -138,6 +192,15 @@ export type JobQueueApi = {
     tx: QueueTx,
     payload: CapJobPayload,
     options: QueueSendOptions
+  ) => Effect.Effect<void, InternalError>;
+  /**
+   * Cancel pending deliveries inside the cancelling transaction `tx` (#722): a rollback leaves
+   * them pending. A running attempt learns of it on its next heartbeat refresh, which aborts its
+   * `job.signal`. Fails with `InternalError` after the scope closed.
+   */
+  readonly cancel: (
+    tx: QueueTx,
+    deliveries: readonly QueueDelivery[]
   ) => Effect.Effect<void, InternalError>;
 };
 
@@ -168,6 +231,32 @@ function sendThrough(
         try: () => driver.send(tx, payload, options),
         catch: mapBossCatch,
       });
+    });
+}
+
+function cancelThrough(
+  driver: BossDriver,
+  isOpen: () => boolean,
+  beforeCancel: Effect.Effect<void, InternalError>
+): JobQueueApi["cancel"] {
+  return (tx, deliveries) =>
+    Effect.gen(function* cancelGen() {
+      if (deliveries.length === 0) return;
+      if (!isOpen()) return yield* closedError();
+      yield* beforeCancel;
+      const byQueue = new Map<string, string[]>();
+      for (const delivery of deliveries) {
+        const ids = byQueue.get(delivery.queue) ?? [];
+        ids.push(delivery.id);
+        byQueue.set(delivery.queue, ids);
+      }
+      // One transaction: its statements run one after another.
+      for (const [queue, ids] of byQueue) {
+        yield* Effect.tryPromise({
+          try: () => driver.cancel(tx, queue, ids),
+          catch: mapBossCatch,
+        });
+      }
     });
 }
 
@@ -258,6 +347,7 @@ export function makeJobQueueLayers(createDriver: () => BossDriver) {
       return JobQueue.of({
         role: "producer",
         send: sendThrough(driver, () => state.open, ensureStarted),
+        cancel: cancelThrough(driver, () => state.open, ensureStarted),
       });
     })
   );
@@ -285,6 +375,7 @@ export function makeJobQueueLayers(createDriver: () => BossDriver) {
       const queue = JobQueue.of({
         role: "worker",
         send: sendThrough(driver, () => state.open, Effect.void),
+        cancel: cancelThrough(driver, () => state.open, Effect.void),
       });
       const worker = JobQueueWorker.of({
         work: (options, handler) =>
@@ -330,14 +421,16 @@ export type RecordedSend = {
 };
 
 /**
- * Test Layer: a `JobQueue` that records sends instead of reaching pg-boss.
+ * Test Layer: a `JobQueue` that records sends and cancels instead of reaching pg-boss.
  * `runDomainWith(Layer.mergeAll(Db.layer, queue.layer))(effect)`.
  */
 export function recordingJobQueue(): {
   readonly layer: Layer.Layer<JobQueue>;
   readonly sends: RecordedSend[];
+  readonly cancels: QueueDelivery[];
 } {
   const sends: RecordedSend[] = [];
+  const cancels: QueueDelivery[] = [];
   const layer = Layer.succeed(
     JobQueue,
     JobQueue.of({
@@ -346,7 +439,11 @@ export function recordingJobQueue(): {
         Effect.sync(() => {
           sends.push({ payload, options });
         }),
+      cancel: (_tx, deliveries) =>
+        Effect.sync(() => {
+          cancels.push(...deliveries);
+        }),
     })
   );
-  return { layer, sends };
+  return { layer, sends, cancels };
 }

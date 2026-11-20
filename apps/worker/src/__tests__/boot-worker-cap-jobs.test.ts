@@ -43,6 +43,7 @@ function queuedJob(id: string, data: unknown): QueuedJob {
     data,
     expireInSeconds: 60,
     signal: new AbortController().signal,
+    abortReason: () => "expired",
   };
 }
 
@@ -181,6 +182,8 @@ describe("processCapJobEffect", () => {
           data: { jobId },
           expireInSeconds: 0.01,
           signal: controller.signal,
+          // pg-boss's reasonless abort while the queue is not stopping: an expiry.
+          abortReason: () => "expired",
         },
         runJob
       ).pipe(

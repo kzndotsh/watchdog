@@ -13,7 +13,7 @@ export type JobStop = {
 
 /**
  * The stop slot of one attempt at a Job. Every source that can end the attempt (the Cap timer,
- * the pg-boss signal, the cancel poll) offers its stop here; the first offer wins and the rest
+ * the pg-boss signal, a cancel in this process, shutdown) offers its stop here; the first offer wins and the rest
  * are ignored, so the settle records the source that really stopped the Job.
  */
 export type StopSlot = {

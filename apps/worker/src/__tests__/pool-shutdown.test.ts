@@ -27,6 +27,7 @@ describe("worker shutdown order", () => {
           ensureQueue: vi.fn(async () => {}),
           work: vi.fn(async () => {}),
           send: vi.fn(async () => {}),
+          cancel: vi.fn(async () => {}),
           stop: vi.fn(async () => {
             events.push("queue drained");
           }),

@@ -31,6 +31,7 @@ function fakeDriver() {
     stop,
     ensureQueue: vi.fn(async () => {}),
     send: vi.fn(async () => {}),
+    cancel: vi.fn(async () => {}),
     work: vi.fn(async () => {}),
   };
   return { driver, stop };

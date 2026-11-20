@@ -26,7 +26,7 @@ A mock replaces something the code under test talks to. It earns its place only 
 | --- | --- | --- |
 | Network and vendor clients | MSW through `@watchdog/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/tools/src/http/__tests__/page-enrich.test.ts` |
 | Database | A real Postgres through `@watchdog/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
-| Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `apps/worker/src/__tests__/cancel-poll.test.ts` |
+| Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `apps/worker/src/__tests__/maintenance.test.ts` |
 | Framework seams | The router, `window`, `EventSource`, the toast and auth server modules, through the shared doubles below | `apps/web/src/testing/` |
 | Server functions (`*.functions.ts`) in a web component or hook test | `vi.mock` of the one `*.functions` module: it is the network boundary of the web app | `apps/web/src/domains/intake/components/__tests__/evidence-detail-provider-calls.component.test.tsx` |
 | The oRPC client (`@/lib/orpc-client`) in a web component or hook test, for a domain that calls the API through it | `vi.mock` with `orpcClientModuleDouble` (`apps/web/src/testing/orpc-client.ts`): the real client and Query utils over one `vi.fn` per procedure (`procedureDouble`) | `apps/web/src/domains/dossier/components/__tests__/claims-section.component.test.tsx` |

@@ -1,14 +1,15 @@
 import { Effect } from "effect";
 
-import type { DbTx } from "@watchdog/db";
+import { jobQueueTx, listPendingJobDeliveries, type DbTx } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
+import { tryDb } from "../../infra/postgres-effect";
 import { jobsRepoFx } from "../../infra/repos-fx";
 import { JobFibers } from "../job-fibers";
-import type { JobQueue } from "../job-queue";
+import { JobQueue } from "../job-queue";
 import { settleJobInTx } from "./settle";
 import type { CancelCause } from "./stop-slot";
 import { allowedFromStatuses } from "./table";
@@ -36,8 +37,9 @@ export type CancelOutcome = {
   readonly cancelled: readonly CancelledJob[];
   /**
    * Run this after the transaction has committed, never inside it: it aborts the fiber of each
-   * cancelled Job that this process runs (other workers find out through the cancel poll), then
-   * lets each Playbook run react. Dropping it on a rollback is what makes a rolled-back cancel
+   * cancelled Job that this process runs (a worker elsewhere learns it from pg-boss: the
+   * delivery was cancelled in the transaction, and its next heartbeat refresh aborts
+   * `job.signal`), then lets each Playbook run react. Dropping it on a rollback is what makes a rolled-back cancel
    * leave nothing behind.
    */
   readonly afterCommit: Effect.Effect<void, never, Db | JobQueue>;
@@ -83,16 +85,21 @@ function afterCommitEffect(
 
 /**
  * Cancel the open Jobs a selector names, inside the caller's transaction (the API cancel, a Case
- * delete). Each Job moves through the lifecycle table with a `cancel` event, so a Job that is
- * already terminal is left alone and the guard is the table's; each move appends its one
- * activity entry in the same transaction. Nothing outside the database happens here: the
- * returned `afterCommit` does it once the caller's transaction has committed.
+ * delete, reconcile's access check). Each Job moves through the lifecycle table with a `cancel`
+ * event, so a Job that is already terminal is left alone and the guard is the table's; each move
+ * appends its one activity entry in the same transaction. The cancelled Jobs' pending pg-boss
+ * deliveries (found by `singleton_key` = Job id) are cancelled through pg-boss on the same
+ * transaction (#722): a queued Job is never delivered, a running attempt is aborted by its
+ * fenced heartbeat, and a rollback leaves both as they were. Nothing else outside the database
+ * happens here: the returned `afterCommit` does it once the caller's transaction has committed.
+ * `error` is the Job's error text (reconcile's access message); without it none is written.
  */
 export function cancelWithin(
   tx: DbTx,
   selector: CancelSelector,
-  cause: CancelCause
-): Effect.Effect<CancelOutcome, DomainTag> {
+  cause: CancelCause,
+  error?: string
+): Effect.Effect<CancelOutcome, DomainTag, JobQueue> {
   return Effect.gen(function* cancelWithinGen() {
     const ids = yield* jobsRepoFx.listIdsInStatuses(
       tx,
@@ -106,7 +113,7 @@ export function cancelWithin(
         tx,
         { jobId, caseId: selector.caseId },
         { kind: "cancel", cause },
-        { finishedAt }
+        error === undefined ? { finishedAt } : { finishedAt, error }
       );
       if (row !== null) {
         cancelled.push({
@@ -115,6 +122,16 @@ export function cancelWithin(
           playbookRunId: row.playbookRunId,
         });
       }
+    }
+    if (cancelled.length > 0) {
+      const deliveries = yield* tryDb(() =>
+        listPendingJobDeliveries(
+          tx,
+          cancelled.map((job) => job.jobId)
+        )
+      );
+      const queue = yield* JobQueue;
+      yield* queue.cancel(jobQueueTx(tx), deliveries);
     }
     return { cancelled, afterCommit: afterCommitEffect(cancelled, cause) };
   });

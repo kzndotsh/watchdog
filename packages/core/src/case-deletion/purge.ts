@@ -25,6 +25,7 @@ import {
   casesRepoFxDb,
   caseDeletionRecordsRepoFx,
 } from "../infra/repos-fx";
+import type { JobQueue } from "../jobs/job-queue";
 import { requireOrganizationManagerEffect } from "../organization/roles";
 import { recordDeletionEventEffect } from "./deletion-event";
 import {
@@ -309,7 +310,7 @@ export function purgeExpiredCasesEffect(opts?: {
 export function deleteOrganizationCasesEffect(
   organizationId: OrganizationId,
   opts?: { actorId?: string }
-): Effect.Effect<number, DomainTag, Db | BlobStore> {
+): Effect.Effect<number, DomainTag, Db | BlobStore | JobQueue> {
   return Effect.gen(function* deleteOrganizationCasesGen() {
     const ids = yield* casesRepoFxDb.listIdsIncludingDeleted(organizationId);
     const actor: CaseActor =
@@ -327,8 +328,9 @@ export function deleteOrganizationCasesEffect(
             }
           );
           if (locked !== null && locked.deletedAt === null) {
-            // The cancel's `afterCommit` is not run: this process (the web server, no queue)
-            // has no Job fibers, and the purge below erases the Case's Jobs and Playbook runs.
+            // The cancel's `afterCommit` is not run: this process (the web server) has no Job
+            // fibers, and the purge below erases the Case's Jobs and Playbook runs. The cancel
+            // still cancels their pg-boss deliveries in this transaction.
             yield* tombstoneInTx(tx, locked, actor, now, now);
           }
         })

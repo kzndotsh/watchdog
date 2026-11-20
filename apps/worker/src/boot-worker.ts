@@ -43,7 +43,6 @@ import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
 import type { OutboundClient } from "@watchdog/tools/http";
 
-import { cancelPollLoopEffect } from "./cancel-poll";
 import { WorkerConfigError } from "./config-error";
 import {
   claimExportEntryEffect,
@@ -343,7 +342,6 @@ export const bootWorkerEffect = Effect.scoped(
     yield* runMaintenanceOnceEffect(ACTIVITY_RESTORE_CHECK);
     yield* registerCapJobHandlerEffect((jobId) => executeJobOnMap(jobId));
     const shutdown = yield* WorkerShutdown;
-    yield* cancelPollLoopEffect.pipe(Effect.forkChild);
     yield* forkMaintenanceEffect();
     return yield* exportEventsEffect(shutdown);
   })

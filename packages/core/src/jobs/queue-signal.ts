@@ -1,16 +1,11 @@
 import { Effect, Fiber } from "effect";
 
-import { nowMillisEffect } from "../infra/clock";
+import type { JobStopCause } from "@watchdog/schemas/shared";
+
 import type { JobFibers } from "./job-fibers";
-import type { QueuedJob } from "./job-queue-worker";
+import type { QueueAbort, QueuedJob } from "./job-queue-worker";
 import { stop } from "./lifecycle/stop";
 import { timedOutMessage } from "./lifecycle/stop-slot";
-
-/**
- * Slack for the clock difference between pg-boss's timer (which aborts the
- * signal when the handler outlives `expireInSeconds`) and ours.
- */
-const EXPIRY_TOLERANCE_MS = 100;
 
 /** Completes when the signal aborts (at once if it already has). */
 function whenAborted(signal: AbortSignal): Effect.Effect<AbortSignal> {
@@ -29,34 +24,41 @@ function whenAborted(signal: AbortSignal): Effect.Effect<AbortSignal> {
   });
 }
 
+/** The stop cause a pg-boss abort offers the attempt, by its {@link QueueAbort}. */
+const STOP_CAUSE = {
+  expired: "cap_timeout",
+  stopping: "worker_shutdown",
+  claim_lost: "queue_aborted",
+} as const satisfies Record<QueueAbort, JobStopCause>;
+
 /**
- * Run a delivered Cap Job and tie it to its pg-boss `signal` (#397). pg-boss
- * aborts the signal when the handler outlives the job's `expireInSeconds` (it
- * fails the delivery and holds the worker slot until the handler returns), when
- * a heartbeat finds the claim gone, and when a graceful stop gives up. Each
- * abort goes through `stop`, the same path as a cancel: the cause is
- * offered to the attempt's stop slot (an expiry is `cap_timeout`, anything else
- * `queue_aborted`), then the Job fiber is interrupted, so the lifecycle `run` marks the Job
- * `failed` (`Timed out after <expiry>` for an expiry, `aborted` otherwise) and the
- * handler returns. `jobs.status` stays the product source of truth.
+ * Run a delivered Cap Job and tie it to its pg-boss `signal` (#397, #722). pg-boss aborts the
+ * signal when the handler outlives the job's `expireInSeconds` (it fails the delivery and holds
+ * the worker slot until the handler returns), when its fenced heartbeat finds the claim gone (a
+ * cancel cancelled the delivery in the cancel transaction, or another instance failed it), and
+ * when a graceful stop gives up. The abort reason pg-boss gave (`job.abortReason()`) picks the
+ * stop offered to the attempt's stop slot: `cap_timeout` (`Timed out after <expiry>`) for an
+ * expiry, `worker_shutdown` for a stop, `queue_aborted` for a lost claim. A cancelled Job is
+ * already `cancelled`, so its release settles nothing and the canceller advances the run. Then
+ * the Job fiber is interrupted and the handler returns. `jobs.status` stays the product source
+ * of truth.
  */
 export function interruptOnQueueSignal<A, E, R>(
-  job: Pick<QueuedJob, "signal" | "expireInSeconds">,
+  job: Pick<QueuedJob, "signal" | "expireInSeconds" | "abortReason">,
   jobId: string,
   run: Effect.Effect<A, E, R>
 ): Effect.Effect<A, E, R | JobFibers> {
   return Effect.gen(function* interruptOnQueueSignalGen() {
-    const startedAt = yield* nowMillisEffect;
-    const expiryMs = job.expireInSeconds * 1000;
     const watcher = yield* Effect.forkChild(
       Effect.gen(function* watchQueueSignalGen() {
         yield* whenAborted(job.signal);
-        const elapsed = (yield* nowMillisEffect) - startedAt;
-        const expired = elapsed + EXPIRY_TOLERANCE_MS >= expiryMs;
-        const target = { kind: "job", jobId } as const;
-        yield* expired
-          ? stop(target, "cap_timeout", timedOutMessage(expiryMs))
-          : stop(target, "queue_aborted");
+        const abort = job.abortReason();
+        // Only an expiry names its window: the text the Job's `error` shows.
+        const detail =
+          abort === "expired"
+            ? timedOutMessage(job.expireInSeconds * 1000)
+            : undefined;
+        yield* stop({ kind: "job", jobId }, STOP_CAUSE[abort], detail);
       })
     );
     return yield* run.pipe(Effect.ensuring(Fiber.interrupt(watcher)));

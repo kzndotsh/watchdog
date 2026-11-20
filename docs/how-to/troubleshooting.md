@@ -10,7 +10,7 @@
 | Jobs stay **queued** | Worker not running | Second terminal: `pnpm dev:worker` |
 | **Run** disabled on Cap/Playbook | Missing vault credential, or an egress class the Case does not allow (the run form names it and where the seed would go) | Settings → Credentials; the Allow button beside the block, or Case settings → Allowed egress (owner or admin) |
 | Job **succeeded** but shows **interpret failed** | Cap `interpret` threw; artifacts are fine | Re-run or fix the Entity attachment; no Proposal by design |
-| Cancelled Job keeps running for a moment | The worker polls for cancels | Normal; wait for `cancelled` |
+| Cancelled Job keeps running for a moment | The worker learns of a cancel at its next pg-boss heartbeat refresh, about 2 seconds | Normal; the Job already shows `cancelled` |
 | Job **failed** with `Timed out after ...` | The Job outlived its queue expiry (the Cap's timeout plus 60 seconds); the worker interrupted it and freed its slot | Re-run; if it repeats, the Cap or its source is hanging. `pgboss.warning` (type `handler_overrun`) and the worker's `pg-boss:worker` warn log show a handler that was slow to stop |
 | Job stuck **running** | Worker died mid-run | Wait up to a minute, or restart the worker: each worker reconcile tick (`reconcileJobsEffect`, at boot and every 60 seconds) fails stale Jobs (reclaim age derives from the Cap's `timeoutMs`) |
 | Job **failed** with "queue delivery ended before a worker started it" | Its pg-boss delivery failed for good, completed or was cancelled without the Job being claimed (a worker died before its claim), or was deleted by retention | Start it again. Reconcile fails such a `queued` Job (`orphaned`) and never re-sends it |

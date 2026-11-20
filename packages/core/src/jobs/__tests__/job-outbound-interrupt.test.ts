@@ -95,7 +95,7 @@ describe("a timed-out Job's outbound request", () => {
         yield* Effect.promise(async () => server.arrived);
 
         const started = Date.now();
-        // What pg-boss `job.signal` and the cancel poll do (`interruptOnQueueSignal`).
+        // What pg-boss `job.signal` does (`interruptOnQueueSignal`).
         expect(
           yield* fibers.abort(jobId, {
             cause: "cap_timeout",

@@ -201,6 +201,7 @@ describe("enqueueCapJobEffect", () => {
       stop: async () => {},
       ensureQueue: async () => {},
       send: async () => {},
+      cancel: async () => {},
       work: async () => {},
     };
     const failure = await enqueueWith(

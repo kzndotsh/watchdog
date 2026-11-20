@@ -47,11 +47,11 @@ describe("auth server", () => {
 
   it("deletes an organization's Cases before the organization goes", async () => {
     const deleteOrganizationCasesEffect = vi.fn((...args: unknown[]) => args);
-    const runDomain = vi.fn(async () => 2);
+    const runApp = vi.fn(async () => 2);
     vi.doMock("@watchdog/core/case-deletion", () => ({
       deleteOrganizationCasesEffect,
     }));
-    vi.doMock("@watchdog/core/infra", () => ({ runDomain, sharedDb }));
+    vi.doMock("@watchdog/api", () => ({ runApp }));
     await import("@/auth/server");
 
     const options = createAuth.mock.calls[0]?.[0] as {
@@ -68,6 +68,6 @@ describe("auth server", () => {
     expect(deleteOrganizationCasesEffect).toHaveBeenCalledWith("org-1", {
       actorId: "user-1",
     });
-    expect(runDomain).toHaveBeenCalledOnce();
+    expect(runApp).toHaveBeenCalledOnce();
   });
 });

@@ -42,7 +42,6 @@ export {
   retryJobEffect,
   listJobsForCaseEffect,
   getJobForCaseEffect,
-  findCancelledJobIdsEffect,
   type StartJobInput,
   type RetryJobInput,
   type JobRecord,

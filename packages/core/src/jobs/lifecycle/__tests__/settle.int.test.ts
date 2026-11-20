@@ -1,6 +1,8 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, jobsRepo } from "@watchdog/db";
 import {
   JOB_STATUSES,
@@ -24,6 +26,10 @@ import {
 } from "../table.ts";
 
 const runDomain = runDomainWith(Db.layer);
+/** A cancel cancels pg-boss deliveries through the queue; a recording one stands in. */
+const runWithQueue = runDomainWith(
+  Layer.mergeAll(Db.layer, recordingJobQueue().layer)
+);
 const EVENTS: readonly JobEvent[] = [
   { kind: "claim" },
   { kind: "start" },
@@ -109,7 +115,7 @@ describe("Job lifecycle: a terminal Job never moves", () => {
       const { cased, job } = await seedTerminal(status);
       const before = await jobsRepo.get(db, job.id);
 
-      const byJob = await runDomain(
+      const byJob = await runWithQueue(
         transact((tx) =>
           cancelWithin(
             tx,
@@ -118,7 +124,7 @@ describe("Job lifecycle: a terminal Job never moves", () => {
           )
         )
       );
-      const byCase = await runDomain(
+      const byCase = await runWithQueue(
         transact((tx) =>
           cancelWithin(tx, { kind: "case", caseId: cased.id }, "user_cancelled")
         )
