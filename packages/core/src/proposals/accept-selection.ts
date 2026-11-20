@@ -38,8 +38,9 @@ export function selectAcceptedOpsEffect(
       reason: "A chosen change is not in this Proposal",
     });
   }
+  // Every op the chosen ones need, transitively, must itself be chosen.
   const needed = withPatchDependencies(patch, chosen);
-  if (needed.size !== chosen.size) {
+  if ([...needed].some((id) => !chosen.has(id))) {
     return new InvalidError({
       reason:
         "A chosen change depends on a change that is not chosen (an Entity this Proposal creates)",

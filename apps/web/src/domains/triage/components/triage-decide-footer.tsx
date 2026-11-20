@@ -52,6 +52,7 @@ function gateForForm(
 ): AcceptGateResult {
   // The gates read the ops the Accept applies: an unticked invalid op no longer blocks it.
   const patch = tickedPatch(proposalPatch(proposal), values.skippedOpIds);
+  const skipped = new Set(values.skippedOpIds);
   const gate = acceptGate(
     gatedAcceptInput({
       confidence: values.confidence,
@@ -61,7 +62,7 @@ function gateForForm(
       patch,
       isConfidenceNeeded: patchNeedsConfidence(patch),
       identifierCollisions: proposal.identifierCollisions?.filter(
-        (hit) => !values.skippedOpIds.includes(hit.opId)
+        (hit) => !skipped.has(hit.opId)
       ),
     })
   );

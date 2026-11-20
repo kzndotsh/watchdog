@@ -15,6 +15,8 @@ export function useTriageDetailForms(
 ) {
   const [isRejecting, setIsRejecting] = useState(false);
 
+  // One form per Proposal: Triage keys `TriageDetail` on the selected Proposal's id, so another
+  // selection remounts it and the unticked ops start empty (never another Proposal's).
   const defaultValues: AcceptFormValues = {
     confidence: DEFAULT_CONFIDENCE,
     evidenceIds: [],
