@@ -1,139 +1,25 @@
-# Local git hooks — fast checks only. CI remains the merge gate (tests, knip, e2e, drift).
+# Local git hooks. Pre-commit only formats the staged files; lint and every other gate run in
+# `pnpm verify` (the agent stop hook runs it) and in CI (`pnpm verify --full`), the merge gate.
 # Install: automatic in `nix develop` (see flake.nix) and by `pnpm install` (the `prepare` script). Manual: `pnpm exec lefthook install`
 # Overrides: lefthook-local.yml (gitignored) — e.g. skip slow commands locally
 
 min_version: 1.10.0
 
 pre-commit:
-  parallel: true
   skip:
     - merge
     - rebase
   commands:
-    ultracite:
+    format:
       glob:
         - "*.{ts,tsx,js,mjs,json,yml,yaml,md}"
         - "**/*.{ts,tsx,js,mjs,json,yml,yaml,md}"
-      exclude:
-        - "**/routeTree.gen.ts"
-        - "packages/client/src/generated/**"
-        - "packages/caps/capabilities.gen.json"
-        - "packages/ui/src/components/**"
-        - "packages/ui/src/hooks/**"
-        # Formatter-ignored trees (oxfmt.config.ts / .prettierignore): if every staged file is ignored,
-        # ultracite exits 2 ("Expected at least one target file") and blocks the commit.
-        - ".agents/**"
-        - ".cursor/**"
-        - ".claude/**"
-        - ".kiro/**"
-        - "docs/glossary.md"
-        - "packages/db/drizzle/**"
-      # Staged files only: a repo-wide fix rewrites files outside the commit
-      # and can break lefthook's restore of unstaged changes. Scripts (`*.mjs`) and `e2e/`
-      # are linted by path too: scripts/tsconfig.json and e2e/tsconfig.json give them the
-      # type context, so a staged script no longer triggers the whole-repo `pnpm check`.
-      run: pnpm exec ultracite fix --disable-nested-config --no-error-on-unmatched-pattern {staged_files}
+      # Staged files only: a repo-wide format rewrites files outside the commit and can break
+      # lefthook's restore of unstaged changes. Files the formatter ignores (oxfmt.config.ts:
+      # generated output, vendored UI, `.agents/`, `.claude/`, `docs/glossary.md`) are skipped,
+      # and a commit of only those passes (`--no-error-on-unmatched-pattern`).
+      run: pnpm exec oxfmt --disable-nested-config --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
-    agents:
-      glob:
-        - "{AGENTS.md,**/AGENTS.md}"
-        - "CLAUDE.md"
-        - "scripts/check-agents.mjs"
-      run: pnpm check:agents:strict
-    docs:
-      glob:
-        - "docs/**"
-        - "scripts/check-docs.mjs"
-        - "scripts/lib/**"
-      run: pnpm check:docs:strict
-    design-lint:
-      glob:
-        - "DESIGN.md"
-        - "scripts/lint-design.mjs"
-      run: pnpm lint:design
-    tagged-errors:
-      glob:
-        - "packages/**/*.ts"
-        - "apps/**/*.ts"
-        - "apps/**/*.tsx"
-        - "scripts/check-tagged-errors.mjs"
-      exclude:
-        - "**/__tests__/**"
-        - "**/*.test.ts"
-        - "**/*.test.tsx"
-      run: pnpm check:tagged-errors:strict
-    workspace-reexports:
-      glob:
-        - "packages/**/*.ts"
-        - "packages/**/*.tsx"
-        - "apps/**/*.ts"
-        - "apps/**/*.tsx"
-        - "scripts/check-workspace-reexports.mjs"
-      exclude:
-        - "**/__tests__/**"
-        - "**/*.test.ts"
-        - "**/*.test.tsx"
-      run: pnpm check:workspace-reexports
-    vendor-lock:
-      glob:
-        - "packages/ui/src/components/**"
-        - "packages/ui/src/hooks/**"
-        - "packages/ui/vendor.json"
-        - "scripts/ui-vendor.mjs"
-      run: pnpm check:vendor
-    size-budget:
-      glob:
-        - "apps/*/src/**/*.{ts,tsx}"
-        - "packages/*/src/**/*.{ts,tsx}"
-        - "scripts/check-size-budget.mjs"
-        - "scripts/size-budget-baseline.json"
-      run: pnpm check:size
-    action-pins:
-      glob:
-        - ".github/workflows/**"
-        - "scripts/check-action-pins.mjs"
-      run: pnpm check:action-pins
-    workspace:
-      # sherif (mismatched versions, misplaced dependency types) + catalog use.
-      glob:
-        - "**/package.json"
-        - "pnpm-workspace.yaml"
-        - "scripts/check-catalog.mjs"
-      run: pnpm check:workspace
-    migrations:
-      # Schema edits must ship their migration; generate must be a no-op.
-      glob:
-        - "packages/db/src/schema/**"
-        - "packages/schemas/**"
-        - "packages/db/drizzle/**"
-        - "packages/db/drizzle.config.ts"
-        - "scripts/check-migrations.mjs"
-      run: pnpm check:migrations
-    boundaries:
-      # Source imports, manifests and the exports maps they are checked against.
-      glob:
-        - "apps/**/*.{ts,tsx,js,mjs}"
-        - "packages/**/*.{ts,tsx,js,mjs}"
-        - "**/package.json"
-        - "pnpm-workspace.yaml"
-        - "scripts/check-boundaries.mjs"
-      run: pnpm check:boundaries
-    env-docs:
-      # env.example and the configuration reference are generated from the env metadata.
-      glob:
-        - "packages/env/src/**"
-        - "env.example"
-        - "env.production.example"
-        - "docs/reference/platform/configuration.md"
-        - "scripts/generate-env-docs.mjs"
-      run: pnpm check:env
-    agent-skills:
-      glob:
-        - "**/.agents/skills/**"
-        - "scripts/validate-agents.mjs"
-        - "scripts/lib/**"
-        - ".cursor/README.md"
-      run: pnpm validate:agents --staged
 
 pre-push:
   parallel: true

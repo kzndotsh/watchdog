@@ -33,7 +33,7 @@ A new wrapper must also be listed in `scripts/__tests__/oxlint-wrapper-lint-cove
 
 ## Lock
 
-`packages/ui/vendor.json` lists the components, the style, the exact shadcn CLI version (`shadcn`, pinned in `scripts/ui-vendor.mjs`, never `latest`), and a sha256 for every vendored file. `pnpm check:vendor` (pre-commit and CI) fails on an edited, missing, or unlisted file, or when the recorded CLI version differs from the pinned one. To bump the CLI, change the pin in the script, then `pnpm ui:sync`. The formatter, linter, and lefthook skip `src/components` and `src/hooks` so bytes stay identical to the CLI's.
+`packages/ui/vendor.json` lists the components, the style, the exact shadcn CLI version (`shadcn`, pinned in `scripts/ui-vendor.mjs`, never `latest`), and a sha256 for every vendored file. `pnpm check:vendor` (`pnpm verify` and CI) fails on an edited, missing, or unlisted file, or when the recorded CLI version differs from the pinned one. To bump the CLI, change the pin in the script, then `pnpm ui:sync`. The formatter, linter, and lefthook skip `src/components` and `src/hooks` so bytes stay identical to the CLI's.
 
 | Task | Command |
 | --- | --- |

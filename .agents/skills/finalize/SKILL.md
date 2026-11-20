@@ -8,7 +8,7 @@ description: >-
   or when the user names one specific command (e.g. "run pnpm typecheck").
 metadata:
   owner: watchdog
-  sources: lefthook.yml, docs/contributing/ci-gates.md, docs/contributing/testing/standards.md, .agents/skills/check-gates/SKILL.md
+  sources: scripts/verify.mjs, lefthook.yml, docs/contributing/ci-gates.md, docs/contributing/testing/standards.md, .agents/skills/check-gates/SKILL.md
 ---
 
 # Finalize
@@ -34,7 +34,7 @@ May edit the docs that describe the dirty code, nested `AGENTS.md`, tests for th
 3. Docs: patch the pages that describe the dirty code (grep `docs/` and the nested `AGENTS.md` for its paths and nouns), verifying claims against the diff. No new docs unless asked.
 4. Touch a nested `AGENTS.md` only if its Commands or a rule/gotcha actually changed.
 5. If caps / web routes changed, run `pnpm generate:caps` or `pnpm generate-routes` (the client contract is gitignored build output: `pnpm typecheck` regenerates it). Do not hand-edit generated output.
-6. Run `pnpm fix`, then read and execute [check-gates](../check-gates/SKILL.md) on the current dirty set.
+6. Run `pnpm fix`, then `pnpm verify`; for what verify leaves out (component, integration, e2e), read and execute [check-gates](../check-gates/SKILL.md).
 7. If `apps/web` UI behavior changed and browser tools exist, exercise the flow; otherwise say what was not verified.
 8. Load [commit-plan.md](references/commit-plan.md), review **all** uncommitted work, draft the grouping, post it, and **stop**. On explicit approval only, execute that plan (or the user's edited version).
 

@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * stop hook: fast, changed-files-only self-correction gate. Pre-push/CI own
- * the full typecheck and test suites — this only re-checks what the agent
- * just touched, via local binaries (no `pnpm` shell resolution), so the
- * fix -> rerun loop stays sub-second. Replaces the retired ds-ban-stop.mjs,
- * which duplicated pre-push's full `tsc` run.
+ * stop hook: runs `pnpm verify` (scripts/verify.mjs, the changed-only form:
+ * lint and format on changed files, the static gates, typecheck, and the tests
+ * of the affected packages) when the working tree is dirty, and hands its
+ * failures back to the agent. CI runs `pnpm verify --full`.
  *
  * One gate, two harnesses. A thin adapter layer normalizes each tool's stop
  * payload into one internal shape and renders the findings in the tool's own
@@ -15,7 +14,7 @@
  * config) and falls back to sniffing the payload.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -25,7 +24,7 @@ const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../.."
 );
-const oxlintBin = path.join(root, "node_modules/.bin/oxlint");
+const verifyScript = path.join(root, "scripts/verify.mjs");
 
 /** @param {Record<string, unknown>} obj */
 function respond(obj) {
@@ -103,139 +102,45 @@ function formatSpawn(result) {
   return chunks.filter(Boolean).join("\n");
 }
 
-/** @param {string} text */
+/**
+ * The tail: verify prints each failure as it finishes and its summary last.
+ * @param {string} text
+ */
 function clip(text) {
   const t = text.trim();
-  return t.length > 3500 ? `${t.slice(0, 3500)}\n…` : t || "(no output)";
+  return t.length > 6000 ? `…\n${t.slice(-6000)}` : t || "(no output)";
 }
 
-/** @returns {string[]} dirty paths; throws when git fails (main()'s top-level catch fails open) */
-function changedFiles() {
-  return git(["status", "--porcelain"], root)
-    .split("\n")
-    .map((line) => line.slice(3).trim())
-    .filter(Boolean)
-    .map((entry) => (entry.includes(" -> ") ? entry.split(" -> ")[1] : entry));
+/** @returns {boolean} throws when git fails (main()'s top-level catch fails open) */
+function dirty() {
+  return git(["status", "--porcelain"], root).trim() !== "";
 }
 
 function main() {
   const input = readInput();
   const client = detectClient(input);
   if (normalizeInput(input, client).allowStop) respond({});
+  // A clean tree means the work is committed: nothing new to verify this turn.
+  if (!dirty()) respond({});
 
-  const files = changedFiles();
-  if (files.length === 0) respond({});
-
-  const parts = [];
-
-  const lintable = new Set(
-    files.filter(
-      (f) => /\.(ts|tsx|js|mjs|cjs)$/.test(f) && existsSync(path.join(root, f))
+  const res = spawnSync(process.execPath, [verifyScript], {
+    cwd: root,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (res.status === 0) respond({});
+  respond(
+    render(
+      client,
+      [
+        "`pnpm verify` failed. Fix the findings, rerun `pnpm verify`, then stop.",
+        "",
+        "```",
+        clip(formatSpawn(res)),
+        "```",
+      ].join("\n")
     )
   );
-  if (lintable.size > 0 && existsSync(oxlintBin)) {
-    // Type-aware mode needs the whole project graph — an explicit file list
-    // breaks tsconfig resolution and floods output with bogus "error typed
-    // value" findings. Run repo-wide (oxlint alone is sub-10s here even
-    // cold), then keep only the lines that touch files this turn changed.
-    // Explicit `unix` format (one `file:line:col: message` per line): oxlint only
-    // switches to it by itself when it detects an AI agent in the environment,
-    // so without the flag the filter below sees nothing in a plain shell or CI.
-    const lint = spawnSync(
-      oxlintBin,
-      ["--format=unix", "-c", "oxlint.config.ts", "."],
-      {
-        cwd: root,
-        encoding: "utf8",
-      }
-    );
-    const relevant = (lint.stdout ?? "")
-      .split("\n")
-      .filter((line) => lintable.has(line.split(":")[0] ?? ""));
-    if (lint.status !== 0 && relevant.length > 0) {
-      parts.push(
-        "Lint failed on changed files. Run `pnpm check` (or `pnpm fix` to autofix), then stop.",
-        "",
-        "```",
-        clip(relevant.join("\n")),
-        "```"
-      );
-    }
-  }
-
-  const webUiChanged = files.some(
-    (f) =>
-      f.startsWith("apps/web/src/shared/ui/") ||
-      f.startsWith("apps/web/src/domains/") ||
-      f.startsWith("apps/web/src/routes/") ||
-      f.startsWith("apps/web/src/styles.css") ||
-      f.startsWith("apps/web/scripts/") ||
-      f.startsWith("docs/reference/web/") ||
-      f.includes("docs/explanation/ux.md") ||
-      f.includes("AGENTS.md")
-  );
-  const agentsMdChanged = files.some((f) => f.endsWith("AGENTS.md"));
-  if (agentsMdChanged) {
-    const res = spawnSync(
-      process.execPath,
-      [path.join(root, "scripts/check-agents.mjs"), "--strict"],
-      { cwd: root, encoding: "utf8" }
-    );
-    if (res.status !== 0) {
-      parts.push(
-        "`pnpm check:agents:strict` failed after an AGENTS.md edit. Fix the finding, then stop.",
-        "",
-        "```",
-        clip(formatSpawn(res)),
-        "```"
-      );
-    }
-  }
-
-  const skillsChanged = files.some(
-    (f) =>
-      f.includes("/.agents/skills/") ||
-      f.startsWith(".agents/skills/") ||
-      f === ".cursor/README.md"
-  );
-  if (skillsChanged) {
-    const res = spawnSync(
-      process.execPath,
-      [path.join(root, "scripts/validate-agents.mjs")],
-      { cwd: root, encoding: "utf8" }
-    );
-    if (res.status !== 0) {
-      parts.push(
-        "`pnpm validate:agents` failed after a skill or `.cursor/README.md` edit. Fix the finding, then stop.",
-        "",
-        "```",
-        clip(formatSpawn(res)),
-        "```"
-      );
-    }
-  }
-
-  const docsChanged = files.some(
-    (f) => f.startsWith("docs/") || f.startsWith("docs/reference/web/")
-  );
-  if (docsChanged) {
-    const res = spawnSync(
-      process.execPath,
-      [path.join(root, "scripts/check-docs.mjs"), "--strict", "--fail-length"],
-      { cwd: root, encoding: "utf8" }
-    );
-    if (res.status !== 0) {
-      parts.push(
-        "`pnpm check:docs:strict` failed after a docs edit. Fix broken links/anchors, then stop.",
-        "",
-        "```",
-        clip(formatSpawn(res)),
-        "```"
-      );
-    }
-  }
-
-  respond(render(client, parts.join("\n")));
 }
 
 /**
