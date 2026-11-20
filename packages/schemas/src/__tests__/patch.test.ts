@@ -217,16 +217,19 @@ describe("patchOpSchema data", () => {
       { ...op("question.create", COMPLETE["question.create"]), id: "op-1" },
       "id",
     ],
-    [
-      "an expected version on a create",
-      op("claim.create", COMPLETE["claim.create"], { expectedVersion: 2 }),
-      "",
-    ],
   ];
 
   for (const [name, raw, path] of cases) {
     it(`refuses ${name}`, () => {
       expect(refusal(raw)?.path).toBe(path);
+    });
+  }
+
+  for (const kind of PATCH_OP_KINDS.filter((k) => k.endsWith(".create"))) {
+    it(`refuses an expected version on ${kind}`, () => {
+      expect(
+        refusal(op(kind, COMPLETE[kind], { expectedVersion: 2 }))?.path
+      ).toBe("");
     });
   }
 

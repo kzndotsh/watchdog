@@ -144,7 +144,7 @@ function writeOp<K extends string, D extends z.ZodType>(kind: K, data: D) {
  * Accept, never in `data`.
  */
 export const patchOpSchema = z.discriminatedUnion("kind", [
-  writeOp("entity.create", entityWriteData),
+  createOp("entity.create", entityWriteData),
   writeOp("entity.upsert", entityWriteData),
   writeOp("entity.update", entityUpdateData),
   createOp("identifier.create", identifierData),
