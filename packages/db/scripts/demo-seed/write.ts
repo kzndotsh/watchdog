@@ -5,6 +5,7 @@ import {
   activityLogRepo,
   cases,
   casesRepo,
+  changesets,
   claims,
   claimsRepo,
   edges,
@@ -17,7 +18,6 @@ import {
   evidenceLinksRepo,
   evidenceRepo,
   findingSuppressionsRepo,
-  graphWrites,
   identifiers,
   identifiersRepo,
   jobs,
@@ -762,14 +762,13 @@ export class SeedKit {
     at: Date;
     idempotencyKey: string;
   }): Promise<void> {
-    // `graph_writes` is append-only for the application role (INSERT and SELECT only), so the
+    // `changesets` is append-only for the application role (INSERT and SELECT only), so the
     // seed sets the backdated time on insert instead of updating the row afterwards.
-    await this.exec.insert(graphWrites).values({
+    await this.exec.insert(changesets).values({
       caseId: input.caseId,
       actorId: this.actorId,
       actorLabel: null,
       channel: "agent_write",
-      userOverridden: true,
       confidence: input.confidence,
       summary: input.summary,
       patch: input.patch,

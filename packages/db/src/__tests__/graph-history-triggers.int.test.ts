@@ -141,9 +141,12 @@ describe("graph_history triggers", () => {
       actorId: "user-1",
       actorLabel: "api-key:ci-bot",
       channel: "agent_write",
+      // An agent write's changeset carries its patch and tier (#724).
+      changeset: { caseId: cased.id, confidence: "unverified", patch: [] },
     };
+    let changesetId: string | null = null;
     await db.transaction(async (tx) => {
-      await setGraphHistoryContext(tx, context);
+      changesetId = await setGraphHistoryContext(tx, context);
       await tx.execute(sql`insert into entities (id, case_id, kind, name, slug)
         values (${E1}, ${cased.id}, 'org', 'A', 'a')`);
       await tx.execute(sql`insert into claims (id, case_id, entity_id, text, confidence)
@@ -151,11 +154,13 @@ describe("graph_history triggers", () => {
     });
     const rows = await history();
     expect(rows).toHaveLength(2);
+    expect(changesetId).not.toBeNull();
     for (const row of rows) {
       expect(row).toMatchObject({
         actorId: "user-1",
         actorLabel: "api-key:ci-bot",
         channel: "agent_write",
+        changesetId,
       });
       expect(row.after).toMatchObject({
         created_by: "user-1",
@@ -377,8 +382,12 @@ describe("graph_history is append-only", () => {
     const insert = (kind: string, op: string, channel: string) =>
       sqlState(
         () => owner`
-          insert into graph_history (case_id, kind, row_id, op, channel, after)
-          select id, ${kind}, ${testId(342)}, ${op}, ${channel}, '{}'::jsonb from cases limit 1`
+          with cs as (
+            insert into changesets (case_id, channel) select id, 'system' from cases limit 1
+            returning id, case_id
+          )
+          insert into graph_history (case_id, kind, row_id, op, changeset_id, channel, after)
+          select case_id, ${kind}, ${testId(342)}, ${op}, id, ${channel}, '{}'::jsonb from cs`
       );
     // check_violation
     expect(await insert("nope", "create", "system")).toBe("23514");

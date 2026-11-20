@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
-import { graphWrites, jobs, type DbExec } from "@watchdog/db";
+import { changesets, jobs, type DbExec } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 /**
@@ -19,16 +19,30 @@ export async function listCaseJobs(
 }
 
 /**
- * Every Graph write row of a Case, newest first, for assertions. Tests read rows here rather
- * than through the paged write log (`graphWriteList`).
+ * Every agent graph write of a Case (its `agent_write` changesets), newest first, for assertions.
+ * Tests read rows here rather than through the paged write log (`graphWriteList`).
  */
 export async function listCaseGraphWrites(
   exec: DbExec,
   caseId: CaseId
-): Promise<(typeof graphWrites.$inferSelect)[]> {
+): Promise<(typeof changesets.$inferSelect)[]> {
   return exec
     .select()
-    .from(graphWrites)
-    .where(eq(graphWrites.caseId, caseId))
-    .orderBy(desc(graphWrites.createdAt), desc(graphWrites.id));
+    .from(changesets)
+    .where(
+      and(eq(changesets.caseId, caseId), eq(changesets.channel, "agent_write"))
+    )
+    .orderBy(desc(changesets.createdAt), desc(changesets.id));
+}
+
+/** Every changeset of a Case, whatever the channel, oldest first, for assertions. */
+export async function listCaseChangesets(
+  exec: DbExec,
+  caseId: CaseId
+): Promise<(typeof changesets.$inferSelect)[]> {
+  return exec
+    .select()
+    .from(changesets)
+    .where(eq(changesets.caseId, caseId))
+    .orderBy(asc(changesets.createdAt), asc(changesets.id));
 }

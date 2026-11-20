@@ -69,6 +69,11 @@ export function defineLinkedConformance<
               yield* setHistoryContextEffect(tx, {
                 ...ACTOR,
                 channel: "agent_write",
+                changeset: {
+                  caseId: ctx.caseId,
+                  confidence: "unverified",
+                  patch: [],
+                },
               });
               return yield* runGraphMutationInTx(
                 tx,

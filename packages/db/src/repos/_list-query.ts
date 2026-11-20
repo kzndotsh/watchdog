@@ -1,4 +1,13 @@
-import { and, count, getTableName, ilike, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  getTableName,
+  ilike,
+  inArray,
+  isNotNull,
+  or,
+  sql,
+} from "drizzle-orm";
 import type { AnyColumn, SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 
@@ -164,10 +173,10 @@ export type ListBinding<
   /**
    * Display-label matching kept from today's search: `q` also matches these `choices` filters'
    * option labels ("url archive" finds kind = 'url_archive'), as `OR column IN (...)`, added only
-   * when `q` matches a label.
+   * when `q` matches a label. A nullable column's NULL rows match no label and are not counted.
    */
   readonly searchLabels?: Readonly<
-    Partial<Record<ChoicesKey<Def>, OwnColumn<T, { notNull: true }>>>
+    Partial<Record<ChoicesKey<Def>, OwnColumn<T, object>>>
   >;
   readonly search: [SearchField<Def>] extends [never]
     ? undefined
@@ -421,7 +430,7 @@ export function defineListRepo<
       const capped = exec
         .select({ value: sql<string>`${column}`.as("value") })
         .from(table)
-        .where(matching(scope, query))
+        .where(and(matching(scope, query), isNotNull(column)))
         .limit(cap + 1)
         .as("capped");
       const rows = await exec

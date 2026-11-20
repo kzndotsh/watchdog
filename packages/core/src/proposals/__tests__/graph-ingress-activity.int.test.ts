@@ -12,7 +12,6 @@ import {
   claimsRepo,
   db,
   entitiesRepo,
-  graphWritesRepo,
   proposalsRepo,
 } from "@watchdog/db";
 import {
@@ -117,7 +116,7 @@ describe("Accept appends one Graph entry per op in the Accept transaction", () =
   });
 });
 
-describe("the agent graph write appends per op and leaves graph_writes alone", () => {
+describe("the agent graph write appends per op and leaves its changeset alone", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
@@ -126,7 +125,7 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
     vi.restoreAllMocks();
   });
 
-  it("logs each op with the agent as actor and keeps the graph_writes row and the Graph", async () => {
+  it("logs each op with the agent as actor and keeps its changeset and the Graph", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
 
@@ -147,8 +146,9 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
     );
 
     expect(written.replayed).toBe(false);
-    const audit = await graphWritesRepo.get(db, written.writeId);
+    const [audit] = await listCaseGraphWrites(db, cased.id);
     expect(audit).toMatchObject({
+      id: written.writeId,
       channel: "agent_write",
       confidence: "unverified",
       idempotencyKey: "key-1",
@@ -167,7 +167,7 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
     });
   });
 
-  it("a replayed idempotency key appends nothing and writes no second graph_writes row", async () => {
+  it("a replayed idempotency key appends nothing and writes no second changeset", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
     const input = {
@@ -189,7 +189,7 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
     expect(await listCaseGraphWrites(db, cased.id)).toHaveLength(1);
   });
 
-  it("a failed append rolls back the graph_writes row and the Graph", async () => {
+  it("a failed append rolls back the changeset and the Graph", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
     const append = vi

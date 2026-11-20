@@ -139,7 +139,15 @@ describe.each(["triage_accept", "agent_write"] as const)(
       await runDomain(
         transact((tx) =>
           Effect.gen(function* joinedGen() {
-            yield* setHistoryContextEffect(tx, { ...caller, channel });
+            yield* setHistoryContextEffect(tx, {
+              ...caller,
+              channel,
+              changeset: {
+                caseId: fx.caseId,
+                confidence: "unverified",
+                patch: [],
+              },
+            });
             yield* applyPatchEffect({
               caseId: fx.caseId,
               // Not the caller's channel and actor: a joined patch must not reset the context.
@@ -277,7 +285,7 @@ describe("an Entity insert with a caller-chosen id", () => {
         {
           caseId: fx.caseId,
           organizationId: fx.organizationId,
-          channel: "agent_write",
+          channel: "dossier",
         },
         (w) =>
           w.insert(

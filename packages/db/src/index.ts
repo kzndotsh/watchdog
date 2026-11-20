@@ -36,6 +36,7 @@ export {
 export {
   setGraphHistoryContext,
   type GraphHistoryContext,
+  type NewChangeset,
 } from "./history-context";
 export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";
@@ -65,7 +66,7 @@ export {
   evidenceUploads,
   findingSuppressions,
   graphHistory,
-  graphWrites,
+  changesets,
   identifierEvidence,
   identifiers,
   invitation,

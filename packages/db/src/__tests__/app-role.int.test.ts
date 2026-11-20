@@ -170,7 +170,7 @@ describe("application role after migrations run as the owner", () => {
     const [read] =
       await app`select name from public.cases where id = ${created!.id}`;
     expect(read?.name).toBe("Probe 2");
-    await app`insert into public.graph_writes (case_id, actor_id, channel, confidence, patch)
+    await app`insert into public.changesets (case_id, actor_id, channel, confidence, patch)
       values (${created!.id}, 'actor', 'agent_write', 'unverified', '{}'::jsonb)`;
     await app`select count(*) from auth.organization`;
     await app`delete from pgboss.job where false`;
@@ -207,9 +207,9 @@ describe("application role after migrations run as the owner", () => {
     await denied("alter table public.cases add column probe int");
     await denied("drop table public.cases");
     await denied("truncate public.cases");
-    await denied("truncate public.cases, public.graph_writes");
+    await denied("truncate public.cases, public.changesets");
     await denied("alter table public.cases disable trigger all");
-    await denied("alter table public.graph_writes disable trigger all");
+    await denied("alter table public.changesets disable trigger all");
     await denied("alter table pgboss.job add column probe int");
   });
 
@@ -221,13 +221,13 @@ describe("application role after migrations run as the owner", () => {
     await denied("select * from drizzle.__drizzle_migrations");
   });
 
-  it("can only read and append to graph_writes", async () => {
-    await app`select count(*) from public.graph_writes`;
-    await denied("update public.graph_writes set summary = 'x'");
-    await denied("delete from public.graph_writes");
-    await denied("truncate public.graph_writes");
+  it("can only read and append to changesets", async () => {
+    await app`select count(*) from public.changesets`;
+    await denied("update public.changesets set summary = 'x'");
+    await denied("delete from public.changesets");
+    await denied("truncate public.changesets");
     await denied(
-      "create trigger t before insert on public.graph_writes for each row execute function pg_catalog.suppress_redundant_updates_trigger()"
+      "create trigger t before insert on public.changesets for each row execute function pg_catalog.suppress_redundant_updates_trigger()"
     );
   });
 
@@ -254,16 +254,16 @@ describe("application role after migrations run as the owner", () => {
       insert into public.cases (name, slug, organization_id, deleted_at, deleted_by)
       values ('Purge', ${`purge-${suffix}`}, 'org-probe', now(), 'actor') returning id`;
     const caseId = c!.id as string;
-    await app`insert into public.graph_writes (case_id, actor_id, channel, confidence, patch)
+    await app`insert into public.changesets (case_id, actor_id, channel, confidence, patch)
       values (${caseId}, 'actor', 'agent_write', 'unverified', '{}'::jsonb)`;
     await app`insert into public.case_deletion_records (case_id, organization_id, case_name, case_slug, event, actor_id, counts)
-      values (${caseId}, 'org-probe', 'Purge', 'purge', 'purged', 'actor', '{"graphWrites": 1}'::jsonb)`;
-    await denied("delete from public.graph_writes");
+      values (${caseId}, 'org-probe', 'Purge', 'purge', 'purged', 'actor', '{"changesets": 1}'::jsonb)`;
+    await denied("delete from public.changesets");
 
     await app`delete from public.cases where id = ${caseId}`;
 
     const [gone] =
-      await owner`select count(*)::int as n from public.graph_writes where case_id = ${caseId}`;
+      await owner`select count(*)::int as n from public.changesets where case_id = ${caseId}`;
     const [kept] =
       await owner`select count(*)::int as n from public.case_deletion_records where case_id = ${caseId}`;
     expect(gone?.n).toBe(0);
@@ -480,7 +480,7 @@ describe("a table added by a later migration", () => {
 
   it("keeps the revocations when the migrator runs again with nothing to apply", async () => {
     await migrate(laterMigrations);
-    await denied("update public.graph_writes set summary = 'x'");
+    await denied("update public.changesets set summary = 'x'");
     await denied("delete from public.graph_history");
     await app`insert into public.role_probe (note) values ('after')`;
   });

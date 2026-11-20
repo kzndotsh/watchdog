@@ -1,39 +1,42 @@
-import { eq, getTableColumns, inArray } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 
 import { graphWriteList } from "@watchdog/schemas/graph";
 
-import { graphWrites } from "../schema/graph-writes";
+import { changesets } from "../schema/changesets";
 import { defineListRepo } from "./_list-query";
 
 /**
- * The Case's Graph write log (`graphWriteList`, ADR-0007): the audit rows of the writes an agent
- * or the CLI made through `userOverride`, one row each, patch included (the wire item leaves it
- * out; the row is the table's).
+ * The Case's Graph write log (`graphWriteList`, ADR-0007): the changesets (#724) of the writes an
+ * agent or the CLI made through `userOverride` (channel `agent_write`), one row each, patch
+ * included (the wire item leaves it out).
  */
 export const graphWriteListRepo = defineListRepo(graphWriteList, {
-  table: graphWrites,
+  table: changesets,
   base: (exec, listKey) =>
     exec
-      .select({ ...getTableColumns(graphWrites), listKey })
-      .from(graphWrites)
+      .select({ ...getTableColumns(changesets), listKey })
+      .from(changesets)
       .$dynamic(),
-  id: graphWrites.id,
-  scopeColumn: graphWrites.caseId,
-  scope: ({ caseId }) => eq(graphWrites.caseId, caseId),
+  id: changesets.id,
+  scopeColumn: changesets.caseId,
+  sortLeads: [changesets.channel],
+  scope: ({ caseId }) => {
+    const inCase = eq(changesets.caseId, caseId);
+    // `and` answers undefined only for no conditions at all.
+    return and(inCase, eq(changesets.channel, "agent_write")) ?? inCase;
+  },
   filters: {
     confidence: (tiers) =>
-      tiers.length > 0
-        ? inArray(graphWrites.confidence, [...tiers])
-        : undefined,
+      tiers.length > 0 ? inArray(changesets.confidence, [...tiers]) : undefined,
     actor: (ids) =>
-      ids.length > 0 ? inArray(graphWrites.actorId, [...ids]) : undefined,
+      ids.length > 0 ? inArray(changesets.actorId, [...ids]) : undefined,
   },
-  // `graph_writes_case_created_idx (case_id, created_at desc, id desc)`
-  sorts: { created: graphWrites.createdAt },
-  searchLabels: { confidence: graphWrites.confidence },
+  // `changesets_case_channel_created_idx (case_id, channel, created_at desc, id desc)`
+  sorts: { created: changesets.createdAt },
+  searchLabels: { confidence: changesets.confidence },
   search: {
-    summary: graphWrites.summary,
-    actorLabel: graphWrites.actorLabel,
+    summary: changesets.summary,
+    actorLabel: changesets.actorLabel,
   },
 });
 

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { graphHistory, type DbExec } from "@watchdog/db";
+import { changesets, graphHistory, type DbExec } from "@watchdog/db";
 import type { CaseId, GraphHistoryKind } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit/fixtures";
 
@@ -24,11 +24,17 @@ function entry(
     readonly caseId: CaseId;
     readonly kind: GraphHistoryKind;
     readonly rowId: string;
-  }
+  },
+  changesetOf: ReadonlyMap<CaseId, string>
 ) {
+  const changesetId = changesetOf.get(where.caseId);
+  if (changesetId === undefined) {
+    throw new Error("graph-history fixture: no changeset for the Case");
+  }
   return {
     id: ID_BASE + n,
     ...where,
+    changesetId,
     op: "update" as const,
     channel: "dossier" as const,
     before: { text: `v${n - 1}` },
@@ -73,14 +79,25 @@ export const graphHistoryConformance: ListConformance = {
     const owner = await seedCase(exec, { name: "History conformance" });
     const other = await seedCase(exec, { name: "History conformance decoy" });
     const here = { caseId: owner.id, kind: KIND, rowId: ROW_ID };
+    // Every history row names a changeset of its Case (#724).
+    const written = await exec
+      .insert(changesets)
+      .values([
+        { caseId: owner.id, channel: "dossier" },
+        { caseId: other.id, channel: "dossier" },
+      ])
+      .returning({ id: changesets.id, caseId: changesets.caseId });
+    const changesetOf = new Map(written.map((row) => [row.caseId, row.id]));
     await insertAsOwner([
-      ...Array.from({ length: COUNT }, (_, index) => entry(index + 1, here)),
+      ...Array.from({ length: COUNT }, (_, index) =>
+        entry(index + 1, here, changesetOf)
+      ),
       // Decoys that sort first and last: another row, another kind and another Case, each with
       // the scope's other two parts, so no one of the three equalities can be dropped.
-      entry(20, { ...here, rowId: OTHER_ROW_ID }),
-      entry(21, { ...here, kind: "entity" }),
-      entry(22, { ...here, caseId: other.id }),
-      entry(0, { ...here, caseId: other.id }),
+      entry(20, { ...here, rowId: OTHER_ROW_ID }, changesetOf),
+      entry(21, { ...here, kind: "entity" }, changesetOf),
+      entry(22, { ...here, caseId: other.id }, changesetOf),
+      entry(0, { ...here, caseId: other.id }, changesetOf),
     ]);
     return {
       scope: { caseId: owner.id, kind: KIND, rowId: ROW_ID },

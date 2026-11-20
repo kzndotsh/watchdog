@@ -16,7 +16,7 @@ import {
   evidenceRepo,
   evidenceUploadsRepo,
   findingSuppressionsRepo,
-  graphWritesRepo,
+  changesetsRepo,
   identifiersRepo,
   jobsRepo,
   jobStartCountersRepo,
@@ -69,8 +69,8 @@ export const evidenceRepoFxDb = repoFxDb(evidenceRepoFx);
 export const evidenceUploadsRepoFx = repoFx(() => evidenceUploadsRepo);
 export const evidenceUploadsRepoFxDb = repoFxDb(evidenceUploadsRepoFx);
 export const findingSuppressionsRepoFx = repoFx(() => findingSuppressionsRepo);
-export const graphWritesRepoFx = repoFx(() => graphWritesRepo);
-export const graphWritesRepoFxDb = repoFxDb(graphWritesRepoFx);
+const changesetsRepoFx = repoFx(() => changesetsRepo);
+export const changesetsRepoFxDb = repoFxDb(changesetsRepoFx);
 export const identifiersRepoFx = repoFx(() => identifiersRepo);
 export const identifiersRepoFxDb = repoFxDb(identifiersRepoFx);
 export const jobsRepoFx = repoFx(() => jobsRepo);

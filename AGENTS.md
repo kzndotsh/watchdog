@@ -49,7 +49,7 @@ Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.
 | --- | --- | --- |
 | Postgres = Case Graph SoT; Export is a projection | Hand-edit Export as a second SoT | guidance ([`ingress`](docs/reference/contracts/ingress.md)) |
 | Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | `@watchdog/policy` gates at runtime; caps has no db dep ([`custody`](docs/reference/contracts/custody.md)) |
-| Agents/CLI default to propose; a graph write needs `userOverride` and lands `unverified` + `graph_writes` | Silent machine Graph writes | policy gates + `apps/cli/src/custody.ts` ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)) |
+| Agents/CLI default to propose; a graph write needs `userOverride` and lands `unverified` + an `agent_write` changeset | Silent machine Graph writes | policy gates + `apps/cli/src/custody.ts` ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)) |
 | Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | guidance |
 | Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | `watchdog/no-banned-surface-name` for the first three; `*Panel` is guidance ([ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
 | Process logs via `@watchdog/log` | Secrets/Evidence bodies in logs; treating evlog as Graph audit | guidance ([`evlog`](docs/reference/contracts/evlog.md)) |
@@ -132,7 +132,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Case in caller's org (guard) | `packages/core/src/cases/access.ts` | `assertCaseInOrgEffect` |
 | Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
 | Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |
-| Who writes the Graph, for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest) | `packages/core/src/activity/graph-activity.ts` | `setHistoryContextEffect` |
+| Who writes the Graph and the transaction's changeset (#724), for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest) | `packages/core/src/activity/graph-activity.ts` | `setHistoryContextEffect` |
 | Job status change (the only writer; a lint rule bans others): claim, finish, fail, cancel, reclaim | `packages/core/src/jobs/lifecycle/settle.ts` | `settleJobEffect` |
 | Cancel Jobs inside the caller's transaction (API cancel, Case delete; `afterCommit` aborts fibers and advances runs) | `packages/core/src/jobs/lifecycle/cancel.ts` | `cancelWithin` |
 | Stop Jobs from outside a transaction (abort, timeout, access loss) | `packages/core/src/jobs/lifecycle/stop.ts` | `stop` |

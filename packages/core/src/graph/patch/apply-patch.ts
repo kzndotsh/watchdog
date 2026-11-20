@@ -172,6 +172,12 @@ export function applyPatchEffect(
         yield* setHistoryContextEffect(tx, {
           ...opts.actor,
           channel: opts.channel,
+          // What this transaction applied (an agent write's changeset needs its patch and tier).
+          changeset: {
+            caseId: opts.caseId,
+            confidence: opts.confidence ?? null,
+            patch: opts.patch,
+          },
         });
         yield* runApply(tx);
       })

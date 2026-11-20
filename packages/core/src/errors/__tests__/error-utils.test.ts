@@ -6,23 +6,23 @@ describe("isUniqueViolation", () => {
   it("matches a nested postgres unique violation by index name", () => {
     const inner = {
       code: "23505",
-      constraint: "graph_writes_case_actor_idem_uidx",
+      constraint: "changesets_case_actor_idem_uidx",
     };
     const wrapped = new Error("Failed query: insert");
     Object.assign(wrapped, { cause: inner });
-    expect(
-      isUniqueViolation(wrapped, "graph_writes_case_actor_idem_uidx")
-    ).toBe(true);
+    expect(isUniqueViolation(wrapped, "changesets_case_actor_idem_uidx")).toBe(
+      true
+    );
   });
 
   it("walks a three-level cause chain", () => {
     const inner = {
       code: "23505",
-      constraint_name: "graph_writes_case_actor_idem_uidx",
+      constraint_name: "changesets_case_actor_idem_uidx",
     };
     const mid = Object.assign(new Error("drizzle"), { cause: inner });
     const outer = Object.assign(new Error("query"), { cause: mid });
-    expect(isUniqueViolation(outer, "graph_writes_case_actor_idem_uidx")).toBe(
+    expect(isUniqueViolation(outer, "changesets_case_actor_idem_uidx")).toBe(
       true
     );
   });
@@ -31,7 +31,7 @@ describe("isUniqueViolation", () => {
     expect(
       isUniqueViolation(
         { code: "23505", constraint: "cases_slug_unique" },
-        "graph_writes_case_actor_idem_uidx"
+        "changesets_case_actor_idem_uidx"
       )
     ).toBe(false);
   });

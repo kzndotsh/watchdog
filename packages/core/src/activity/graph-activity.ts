@@ -4,6 +4,7 @@ import {
   setGraphHistoryContext,
   type DbExec,
   type GraphHistoryContext,
+  type NewChangeset,
 } from "@watchdog/db";
 import type {
   ACTIVITY_ENTRY_ACTIONS,
@@ -17,7 +18,7 @@ import type {
 
 import { optionalActorId } from "../actors/require-actor-id";
 import type { DomainTag } from "../errors/tagged-errors";
-import { tryDb } from "../infra/postgres-effect";
+import { requireWritten, tryDb } from "../infra/postgres-effect";
 import { appendActivityEffect } from "./append";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */
@@ -76,26 +77,40 @@ export function dossierChannel(
   return optionalActorId(actor?.actorId) === undefined ? "system" : "dossier";
 }
 
+/** The history context of a Graph write transaction in core: always with its changeset (#724). */
+export type GraphWriteContext = GraphHistoryContext & {
+  changeset: NewChangeset;
+};
+
 /**
- * The history context of a Dossier write (or a Task edit): the caller, through
- * the `dossier` channel; a write with no caller is the `system`.
+ * The history context of a Dossier write (or a Task edit) in `caseId`: the
+ * caller, through the `dossier` channel; a write with no caller is the `system`.
  */
 export function dossierHistory(
+  caseId: CaseId,
   actor: GraphActor | undefined
-): GraphHistoryContext {
-  return { ...graphActorFields(actor), channel: dossierChannel(actor) };
+): GraphWriteContext {
+  return {
+    ...graphActorFields(actor),
+    channel: dossierChannel(actor),
+    changeset: { caseId },
+  };
 }
 
 /**
- * First statement of every Graph write transaction (issue #303): tells the
- * database triggers who is writing and through which door, so each changed row
- * (including rows a cascade removes or unlinks) lands in `graph_history` with
- * its author. The settings end with the transaction, so call it on that
- * transaction's `tx`, never on the pool.
+ * First statement of every Graph write transaction (issues #303, #724): records
+ * the transaction's changeset (Case, channel, actor, and what the channel adds:
+ * an Accept's Proposal, an agent write's patch and idempotency key) and tells
+ * the database triggers who is writing, so each changed row (including rows a
+ * cascade removes or unlinks) lands in `graph_history` with its author and
+ * changeset. Returns the changeset id. The settings end with the transaction,
+ * so call it on that transaction's `tx`, never on the pool.
  */
 export function setHistoryContextEffect(
   tx: DbExec,
-  context: GraphHistoryContext
-): Effect.Effect<void, DomainTag> {
-  return tryDb(() => setGraphHistoryContext(tx, context));
+  context: GraphWriteContext
+): Effect.Effect<string, DomainTag> {
+  return tryDb(() => setGraphHistoryContext(tx, context)).pipe(
+    requireWritten("record changeset")
+  );
 }

@@ -13,6 +13,7 @@ import {
   caseDeletionRecords,
   type CasePurgeCounts,
 } from "../schema/case-deletion-records";
+import { changesets } from "../schema/changesets";
 import { claims } from "../schema/claims";
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";
@@ -20,7 +21,6 @@ import { events } from "../schema/events";
 import { evidence } from "../schema/evidence";
 import { findingSuppressions } from "../schema/finding-suppressions";
 import { graphHistory } from "../schema/graph-history";
-import { graphWrites } from "../schema/graph-writes";
 import { identifiers } from "../schema/identifiers";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
@@ -63,7 +63,7 @@ const COUNTED = [
   ["proposals", proposals, proposals.caseId],
   ["jobs", jobs, jobs.caseId],
   ["playbookRuns", playbookRuns, playbookRuns.caseId],
-  ["graphWrites", graphWrites, graphWrites.caseId],
+  ["changesets", changesets, changesets.caseId],
   ["graphHistory", graphHistory, graphHistory.caseId],
   ["activity", activity, activity.caseId],
   ["capCache", capCache, capCache.caseId],

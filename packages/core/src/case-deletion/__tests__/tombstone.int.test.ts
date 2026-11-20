@@ -731,8 +731,9 @@ describe("Case tombstone (#304)", () => {
         jobs: 3,
         proposals: 1,
         playbookRuns: 1,
-        graphWrites: 1,
       });
+      // The seeded agent write and the seeds' system writes (#724).
+      expect(purged?.counts?.changesets).toBeGreaterThan(1);
       expect(purged?.counts?.graphHistory).toBeGreaterThan(0);
     });
 

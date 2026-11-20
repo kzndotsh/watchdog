@@ -54,7 +54,7 @@ export { findingSuppressions } from "./finding-suppressions";
 export { graphHistory } from "./graph-history";
 export type { GraphHistorySnapshotJson } from "./graph-history";
 
-export { graphWrites } from "./graph-writes";
+export { changesets } from "./changesets";
 
 export { identifiers } from "./identifiers";
 

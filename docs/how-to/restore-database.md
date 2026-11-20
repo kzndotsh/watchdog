@@ -30,7 +30,7 @@ If the worker's stored cursor is ahead of the restored log (the dump is older th
 
 ## Retention
 
-The worker prunes entries older than 90 days once a day (newest 200 per Case stay) and raises the replay floor with each batch; see [ADR-0005](../adr/0005-unified-activity-log.md) decision 8 and `apps/worker/AGENTS.md`. Pruning only removes activity entries (feed history and the live signal), never Graph rows or `graph_writes`, so a restore of an old dump is not made worse by it.
+The worker prunes entries older than 90 days once a day (newest 200 per Case stay) and raises the replay floor with each batch; see [ADR-0005](../adr/0005-unified-activity-log.md) decision 8 and `apps/worker/AGENTS.md`. Pruning only removes activity entries (feed history and the live signal), never Graph rows, their history or `changesets`, so a restore of an old dump is not made worse by it.
 
 ## Check it by hand
 

@@ -12,7 +12,7 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 
 **Collect → Decide (Triage) → Graph under human custody → Export Case package.**
 
-- Caps never write Graph ([Proposal](../glossary.md#collection-and-decision) → Triage [Accept](../glossary.md#collection-and-decision)). Agents default to Proposal; the escape hatch is an explicit [graph write](../glossary.md#collection-and-decision) at `unverified` with a `graph_writes` audit. Humans may also write via the Dossier.
+- Caps never write Graph ([Proposal](../glossary.md#collection-and-decision) → Triage [Accept](../glossary.md#collection-and-decision)). Agents default to Proposal; the escape hatch is an explicit [graph write](../glossary.md#collection-and-decision) at `unverified` with an `agent_write` changeset. Humans may also write via the Dossier.
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
 

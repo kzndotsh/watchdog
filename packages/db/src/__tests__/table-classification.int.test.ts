@@ -35,9 +35,9 @@ const RECORDS = [
 
 /** Rows are inserted and never change. Need `created_at`; the application role has no UPDATE. */
 const APPEND_ONLY = [
+  "changesets",
   "evidence_provider_calls",
   "finding_suppressions",
-  "graph_writes",
   "provider_call_outcomes",
   "provider_calls",
 ] as const;
