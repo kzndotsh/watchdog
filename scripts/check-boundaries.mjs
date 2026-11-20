@@ -29,6 +29,10 @@
  *      `cases`, ...) depend on one another in one direction only, so a piece two domains
  *      use lives with its owner (or in `shared/` when it is generic). Tests are not counted.
  *      The message names the cycle with one import per edge.
+ *   8. Denied imports: a package in DENIED_IMPORTS never imports the modules it lists (or a
+ *      subpath of one), declared or not, in any of its files. Caps reach no database, ORM or
+ *      Postgres driver, so a Cap cannot write the Graph; api reaches storage only through core;
+ *      core calls repos, never the ORM.
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
@@ -159,6 +163,47 @@ function entryPoints(pkg) {
 const RELATIVE_ALLOWED = new Set([
   "packages/client/src/generated/app-router.ts",
 ]);
+
+/**
+ * Modules a package never imports, whatever it declares: package name -> denied modules and why.
+ * @type {Map<string, { deny: string[], why: string }>}
+ */
+const DENIED_IMPORTS = new Map([
+  [
+    "@watchdog/caps",
+    {
+      deny: ["@watchdog/db", "drizzle-orm", "postgres", "pg"],
+      why: "Caps never write the Graph: a Cap returns Proposal ops and reaches storage only through ctx",
+    },
+  ],
+  [
+    "@watchdog/api",
+    {
+      deny: ["@watchdog/db", "drizzle-orm"],
+      why: "api reaches storage only through @watchdog/core",
+    },
+  ],
+  [
+    "@watchdog/core",
+    {
+      deny: ["drizzle-orm"],
+      why: "core calls the repos in @watchdog/db, never the ORM",
+    },
+  ],
+]);
+
+/**
+ * @param {string} owner the importing package's name
+ * @param {string} spec
+ * @param {string} where file:line of the import
+ */
+function deniedImportProblem(owner, spec, where) {
+  const rule = DENIED_IMPORTS.get(owner);
+  const hit = rule?.deny.find((m) => spec === m || spec.startsWith(`${m}/`));
+  return hit === undefined
+    ? undefined
+    : `${where}: "${spec}": ${owner} may not import ${hit}. ${rule?.why}`;
+}
 
 /**
  * Core folder edges (`from -> to`) that may close an import cycle. Each is a known violation
@@ -460,6 +505,12 @@ for (const rel of listed) {
     const where = `${rel}:${line}`;
     recordWebEdge(rel, spec, where);
 
+    const denied = deniedImportProblem(owner.name, spec, where);
+    if (denied !== undefined) {
+      problems.push(denied);
+      continue;
+    }
+
     if (spec.startsWith(".")) {
       if (RELATIVE_ALLOWED.has(rel)) continue;
       const target = path.posix.normalize(
@@ -556,7 +607,7 @@ for (const group of importCycles([...webEdges.keys()])) {
 if (problems.length > 0) {
   for (const p of problems) console.error(`✗ ${p}`);
   console.error(
-    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder; web domains import no cycle. See docs/contributing/ci-gates.md."
+    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; no package makes a denied import (caps: no database, ORM or driver); tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder; web domains import no cycle. See docs/contributing/ci-gates.md."
   );
   process.exit(1);
 }
