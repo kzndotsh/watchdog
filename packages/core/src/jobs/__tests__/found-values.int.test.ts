@@ -127,6 +127,34 @@ describe("listJobFoundValuesEffect", () => {
     });
   });
 
+  it("has no reader for a Job that left no report yet", async () => {
+    const job = await seedJob(db, caseId, {
+      status: "running",
+      capabilityId: "network.dns.lookup",
+      transitions: ["running"],
+    });
+    const found = await run(
+      listJobFoundValuesEffect(caseId, TEST_ORGANIZATION_ID, job.id)
+    );
+    expect(found.hasReader).toBe(false);
+  });
+
+  it("has no reader for a report the Cap cannot read", async () => {
+    const job = await seedJobWithReport(caseId, "network.dns.lookup", {
+      unexpected: true,
+    });
+    const found = await run(
+      listJobFoundValuesEffect(caseId, TEST_ORGANIZATION_ID, job.id)
+    );
+    expect(found.hasReader).toBe(false);
+  });
+
+  it("refuses a Job id that is not in the Case", async () => {
+    await expect(
+      run(listJobFoundValuesEffect(caseId, TEST_ORGANIZATION_ID, testId(99)))
+    ).rejects.toMatchObject({ _tag: "NotFoundError", entity: "Job" });
+  });
+
   it("refuses a Job of another organization's Case", async () => {
     const foreignCaseId = (
       await seedCase(db, { organizationId: TEST_OTHER_ORGANIZATION_ID })

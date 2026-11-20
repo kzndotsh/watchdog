@@ -79,6 +79,7 @@ export function CollectDetail({
     adding === null ? null : (
       <AddFoundValueDialog
         caseId={caseId}
+        entityPort={entityPort}
         jobId={adding.jobId}
         value={adding.value}
         evidenceIds={adding.evidenceIds}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useAddFoundValue } from "@/domains/collect/hooks/use-add-found-value";
-import { entityPickerPort } from "@/domains/entities/queries";
+import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -19,6 +19,8 @@ import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
 type AddFoundValueDialogProps = {
   caseId: string;
+  /** The Case's Entity picker (`entityPickerPort(caseId)`). */
+  entityPort: PickerPort<EntityOption>;
   jobId: string;
   /** The value to add; the dialog is open while it is set. */
   value: FoundValueRecord | null;
@@ -33,6 +35,7 @@ type AddFoundValueDialogProps = {
  */
 export function AddFoundValueDialog({
   caseId,
+  entityPort,
   jobId,
   value,
   evidenceIds,
@@ -84,7 +87,7 @@ export function AddFoundValueDialog({
         <Field>
           <FieldLabel>Entity</FieldLabel>
           <SearchedEntityCombobox
-            port={entityPickerPort(caseId)}
+            port={entityPort}
             excludeIds={value?.onEntities.map((held) => held.id)}
             value={entity?.id ?? ""}
             onValueChange={(id) => {
