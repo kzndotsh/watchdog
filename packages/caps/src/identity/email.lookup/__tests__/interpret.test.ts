@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { emailLookup } from "../cap.ts";
 import { interpretEmailLookupReport } from "../interpret.ts";
 
@@ -24,11 +24,11 @@ describe("interpret", () => {
       input: { email: "bob@gmail.com", entityId },
     });
     expect(result.patch.length).toBe(3);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("email");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
-    expect(result.patch[2]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("email");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
+    expect(result.patch[2]?.kind).toBe("claim.create");
     expect(claimText(result, 2)).toMatch(/provider=google/);
   });
 

@@ -63,6 +63,10 @@ const MOCK_OK: Record<string, string> = {
     HEAD,
     'vi.mock("./claims.functions.ts", () => ({}));'
   ),
+  "boundary-orpc-client.test.ts": lines(
+    HEAD,
+    'vi.mock("@/lib/orpc-client", () => ({}));'
+  ),
   "boundary-auth.test.ts": lines(
     HEAD,
     'vi.mock("@/auth/client", () => ({}));',

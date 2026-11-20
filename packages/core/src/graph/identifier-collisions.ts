@@ -2,16 +2,13 @@ import { Effect } from "effect";
 import type { z } from "zod";
 
 import type { IdentifierListRow } from "@watchdog/db";
-import { isOneOf } from "@watchdog/policy";
 import {
-  normalizeIdentifierTypeInput,
+  isPatchOpOf,
   normalizeIdentifierValue,
-  patchOpEntityId,
   type PatchOp,
 } from "@watchdog/schemas/graph";
 import type { identifierCollisionSchema } from "@watchdog/schemas/jobs";
 import {
-  IDENTIFIER_TYPES,
   entityDisplayLabel,
   parseTrimmedCaseId,
   type CaseId,
@@ -38,19 +35,11 @@ function identifierKeysFromPatch(
     value: string;
   }[] = [];
   for (const op of patch) {
-    if (op.resource !== "identifier") continue;
-    const typeRaw = op.data.type;
-    const valueRaw = op.data.value;
-    const entityId = patchOpEntityId(op);
-    const typeTrimmed =
-      typeof typeRaw === "string" ? normalizeIdentifierTypeInput(typeRaw) : "";
-    if (typeTrimmed === "" || !isOneOf(typeTrimmed, IDENTIFIER_TYPES)) {
-      continue;
-    }
-    if (typeof valueRaw !== "string" || entityId === undefined) continue;
-    const value = normalizeIdentifierValue(typeTrimmed, valueRaw);
+    if (!isPatchOpOf(op, "identifier")) continue;
+    const { entityId, type } = op.data;
+    const value = normalizeIdentifierValue(type, op.data.value);
     if (!value) continue;
-    keys.push({ opId: op.id, entityId, type: typeTrimmed, value });
+    keys.push({ opId: op.id, entityId, type, value });
   }
   return keys;
 }

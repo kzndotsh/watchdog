@@ -1,6 +1,7 @@
 export { runCap } from "../sdk";
 export {
   claimText,
+  dataOf,
   expectNoConfidenceOnPatch,
   expectProposesClaim,
   expectProposesIdentifier,

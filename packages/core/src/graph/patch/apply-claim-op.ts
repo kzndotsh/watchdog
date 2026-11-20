@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOpOf } from "@watchdog/schemas/graph";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 import { assertEntityInCaseEffect } from "../../cases/access";
@@ -8,22 +8,16 @@ import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { claimsTable } from "../mutation/tables";
-import { claimOpData, decodeOpData } from "./op-data";
 
 export function applyClaimOpEffect(
   w: JoinedGraphWriter,
-  op: PatchOp,
+  op: PatchOpOf<"claim">,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyClaimOpGen() {
-    if (op.op !== "create") {
-      return yield* new InvalidError({
-        reason: "claim only supports create",
-      });
-    }
-    const data = yield* decodeOpData(claimOpData, op.data);
-    yield* assertEntityInCaseEffect(w.caseId, data.entityId, w.tx);
+    const { entityId, text } = op.data;
+    yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
     if (!confidence) {
       return yield* new InvalidError({
         reason: "confidence required for claim",
@@ -31,7 +25,13 @@ export function applyClaimOpEffect(
     }
     yield* w.insert(
       claimsTable,
-      { id: op.id, ...data, confidence },
+      {
+        id: op.id,
+        entityId,
+        text,
+        class: op.data.class ?? "observation",
+        confidence,
+      },
       { evidence: evidenceIds }
     );
   });

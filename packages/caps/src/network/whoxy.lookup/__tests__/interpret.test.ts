@@ -31,12 +31,12 @@ describe("interpret", () => {
     const result = interpretWhoxyLookupReport(fixture, {
       input: { host: "example.com", entityId },
     });
-    const types = result.patch.map((p) => p.resource);
+    const types = result.patch.map((p) => p.kind.split(".")[0]);
     expect(types).toContain("identifier");
     expect(types).toContain("claim");
     expect(types).toContain("event");
     const identifierTypes = result.patch
-      .filter((p) => p.resource === "identifier")
+      .filter((p) => p.kind === "identifier.create")
       .map((p) => p.data.type);
     expect(identifierTypes).toContain("domain");
     expect(identifierTypes).toContain("email");

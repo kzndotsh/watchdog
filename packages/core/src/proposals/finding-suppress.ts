@@ -1,23 +1,18 @@
 import { Effect } from "effect";
 
 import type { DbExec, DbTx } from "@watchdog/db";
-import { isOneOf } from "@watchdog/policy";
 import {
   edgePatchFingerprintKey,
   fingerprintPatchOp,
-  normalizeIdentifierTypeInput,
+  isPatchOpOf,
   normalizeIdentifierValue,
-  patchOpEntityId,
   patchOpRelatedEntityIds,
   type PatchOp,
+  type PatchOpOf,
 } from "@watchdog/schemas/graph";
 import {
-  IDENTIFIER_TYPES,
   normalizeIdentifierPlatform,
   normalizeUuidList,
-  parseTrimmedUuid,
-  slugifyName,
-  trimmedOrUndefined,
   type CaseId,
 } from "@watchdog/schemas/shared";
 
@@ -34,10 +29,26 @@ import {
   proposalsRepoFx,
 } from "../infra/repos-fx";
 
+type Fingerprinted<T extends PatchOp = PatchOp> = { op: T; fp: string };
+
+/** The entity ids a group of ops is about (their `entityId`), once each. */
+function entityIdsOf(
+  items: readonly Fingerprinted<
+    PatchOpOf<"identifier" | "claim" | "question">
+  >[]
+): string[] {
+  return normalizeUuidList(items.map((x) => x.op.data.entityId));
+}
+
+/** Text keys (`entity\0lowercased text`) of a Claim or Question op. */
+function textKey(op: PatchOpOf<"claim" | "question">): string {
+  return `${op.data.entityId}\0${op.data.text.toLowerCase()}`;
+}
+
 function markExistingInGraphEffect(
   exec: DbExec | undefined,
   caseId: CaseId,
-  fps: { op: PatchOp; fp: string }[],
+  fps: Fingerprinted[],
   known: Set<string>
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* markExistingInGraphGen() {
@@ -46,211 +57,108 @@ function markExistingInGraphEffect(
       return;
     }
 
-    const identifierOps: { op: PatchOp; fp: string }[] = [];
-    const claimOps: { op: PatchOp; fp: string }[] = [];
-    const edgeOps: { op: PatchOp; fp: string }[] = [];
-    const questionOps: { op: PatchOp; fp: string }[] = [];
-    const entityOps: { op: PatchOp; fp: string }[] = [];
-    for (const item of unchecked) {
-      switch (item.op.resource) {
-        case "identifier": {
-          identifierOps.push(item);
-          break;
-        }
-        case "claim": {
-          claimOps.push(item);
-          break;
-        }
-        case "edge": {
-          edgeOps.push(item);
-          break;
-        }
-        case "question": {
-          questionOps.push(item);
-          break;
-        }
-        case "entity": {
-          entityOps.push(item);
-          break;
-        }
-        case "event": {
-          break;
-        }
-        default: {
-          item.op.resource satisfies never;
-        }
-      }
+    const identifierOps: Fingerprinted<PatchOpOf<"identifier">>[] = [];
+    const claimOps: Fingerprinted<PatchOpOf<"claim">>[] = [];
+    const edgeOps: Fingerprinted<PatchOpOf<"edge">>[] = [];
+    const questionOps: Fingerprinted<PatchOpOf<"question">>[] = [];
+    const entityOps: Fingerprinted<PatchOpOf<"entity">>[] = [];
+    for (const { op, fp } of unchecked) {
+      if (isPatchOpOf(op, "identifier")) identifierOps.push({ op, fp });
+      else if (isPatchOpOf(op, "claim")) claimOps.push({ op, fp });
+      else if (isPatchOpOf(op, "edge")) edgeOps.push({ op, fp });
+      else if (isPatchOpOf(op, "question")) questionOps.push({ op, fp });
+      else if (isPatchOpOf(op, "entity")) entityOps.push({ op, fp });
     }
 
     if (identifierOps.length > 0) {
-      const entityIds = normalizeUuidList(
-        identifierOps.flatMap((x) => {
-          const entityId = patchOpEntityId(x.op);
-          return entityId === undefined ? [] : [entityId];
-        })
+      const rows = yield* onExec(exec, (handle) =>
+        identifiersRepoFx.listNaturalKeysInCase(
+          handle,
+          caseId,
+          entityIdsOf(identifierOps)
+        )
       );
-      if (entityIds.length > 0) {
-        const rows = yield* onExec(exec, (handle) =>
-          identifiersRepoFx.listNaturalKeysInCase(handle, caseId, entityIds)
-        );
-        const keys = new Set(
-          rows.map((r) => `${r.entityId}\0${r.type}\0${r.platform}\0${r.value}`)
-        );
-        for (const { op, fp } of identifierOps) {
-          const d = op.data;
-          const entityId = patchOpEntityId(op);
-          const typeRaw =
-            typeof d.type === "string"
-              ? normalizeIdentifierTypeInput(d.type)
-              : undefined;
-          const valueRaw =
-            typeof d.value === "string"
-              ? trimmedOrUndefined(d.value)
-              : undefined;
-          if (
-            entityId === undefined ||
-            typeRaw === undefined ||
-            typeRaw === "" ||
-            valueRaw === undefined
-          )
-            continue;
-          if (!isOneOf(typeRaw, IDENTIFIER_TYPES)) continue;
-          const type = typeRaw;
-          const platform =
-            typeof d.platform === "string"
-              ? normalizeIdentifierPlatform(d.platform)
-              : "";
-          const value = normalizeIdentifierValue(type, valueRaw);
-          if (keys.has(`${entityId}\0${type}\0${platform}\0${value}`)) {
-            known.add(fp);
-          }
+      const keys = new Set(
+        rows.map((r) => `${r.entityId}\0${r.type}\0${r.platform}\0${r.value}`)
+      );
+      for (const { op, fp } of identifierOps) {
+        const { entityId, type } = op.data;
+        const platform = normalizeIdentifierPlatform(op.data.platform ?? "");
+        const value = normalizeIdentifierValue(type, op.data.value);
+        if (keys.has(`${entityId}\0${type}\0${platform}\0${value}`)) {
+          known.add(fp);
         }
       }
     }
 
     if (claimOps.length > 0) {
-      const entityIds = normalizeUuidList(
-        claimOps.flatMap((x) => {
-          const entityId = patchOpEntityId(x.op);
-          return entityId === undefined ? [] : [entityId];
-        })
+      const rows = yield* onExec(exec, (handle) =>
+        claimsRepoFx.listTextKeysInCase(handle, caseId, entityIdsOf(claimOps))
       );
-      if (entityIds.length > 0) {
-        const rows = yield* onExec(exec, (handle) =>
-          claimsRepoFx.listTextKeysInCase(handle, caseId, entityIds)
-        );
-        const keys = new Set(
-          rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
-        );
-        for (const { op, fp } of claimOps) {
-          const entityId = patchOpEntityId(op);
-          const text =
-            typeof op.data.text === "string"
-              ? (trimmedOrUndefined(op.data.text)?.toLowerCase() ?? null)
-              : null;
-          if (
-            entityId !== undefined &&
-            text !== null &&
-            keys.has(`${entityId}\0${text}`)
-          ) {
-            known.add(fp);
-          }
-        }
+      const keys = new Set(
+        rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
+      );
+      for (const { op, fp } of claimOps) {
+        if (keys.has(textKey(op))) known.add(fp);
       }
     }
 
     if (edgeOps.length > 0) {
-      const entityIds = normalizeUuidList(
-        edgeOps.flatMap((x) => patchOpRelatedEntityIds(x.op))
+      const rows = yield* onExec(exec, (handle) =>
+        edgesRepoFx.listNaturalKeysInCase(
+          handle,
+          caseId,
+          normalizeUuidList(
+            edgeOps.flatMap((x) => patchOpRelatedEntityIds(x.op))
+          )
+        )
       );
-      if (entityIds.length > 0) {
-        const rows = yield* onExec(exec, (handle) =>
-          edgesRepoFx.listNaturalKeysInCase(handle, caseId, entityIds)
-        );
-        const keys = new Set(
-          rows
-            .map((row) =>
-              edgePatchFingerprintKey({
-                fromId: row.fromId,
-                toId: row.toId,
-                predicate: row.predicate,
-                notes: row.notes,
-              })
-            )
-            .filter((key): key is string => key !== null)
-        );
-        for (const { op, fp } of edgeOps) {
-          const key = edgePatchFingerprintKey({
-            fromId:
-              typeof op.data.fromId === "string"
-                ? (parseTrimmedUuid(op.data.fromId) ?? "")
-                : "",
-            toId:
-              typeof op.data.toId === "string"
-                ? (parseTrimmedUuid(op.data.toId) ?? "")
-                : "",
-            predicate:
-              typeof op.data.predicate === "string"
-                ? (trimmedOrUndefined(op.data.predicate) ?? "")
-                : "",
-            notes: op.data.notes,
-          });
-          if (key !== null && keys.has(key)) known.add(fp);
-        }
+      const keys = new Set(
+        rows
+          .map((row) =>
+            edgePatchFingerprintKey({
+              fromId: row.fromId,
+              toId: row.toId,
+              predicate: row.predicate,
+              notes: row.notes,
+            })
+          )
+          .filter((key): key is string => key !== null)
+      );
+      for (const { op, fp } of edgeOps) {
+        const key = edgePatchFingerprintKey(op.data);
+        if (key !== null && keys.has(key)) known.add(fp);
       }
     }
 
     if (questionOps.length > 0) {
-      const entityIds = normalizeUuidList(
-        questionOps.flatMap((x) => {
-          const entityId = patchOpEntityId(x.op);
-          return entityId === undefined ? [] : [entityId];
-        })
+      const rows = yield* onExec(exec, (handle) =>
+        questionsRepoFx.listTextKeysInCase(
+          handle,
+          caseId,
+          entityIdsOf(questionOps)
+        )
       );
-      if (entityIds.length > 0) {
-        const rows = yield* onExec(exec, (handle) =>
-          questionsRepoFx.listTextKeysInCase(handle, caseId, entityIds)
-        );
-        const keys = new Set(
-          rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
-        );
-        for (const { op, fp } of questionOps) {
-          const entityId = patchOpEntityId(op);
-          const text =
-            typeof op.data.text === "string"
-              ? (trimmedOrUndefined(op.data.text)?.toLowerCase() ?? null)
-              : null;
-          if (
-            entityId !== undefined &&
-            text !== null &&
-            keys.has(`${entityId}\0${text}`)
-          ) {
-            known.add(fp);
-          }
-        }
+      const keys = new Set(
+        rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
+      );
+      for (const { op, fp } of questionOps) {
+        if (keys.has(textKey(op))) known.add(fp);
       }
     }
 
-    if (entityOps.length > 0) {
-      const slugs = [
-        ...new Set(
-          entityOps.flatMap((x) => {
-            if (typeof x.op.data.slug !== "string") return [];
-            const slug = slugifyName(x.op.data.slug);
-            return slug === "" ? [] : [slug];
-          })
-        ),
-      ];
-      if (slugs.length > 0) {
-        const rows = yield* onExec(exec, (handle) =>
-          entitiesRepoFx.listSlugsInCase(handle, caseId, slugs)
-        );
-        const keys = new Set(rows.map((r) => r.slug));
-        for (const { op, fp } of entityOps) {
-          const slug =
-            typeof op.data.slug === "string" ? slugifyName(op.data.slug) : "";
-          if (slug !== "" && keys.has(slug)) known.add(fp);
-        }
+    const sluggedOps = entityOps.flatMap(({ op, fp }) =>
+      op.kind === "entity.update" ? [] : [{ slug: op.data.slug, fp }]
+    );
+    if (sluggedOps.length > 0) {
+      const rows = yield* onExec(exec, (handle) =>
+        entitiesRepoFx.listSlugsInCase(handle, caseId, [
+          ...new Set(sluggedOps.map((x) => x.slug)),
+        ])
+      );
+      const keys = new Set(rows.map((r) => r.slug));
+      for (const { slug, fp } of sluggedOps) {
+        if (keys.has(slug)) known.add(fp);
       }
     }
   });
@@ -298,7 +206,7 @@ export function suppressKnownFindingsEffect(
     yield* markExistingInGraphEffect(
       exec,
       caseId,
-      fps.filter((x): x is { op: PatchOp; fp: string } => Boolean(x.fp)),
+      fps.filter((x): x is Fingerprinted => Boolean(x.fp)),
       known
     );
 

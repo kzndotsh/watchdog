@@ -30,13 +30,13 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Base UI `Button` + `render={<Link/>}` sets `nativeButton={false}`; no `<button>` in `<button>` | [`atoms.md`](atoms.md) | `guidance` (breaks as a hydration error) |
 | `DataTable`: every column sets `size`; tables use `isPending`, never `PendingRegion` | [`tables.md`](tables.md) | `guidance` |
 | `shared/ui` never fetches, mutates, or routes | [`atoms.md`](atoms.md) | `guidance` |
-| Uppercase tracked label is `Eyebrow` (`EYEBROW_CLASS` for a `className`-only slot); timeline marker is `TimelineDot` inside a `TimelineSpine` with `ml-2 pl-4`; a repeated arbitrary width is a named width token | [`atoms.md`](atoms.md#variants-not-overrides) | `guidance` (the token value is synced by `check:design-tokens`) |
+| Uppercase tracked label is `Eyebrow` (`EYEBROW_CLASS` for a `className`-only slot); timeline marker is `TimelineDot` inside a `TimelineSpine` with `ml-2 pl-4`; a repeated arbitrary width is a named width token | [`atoms.md`](atoms.md#variants-not-overrides) | `guidance` |
 
 ## Consistency
 
 | Rule | Where | Enforced by |
 | --- | --- | --- |
-| `packages/ui/src/components` is never hand-edited (change via `pnpm ui:add` / `ui:sync`) | [`vendor.md`](vendor.md) | `check:vendor` (sha256 lock; pre-commit and CI) |
+| `packages/ui/src/components` is never hand-edited (change via `pnpm ui:add` / `ui:sync`) | [`vendor.md`](vendor.md) | `check:vendor` (sha256 lock; `pnpm verify` and CI) |
 | A component with a Watchdog wrapper (Button, Dialog, AlertDialog, Combobox) is imported from `@/shared/ui/primitives/*`, not `@watchdog/ui` | [`vendor.md`](vendor.md) | `oxlint` `no-restricted-imports` (list follows the folder) + test `scripts/__tests__/oxlint-wrapper-lint-coverage.gate.test.ts` |
 | No raw palette hues, undeclared `--color-*`, or hex in SVG attributes | [`DESIGN.md`](../../../../DESIGN.md#colors) | `oxlint` `shadcn/no-raw-colors` |
 | No `text-[Npx]` or other off-scale arbitrary values (layout values allowed) | [`DESIGN.md`](../../../../DESIGN.md#typography) | `oxlint` `shadcn/no-arbitrary-values` |

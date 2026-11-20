@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { mnemonicLookup } from "../cap.ts";
 import { interpretMnemonicLookupReport } from "../interpret.ts";
 
@@ -34,11 +34,11 @@ describe("interpret", () => {
       input: { query: "8.8.8.8", entityId },
     });
     expect(result.patch.length).toBe(3);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("8.8.8.8");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("8.8.8.8");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
     expect(claimText(result, 2)).toMatch(/Mnemonic PDNS/);
   });
 
@@ -53,7 +53,7 @@ describe("interpret", () => {
       },
       { input: { query: "dns.google", entityId } }
     );
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(ids).toHaveLength(2);
     const types = ids.map((p) =>
       typeof p.data.type === "string" ? p.data.type : ""
@@ -77,10 +77,10 @@ describe("interpret", () => {
       { input: { query: "2001:db8::1", entityId } }
     );
     const ipIds = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "ip"
+      (p) => p.kind === "identifier.create" && p.data.type === "ip"
     );
     expect(ipIds).toHaveLength(1);
-    expect(ipIds[0]?.data.value).toBe("2001:db8::1");
+    expect(dataOf(ipIds[0]).value).toBe("2001:db8::1");
   });
 
   it("omits related-ip claim text when the only PDNS IP is the seed spelling", () => {
@@ -112,7 +112,7 @@ describe("interpret", () => {
     );
     expect(
       result.patch.filter(
-        (p) => p.resource === "identifier" && p.data.type === "domain"
+        (p) => p.kind === "identifier.create" && p.data.type === "domain"
       )
     ).toHaveLength(80);
     expect(String(result.summary)).toMatch(
@@ -132,7 +132,7 @@ describe("interpret", () => {
     );
     expect(
       result.patch.filter(
-        (p) => p.resource === "identifier" && p.data.type === "ip"
+        (p) => p.kind === "identifier.create" && p.data.type === "ip"
       )
     ).toHaveLength(81);
     expect(String(result.summary)).toMatch(

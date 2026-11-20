@@ -3,18 +3,19 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClaimRecord } from "@/domains/entities/claims/types";
-import { lastListRequest, memoryListPage } from "@/testing/memory-list";
+import { lastProcedureInput, memoryListProcedure } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildClaimRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const listClaimsPageFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/claims/claims.functions", () => ({
-  listClaimsPageFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { DisproveSection } from "@/domains/dossier/components/disprove-section";
+
+const listClaims = procedureDouble("claims.list");
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -31,9 +32,9 @@ const RETRACTED = buildClaimRecord({
 
 /** The Claim list on the "server": the `retracted` view, newest (highest id) first on `created.desc`. */
 function renderSection(claims: readonly ClaimRecord[]) {
-  listClaimsPageFn.mockReset();
-  listClaimsPageFn.mockImplementation(
-    memoryListPage(claims, {
+  listClaims.mockReset();
+  listClaims.mockImplementation(
+    memoryListProcedure(claims, {
       matches: (row, data) => row.retracted === (data.retracted === true),
       compare: (sort) => (a, b) =>
         sort === "created.desc"
@@ -52,7 +53,7 @@ describe("DisproveSection", () => {
   it("renders nothing when there are no retracted claims", async () => {
     const { container } = renderSection([]);
     await vi.waitFor(() => {
-      expect(listClaimsPageFn).toHaveBeenCalled();
+      expect(listClaims).toHaveBeenCalled();
     });
     expect(container).toBeEmptyDOMElement();
   });
@@ -64,7 +65,7 @@ describe("DisproveSection", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Former claim")).toHaveClass("line-through");
     expect(screen.getByText("Contradicted by intake")).toBeInTheDocument();
-    expect(lastListRequest(listClaimsPageFn)).toEqual({
+    expect(lastProcedureInput(listClaims)).toEqual({
       caseId: CASE_ID,
       entityId: ENTITY_ID,
       retracted: true,

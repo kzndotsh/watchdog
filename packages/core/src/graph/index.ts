@@ -4,7 +4,7 @@ export {
   type ApplyPatchOpts,
   type ApplyPatchTx,
 } from "./patch/apply-patch";
-export { parseAgentPatchEffect } from "./patch/parse-agent-patch";
+export { parseAgentPatch } from "./patch/parse-agent-patch";
 export type { IdentifierCollision } from "./identifier-collisions";
 export {
   createClaimEffect,

@@ -182,8 +182,7 @@ describe("organization isolation matrix", () => {
     ids.proposalA = (
       await seedProposal(testDb, caseA.id, [
         {
-          op: "create",
-          resource: "question",
+          kind: "question.create",
           id: testId(300),
           data: { entityId: ids.entityA, text: "Who is Alice?" },
         },
@@ -191,8 +190,7 @@ describe("organization isolation matrix", () => {
     ).id;
     await seedGraphWrite(testDb, caseA.id, [
       {
-        op: "create",
-        resource: "question",
+        kind: "question.create",
         id: testId(301),
         data: { entityId: ids.entityA, text: "Seed write" },
       },
@@ -377,8 +375,7 @@ describe("organization isolation matrix", () => {
           userOverride: true,
           patch: [
             {
-              op: "upsert",
-              resource: "entity",
+              kind: "entity.upsert",
               id,
               data: { kind: "person", name: "Racer", slug },
             },
@@ -599,8 +596,7 @@ describe("organization isolation matrix", () => {
         caseId: ids.caseA,
         patch: [
           {
-            op: "create",
-            resource: "question",
+            kind: "question.create",
             id: testId(n),
             data: { entityId: ids.entityA, text: `session only ${n}` },
           },

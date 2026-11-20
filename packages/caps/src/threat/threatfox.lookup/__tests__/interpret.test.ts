@@ -4,6 +4,7 @@ import { testId } from "@watchdog/test-kit";
 
 import {
   claimText,
+  dataOf,
   expectProposesIdentifier,
   itRejectsIncompleteReport,
 } from "../../../testing";
@@ -40,9 +41,9 @@ describe("interpret", () => {
     const result = interpretThreatfoxLookupReport(fixture, {
       input: { query: "1.2.3.4", entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("1.2.3.4");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("1.2.3.4");
     expect(claimText(result, 1)).toMatch(/abuse\.ch/);
     expect(claimText(result, 1)).toMatch(/Emotet/);
   });
@@ -59,7 +60,9 @@ describe("interpret", () => {
       { input: { query: "1.2.3.4", entityId } }
     );
     expectProposesIdentifier(result, { type: "ip", value: "1.2.3.4" });
-    expect(result.patch.filter((p) => p.resource === "claim")).toHaveLength(1);
+    expect(result.patch.filter((p) => p.kind === "claim.create")).toHaveLength(
+      1
+    );
     expect(claimText(result, 1)).toMatch(/0 IOC\(s\)/);
     expect(claimText(result, 1)).not.toMatch(/no IOC hits/);
   });
@@ -111,10 +114,10 @@ describe("interpret", () => {
       { input: { query: "evil.example", entityId } }
     );
     const domains = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "domain"
+      (p) => p.kind === "identifier.create" && dataOf(p).type === "domain"
     );
     expect(domains).toHaveLength(1);
-    expect(domains[0]?.data.value).toBe("cdn.evil.example");
+    expect(dataOf(domains[0]).value).toBe("cdn.evil.example");
   });
 
   it("strips ports from IPv6 IOCs before validation", () => {
@@ -142,7 +145,7 @@ describe("interpret", () => {
     );
     expectProposesIdentifier(result, { type: "ip", value: "2001:db8::1" });
     expect(
-      result.patch.filter((p) => p.resource === "identifier")
+      result.patch.filter((p) => p.kind === "identifier.create")
     ).toHaveLength(1);
   });
 
@@ -176,7 +179,7 @@ describe("interpret", () => {
     );
     expect(
       result.patch.filter(
-        (p) => p.resource === "identifier" && p.data.type === "ip"
+        (p) => p.kind === "identifier.create" && dataOf(p).type === "ip"
       )
     ).toHaveLength(1);
     expect(claimText(result, 1)).toMatch(/1 IOC\(s\)/);
@@ -215,11 +218,11 @@ describe("interpret", () => {
       { input: { query: "1.2.3.4", entityId } }
     );
     const ips = result.patch.filter(
-      (op) => op.resource === "identifier" && op.data.type === "ip"
+      (op) => op.kind === "identifier.create" && dataOf(op).type === "ip"
     );
     expect(
       ips
-        .map((op) => op.data.value)
+        .map((op) => dataOf(op).value)
         .filter((value): value is string => typeof value === "string")
         .sort((a, b) => a.localeCompare(b))
     ).toEqual(

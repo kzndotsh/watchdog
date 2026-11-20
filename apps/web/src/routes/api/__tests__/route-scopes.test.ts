@@ -34,6 +34,7 @@ const ROUTES = {
   },
   "v1.ts": { kind: "router" },
   "v1.$.ts": { kind: "router" },
+  "rpc.$.ts": { kind: "router" },
   "auth/$.ts": { kind: "no-key" },
   "client-errors.ts": { kind: "no-key" },
   "csp-report.ts": { kind: "no-key" },
@@ -78,7 +79,7 @@ describe("routes under routes/api that accept an API key", () => {
       } else if (route.kind === "router") {
         const source = read(file);
         // Procedures declare their scope in `.meta`; the router test enumerates them.
-        expect(source).toContain("handleOpenApiRequest");
+        expect(source).toMatch(/handleOpenApiRequest|handleRpcRequest/);
       } else {
         const source = read(file);
         expect(source).not.toContain("createApiContext");

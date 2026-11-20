@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { waybackFetch } from "../cap.ts";
 import { interpretWaybackFetchReport } from "../interpret.ts";
 
@@ -30,10 +30,10 @@ describe("interpret", () => {
         entityId,
       },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("url");
-    expect(result.patch[0]?.data.value).toBe("https://example.com");
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("url");
+    expect(dataOf(result.patch[0]).value).toBe("https://example.com");
+    expect(result.patch[1]?.kind).toBe("claim.create");
     expect(claimText(result, 1)).toMatch(/status=200/);
     expect(claimText(result, 1)).toMatch(/bytes=13/);
   });

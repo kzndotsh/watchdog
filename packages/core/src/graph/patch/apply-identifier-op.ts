@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
+import {
+  validateIdentifierWrite,
+  type PatchOpOf,
+} from "@watchdog/schemas/graph";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 import { assertEntityInCaseEffect } from "../../cases/access";
@@ -9,27 +12,23 @@ import type { Db } from "../../infra/db-service";
 import { identifiersRepoFx } from "../../infra/repos-fx";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { identifiersTable } from "../mutation/tables";
-import { decodeOpData, identifierOpData } from "./op-data";
 
 export function applyIdentifierOpEffect(
   w: JoinedGraphWriter,
-  op: PatchOp,
+  op: PatchOpOf<"identifier">,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyIdentifierOpGen() {
-    if (op.op !== "create" && op.op !== "upsert") {
-      return yield* new InvalidError({
-        reason: "identifier supports create/upsert",
-      });
-    }
-    const data = yield* decodeOpData(identifierOpData, op.data);
-    const { entityId, status, notes } = data;
+    const { entityId } = op.data;
+    const status = op.data.status ?? "unknown";
+    const notes = op.data.notes ?? null;
     yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
+    // A Cap may propose an imprecise value; the reviewer sees it flagged and Accept refuses it.
     const written = validateIdentifierWrite({
-      type: data.type,
-      value: data.value,
-      platform: data.platform,
+      type: op.data.type,
+      value: op.data.value,
+      platform: op.data.platform ?? "",
     });
     if (!written.ok) {
       return yield* new InvalidError({ reason: written.message });
@@ -41,7 +40,7 @@ export function applyIdentifierOpEffect(
       });
     }
 
-    if (op.op === "upsert") {
+    if (op.kind === "identifier.upsert") {
       const existing = yield* identifiersRepoFx.findByNaturalKey(w.tx, {
         entityId,
         type,

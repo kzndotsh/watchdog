@@ -98,8 +98,7 @@ function identifierToPatchOp(
   });
   if (!written.ok) return null;
   return {
-    op: "create",
-    resource: "identifier",
+    kind: "identifier.create",
     id: randomUUID(),
     evidenceIds,
     data: {
@@ -121,8 +120,7 @@ function claimToPatchOp(
   const text = trimmedOrUndefined(claim.text);
   if (text === undefined) return null;
   return {
-    op: "create",
-    resource: "claim",
+    kind: "claim.create",
     id: randomUUID(),
     evidenceIds,
     data: {
@@ -141,8 +139,7 @@ function questionToPatchOp(
   const text = trimmedOrUndefined(question.text);
   if (text === undefined) return null;
   return {
-    op: "create",
-    resource: "question",
+    kind: "question.create",
     id: randomUUID(),
     evidenceIds,
     data: {

@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 /**
- * Workspace packages affected by a diff, dependents included. Advisory, local
- * speed-up: `pnpm changed` lists them, `pnpm changed --run` typechecks and
- * unit-tests only those. It enforces no rule; `pnpm typecheck` / `pnpm test`
- * stay the full gates.
+ * Workspace packages affected by a diff, dependents included. `pnpm changed`
+ * lists them; `pnpm verify` (scripts/verify.mjs) imports the same selection to
+ * pick the tests it runs. It enforces no rule.
  *
  * Diff: merge-base with main (origin/main, then main) against the working tree,
  * plus untracked files. `--base <ref>` replaces the merge-base with another ref.
  * A root-level config change selects every package; a change outside any package
  * (docs, scripts, e2e) selects none.
  *
- * Usage: node scripts/changed-packages.mjs [--base <ref>] [--json] [--run]
+ * Usage: node scripts/changed-packages.mjs [--base <ref>] [--json]
  */
-import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -36,7 +34,7 @@ function asRecord(v) {
 }
 
 /** @param {string} dir */
-function readPackages(dir) {
+export function readPackages(dir) {
   /** @type {{ name: string; dir: string; deps: string[] }[]} */
   const pkgs = [];
   for (const parent of ["apps", "packages"]) {
@@ -92,57 +90,51 @@ export function affected(pkgs, files) {
     .sort((a, b) => a.dir.localeCompare(b.dir));
 }
 
-/** @param {string[]} argv */
-function main(argv) {
+/**
+ * The diff base from `--base <ref>`, else the merge base with main.
+ * @param {readonly string[]} argv
+ * @param {string} dir repo root
+ * @returns {string}
+ * @throws {Error} when `--base` has no ref, or no merge base with main exists
+ */
+export function diffBase(argv, dir) {
   const baseIdx = argv.indexOf("--base");
   const given = baseIdx === -1 ? undefined : argv[baseIdx + 1];
   if (baseIdx !== -1 && (given === undefined || given.startsWith("--"))) {
     throw new Error("--base needs a ref, e.g. --base origin/main");
   }
-  const base = given ?? mergeBaseWith("main", root);
+  const base = given ?? mergeBaseWith("main", dir);
   if (!base) {
     throw new Error("no merge base with main; pass --base <ref>");
   }
-  const files = [
+  return base;
+}
+
+/**
+ * Paths changed between `base` and the working tree, plus untracked files.
+ * @param {string} dir repo root
+ * @param {string} base
+ * @returns {string[]} repo-relative paths
+ */
+export function changedFiles(dir, base) {
+  return [
     ...new Set([
-      ...changedPaths([base], root),
-      ...lines(git(["ls-files", "--others", "--exclude-standard"], root)),
+      ...changedPaths([base], dir),
+      ...lines(git(["ls-files", "--others", "--exclude-standard"], dir)),
     ]),
   ];
-  const picked = affected(readPackages(root), files);
+}
 
+/** @param {string[]} argv */
+function main(argv) {
+  const picked = affected(
+    readPackages(root),
+    changedFiles(root, diffBase(argv, root))
+  );
   if (argv.includes("--json")) {
     console.log(JSON.stringify(picked, null, 2));
   } else {
     for (const p of picked) console.log(p.name);
-  }
-  if (!argv.includes("--run") || picked.length === 0) return 0;
-
-  const steps = [
-    [
-      "pnpm",
-      ...picked.flatMap((p) => ["--filter", p.name]),
-      "run",
-      "--if-present",
-      "typecheck",
-    ],
-    [
-      "pnpm",
-      "exec",
-      "vitest",
-      "run",
-      "--project",
-      "unit",
-      "--project",
-      "web-unit",
-      "--project",
-      "property",
-      ...picked.map((p) => p.dir),
-    ],
-  ];
-  for (const [cmd, ...args] of steps) {
-    const res = spawnSync(cmd, args, { cwd: root, stdio: "inherit" });
-    if (res.status !== 0) return res.status ?? 1;
   }
   return 0;
 }

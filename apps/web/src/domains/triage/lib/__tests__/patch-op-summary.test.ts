@@ -56,8 +56,7 @@ describe("summarizePatchOpData", () => {
     expect(
       summarizePatchOpData("question", {
         text: "Who registered the domain?",
-        resolvedNote: "Found in WHOIS",
       })
-    ).toBe("Who registered the domain? → Found in WHOIS");
+    ).toBe("Who registered the domain?");
   });
 });

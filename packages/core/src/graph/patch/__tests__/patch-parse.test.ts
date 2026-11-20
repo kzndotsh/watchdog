@@ -9,8 +9,7 @@ describe("patch-parse", () => {
   it("tryParsePatch rejects smuggled confidence on claim", () => {
     const result = tryParsePatch([
       {
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: opId,
         data: {
           entityId,
@@ -28,8 +27,7 @@ describe("patch-parse", () => {
   it("tryParsePatch rejects smuggled confidence on identifier", () => {
     const result = tryParsePatch([
       {
-        op: "create",
-        resource: "identifier",
+        kind: "identifier.create",
         id: opId,
         data: {
           entityId,
@@ -45,8 +43,7 @@ describe("patch-parse", () => {
   it("tryParsePatch accepts claim without confidence in data", () => {
     const result = tryParsePatch([
       {
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: opId,
         data: {
           entityId,

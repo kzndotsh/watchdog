@@ -12,11 +12,12 @@ import type { ChipTone } from "@/shared/ui/chip";
 import {
   patchOpVerbLabel,
   patchResourceLabel,
-  type PatchOp,
+  type PatchResource,
+  type PatchVerb,
 } from "@watchdog/schemas/graph";
 
-type Op = PatchOp["op"];
-type Resource = PatchOp["resource"];
+type Op = PatchVerb;
+type Resource = PatchResource;
 
 export const PATCH_OP_TONES: Record<Op, ChipTone> = {
   create: {

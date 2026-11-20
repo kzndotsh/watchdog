@@ -4,7 +4,7 @@ Watchdog is licensed under AGPL-3.0-only (see [LICENSE](LICENSE)). Its productio
 
 Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, lightningcss and similar) are omitted because the set depends on the machine. Their licenses are checked by `pnpm check:licenses`. `@img/sharp-libvips-*` is LGPL-3.0-or-later.
 
-804 packages.
+805 packages.
 
 ## (AFL-2.1 OR BSD-3-Clause) (1)
 
@@ -150,7 +150,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - yaml 2.9.1 (<https://eemeli.org/yaml/>)
 - yargs-parser 22.0.0 (<https://github.com/yargs/yargs-parser#readme>)
 
-## MIT (682)
+## MIT (683)
 
 - @astrojs/compiler-binding 0.5.1, 0.5.3 (<https://astro.build>)
 - @astrojs/compiler-rs 0.5.1, 0.5.3 (<https://astro.build>)
@@ -263,6 +263,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - @orpc/standard-server-fetch 1.16.3 (<https://orpc.dev>)
 - @orpc/standard-server-node 1.16.3 (<https://orpc.dev>)
 - @orpc/standard-server-peer 1.16.3 (<https://orpc.com>)
+- @orpc/tanstack-query 1.16.3 (<https://orpc.dev>)
 - @orpc/zod 1.16.3 (<https://orpc.dev>)
 - @oslojs/encoding 1.1.0 (<https://github.com/oslo-project/encoding#readme>)
 - @oxc-project/types 0.156.0 (<https://oxc.rs>)

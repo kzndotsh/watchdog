@@ -84,7 +84,8 @@ type WriteVerb<V> = {
  * when the screen re-renders for Case B before the server answers: the Case and
  * Entity come from the mutation variables fixed at `mutate`, never from what the
  * hook or screen holds when the answer lands. `serverFn` is the mocked server
- * function the hook calls.
+ * function the hook calls (`{ data: input }`), or with `isProcedure` the oRPC
+ * procedure double (`procedureDouble`, called with the input itself).
  *
  * `useVerb` receives `onDone`, which the test wires to the hook's success
  * callback; the helper then pins the order every hook inherited from the
@@ -98,12 +99,14 @@ export async function expectSettlesStartingCase<V>({
   variables,
   resolveWith = {},
   expectCallbackBeforeInvalidation = false,
+  isProcedure = false,
 }: {
   useVerb: (onDone: () => void) => WriteVerb<V>;
   serverFn: Mock;
   variables: V;
   resolveWith?: unknown;
   expectCallbackBeforeInvalidation?: boolean;
+  isProcedure?: boolean;
 }) {
   let finish: () => void = () => undefined;
   serverFn.mockReturnValue(
@@ -130,9 +133,10 @@ export async function expectSettlesStartingCase<V>({
   await waitFor(() => {
     expect(serverFn).toHaveBeenCalledTimes(1);
   });
-  expect(serverFn).toHaveBeenCalledWith({
-    data: expect.objectContaining({ caseId: CASE_A }),
-  });
+  const startedIn = expect.objectContaining({ caseId: CASE_A });
+  expect(serverFn).toHaveBeenCalledWith(
+    isProcedure ? startedIn : { data: startedIn }
+  );
   expect(invalidated(CASE_A)).toEqual(settledKeys(CASE_A).map(() => false));
 
   await act(async () => {

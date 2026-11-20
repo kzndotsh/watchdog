@@ -2,6 +2,11 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { render, screen } from "@/testing/render-in-case";
+import {
+  buildClaimCreateOp,
+  buildEntityCreateOp,
+  buildIdentifierCreateOp,
+} from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -20,6 +25,17 @@ vi.mock("@tanstack/react-router", () => ({
 
 import { PatchOpList } from "@/domains/triage/components/patch-op-list";
 
+const ENTITY = testId(50);
+
+/** Thirty domain Identifier ops on one Entity (`h0.acme.test` …). */
+function domainOps() {
+  return Array.from({ length: 30 }, (_, i) =>
+    buildIdentifierCreateOp(ENTITY, "domain", `h${i}.acme.test`, {
+      id: testId(10 + i),
+    })
+  );
+}
+
 describe("PatchOpList", () => {
   it("renders empty patch copy and populated change rows", () => {
     const { rerender } = render(<PatchOpList patch={[]} />);
@@ -28,12 +44,7 @@ describe("PatchOpList", () => {
     rerender(
       <PatchOpList
         patch={[
-          {
-            id: testId(1),
-            op: "create",
-            resource: "claim",
-            data: { text: "Observed alias" },
-          },
+          buildClaimCreateOp(ENTITY, "Observed alias", { id: testId(1) }),
         ]}
         jobId={testId(99)}
       />
@@ -48,18 +59,10 @@ describe("PatchOpList", () => {
     render(
       <PatchOpList
         patch={[
-          {
-            id: testId(2),
-            op: "create",
-            resource: "entity",
-            data: { kind: "person", name: "Acme" },
-          },
-          {
+          buildEntityCreateOp("Acme", "acme", "person", { id: testId(2) }),
+          buildIdentifierCreateOp(ENTITY, "email", "ops@acme.test", {
             id: testId(3),
-            op: "create",
-            resource: "identifier",
-            data: { type: "email", value: "ops@acme.test" },
-          },
+          }),
         ]}
       />
     );
@@ -73,18 +76,8 @@ describe("PatchOpList", () => {
     render(
       <PatchOpList
         patch={[
-          ...Array.from({ length: 30 }, (_, i) => ({
-            id: testId(10 + i),
-            op: "create" as const,
-            resource: "identifier" as const,
-            data: { type: "domain", value: `h${i}.acme.test` },
-          })),
-          {
-            id: testId(99),
-            op: "create",
-            resource: "claim",
-            data: { text: "CT for acme.test" },
-          },
+          ...domainOps(),
+          buildClaimCreateOp(ENTITY, "CT for acme.test", { id: testId(99) }),
         ]}
       />
     );
@@ -101,17 +94,7 @@ describe("PatchOpList", () => {
   });
 
   it("opens a large group that holds a flagged op and shows that op first", () => {
-    render(
-      <PatchOpList
-        patch={Array.from({ length: 30 }, (_, i) => ({
-          id: testId(10 + i),
-          op: "create" as const,
-          resource: "identifier" as const,
-          data: { type: "domain", value: `h${i}.acme.test` },
-        }))}
-        collidingOpIds={[testId(25)]}
-      />
-    );
+    render(<PatchOpList patch={domainOps()} collidingOpIds={[testId(25)]} />);
 
     expect(screen.getByText("1 flagged")).toBeInTheDocument();
     const rows = screen.getAllByText(/^Domain: /);
@@ -120,12 +103,7 @@ describe("PatchOpList", () => {
   });
 
   it("opens a collapsed group when one of its ops becomes flagged", () => {
-    const patch = Array.from({ length: 30 }, (_, i) => ({
-      id: testId(10 + i),
-      op: "create" as const,
-      resource: "identifier" as const,
-      data: { type: "domain", value: `h${i}.acme.test` },
-    }));
+    const patch = domainOps();
     const { rerender } = render(<PatchOpList patch={patch} />);
     const name = "Domain Identifiers (30)";
     expect(screen.getByRole("button", { name })).toHaveAttribute(

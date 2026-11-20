@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { dataOf } from "../../../testing";
 import { interpretProcessDraft } from "../process-shared.ts";
 
 describe("interpret-process", () => {
@@ -23,8 +24,8 @@ describe("interpret-process", () => {
     );
     expect(result.markSourceProcessed).toBe(true);
     expect(result.patch.length >= 1).toBeTruthy();
-    expect(result.patch[0].resource).toBe("identifier");
-    expect(result.patch[0].data.value).toBe("a@b.co");
+    expect(result.patch[0].kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).value).toBe("a@b.co");
   });
 
   it("interpretProcessDraft uses snapshotEntityId when input omits entity", () => {
@@ -40,7 +41,7 @@ describe("interpret-process", () => {
       },
       empty
     );
-    expect(result.patch[0].data.entityId).toBe(entityId);
+    expect(dataOf(result.patch[0]).entityId).toBe(entityId);
     expect(result.markSourceProcessed).toBe(true);
   });
 
@@ -109,9 +110,9 @@ describe("interpret-process", () => {
       empty
     );
     expect(
-      result.patch.filter((op) => op.resource === "identifier")
+      result.patch.filter((op) => op.kind === "identifier.create")
     ).toHaveLength(1);
-    expect(result.patch[0].data.type).toBe("email");
+    expect(dataOf(result.patch[0]).type).toBe("email");
   });
 
   it("interpretProcessDraft rejects invalid entityId", () => {

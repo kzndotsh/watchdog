@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { hudsonrockLookup } from "../cap.ts";
 import { interpretHudsonrockLookupReport } from "../interpret.ts";
 
@@ -23,10 +23,10 @@ describe("interpret", () => {
     const result = interpretHudsonrockLookupReport(fixture, {
       input: { query: fixture.query, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("email");
-    expect(result.patch[0]?.data.value).toBe("victim@example.com");
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("email");
+    expect(dataOf(result.patch[0]).value).toBe("victim@example.com");
+    expect(result.patch[1]?.kind).toBe("claim.create");
     expect(claimText(result, 1)).toMatch(/Hudson Rock/);
     expect(claimText(result, 1)).toMatch(/infostealer exposure/);
     expect(claimText(result, 1)).toMatch(/2 exposure record\(s\)/);

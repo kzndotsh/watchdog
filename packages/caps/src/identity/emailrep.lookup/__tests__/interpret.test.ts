@@ -46,7 +46,7 @@ describe("interpret", () => {
     expect(claimText(result, 1)).toMatch(/lastSeen=07\/01\/23/);
     expect(claimText(result, 1)).toMatch(/profiles=twitter/);
     const handles = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "handle"
+      (p) => p.kind === "identifier.create" && p.data.type === "handle"
     );
     expect(handles).toHaveLength(0);
   });
