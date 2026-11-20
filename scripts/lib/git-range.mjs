@@ -1,8 +1,9 @@
 /**
  * Shared git helpers for gate scripts (validate-agents, changed-packages, the
  * Cursor stop hook). One rule: a git failure is never read as "nothing changed". Every
- * helper here THROWS (with git's stderr) instead of returning an empty answer, so
- * a gate that calls them fails loudly when its diff is broken. Callers decide
+ * helper here THROWS (with git's stderr) instead of returning an empty answer, except
+ * `tryGit`, which returns null for probes where failure is a real answer (does this ref
+ * exist?), so a gate that calls them fails loudly when its diff is broken. Callers decide
  * how to surface the error (the gates `die`; the stop hook deliberately fails open).
  */
 import { spawnSync } from "node:child_process";
