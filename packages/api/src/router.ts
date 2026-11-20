@@ -71,6 +71,7 @@ export const router = {
   },
   identifiers: {
     list: identifiers.list,
+    typeCounts: identifiers.typeCounts,
     getMany: identifiers.getMany,
     create: identifiers.create,
     update: identifiers.update,

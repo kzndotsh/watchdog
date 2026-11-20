@@ -27,6 +27,9 @@ type ListTableProps<
   readonly appendRow?: ReactNode;
   /** The screen's add action for "No <noun> yet". */
   readonly blankSlateAction?: ReactNode;
+  /** Row ids shown expanded, and their content (`DataTable`'s expandable rows). */
+  readonly expandedRowIds?: ReadonlySet<string>;
+  readonly renderExpanded?: (row: Item) => ReactNode;
 };
 
 /**
@@ -48,6 +51,8 @@ export function ListTable<
   getRowActions,
   appendRow,
   blankSlateAction,
+  expandedRowIds,
+  renderExpanded,
 }: ListTableProps<D, Item, K>) {
   const { status, def } = list;
   let empty: ReactNode = null;
@@ -94,6 +99,8 @@ export function ListTable<
         onRowClick={onRowClick}
         getRowActions={getRowActions}
         appendRow={appendRow}
+        expandedRowIds={expandedRowIds}
+        renderExpanded={renderExpanded}
       />
       <ListFooter
         status={status}

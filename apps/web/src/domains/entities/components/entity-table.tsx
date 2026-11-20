@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback } from "react";
 
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { loadEntityIdentifiersPreview } from "@/domains/entities/components/entity-identifiers-preview-load";
 import { EntityTableActionsProvider } from "@/domains/entities/components/entity-table.columns";
 import {
   useEntityTable,
@@ -21,6 +22,7 @@ import {
 } from "@/shared/ui/data-table";
 import { ListCount, ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
+import { LoadingRegion, TableBodySkeletonLayout } from "@/shared/ui/skeletons";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import { trimmedEntityKindSchema } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
@@ -32,6 +34,18 @@ const LoadedDeleteDialog = lazy(async () => {
     await import("@/domains/entities/components/delete-entity-dialog");
   return { default: DeleteEntityDialog };
 });
+
+// An expanded row's Identifiers load on the first expand (warmed on the button's hover or focus).
+const LoadedIdentifiersPreview = lazy(async () => {
+  const { EntityIdentifiersPreview } = await loadEntityIdentifiersPreview();
+  return { default: EntityIdentifiersPreview };
+});
+
+const PREVIEW_FALLBACK = (
+  <LoadingRegion label="Loading identifiers">
+    <TableBodySkeletonLayout rows={2} columns={2} />
+  </LoadingRegion>
+);
 
 type EntityTableActiveProps = EntityTableSearch & { active: CaseRecord };
 
@@ -57,6 +71,7 @@ function EntityTableActive({
     caseId,
     deleteTarget,
     setDeleteTarget,
+    expandedIds,
   } = useEntityTable(active, { search, onSearchChange });
 
   const getRowActions = useCallback(
@@ -180,6 +195,12 @@ function EntityTableActive({
           blankSlateAction={createButton}
           getRowActions={getRowActions}
           onRowClick={onRowClick}
+          expandedRowIds={expandedIds}
+          renderExpanded={(row) => (
+            <Suspense fallback={PREVIEW_FALLBACK}>
+              <LoadedIdentifiersPreview caseId={caseId} entityId={row.id} />
+            </Suspense>
+          )}
         />
       </EntityTableActionsProvider>
 

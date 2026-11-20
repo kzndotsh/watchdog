@@ -8,6 +8,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import type { EntityListItem } from "@/domains/entities/types";
 import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
 import {
+  buildCaseIdentifierRecord,
   buildEntityListConnection,
   buildEntityListItem,
 } from "@/testing/records";
@@ -50,7 +51,17 @@ const edgeReads = vi.hoisted(() => ({
   deleteEdgeFn: vi.fn(),
 }));
 
+// An expanded row reads its Entity's Identifier counts by type, then each open group's page.
+const identifierReads = vi.hoisted(() => ({
+  listIdentifiersPageFn: vi.fn(),
+  countIdentifierTypesFn: vi.fn(),
+}));
+
 vi.mock("@/domains/entities/entities.functions", () => entityReads);
+vi.mock(
+  "@/domains/entities/identifiers/identifiers.functions",
+  () => identifierReads
+);
 vi.mock("@/domains/entities/edges/edges.functions", () => edgeReads);
 
 import { EntityTable } from "@/domains/entities/components/entity-table";
@@ -349,5 +360,60 @@ describe("EntityTable (the list standard)", () => {
       expect.objectContaining({ kind: undefined })
     );
     expect(await screen.findByText("Showing 2")).toBeInTheDocument();
+  });
+
+  it("expands a row into its Entity's Identifiers grouped by type, read only when opened", async () => {
+    const user = userEvent.setup();
+    const [first] = entities(2);
+    if (first === undefined) throw new Error("no Entity");
+    const emails = [0, 1].map((n) =>
+      buildCaseIdentifierRecord({
+        id: testId(5000 + n),
+        entityId: first.id,
+        type: "email",
+        value: `ops${n}@example.com`,
+      })
+    );
+    identifierReads.countIdentifierTypesFn.mockReset();
+    identifierReads.countIdentifierTypesFn.mockResolvedValue({
+      counts: [
+        { type: "domain", count: 40 },
+        { type: "email", count: 2 },
+      ],
+      isCapped: false,
+    });
+    identifierReads.listIdentifiersPageFn.mockReset();
+    identifierReads.listIdentifiersPageFn.mockImplementation(
+      memoryListPage(emails, {
+        pageSize: PAGE_SIZE,
+        matches: (row, data) =>
+          matchesChoice(row.type, data.type) && data.entityId === row.entityId,
+        compare: () => (a, b) => a.value.localeCompare(b.value),
+      })
+    );
+    renderPage(entities(2));
+    const expand = await screen.findByRole("button", {
+      name: `Show identifiers of ${first.name}`,
+    });
+    expect(identifierReads.countIdentifierTypesFn).not.toHaveBeenCalled();
+
+    await user.click(expand);
+
+    expect(
+      await screen.findByRole("button", { name: "Domain (40)" })
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(await screen.findByText("ops1@example.com")).toBeInTheDocument();
+    expect(identifierReads.countIdentifierTypesFn).toHaveBeenCalledWith({
+      data: { caseId: ACTIVE.id, entityId: first.id },
+    });
+    expect(identifierReads.listIdentifiersPageFn).toHaveBeenCalledTimes(1);
+    expect(identifierReads.listIdentifiersPageFn).toHaveBeenCalledWith({
+      data: { caseId: ACTIVE.id, entityId: first.id, type: ["email"] },
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: `Hide identifiers of ${first.name}` })
+    );
+    expect(screen.queryByText("ops1@example.com")).not.toBeInTheDocument();
   });
 });

@@ -3,6 +3,12 @@ import { Effect } from "effect";
 import { identifierListRepo } from "@watchdog/db";
 import type { IdentifierListPageRow } from "@watchdog/db";
 import { identifierList } from "@watchdog/schemas/graph";
+import type { IdentifierTypeCounts } from "@watchdog/schemas/graph";
+import {
+  IDENTIFIER_TYPES,
+  LIST_TOTAL_CAP,
+  opsOf,
+} from "@watchdog/schemas/shared";
 import type {
   CaseId,
   ListInput,
@@ -13,7 +19,11 @@ import type {
 import { assertCaseInOrgEffect } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import {
+  listByIdsEffect,
+  listCountsByEffect,
+  listPageEffect,
+} from "../infra/list-page";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { toCaseIdentifierRecord } from "./identifiers";
 import type { CaseIdentifierRecord } from "./identifiers";
@@ -70,5 +80,34 @@ export function getIdentifiersByIdsEffect(
       toItems: identifierItems,
     });
     return [...items];
+  });
+}
+
+/**
+ * The Identifiers the list's filters and `q` match, per type (`identifiers.typeCounts`): the
+ * headers of an Entity's Identifiers grouped by type, so each group's count is right before its
+ * rows are read. Cursor, limit and sort in `input` are ignored.
+ */
+export function countIdentifiersByTypeEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: ListInput<typeof identifierList>
+): Effect.Effect<IdentifierTypeCounts, DomainTag, Db> {
+  return Effect.gen(function* countIdentifiersByTypeGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const { counts, isCapped } = yield* listCountsByEffect({
+      repo: identifierListRepo,
+      scope: { caseId: scopedCaseId },
+      query: opsOf(identifierList).queryOf(input),
+      key: "type",
+      cap: LIST_TOTAL_CAP,
+    });
+    return {
+      counts: counts.flatMap((row) => {
+        const type = IDENTIFIER_TYPES.find((known) => known === row.value);
+        return type === undefined ? [] : [{ type, count: row.count }];
+      }),
+      isCapped,
+    };
   });
 }

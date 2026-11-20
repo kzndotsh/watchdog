@@ -1,7 +1,9 @@
 export type { ListAfter } from "./_keyset";
 export type {
   AnyListRepo,
+  ChoicesKey,
   ListIndexNeeds,
+  ListChoiceCount,
   ListPageWindow,
   ListRepo,
   ListRow,

@@ -33,6 +33,8 @@ const ENTITY_ACTIONS: EntityTableActions = {
   onCopyEntityLink: vi.fn(),
   onCopyEntityMarkdown: vi.fn(),
   onDeleteEntity: vi.fn(),
+  expandedIds: new Set(),
+  toggleExpanded: vi.fn(),
 };
 
 const NO_EVIDENCE = {

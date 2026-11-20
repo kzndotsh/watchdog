@@ -12,6 +12,8 @@ import {
 } from "./enums";
 import { caseIdSchema } from "./ids";
 import { listPageSchema } from "./lists/list-page";
+import { boundedListSchema } from "./pagination";
+import { IDENTIFIER_TYPES } from "./vocab";
 
 export const entitySchema = z.object({
   id: z.uuid(),
@@ -143,6 +145,23 @@ export const identifierListPageSchema = listPageSchema(caseIdentifierSchema);
 export const claimListPageSchema = listPageSchema(claimSchema);
 export const eventListPageSchema = listPageSchema(eventSchema);
 export const questionListPageSchema = listPageSchema(questionSchema);
+
+/**
+ * `identifiers.typeCounts`: the Identifiers the list's filters and `q` match, per type (one
+ * Entity's, with `entityId`), types with none left out. Counted over the first
+ * `LIST_TOTAL_CAP + 1` matching rows: `isCapped` means the counts stop there.
+ */
+export const identifierTypeCountsSchema = z.object({
+  counts: boundedListSchema(
+    z.object({
+      type: identifierTypeSchema,
+      count: z.number().int().positive(),
+    }),
+    IDENTIFIER_TYPES.length
+  ),
+  isCapped: z.boolean(),
+});
+export type IdentifierTypeCounts = z.infer<typeof identifierTypeCountsSchema>;
 export const edgeListPageSchema = listPageSchema(caseEdgeSchema);
 
 /** An Entity picker's item (#573): label parts and kind, no notes, counts or Connection. */
