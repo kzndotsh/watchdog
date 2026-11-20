@@ -18,7 +18,6 @@ import { queueExpireSeconds, gracefulStopTimeoutMs } from "./timeouts";
 export {
   JobQueueWorker,
   queueAbortOf,
-  type QueueAbort,
   type QueuedJob,
 } from "./job-queue-worker";
 
@@ -45,7 +44,7 @@ const QUEUE_HEARTBEAT_SECONDS = 60;
  * after the cancel commits finds the delivery gone and aborts `job.signal` (#722). One small
  * UPDATE per running delivery per refresh.
  */
-export const QUEUE_HEARTBEAT_REFRESH_SECONDS = 2;
+const QUEUE_HEARTBEAT_REFRESH_SECONDS = 2;
 const QUEUE_WARNING_SIZE = 100;
 /** A producer holds no handlers to drain: only in-flight sends settle. */
 const PRODUCER_STOP_TIMEOUT_MS = 5000;
