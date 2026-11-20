@@ -338,11 +338,3 @@ export function getJobForCaseEffect(
     return toJobRecord(row.job, row, users);
   });
 }
-
-export function findCancelledJobIdsEffect(
-  ids: string[]
-): Effect.Effect<string[], DomainTag, Db> {
-  const normalized = normalizeUuidList(ids);
-  if (normalized.length === 0) return Effect.succeed([]);
-  return jobsRepoFxDb.findCancelledJobIds(normalized);
-}

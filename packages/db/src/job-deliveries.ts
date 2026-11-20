@@ -31,3 +31,28 @@ export async function listQueuedJobsWithoutDelivery(exec: DbExec) {
       )
     );
 }
+
+/** A pending pg-boss delivery: its pg-boss id and the queue (lane) it waits in. */
+export type PendingJobDelivery = {
+  readonly id: string;
+  readonly queue: string;
+};
+
+/**
+ * The pending (`created`, `retry` or `active`) pg-boss deliveries of the given Jobs, found by
+ * `singleton_key` = Job id, so a cancel can cancel them through pg-boss in its own transaction
+ * (#722). Read on `exec`, so a delivery inserted in the same transaction is seen.
+ */
+export async function listPendingJobDeliveries(
+  exec: DbExec,
+  jobIds: readonly string[]
+): Promise<PendingJobDelivery[]> {
+  if (jobIds.length === 0) return [];
+  const rows = await exec.execute<{ id: string; queue: string }>(
+    sql`select delivery.id::text as id, delivery.name as queue
+        from pgboss.job delivery
+        where delivery.singleton_key in ${[...jobIds]}
+          and delivery.state in ('created', 'retry', 'active')`
+  );
+  return rows.map((row) => ({ id: row.id, queue: row.queue }));
+}

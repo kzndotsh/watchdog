@@ -236,7 +236,7 @@ export function tombstoneInTx(
   actor: CaseActor,
   now: Date,
   purgeAfter: Date
-): Effect.Effect<CancelOutcome, DomainTag> {
+): Effect.Effect<CancelOutcome, DomainTag, JobQueue> {
   return Effect.gen(function* tombstoneInTxGen() {
     const actorId = optionalActorId(actor.actorId);
     yield* recordDeletionEventEffect(tx, row, "deleted", {

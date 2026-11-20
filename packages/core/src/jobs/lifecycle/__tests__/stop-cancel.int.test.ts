@@ -15,6 +15,7 @@ import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
+  listJobDeliveryStates,
   resetActorAccess,
   resetTestDb,
   seedCase,
@@ -31,9 +32,16 @@ import { recordingBlobStore } from "../../../infra/blob-store.ts";
 import { Db } from "../../../infra/db-service.ts";
 import { transact } from "../../../infra/postgres-tx.ts";
 import { vaultLayer } from "../../../infra/vault.ts";
+import { enqueueCapJobEffect } from "../../boss.ts";
 import { cancelJobEffect } from "../../cancel-jobs.ts";
 import { JobFibers } from "../../job-fibers.ts";
-import { recordingJobQueue } from "../../job-queue.ts";
+import {
+  JobQueueWorker,
+  jobQueueProducerLayer,
+  jobQueueWorkerLayer,
+  recordingJobQueue,
+} from "../../job-queue.ts";
+import { interruptOnQueueSignal } from "../../queue-signal.ts";
 import { executeJobOnMap } from "../../run-job.ts";
 import { cancelWithin } from "../cancel.ts";
 import { stop } from "../stop.ts";
@@ -264,11 +272,11 @@ describe("cancel: a person or a Case delete ends open Jobs", () => {
     const advances = spyOnAdvances();
 
     await program(
-      Effect.gen(function* cancelPollGen() {
+      Effect.gen(function* cancelElsewhereGen() {
         const running = yield* Effect.forkChild(executeJobOnMap(job.id));
         yield* Effect.promise(() => capStarted);
         // Another process cancelled the Job and has run its own follow-up: here only the row
-        // changed, as the cancel poll sees it.
+        // changed, and the pg-boss signal then aborts the attempt (`claim_lost`).
         yield* transact((tx) =>
           cancelWithin(
             tx,
@@ -276,7 +284,7 @@ describe("cancel: a person or a Case delete ends open Jobs", () => {
             "user_cancelled"
           )
         ).pipe(Effect.orDie);
-        yield* stop({ kind: "job", jobId: job.id }, "user_cancelled");
+        yield* stop({ kind: "job", jobId: job.id }, "queue_aborted");
         yield* Fiber.join(running);
       })
     );
@@ -367,5 +375,159 @@ describe("stop: sources without a transaction", () => {
     // The next step is independent of the stopped one: the run advanced to it.
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     expect(members.find((j) => j.playbookStep === 1)?.status).toBe("queued");
+  });
+});
+
+describe("cancel through pg-boss: the delivery is cancelled in the cancel transaction (#722)", () => {
+  /** What a cancel must reach a running attempt within, from its commit. */
+  const CANCEL_LATENCY_TARGET_MS = 5000;
+
+  // The worker: a real pg-boss worker runs the Job, as `apps/worker` does.
+  const worker = Layer.mergeAll(
+    baseServices,
+    JobFibers.layer,
+    jobQueueWorkerLayer
+  );
+  // Another process (the web): its own pg-boss producer, and no Job fibers to abort locally.
+  const web = Layer.mergeAll(Db.layer, jobQueueProducerLayer);
+
+  function inWeb<A, E>(
+    effect: Effect.Effect<A, E, Layer.Success<typeof web>>
+  ): Promise<A> {
+    return Effect.runPromise(effect.pipe(Effect.provide(web), Effect.scoped));
+  }
+
+  async function seedHungJob() {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, {
+      capabilityId: "network.dns.lookup",
+      input: { host: HANG_HOST },
+      status: "queued",
+    });
+    return { cased, job };
+  }
+
+  /** Run the worker on the quick lane, queue `jobId`, and wait until its Cap body runs. */
+  const startAttempt = (jobId: string, capabilityId: string) =>
+    Effect.gen(function* startAttemptGen() {
+      const capStarted = untilCapStarts();
+      const queueWorker = yield* JobQueueWorker;
+      const context = yield* Effect.context<Layer.Success<typeof worker>>();
+      const runBatch = Effect.runPromiseWith(context);
+      yield* queueWorker.work(
+        { lane: "quick", localConcurrency: 1, pollingIntervalSeconds: 0.5 },
+        (jobs) =>
+          runBatch(
+            Effect.forEach(
+              jobs,
+              (job) => {
+                const id = (job.data as { jobId: string }).jobId;
+                return interruptOnQueueSignal(job, id, executeJobOnMap(id));
+              },
+              { discard: true }
+            )
+          )
+      );
+      yield* transact((tx) => enqueueCapJobEffect(tx, jobId, capabilityId));
+      yield* Effect.promise(() => capStarted);
+    }).pipe(Effect.orDie);
+
+  function untilNotRunning(jobId: string, timeoutMs: number) {
+    return Effect.gen(function* untilNotRunningGen() {
+      const fibers = yield* JobFibers;
+      yield* Effect.promise(() =>
+        vi.waitFor(
+          () => {
+            if (fibers.listIds().includes(jobId)) {
+              throw new Error(`Job ${jobId} still runs here`);
+            }
+          },
+          { timeout: timeoutMs, interval: 50 }
+        )
+      );
+    });
+  }
+
+  it("a cancel committed in another process aborts the running attempt within the target", async () => {
+    const { cased, job } = await seedHungJob();
+
+    const latencyMs = await Effect.gen(function* latencyGen() {
+      yield* startAttempt(job.id, job.capabilityId);
+      expect(
+        yield* Effect.promise(() => listJobDeliveryStates(db, job.id))
+      ).toEqual(["active"]);
+      const committedAt = performance.now();
+      yield* Effect.promise(() =>
+        inWeb(
+          cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id).pipe(
+            Effect.orDie
+          )
+        )
+      );
+      yield* untilNotRunning(job.id, CANCEL_LATENCY_TARGET_MS * 2);
+      return performance.now() - committedAt;
+    }).pipe(Effect.provide(worker), Effect.scoped, Effect.runPromise);
+
+    expect(latencyMs).toBeLessThan(CANCEL_LATENCY_TARGET_MS);
+    const row = await jobsRepo.get(db, job.id);
+    expect(row?.status).toBe("cancelled");
+    expect(row?.errorCode).toBe("user_cancelled");
+    expect(await terminalEntries(job.id)).toHaveLength(1);
+    expect(await listJobDeliveryStates(db, job.id)).toEqual(["cancelled"]);
+  }, 30_000);
+
+  it("a rolled-back cancel transaction leaves the delivery active and the attempt running", async () => {
+    const { cased, job } = await seedHungJob();
+
+    await Effect.gen(function* rolledBackGen() {
+      const fibers = yield* JobFibers;
+      yield* startAttempt(job.id, job.capabilityId);
+      const attempt = yield* Effect.promise(() =>
+        inWeb(
+          Effect.exit(
+            transact((tx) =>
+              cancelWithin(
+                tx,
+                { kind: "case", caseId: cased.id },
+                "case_deleted"
+              ).pipe(
+                Effect.andThen(new InternalError({ reason: "roll it back" }))
+              )
+            )
+          )
+        )
+      );
+      expect(Exit.isFailure(attempt)).toBe(true);
+      expect(
+        yield* Effect.promise(() => listJobDeliveryStates(db, job.id))
+      ).toEqual(["active"]);
+      // Longer than a heartbeat refresh: a cancelled delivery would have aborted the attempt by now.
+      yield* Effect.sleep(CANCEL_LATENCY_TARGET_MS);
+      expect(fibers.listIds()).toEqual([job.id]);
+      expect(
+        (yield* Effect.promise(() => jobsRepo.get(db, job.id)))?.status
+      ).toBe("running");
+      yield* stop({ kind: "running" }, "worker_shutdown");
+      yield* untilNotRunning(job.id, CANCEL_LATENCY_TARGET_MS);
+    }).pipe(Effect.provide(worker), Effect.scoped, Effect.runPromise);
+
+    expect((await jobsRepo.get(db, job.id))?.errorCode).toBe("worker_shutdown");
+  }, 30_000);
+
+  it("a cancel of a queued Job cancels its pending delivery", async () => {
+    const { cased, job } = await seedHungJob();
+    await inWeb(
+      transact((tx) => enqueueCapJobEffect(tx, job.id, job.capabilityId)).pipe(
+        Effect.orDie
+      )
+    );
+    expect(await listJobDeliveryStates(db, job.id)).toEqual(["created"]);
+
+    await inWeb(
+      cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id).pipe(Effect.orDie)
+    );
+
+    expect((await jobsRepo.get(db, job.id))?.status).toBe("cancelled");
+    expect(await listJobDeliveryStates(db, job.id)).toEqual(["cancelled"]);
   });
 });

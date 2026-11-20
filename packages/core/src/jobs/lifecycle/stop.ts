@@ -11,7 +11,7 @@ export type StopSelector =
 
 /**
  * Stop Jobs this worker runs, from a source that has no transaction open (graceful shutdown, the
- * pg-boss signal, the cancel poll). It records `cause` in each attempt's stop slot (the first
+ * pg-boss signal). It records `cause` in each attempt's stop slot (the first
  * source to offer wins) and interrupts the fiber; the attempt's release does the rest: one
  * settle with the cause, one activity entry and the Playbook advance. A Job that no fiber here
  * runs is left alone. Returns how many fibers it stopped.

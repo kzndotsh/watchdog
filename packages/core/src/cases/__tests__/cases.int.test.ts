@@ -35,7 +35,11 @@ import {
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 const runWithBlobs = runDomainWith(
-  Layer.mergeAll(Db.layer, recordingBlobStore().layer)
+  Layer.mergeAll(
+    Db.layer,
+    recordingBlobStore().layer,
+    recordingJobQueue().layer
+  )
 );
 
 async function seedOwner(organizationId = TEST_ORGANIZATION_ID) {

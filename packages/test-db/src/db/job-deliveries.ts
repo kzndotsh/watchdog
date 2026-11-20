@@ -33,3 +33,14 @@ export async function deleteJobDeliveries(
     sql`delete from pgboss.job where data->>'jobId' = ${jobId}`
   );
 }
+
+/** The pg-boss states of `jobId`'s deliveries (any lane), oldest first. */
+export async function listJobDeliveryStates(
+  exec: DbExec,
+  jobId: string
+): Promise<string[]> {
+  const rows = await exec.execute<{ state: string }>(
+    sql`select state::text as state from pgboss.job where data->>'jobId' = ${jobId} order by created_on`
+  );
+  return rows.map((row) => row.state);
+}

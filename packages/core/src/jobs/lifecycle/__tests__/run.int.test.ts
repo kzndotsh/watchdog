@@ -309,7 +309,7 @@ describe("lifecycle run: every way out settles once", () => {
         yield* cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id).pipe(
           Effect.orDie
         );
-        // What the cancel poll does once it has seen the cancelled row.
+        // A cancel in this process aborts its fiber once the cancel is in.
         yield* fibers.abort(job.id, { cause: "user_cancelled" });
         yield* Fiber.join(running);
       })

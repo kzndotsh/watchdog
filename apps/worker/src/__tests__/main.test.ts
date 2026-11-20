@@ -5,19 +5,17 @@ import { vi, type MockInstance } from "vitest";
 const workerMocks = vi.hoisted(() => ({
   reconcileJobsEffect: vi.fn(),
   runActivityConsumerEffect: vi.fn(),
-  findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
 }));
 
-// The database boundary. Boot reaches Postgres in four places (running a Cap Job, the cancel
-// poll, the activity LISTEN stream, the maintenance runs), none of which a unit test can serve
+// The database boundary. Boot reaches Postgres in three places (running a Cap Job, the
+// activity LISTEN stream, the maintenance runs), none of which a unit test can serve
 // from a Db double, so each is stubbed at its core export and nothing else in core is.
 vi.mock("@watchdog/core/jobs", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
   return {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
-    findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
   };
 });
 
@@ -160,8 +158,9 @@ function fakeDriver(): FakeDriver {
   });
   const work = vi.fn(async () => {});
   const send = vi.fn(async () => {});
+  const cancel = vi.fn(async () => {});
   return {
-    driver: { start, stop, ensureQueue, work, send },
+    driver: { start, stop, ensureQueue, work, send, cancel },
     events,
     start,
     ensureQueue,
@@ -218,9 +217,6 @@ workerMocks.reconcileJobsEffect.mockReturnValue(
     stuckPlaybooks: 0,
     collectQueueRebuilt: 0,
   })
-);
-workerMocks.findCancelledJobIdsEffect.mockReturnValue(
-  Effect.succeed([] as string[])
 );
 workerMocks.runActivityConsumerEffect.mockReturnValue(Effect.never);
 
@@ -351,6 +347,7 @@ describe("bootWorkerEffect", () => {
               data: { jobId: CAP_JOB_ID },
               expireInSeconds: 60,
               signal: new AbortController().signal,
+              abortReason: () => "expired",
             },
           ])
         );

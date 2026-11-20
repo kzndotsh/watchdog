@@ -510,23 +510,6 @@ describe("jobsRepo", () => {
     });
   });
 
-  it("findCancelledJobIds trims and dedupes job ids", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const cancelled = await seedJob(tx, cased.id, {
-        status: "cancelled",
-        transitions: ["queued", "cancelled"],
-      });
-      const running = await seedJob(tx, cased.id, { status: "running" });
-      const ids = await jobsRepo.findCancelledJobIds(tx, [
-        `  ${cancelled.id}  `,
-        cancelled.id,
-        running.id,
-      ]);
-      expect(ids).toEqual([cancelled.id]);
-    });
-  });
-
   it("update normalizes padded evidenceIds", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

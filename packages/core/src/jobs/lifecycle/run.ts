@@ -199,7 +199,7 @@ function stopAttemptEffect(
       { error: message, logs: jobLog.lines, finishedAt }
     ).pipe(Effect.orDie);
     // No move means the Job was already terminal (a cancel that committed while this attempt
-    // ran, the cancel poll aborting for it): whoever ended it owns the advance.
+    // ran, pg-boss's heartbeat aborting for it): whoever ended it owns the advance.
     if (moved !== null) {
       yield* advancePlaybookTailEffect({
         jobId: subject.jobId,
@@ -405,7 +405,7 @@ function settleAttemptEffect(
 /**
  * Run one attempt at a Job on the worker: claim and preflight it (acquire), run the Cap body
  * (use), settle it from how that ended (release). Release is uninterruptible and runs once
- * whatever happened, so an interrupt from the Cap timer, the pg-boss signal or the cancel poll
+ * whatever happened, so an interrupt from the Cap timer, the pg-boss signal or a cancel
  * leaves one terminal status, one activity entry and one Playbook advance, the same as a finish.
  * The stop slot of the attempt (`JobFibers.attemptFor`) holds the cause of the first source that
  * stopped it; the settle stores it in `error_code`.

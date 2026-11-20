@@ -1,6 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Cause, Effect, Exit, Fiber, FiberMap } from "effect";
-import { TestClock } from "effect/testing";
 
 import { JobFibers } from "../job-fibers";
 import { stopMessage, timedOutMessage } from "../lifecycle/stop-slot";
@@ -33,52 +32,35 @@ describe("timedOutMessage", () => {
 });
 
 describe("interruptOnQueueSignal", () => {
-  it.effect(
-    "interrupts the Job fiber with the cap_timeout stop on expiry",
-    () =>
-      Effect.gen(function* expiryGen() {
+  it.effect.each([
+    ["expired", { cause: "cap_timeout", detail: "Timed out after 30s" }],
+    ["stopping", { cause: "worker_shutdown" }],
+    ["claim_lost", { cause: "queue_aborted" }],
+  ] as const)(
+    "a %s abort interrupts the Job fiber with its stop",
+    ([abort, expected]) =>
+      Effect.gen(function* abortGen() {
         const fibers = yield* JobFibers;
         const controller = new AbortController();
         const running = yield* Effect.forkChild(
           interruptOnQueueSignal(
-            { signal: controller.signal, expireInSeconds: 30 },
+            {
+              signal: controller.signal,
+              expireInSeconds: 30,
+              abortReason: () => abort,
+            },
             JOB_ID,
             runInMap
           )
         );
         yield* Effect.yieldNow;
-        yield* TestClock.adjust("30 seconds");
         controller.abort();
         const exit = yield* Fiber.join(running);
         expect(
           Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)
         ).toBe(true);
-        expect(yield* fibers.attemptFor(JOB_ID).stop.peek).toEqual({
-          cause: "cap_timeout",
-          detail: "Timed out after 30s",
-        });
+        expect(yield* fibers.attemptFor(JOB_ID).stop.peek).toEqual(expected);
       }).pipe(Effect.provide(JobFibers.layer), Effect.scoped)
-  );
-
-  it.effect("an abort before the expiry is queue_aborted, not a timeout", () =>
-    Effect.gen(function* earlyAbortGen() {
-      const fibers = yield* JobFibers;
-      const controller = new AbortController();
-      const running = yield* Effect.forkChild(
-        interruptOnQueueSignal(
-          { signal: controller.signal, expireInSeconds: 30 },
-          JOB_ID,
-          runInMap
-        )
-      );
-      yield* Effect.yieldNow;
-      yield* TestClock.adjust("2 seconds");
-      controller.abort();
-      yield* Fiber.join(running);
-      expect(yield* fibers.attemptFor(JOB_ID).stop.peek).toEqual({
-        cause: "queue_aborted",
-      });
-    }).pipe(Effect.provide(JobFibers.layer), Effect.scoped)
   );
 
   it.effect("leaves a Job that finishes before any abort untouched", () =>
@@ -86,7 +68,11 @@ describe("interruptOnQueueSignal", () => {
       const fibers = yield* JobFibers;
       const controller = new AbortController();
       const value = yield* interruptOnQueueSignal(
-        { signal: controller.signal, expireInSeconds: 30 },
+        {
+          signal: controller.signal,
+          expireInSeconds: 30,
+          abortReason: () => "expired",
+        },
         JOB_ID,
         Effect.succeed("done")
       );

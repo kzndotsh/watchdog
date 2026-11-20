@@ -26,6 +26,7 @@ import type { JobQueue } from "../job-queue";
 import { ACT_LOST_MESSAGE, isActJob } from "../lanes";
 import { advancePlaybookRunEffect } from "../stages/chain";
 import { capExpireSeconds } from "../timeouts";
+import { cancelWithin } from "./cancel";
 import { settleJobEffect } from "./settle";
 import { advancePlaybookTailEffect } from "./tail";
 
@@ -134,18 +135,18 @@ function repairRunningJobEffect(
       caseRow.organizationId
     );
     if (accessLost === null) return "none" as const;
-    // The local fiber stops through the cancel poll, which sees the status change.
-    const settled = yield* settleJobEffect(
-      target,
-      { kind: "cancel", cause: "access_revoked" },
-      { error: accessLost, finishedAt }
+    // The lifecycle's cancel: its delivery is cancelled in the same transaction, so the
+    // attempt (here or in another worker) is aborted by its next heartbeat refresh.
+    const outcome = yield* transact((tx) =>
+      cancelWithin(
+        tx,
+        { kind: "job", caseId: row.caseId, jobId: row.id },
+        "access_revoked",
+        accessLost
+      )
     );
-    if (settled === null) return "none" as const;
-    yield* advancePlaybookTailEffect({
-      jobId: row.id,
-      caseId: row.caseId,
-      playbookRunId: row.playbookRunId,
-    });
+    if (outcome.cancelled.length === 0) return "none" as const;
+    yield* outcome.afterCommit;
     return "access_revoked" as const;
   });
 }

@@ -26,6 +26,7 @@ export { listCaseGraphWrites, listCaseJobs } from "./db/case-rows.ts";
 export {
   countJobDeliveries,
   deleteJobDeliveries,
+  listJobDeliveryStates,
   setJobDeliveryState,
 } from "./db/job-deliveries.ts";
 export { listCaseEvidence } from "./db/evidence-rows.ts";
