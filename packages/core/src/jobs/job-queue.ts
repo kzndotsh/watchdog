@@ -162,7 +162,7 @@ function pgBossDriver(role: BossRole): BossDriver {
           heartbeatRefreshSeconds: QUEUE_HEARTBEAT_REFRESH_SECONDS,
         },
         (jobs) => {
-          const startedAt = Date.now();
+          const startedAt = performance.now();
           return handler(
             jobs.map((job) => ({
               id: job.id,
@@ -173,7 +173,7 @@ function pgBossDriver(role: BossRole): BossDriver {
                 queueAbortOf(job.signal.reason, {
                   stopping,
                   pastExpiry:
-                    Date.now() - startedAt >= job.expireInSeconds * 1000,
+                    performance.now() - startedAt >= job.expireInSeconds * 1000,
                 }),
             }))
           );
