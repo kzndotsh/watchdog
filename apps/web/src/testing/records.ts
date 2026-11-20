@@ -368,8 +368,7 @@ export const buildProposalRecord = (
   status: "pending",
   patch: [
     {
-      op: "create",
-      resource: "claim",
+      kind: "claim.create",
       id: testId(30),
       data: {
         entityId: testId(20),

@@ -5,6 +5,7 @@ import { testId } from "@watchdog/test-kit";
 import { fingerprintPatchOp } from "../fingerprint.ts";
 import {
   buildClaimCreateOp,
+  buildEdgeCreateOp,
   buildEntityCreateOp,
   buildEventCreateOp,
   buildIdentifierCreateOp,
@@ -57,37 +58,20 @@ describe("fingerprintPatchOp", () => {
   it("canonicalizes symmetric edge endpoints", () => {
     const a = testId(30);
     const b = testId(31);
-    const forward = {
-      op: "create" as const,
-      resource: "edge" as const,
-      id: testId(32),
-      data: { fromId: a, toId: b, predicate: "same_as" },
-    };
-    const reverse = {
-      ...forward,
-      data: { fromId: b, toId: a, predicate: "SAME_AS" },
-    };
+    const forward = buildEdgeCreateOp(a, b, "same_as", { id: testId(32) });
+    const reverse = buildEdgeCreateOp(b, a, "same_as", { id: testId(32) });
     expect(fingerprintPatchOp(forward)).toBe(fingerprintPatchOp(reverse));
   });
 
   it("includes related_to notes in the edge fingerprint", () => {
     const a = testId(33);
     const b = testId(34);
-    const one = {
-      op: "create" as const,
-      resource: "edge" as const,
-      id: testId(35),
-      data: {
-        fromId: a,
-        toId: b,
-        predicate: "related_to",
-        notes: "Same household",
-      },
-    };
-    const two = {
-      ...one,
-      data: { ...one.data, notes: "Different rationale" },
-    };
+    const one = buildEdgeCreateOp(a, b, "related_to", {
+      data: { notes: "Same household" },
+    });
+    const two = buildEdgeCreateOp(a, b, "related_to", {
+      data: { notes: "Different rationale" },
+    });
     expect(fingerprintPatchOp(one)).not.toBe(fingerprintPatchOp(two));
   });
 

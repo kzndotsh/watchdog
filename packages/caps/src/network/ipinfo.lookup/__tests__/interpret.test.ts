@@ -53,7 +53,7 @@ describe("interpret", () => {
     );
     expectProposesIdentifier(result, { type: "ip", value: "8.8.8.8" });
     const domains = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "domain"
+      (p) => p.kind === "identifier.create" && p.data.type === "domain"
     );
     expect(domains).toHaveLength(0);
     expect(claimText(result, 1)).toMatch(/bogon\/reserved/);
@@ -66,7 +66,7 @@ describe("interpret", () => {
     );
     expectProposesIdentifier(result, { type: "ip", value: "8.8.8.8" });
     const domains = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "domain"
+      (p) => p.kind === "identifier.create" && p.data.type === "domain"
     );
     expect(domains).toHaveLength(0);
   });

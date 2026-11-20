@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { shodanLookup } from "../cap.ts";
 import { interpretShodanLookupReport } from "../interpret.ts";
 
@@ -31,13 +31,13 @@ describe("interpret", () => {
       input: { ip: "8.8.8.8", entityId },
     });
     expect(result.patch.length).toBe(3);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("8.8.8.8");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
-    expect(result.patch[1]?.data.value).toBe("dns.google");
-    expect(result.patch[2]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("8.8.8.8");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
+    expect(dataOf(result.patch[1]).value).toBe("dns.google");
+    expect(result.patch[2]?.kind).toBe("claim.create");
     expect(claimText(result, 2)).toMatch(/Google LLC/);
     expect(claimText(result, 2)).toMatch(/53/);
   });

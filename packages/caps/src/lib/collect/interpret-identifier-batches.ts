@@ -113,8 +113,7 @@ export function interpretIdentifierBatches(opts: {
       if (seen.has(key)) continue;
       seen.add(key);
       patch.push({
-        op: "create",
-        resource: "identifier",
+        kind: "identifier.create",
         id: randomUUID(),
         data: {
           entityId,
@@ -131,8 +130,7 @@ export function interpretIdentifierBatches(opts: {
   const claimText = opts.claimText.trim();
   if (claimText !== "") {
     patch.push({
-      op: "create",
-      resource: "claim",
+      kind: "claim.create",
       id: randomUUID(),
       data: {
         entityId,

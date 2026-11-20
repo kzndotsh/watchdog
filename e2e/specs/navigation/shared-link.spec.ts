@@ -111,8 +111,7 @@ test.describe("Shared Case links", () => {
       summary,
       patch: [
         {
-          op: "create",
-          resource: "claim",
+          kind: "claim.create",
           id: testId(43),
           data: {
             entityId: entity.id,

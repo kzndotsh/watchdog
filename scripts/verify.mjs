@@ -51,7 +51,6 @@ const STATIC_GATES = [
   "check:boundaries",
   "check:migrations",
   "check:env",
-  "check:design-tokens",
   "lint:design",
 ];
 
@@ -68,6 +67,7 @@ const DRIFT = [
     ],
   },
   { script: "generate-routes", files: ["apps/web/src/routeTree.gen.ts"] },
+  { script: "generate:design", files: ["DESIGN.md"] },
 ];
 
 /** Files Oxlint or Oxfmt read; the formatter's own ignore list drops the rest. */

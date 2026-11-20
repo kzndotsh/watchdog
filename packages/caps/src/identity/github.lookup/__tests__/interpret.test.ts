@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 import {
+  dataOf,
   expectNoConfidenceOnPatch,
   itRejectsIncompleteReport,
 } from "../../../testing";
@@ -34,14 +35,14 @@ describe("interpret", () => {
       input: { handle: "octocat", entityId },
     });
     expect(result.patch.length).toBe(4);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("handle");
-    expect(result.patch[0]?.data.platform).toBe("github");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("url");
-    expect(result.patch[2]?.resource).toBe("identifier");
-    expect(result.patch[2]?.data.type).toBe("url");
-    expect(result.patch[3]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("handle");
+    expect(dataOf(result.patch[0]).platform).toBe("github");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("url");
+    expect(result.patch[2]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[2]).type).toBe("url");
+    expect(result.patch[3]?.kind).toBe("claim.create");
     expectNoConfidenceOnPatch(result);
   });
 
@@ -51,10 +52,10 @@ describe("interpret", () => {
       { input: { handle: "octocat", entityId } }
     );
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && p.data.type === "url"
     );
     expect(urls).toHaveLength(1);
-    expect(urls[0]?.data.value).toBe("https://github.com/octocat");
+    expect(dataOf(urls[0]).value).toBe("https://github.com/octocat");
   });
 
   it("proposes the queried handle when the profile is not found", () => {
@@ -63,10 +64,10 @@ describe("interpret", () => {
       { input: { handle: "octocat", entityId } }
     );
     expect(result.patch.length).toBe(2);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("handle");
-    expect(result.patch[0]?.data.value).toBe("octocat");
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("handle");
+    expect(dataOf(result.patch[0]).value).toBe("octocat");
+    expect(result.patch[1]?.kind).toBe("claim.create");
   });
 
   itRejectsIncompleteReport(githubLookup, { handle: "x" }, { handle: "x" });

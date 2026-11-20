@@ -1,10 +1,5 @@
-import { Effect, Result } from "effect";
-
-import { assertPatchShape } from "@watchdog/policy";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import { parseGraphUuidList, trimmedOrNull } from "@watchdog/schemas/shared";
-
-import { tryParsePatch } from "./patch";
 
 export type ParsedAgentPatch = {
   ok: true;
@@ -18,37 +13,27 @@ export type AgentPatchRefusal = {
   error: string;
 };
 
-/** Write-only rules (userOverride, forced unverified) live at the call site. */
-export function parseAgentPatchEffect(input: {
-  patch: unknown;
+/**
+ * An agent's Proposal or graph write: the ops are already typed (the API input parses them
+ * with the patch op schema); this refuses an empty patch and normalizes the summary and the
+ * shared Evidence ids. Write-only rules (userOverride, forced unverified) live at the call site.
+ */
+export function parseAgentPatch(input: {
+  patch: PatchOp[];
   summary?: string;
   evidenceIds?: string[];
-}): Effect.Effect<ParsedAgentPatch | AgentPatchRefusal> {
-  return Effect.gen(function* parseAgentPatchGen() {
-    const parsed = tryParsePatch(input.patch);
-    if (!parsed.ok) {
-      return { ok: false, error: parsed.error };
-    }
-
-    const shaped = yield* Effect.result(assertPatchShape(parsed.patch));
-    if (Result.isFailure(shaped)) {
-      return { ok: false, error: shaped.failure.reason };
-    }
-
-    if (parsed.patch.length === 0) {
-      return { ok: false, error: "patch must not be empty" };
-    }
-
-    const evidenceIds = parseGraphUuidList(input.evidenceIds ?? []);
-    if (evidenceIds === null) {
-      return { ok: false, error: "evidenceIds contains an invalid UUID" };
-    }
-
-    return {
-      ok: true,
-      patch: parsed.patch,
-      summary: trimmedOrNull(input.summary),
-      evidenceIds,
-    };
-  });
+}): ParsedAgentPatch | AgentPatchRefusal {
+  if (input.patch.length === 0) {
+    return { ok: false, error: "patch must not be empty" };
+  }
+  const evidenceIds = parseGraphUuidList(input.evidenceIds ?? []);
+  if (evidenceIds === null) {
+    return { ok: false, error: "evidenceIds contains an invalid UUID" };
+  }
+  return {
+    ok: true,
+    patch: input.patch,
+    summary: trimmedOrNull(input.summary),
+    evidenceIds,
+  };
 }

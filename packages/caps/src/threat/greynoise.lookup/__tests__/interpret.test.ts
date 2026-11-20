@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { greynoiseLookup } from "../cap.ts";
 import { interpretGreynoiseLookupReport } from "../interpret.ts";
 
@@ -29,9 +29,9 @@ describe("interpret", () => {
       input: { ip: "1.2.3.4", entityId },
     });
     expect(result.patch.length).toBe(2);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("1.2.3.4");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("1.2.3.4");
     expect(claimText(result, 1)).toMatch(/noise=true/);
   });
 

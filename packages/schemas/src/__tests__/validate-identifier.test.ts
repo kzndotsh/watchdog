@@ -214,8 +214,7 @@ describe("listInvalidIdentifierOps", () => {
     const hits = listInvalidIdentifierOps([
       {
         id: "00000000-0000-4000-8000-000000000001",
-        op: "create",
-        resource: "identifier",
+        kind: "identifier.create",
         data: {
           entityId: "00000000-0000-4000-8000-000000000099",
           type: "email",
@@ -224,8 +223,7 @@ describe("listInvalidIdentifierOps", () => {
       },
       {
         id: "00000000-0000-4000-8000-000000000002",
-        op: "upsert",
-        resource: "identifier",
+        kind: "identifier.upsert",
         data: {
           entityId: "00000000-0000-4000-8000-000000000099",
           type: "handle",
@@ -235,9 +233,8 @@ describe("listInvalidIdentifierOps", () => {
       },
       {
         id: "00000000-0000-4000-8000-000000000003",
-        op: "create",
-        resource: "claim",
-        data: { text: "ok" },
+        kind: "claim.create",
+        data: { entityId: "00000000-0000-4000-8000-000000000099", text: "ok" },
       },
     ]);
     expect(hits.length).toBe(2);
@@ -249,23 +246,5 @@ describe("listInvalidIdentifierOps", () => {
     expect(listInvalidIdentifierOps([])).toEqual([]);
     expect(listInvalidIdentifierOps(undefined)).toEqual([]);
     expect(listInvalidIdentifierOps(null)).toEqual([]);
-  });
-
-  it("trims padded identifier fields before validation", () => {
-    const hits = listInvalidIdentifierOps([
-      {
-        id: "00000000-0000-4000-8000-000000000004",
-        op: "create",
-        resource: "identifier",
-        data: {
-          entityId: "00000000-0000-4000-8000-000000000099",
-          type: "  email  ",
-          value: "  not-an-email  ",
-        },
-      },
-    ]);
-    expect(hits).toHaveLength(1);
-    expect(hits[0]?.type).toBe("email");
-    expect(hits[0]?.value).toBe("not-an-email");
   });
 });

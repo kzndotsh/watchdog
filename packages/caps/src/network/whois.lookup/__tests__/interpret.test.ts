@@ -4,6 +4,7 @@ import { testId } from "@watchdog/test-kit";
 
 import { interpretWhoisSnapshot } from "../../../lib/collect/interpret-whois-snapshot.ts";
 import {
+  dataOf,
   expectNoConfidenceOnPatch,
   expectProposesClaim,
   itRejectsIncompleteReport,
@@ -31,12 +32,14 @@ describe("interpretWhoisReport", () => {
       input: { host: "example.com", entityId },
     });
     expect(
-      result.patch.filter((p) => p.resource === "identifier")
+      result.patch.filter((p) => p.kind === "identifier.create")
     ).toHaveLength(0);
     expectProposesClaim(result, { textMatches: /Example Registrar/ });
     expect(String(result.summary)).toMatch(/expires=/);
     expect(String(result.summary)).toMatch(/a\.iana-servers\.net/);
-    expect(result.patch.filter((p) => p.resource === "event")).toHaveLength(0);
+    expect(result.patch.filter((p) => p.kind === "event.create")).toHaveLength(
+      0
+    );
     expectNoConfidenceOnPatch(result);
   });
 
@@ -88,10 +91,10 @@ describe("interpretWhoisSnapshot", () => {
       noEntitySummary: "none",
       nowMs: Date.now(),
     });
-    const events = result.patch.filter((p) => p.resource === "event");
+    const events = result.patch.filter((p) => p.kind === "event.create");
     expect(events).toHaveLength(1);
-    expect(events[0]?.data.when).toBe(soon);
-    expect(events[0]?.data.what).toBe("WHOIS expiry for example.com");
+    expect(dataOf(events[0]).when).toBe(soon);
+    expect(dataOf(events[0]).what).toBe("WHOIS expiry for example.com");
     expectNoConfidenceOnPatch(result);
   });
 
@@ -103,9 +106,9 @@ describe("interpretWhoisSnapshot", () => {
       noEntitySummary: "none",
       extraBatches: [{ type: "email", values: ["admin@example.com"] }],
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("email");
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("email");
+    expect(result.patch[1]?.kind).toBe("claim.create");
   });
 
   it("treats whitespace-only entityId as missing", () => {

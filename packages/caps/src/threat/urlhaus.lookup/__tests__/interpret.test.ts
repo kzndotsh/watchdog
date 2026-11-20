@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { urlhausLookup } from "../cap.ts";
 import { interpretUrlhausLookupReport } from "../interpret.ts";
 
@@ -27,8 +27,8 @@ describe("interpret", () => {
     const result = interpretUrlhausLookupReport(fixture, {
       input: { query: fixture.query, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("url");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("url");
     expect(claimText(result, 1)).toMatch(/URLhaus/);
     expect(claimText(result, 1)).toMatch(/malware_download/);
   });
@@ -42,9 +42,9 @@ describe("interpret", () => {
       },
       { input: { query: "evil.example", entityId } }
     );
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("domain");
-    expect(result.patch[0]?.data.value).toBe("evil.example");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("domain");
+    expect(dataOf(result.patch[0]).value).toBe("evil.example");
   });
 
   it("interpretUrlhausLookupReport proposes seed url Identifier when no hit", () => {
@@ -52,9 +52,9 @@ describe("interpret", () => {
       { ...fixture, found: false, threat: null, urlStatus: null, tags: [] },
       { input: { query: fixture.query, entityId } }
     );
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("url");
-    expect(result.patch[0]?.data.value).toBe(fixture.query);
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("url");
+    expect(dataOf(result.patch[0]).value).toBe(fixture.query);
   });
 
   it("interpretUrlhausLookupReport proposes ip Identifier for host-kind IP queries", () => {
@@ -70,9 +70,9 @@ describe("interpret", () => {
       },
       { input: { query: "198.51.100.1", entityId } }
     );
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("198.51.100.1");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("198.51.100.1");
   });
 
   it("interpretUrlhausLookupReport proposes hash seed as other Identifier", () => {
@@ -89,9 +89,9 @@ describe("interpret", () => {
       },
       { input: { query: hash, entityId } }
     );
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("other");
-    expect(result.patch[0]?.data.value).toBe(hash);
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("other");
+    expect(dataOf(result.patch[0]).value).toBe(hash);
   });
 
   itRejectsIncompleteReport(

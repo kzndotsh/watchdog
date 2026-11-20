@@ -66,8 +66,7 @@ export function interpretWhoisSnapshot(opts: {
     patch: [
       ...result.patch,
       {
-        op: "create",
-        resource: "event",
+        kind: "event.create",
         id: randomUUID(),
         data: {
           entityId,

@@ -170,14 +170,12 @@ describe("Graph entries carry the subject and a label", () => {
         actor: { actorId: TEST_ACTOR_ID, actorLabel: "Test Actor" },
         patch: [
           {
-            op: "create",
-            resource: "entity",
+            kind: "entity.create",
             id: "00000000-0000-4000-8000-0000000000a1",
             data: { kind: "person", name: "Grace Hopper", slug: "grace" },
           },
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-0000000000a2",
             data: { entityId: fx.entityId, text: "Coined debugging" },
           },
@@ -204,14 +202,12 @@ describe("Graph entries carry the subject and a label", () => {
           confidence: "unverified",
           patch: [
             {
-              op: "create",
-              resource: "entity",
+              kind: "entity.create",
               id: "00000000-0000-4000-8000-0000000000a1",
               data: { kind: "person", name: "Grace Hopper", slug: "grace" },
             },
             {
-              op: "create",
-              resource: "claim",
+              kind: "claim.create",
               id: "00000000-0000-4000-8000-0000000000a2",
               data: {
                 entityId: "00000000-0000-4000-8000-0000000000ff",

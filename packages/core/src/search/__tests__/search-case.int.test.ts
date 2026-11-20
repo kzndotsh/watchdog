@@ -879,13 +879,12 @@ describe("searchCase", () => {
       cased.id,
       [
         {
-          op: "create",
-          resource: "edge",
+          kind: "edge.create",
           id: testId(36),
           data: {
             fromId: from.id,
             toId: to.id,
-            predicate: "knows",
+            predicate: "associate_of",
           },
         },
       ],

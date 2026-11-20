@@ -165,8 +165,7 @@ describe("display helpers", () => {
         capabilityId: "network.shodan.lookup",
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: {
               entityId: "00000000-0000-4000-8000-000000000001",
@@ -189,8 +188,7 @@ describe("display helpers", () => {
         capabilityId: "network.shodan.lookup",
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: {
               entityId: "00000000-0000-4000-8000-000000000001",
@@ -217,10 +215,12 @@ describe("display helpers", () => {
         capabilityId: null,
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "11111111-1111-4111-8111-000000000001",
-            data: {},
+            data: {
+              entityId: "11111111-1111-4111-8111-000000000002",
+              text: "x",
+            },
           },
         ],
       })
@@ -304,10 +304,12 @@ describe("display helpers", () => {
         },
         [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
-            data: { text: "x" },
+            data: {
+              entityId: "00000000-0000-4000-8000-000000000003",
+              text: "x",
+            },
           },
         ]
       )

@@ -4,6 +4,7 @@ import { testId } from "@watchdog/test-kit";
 
 import {
   claimText,
+  dataOf,
   expectNoConfidenceOnPatch,
   itRejectsIncompleteReport,
 } from "../../../testing";
@@ -33,8 +34,8 @@ describe("interpretIpLookupReport", () => {
       input: { ip: "8.8.8.8", entityId },
     });
     expect(result.patch).toHaveLength(2);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
     expect(claimText(result, 1)).toMatch(/15169/);
     expect(claimText(result, 1)).toMatch(/GOOGLE/);
     expectNoConfidenceOnPatch(result);

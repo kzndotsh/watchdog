@@ -1,70 +1,57 @@
 import { testId } from "@watchdog/test-kit/fixtures";
 
-import type { JsonObject } from "../json";
-import type { PatchOp } from "../patch";
+import type { PatchOp, PatchOpKind } from "../patch";
+import type { EdgePredicate, EntityKind, IdentifierType } from "../vocab";
 
-export function buildPatchOp(
-  overrides: Partial<PatchOp> & Pick<PatchOp, "resource">
-): PatchOp {
-  return {
-    op: "create",
-    id: testId(3),
-    data: {},
-    ...overrides,
-  };
-}
+/** The op of one kind (`OpOfKind<"claim.create">`). */
+export type OpOfKind<K extends PatchOpKind> = Extract<PatchOp, { kind: K }>;
+
+/** What a test changes on a built op: any envelope field, and some of its data. */
+export type OpOverrides<K extends PatchOpKind> = Partial<
+  Omit<OpOfKind<K>, "kind" | "data">
+> & { data?: Partial<OpOfKind<K>["data"]> };
 
 export function buildClaimCreateOp(
   entityId: string,
   text: string,
-  overrides?: Partial<PatchOp>
-): PatchOp {
+  overrides: OpOverrides<"claim.create"> = {}
+): OpOfKind<"claim.create"> {
+  const { data, ...envelope } = overrides;
   return {
-    op: "create",
-    resource: "claim",
+    kind: "claim.create",
     id: testId(3),
-    data: {
-      entityId,
-      text,
-      class: "observation",
-    },
-    ...overrides,
+    ...envelope,
+    data: { entityId, text, class: "observation", ...data },
   };
 }
 
 export function buildIdentifierCreateOp(
   entityId: string,
-  type: string,
+  type: IdentifierType,
   value: string,
-  overrides?: Partial<PatchOp>
-): PatchOp {
-  const data: JsonObject = {
-    entityId,
-    type,
-    value,
-    ...overrides?.data,
-  };
+  overrides: OpOverrides<"identifier.create"> = {}
+): OpOfKind<"identifier.create"> {
+  const { data, ...envelope } = overrides;
   return {
-    op: "create",
-    resource: "identifier",
+    kind: "identifier.create",
     id: testId(4),
-    ...overrides,
-    data,
+    ...envelope,
+    data: { entityId, type, value, ...data },
   };
 }
 
 export function buildEntityCreateOp(
   name: string,
   slug: string,
-  kind = "person",
-  overrides?: Partial<PatchOp>
-): PatchOp {
+  kind: EntityKind = "person",
+  overrides: OpOverrides<"entity.create"> = {}
+): OpOfKind<"entity.create"> {
+  const { data, ...envelope } = overrides;
   return {
-    op: "create",
-    resource: "entity",
+    kind: "entity.create",
     id: testId(5),
-    data: { name, slug, kind },
-    ...overrides,
+    ...envelope,
+    data: { name, slug, kind, ...data },
   };
 }
 
@@ -72,48 +59,42 @@ export function buildEventCreateOp(
   entityId: string,
   when: string,
   what: string,
-  overrides?: Partial<PatchOp>
-): PatchOp {
+  overrides: OpOverrides<"event.create"> = {}
+): OpOfKind<"event.create"> {
+  const { data, ...envelope } = overrides;
   return {
-    op: "create",
-    resource: "event",
+    kind: "event.create",
     id: testId(6),
-    data: { entityId, when, what },
-    ...overrides,
+    ...envelope,
+    data: { entityId, when, what, ...data },
   };
 }
 
 export function buildQuestionCreateOp(
   entityId: string,
   text: string,
-  overrides?: Partial<PatchOp>
-): PatchOp {
+  overrides: OpOverrides<"question.create"> = {}
+): OpOfKind<"question.create"> {
+  const { data, ...envelope } = overrides;
   return {
-    op: "create",
-    resource: "question",
+    kind: "question.create",
     id: testId(7),
-    data: { entityId, text },
-    ...overrides,
+    ...envelope,
+    data: { entityId, text, ...data },
   };
 }
 
 export function buildEdgeCreateOp(
   fromId: string,
   toId: string,
-  predicate: string,
-  overrides?: Partial<PatchOp>
-): PatchOp {
-  const data: JsonObject = {
-    fromId,
-    toId,
-    predicate,
-    ...overrides?.data,
-  };
+  predicate: EdgePredicate,
+  overrides: OpOverrides<"edge.create"> = {}
+): OpOfKind<"edge.create"> {
+  const { data, ...envelope } = overrides;
   return {
-    op: "create",
-    resource: "edge",
+    kind: "edge.create",
     id: testId(8),
-    ...overrides,
-    data,
+    ...envelope,
+    data: { fromId, toId, predicate, ...data },
   };
 }

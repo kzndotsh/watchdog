@@ -19,8 +19,7 @@ test.describe("Custody accept gates", () => {
         summary: "custody probe invalid identifier",
         patch: [
           {
-            op: "create",
-            resource: "identifier",
+            kind: "identifier.create",
             id: testId(40),
             data: {
               entityId: entity.id,
@@ -43,8 +42,7 @@ test.describe("Custody accept gates", () => {
         summary: "custody probe confirmed claim",
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: testId(41),
             data: {
               entityId: entity.id,

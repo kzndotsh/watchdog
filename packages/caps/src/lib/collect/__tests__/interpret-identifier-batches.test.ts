@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { dataOf } from "../../../testing";
 import { interpretIdentifierBatches } from "../interpret-identifier-batches.ts";
 import { INVALID_COLLECT_ENTITY_SUMMARY } from "../resolve-collect-entity-id.ts";
 
@@ -47,8 +48,8 @@ describe("interpret-identifier-batches", () => {
       noEntitySummary: "none",
     });
     expect(result.summary).toBe("summary");
-    const claim = result.patch.find((op) => op.resource === "claim");
-    expect(claim?.data.text).toBe("summary");
+    const claim = result.patch.find((op) => op.kind === "claim.create");
+    expect(dataOf(claim).text).toBe("summary");
   });
 
   it("interpretIdentifierBatches trims padded entityId", () => {
@@ -58,7 +59,7 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    expect(result.patch[0]?.data.entityId).toBe(entityId);
+    expect(dataOf(result.patch[0]).entityId).toBe(entityId);
   });
 
   it("interpretIdentifierBatches multiple types + claim", () => {
@@ -73,11 +74,11 @@ describe("interpret-identifier-batches", () => {
       noEntitySummary: "none",
     });
     expect(result.patch.length).toBe(4);
-    expect(result.patch[0]?.data.type).toBe("email");
-    expect(result.patch[1]?.data.type).toBe("domain");
-    expect(result.patch[2]?.data.type).toBe("handle");
-    expect(result.patch[2]?.data.platform).toBe("gravatar");
-    expect(result.patch[3]?.resource).toBe("claim");
+    expect(dataOf(result.patch[0]).type).toBe("email");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
+    expect(dataOf(result.patch[2]).type).toBe("handle");
+    expect(dataOf(result.patch[2]).platform).toBe("gravatar");
+    expect(result.patch[3]?.kind).toBe("claim.create");
   });
 
   it("skips values that fail identifier validation", () => {
@@ -90,12 +91,12 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    const ids = result.patch.filter((op) => op.resource === "identifier");
+    const ids = result.patch.filter((op) => op.kind === "identifier.create");
     expect(ids.map((op) => op.data.value)).toEqual([
       "https://ok.example",
       "ok.example",
     ]);
-    expect(result.patch.at(-1)?.resource).toBe("claim");
+    expect(result.patch.at(-1)?.kind).toBe("claim.create");
   });
 
   it("skips handles that fail the write gate", () => {
@@ -108,10 +109,10 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    const ids = result.patch.filter((op) => op.resource === "identifier");
+    const ids = result.patch.filter((op) => op.kind === "identifier.create");
     expect(ids).toHaveLength(1);
-    expect(ids[0]?.data.value).toBe("bob");
-    expect(ids[0]?.data.platform).toBe("github");
+    expect(dataOf(ids[0]).value).toBe("bob");
+    expect(dataOf(ids[0]).platform).toBe("github");
   });
 
   it("keeps the same handle value on different platforms", () => {
@@ -124,7 +125,7 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    const ids = result.patch.filter((op) => op.resource === "identifier");
+    const ids = result.patch.filter((op) => op.kind === "identifier.create");
     expect(ids).toHaveLength(2);
     expect(ids.map((op) => op.data.platform)).toEqual(["keybase", "github"]);
   });
@@ -139,9 +140,9 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    const ids = result.patch.filter((op) => op.resource === "identifier");
+    const ids = result.patch.filter((op) => op.kind === "identifier.create");
     expect(ids).toHaveLength(1);
-    expect(ids[0]?.data.value).toBe("1.2.3.4");
+    expect(dataOf(ids[0]).value).toBe("1.2.3.4");
   });
 
   it("drops wildcard domains before validation", () => {
@@ -156,9 +157,9 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    const ids = result.patch.filter((op) => op.resource === "identifier");
+    const ids = result.patch.filter((op) => op.kind === "identifier.create");
     expect(ids).toHaveLength(1);
-    expect(ids[0]?.data.value).toBe("www.example.com");
+    expect(dataOf(ids[0]).value).toBe("www.example.com");
   });
 
   it("uses domain batch default limit of 80 when limit is omitted", () => {
@@ -169,7 +170,7 @@ describe("interpret-identifier-batches", () => {
       claimText: "summary",
       noEntitySummary: "none",
     });
-    const ids = result.patch.filter((op) => op.resource === "identifier");
+    const ids = result.patch.filter((op) => op.kind === "identifier.create");
     expect(ids).toHaveLength(80);
   });
 });

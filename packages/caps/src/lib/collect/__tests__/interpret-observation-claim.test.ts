@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { dataOf } from "../../../testing";
 import { interpretObservationClaim } from "../interpret-observation-claim.ts";
 import { INVALID_COLLECT_ENTITY_SUMMARY } from "../resolve-collect-entity-id.ts";
 
@@ -64,7 +65,7 @@ describe("interpret-observation-claim", () => {
       noEntitySummary: "no Entity",
     });
     expect(result.summary).toBe(text);
-    expect(result.patch[0]?.data.text).toBe(text);
+    expect(dataOf(result.patch[0]).text).toBe(text);
   });
 
   it("interpretObservationClaim trims padded entityId", () => {
@@ -74,7 +75,7 @@ describe("interpret-observation-claim", () => {
       text,
       noEntitySummary: "no Entity",
     });
-    expect(result.patch[0]?.data.entityId).toBe(entityId);
+    expect(dataOf(result.patch[0]).entityId).toBe(entityId);
   });
 
   it("interpretObservationClaim creates observation claim when entityId set", () => {
@@ -87,11 +88,10 @@ describe("interpret-observation-claim", () => {
     expect(result.summary).toBe(text);
     expect(result.patch.length).toBe(1);
     const op = result.patch[0];
-    expect(op.op).toBe("create");
-    expect(op.resource).toBe("claim");
+    expect(op.kind).toBe("claim.create");
     expect(typeof op.id).toBe("string");
-    expect(op.data.entityId).toBe(entityId);
-    expect(op.data.text).toBe(text);
-    expect(op.data.class).toBe("observation");
+    expect(dataOf(op).entityId).toBe(entityId);
+    expect(dataOf(op).text).toBe(text);
+    expect(dataOf(op).class).toBe("observation");
   });
 });

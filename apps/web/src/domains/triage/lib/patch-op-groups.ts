@@ -1,5 +1,6 @@
 import {
-  identifierTypeEntry,
+  isPatchOpOf,
+  patchOpResource,
   patchResourceLabel,
   type PatchOp,
 } from "@watchdog/schemas/graph";
@@ -18,25 +19,16 @@ export type PatchOpGroup = {
   isOpenByDefault: boolean;
 };
 
-const identifierTypeLabels: Readonly<Record<string, string>> =
-  IDENTIFIER_TYPE_LABELS;
-
 function groupOf(op: PatchOp): { key: string; label: string } {
-  if (op.resource === "identifier") {
-    const type = op.data.type;
-    // Only a known type has a label: `identifierTypeEntry` refuses "constructor" and the like.
-    const typeLabel =
-      typeof type === "string" && identifierTypeEntry(type) !== undefined
-        ? identifierTypeLabels[type]
-        : undefined;
-    if (typeof type === "string" && typeLabel !== undefined) {
-      return { key: `identifier:${type}`, label: `${typeLabel} Identifiers` };
-    }
+  if (isPatchOpOf(op, "identifier")) {
+    const { type } = op.data;
+    return {
+      key: `identifier:${type}`,
+      label: `${IDENTIFIER_TYPE_LABELS[type]} Identifiers`,
+    };
   }
-  return {
-    key: op.resource,
-    label: patchResourceLabel(op.resource),
-  };
+  const resource = patchOpResource(op);
+  return { key: resource, label: patchResourceLabel(resource) };
 }
 
 /**

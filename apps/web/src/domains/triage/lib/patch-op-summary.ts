@@ -1,9 +1,6 @@
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import type { JsonObject } from "@watchdog/schemas/shared";
+import type { PatchResource } from "@watchdog/schemas/graph";
 import { predicateLabel } from "@watchdog/schemas/shared";
-
-type Resource = PatchOp["resource"];
 
 /** Safely stringify an unknown patch-data field without `[object Object]` noise. */
 function stringifyField(value: unknown, fallback = ""): string {
@@ -17,8 +14,8 @@ function stringifyField(value: unknown, fallback = ""): string {
 
 /** One-line summary of a patch op body for the Triage ledger. */
 export function summarizePatchOpData(
-  resource: Resource,
-  data: JsonObject
+  resource: PatchResource,
+  data: Readonly<Record<string, unknown>>
 ): string {
   switch (resource) {
     case "claim": {
@@ -58,12 +55,7 @@ export function summarizePatchOpData(
       return where ? `${head} @ ${where}` : head;
     }
     case "question": {
-      const text = stringifyField(data.text);
-      const resolvedNote = stringifyField(data.resolvedNote);
-      if (text && resolvedNote) return `${text} → ${resolvedNote}`;
-      if (text) return text;
-      if (resolvedNote) return resolvedNote;
-      return JSON.stringify(data);
+      return stringifyField(data.text, JSON.stringify(data));
     }
     case "entity": {
       const kind = stringifyField(data.kind);

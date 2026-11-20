@@ -56,10 +56,6 @@ jobs:
       e2e: ${{ steps.filter.outputs.e2e }}
       bundle_scripts: ${{ steps.filter.outputs.bundle_scripts }}
       container: ${{ steps.filter.outputs.container }}
-      agents: ${{ steps.filter.outputs.agents }}
-      docs: ${{ steps.filter.outputs.docs }}
-      design: ${{ steps.filter.outputs.design }}
-      code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -69,16 +65,6 @@ jobs:
         id: filter
         with:
           filters: |
-            code:
-              - '**/*.ts'
-              - '**/*.tsx'
-              - '**/*.json'
-              - '**/*.yml'
-              - '**/*.yaml'
-              - '**/*.sql'
-              - '**/*.sh'
-              - '**/*.mjs'
-              - '**/*.js'
             typescript:
               - '**/*.ts'
               - '**/*.tsx'
@@ -152,20 +138,6 @@ jobs:
             e2e:
               - 'e2e/**'
               - 'playwright.config.ts'
-            agents:
-              - '**/AGENTS.md'
-              - 'scripts/check-agents.mjs'
-              - '**/.agents/skills/**'
-              - 'scripts/validate-agents.mjs'
-              - '.cursor/README.md'
-            # DESIGN.md is checked in Gates (lint:design, check:design-tokens) and is not under docs/.
-            design:
-              - 'DESIGN.md'
-            docs:
-              - 'docs/**'
-              - 'docs/reference/web/**'
-              - '**/*.md'
-              - 'scripts/check-docs.mjs'
 
       # `some-with-excludes` lets a filter carry a `!` pattern: the default `some`
       # quantifier ignores negations. Same patterns as `typescript`, minus scripts/**.

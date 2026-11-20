@@ -2,9 +2,9 @@ import type { ComponentProps } from "react";
 
 import { Chip } from "@/shared/ui/chip";
 import { PATCH_OP_TONES, patchOpLabel } from "@/shared/ui/vocab/patch-op.lib";
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchVerb } from "@watchdog/schemas/graph";
 
-type Op = PatchOp["op"];
+type Op = PatchVerb;
 
 type PatchOpBadgeProps = Omit<ComponentProps<typeof Chip>, "label" | "tone"> & {
   op: Op;

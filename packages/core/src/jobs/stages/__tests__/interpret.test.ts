@@ -151,11 +151,9 @@ describe("interpret stage", () => {
 
     expect(result.interpretError).toBeNull();
     expect(result.resultSummary).toContain("93.184.216.34");
-    expect(
-      result.patch.some(
-        (op) => op.op === "create" && op.resource === "identifier"
-      )
-    ).toBe(true);
+    expect(result.patch.some((op) => op.kind === "identifier.create")).toBe(
+      true
+    );
   });
 
   it("reports an interpret patch the graph would refuse as an error, with no patch", async () => {
@@ -163,7 +161,11 @@ describe("interpret stage", () => {
       interpret: () => ({
         summary: "dns ok",
         patch: [
-          { op: "create", resource: "claim", id: "not-a-uuid", data: {} },
+          {
+            kind: "claim.create",
+            id: "not-a-uuid",
+            data: { entityId: testId(20), text: "observed" },
+          },
         ],
       }),
     });

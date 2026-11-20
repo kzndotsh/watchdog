@@ -42,14 +42,14 @@ describe("interpret", () => {
       input: { host: "example.com", entityId },
     });
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && p.data.type === "url"
     );
     const domains = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "domain"
+      (p) => p.kind === "identifier.create" && p.data.type === "domain"
     );
     expect(urls.length).toBe(2);
     expect(domains.length).toBe(2);
-    expect(result.patch.at(-1)?.resource).toBe("claim");
+    expect(result.patch.at(-1)?.kind).toBe("claim.create");
     expectNoConfidenceOnPatch(result);
   });
 
