@@ -37,6 +37,7 @@ describe("proposal ingress schemas", () => {
       proposalId: PROPOSAL_ID,
       sharedEvidenceIds: [EVIDENCE_ID],
       attestationText: "reviewed",
+      untickedAs: "left",
     });
   });
 

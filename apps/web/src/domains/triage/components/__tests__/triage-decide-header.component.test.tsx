@@ -59,6 +59,8 @@ function pendingProposal(
     suppressedCount: 0,
     evidenceIds: [],
     rejectReason: null,
+    leftOpIds: [],
+    rejectedOpIds: [],
     decidedBy: null,
     decidedByLabel: null,
     decidedAt: null,

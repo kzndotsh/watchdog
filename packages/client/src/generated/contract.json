@@ -1663,7 +1663,7 @@
         "route": {
           "method": "POST",
           "path": "/cases/{caseId}/proposals/{proposalId}/accept",
-          "summary": "Accept a pending Proposal",
+          "summary": "Accept a pending Proposal, whole or the chosen changes",
           "tags": [
             "inbox"
           ]

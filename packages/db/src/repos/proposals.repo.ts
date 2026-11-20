@@ -271,7 +271,13 @@ export const proposalsRepo = {
     exec: DbExec,
     caseId: CaseId,
     proposalId: string,
-    values: { decidedBy: string; decidedAt: Date }
+    values: {
+      decidedBy: string;
+      decidedAt: Date;
+      /** A partial Accept's unticked ops, by how they were left. */
+      leftOpIds?: readonly string[];
+      rejectedOpIds?: readonly string[];
+    }
   ): Promise<ProposalRow | null> {
     const scoped = trimScopedCaseIds(caseId, proposalId);
     if (!scoped) return null;
@@ -283,6 +289,8 @@ export const proposalsRepo = {
         status: "accepted",
         decidedBy: scopedDecidedBy,
         decidedAt: values.decidedAt,
+        leftOpIds: [...(values.leftOpIds ?? [])],
+        rejectedOpIds: [...(values.rejectedOpIds ?? [])],
       })
       .where(
         and(

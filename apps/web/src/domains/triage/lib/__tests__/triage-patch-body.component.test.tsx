@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
 import { useMemo } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -36,6 +37,8 @@ function proposal(patch: ProposalRecord["patch"]): ProposalRecord {
     suppressedCount: 0,
     evidenceIds: [],
     rejectReason: null,
+    leftOpIds: [],
+    rejectedOpIds: [],
     decidedBy: null,
     decidedByLabel: null,
     decidedAt: null,
@@ -58,6 +61,8 @@ function Harness({
       confidence,
       evidenceIds: [] as string[],
       attestationText: "",
+      skippedOpIds: [] as string[],
+      untickedAs: "left" as const,
     },
     onSubmit: () => {},
   });
@@ -169,5 +174,129 @@ describe("TriagePatchBody", () => {
     );
     expect(screen.getByText("Queued enrichment")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
+  });
+
+  describe("partial Accept", () => {
+    const entityOp: ProposalRecord["patch"][number] = {
+      op: "create",
+      resource: "entity",
+      id: testId(40),
+      data: { name: "Acme", slug: "acme", kind: "org" },
+    };
+    const onEntity: ProposalRecord["patch"][number] = {
+      op: "create",
+      resource: "identifier",
+      id: testId(41),
+      data: { entityId: testId(40), type: "domain", value: "acme.example" },
+    };
+    const invalid: ProposalRecord["patch"][number] = {
+      op: "create",
+      resource: "identifier",
+      id: testId(42),
+      data: { entityId: testId(20), type: "email", value: "not-an-email" },
+    };
+
+    it("accepts the rest once the invalid change is unticked, and asks what the rest becomes", async () => {
+      const user = userEvent.setup();
+      render(
+        <Harness
+          confidence="unverified"
+          row={proposal([entityOp, onEntity, invalid])}
+        />
+      );
+      expect(screen.getByRole("button", { name: "Accept" })).toBeDisabled();
+
+      await user.click(
+        screen.getByRole("checkbox", {
+          name: /Accept: Identifier .*not-an-email/,
+        })
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Accept 2 of 3" })
+      ).toBeEnabled();
+      expect(
+        screen.getByRole("combobox", { name: "Unticked changes" })
+      ).toHaveTextContent("Leave the rest");
+    });
+
+    it("unticks a change on an Entity with the Entity, and ticks the Entity back with it", async () => {
+      const user = userEvent.setup();
+      render(
+        <Harness confidence="unverified" row={proposal([entityOp, onEntity])} />
+      );
+      const entityBox = screen.getByRole("checkbox", {
+        name: /Accept: Entity/,
+      });
+      const identifierBox = screen.getByRole("checkbox", {
+        name: /Accept: Identifier/,
+      });
+
+      await user.click(entityBox);
+      expect(entityBox).not.toBeChecked();
+      expect(identifierBox).not.toBeChecked();
+      expect(
+        screen.getByRole("button", { name: "Accept 0 of 2" })
+      ).toBeDisabled();
+
+      await user.click(identifierBox);
+      expect(entityBox).toBeChecked();
+      expect(identifierBox).toBeChecked();
+      expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
+    });
+
+    it("unticks and ticks a whole group, and can reject the rest", async () => {
+      const user = userEvent.setup();
+      const second: ProposalRecord["patch"][number] = {
+        ...onEntity,
+        id: testId(43),
+        data: { entityId: testId(20), type: "domain", value: "b.example" },
+      };
+      render(
+        <Harness
+          confidence="unverified"
+          row={proposal([entityOp, onEntity, second])}
+        />
+      );
+      const group = screen.getByRole("checkbox", {
+        name: /Accept all Domain Identifiers/,
+      });
+
+      await user.click(group);
+      expect(group).not.toBeChecked();
+      expect(
+        screen.getByRole("button", { name: "Accept 1 of 3" })
+      ).toBeEnabled();
+
+      await user.click(
+        screen.getByRole("combobox", { name: "Unticked changes" })
+      );
+      await user.click(
+        await screen.findByRole("option", { name: "Reject the rest" })
+      );
+      expect(
+        screen.getByRole("combobox", { name: "Unticked changes" })
+      ).toHaveTextContent("Reject the rest");
+
+      await user.click(group);
+      expect(group).toBeChecked();
+      expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
+    });
+
+    it("shows which changes a decided partial Accept left or rejected, with no tick boxes", () => {
+      render(
+        <Harness
+          confidence="unverified"
+          row={{
+            ...proposal([entityOp, onEntity, invalid]),
+            status: "accepted",
+            leftOpIds: [testId(42)],
+            rejectedOpIds: [],
+          }}
+        />
+      );
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(screen.getByText("Left")).toBeInTheDocument();
+    });
   });
 });

@@ -185,7 +185,7 @@ The human act in Triage that closes a Proposal without applying it. The Proposal
 _Avoid_: Dismiss, decline
 
 **Accept**:
-The human act in Triage that applies a Proposal to the Case Graph and sets its custody tier; the trust boundary. Detail: [`custody.md`](reference/contracts/custody.md).
+The human act in Triage that applies a Proposal to the Case Graph and sets its custody tier; the trust boundary. A partial Accept applies the ticked ops and leaves (or rejects) the rest. Detail: [`custody.md`](reference/contracts/custody.md).
 _Avoid_: Approve, merge, commit
 
 **graph write**:

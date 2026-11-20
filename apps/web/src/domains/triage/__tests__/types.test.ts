@@ -45,6 +45,7 @@ describe("triage input schemas", () => {
       proposalId: PROPOSAL_ID,
       sharedEvidenceIds: [evidenceId],
       attestationText: "reviewed",
+      untickedAs: "left",
     });
   });
 });

@@ -70,6 +70,8 @@ vi.mock("@/domains/triage/components/triage-detail", () => ({
       confidence: "possible";
       evidenceIds: string[];
       attestationText: string;
+      skippedOpIds: string[];
+      untickedAs: "left";
     }) => void;
     onReject: (reason: string) => void;
   }) => (
@@ -86,6 +88,8 @@ vi.mock("@/domains/triage/components/triage-detail", () => ({
             confidence: "possible",
             evidenceIds: [],
             attestationText: "",
+            skippedOpIds: [],
+            untickedAs: "left",
           });
         }}
       >
@@ -469,6 +473,24 @@ describe("Triage", () => {
       });
     });
     expect(toast.success).toHaveBeenCalledWith("Proposal accepted");
+  });
+
+  it("says only the chosen changes were accepted after a partial Accept", async () => {
+    const user = userEvent.setup();
+    const rows = proposals(1);
+    renderTriage(rows);
+    acceptProposalFn.mockResolvedValue({
+      ...rows[0],
+      status: "accepted",
+      leftOpIds: [testId(9)],
+    });
+    await screen.findByText("Detail: Proposal 00");
+
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Chosen changes accepted");
+    });
   });
 
   it("rejects the selected Proposal with the reason", async () => {

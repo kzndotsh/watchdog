@@ -115,7 +115,7 @@ export const accept = sessionAuthed
   .route({
     method: "POST",
     path: "/cases/{caseId}/proposals/{proposalId}/accept",
-    summary: "Accept a pending Proposal",
+    summary: "Accept a pending Proposal, whole or the chosen changes",
     tags: ["inbox"],
   })
   .input(acceptProposalInputSchema)
@@ -129,6 +129,8 @@ export const accept = sessionAuthed
         confidence: input.confidence,
         sharedEvidenceIds: input.sharedEvidenceIds,
         attestationText: input.attestationText,
+        opIds: input.opIds,
+        untickedAs: input.untickedAs,
         actorId: context.actor.userId,
       })
     )

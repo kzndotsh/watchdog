@@ -8,6 +8,7 @@ import {
 import { TRIAGE_PENDING_SEARCH } from "@/config/nav";
 import { useSelectedProposal } from "@/domains/triage/hooks/use-selected-proposal";
 import { proposalPatch } from "@/domains/triage/lib/filters";
+import { acceptOpIds } from "@/domains/triage/lib/op-selection";
 import type {
   TriageSearch,
   TriageSearchPatch,
@@ -86,11 +87,17 @@ export function useTriageWorkspace(
           confidence: needs ? values.confidence : undefined,
           sharedEvidenceIds: values.evidenceIds,
           attestationText: values.attestationText,
+          opIds: acceptOpIds(proposalPatch(selected), values.skippedOpIds),
+          untickedAs: values.untickedAs,
         }),
       });
     },
-    onSuccess: async () => {
-      toast.success("Proposal accepted");
+    onSuccess: async (accepted) => {
+      toast.success(
+        accepted.leftOpIds.length + accepted.rejectedOpIds.length > 0
+          ? "Chosen changes accepted"
+          : "Proposal accepted"
+      );
       onSearchChange(AFTER_DECISION);
       await invalidateAfterProposalAccept(queryClient, caseId);
     },

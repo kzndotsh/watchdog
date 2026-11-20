@@ -76,6 +76,8 @@ function pendingProposal(
     suppressedCount: 0,
     evidenceIds: [],
     rejectReason: null,
+    leftOpIds: [],
+    rejectedOpIds: [],
     decidedBy: null,
     decidedByLabel: null,
     decidedAt: null,
@@ -117,6 +119,8 @@ function FooterHarness({
       confidence,
       evidenceIds: [] as string[],
       attestationText,
+      skippedOpIds: [] as string[],
+      untickedAs: "left" as const,
     },
     onSubmit: onAccept,
   });

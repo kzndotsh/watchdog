@@ -13,6 +13,7 @@ import { proposalList } from "@watchdog/schemas/jobs";
 import type {
   proposalQueueItemSchema,
   proposalSchema,
+  UntickedOpOutcome,
 } from "@watchdog/schemas/jobs";
 import type {
   CaseId,
@@ -71,6 +72,7 @@ import {
   proposalsRepoFxDb,
   proposalsRepoFx,
 } from "../infra/repos-fx";
+import { selectAcceptedOpsEffect } from "./accept-selection";
 import { recordRejectedFingerprintsEffect } from "./finding-suppress";
 
 export type ProposalRecord = z.output<typeof proposalSchema>;
@@ -130,6 +132,8 @@ function toRecord(
     suppressedCount: row.suppressedCount,
     evidenceIds: normalizeUuidList(row.evidenceIds ?? []),
     rejectReason: row.rejectReason,
+    leftOpIds: normalizeUuidList(row.leftOpIds ?? []),
+    rejectedOpIds: normalizeUuidList(row.rejectedOpIds ?? []),
     decidedBy: row.decidedBy,
     decidedByLabel: row.decidedBy ? labelForActor(row.decidedBy, users) : null,
     decidedAt: row.decidedAt?.toISOString() ?? null,
@@ -350,6 +354,10 @@ export function acceptProposalEffect(input: {
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
   attestationText?: string;
+  /** The ops to apply (a partial Accept); omitted applies the whole patch. */
+  opIds?: readonly string[];
+  /** The ops not applied: `left` (default) or fingerprinted as `rejected`. */
+  untickedAs?: UntickedOpOutcome;
 }): Effect.Effect<ProposalRecord, DomainTag, Db> {
   return Effect.gen(function* acceptProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
@@ -389,9 +397,14 @@ export function acceptProposalEffect(input: {
           });
         }
 
+        const selection = yield* selectAcceptedOpsEffect(
+          pending.patch,
+          input.opIds,
+          input.untickedAs ?? "left"
+        );
         // Linked rows of `proposal_evidence`: real foreign keys, so each is Evidence of this Case.
         const proposalEvidence = pending.evidenceIds;
-        for (const op of pending.patch) {
+        for (const op of selection.applied) {
           const raw = op.evidenceIds ?? [];
           const hasNonEmpty = raw.some(
             (id) => typeof id === "string" && id.trim() !== ""
@@ -427,7 +440,7 @@ export function acceptProposalEffect(input: {
 
         yield* applyPatchEffect({
           caseId: scopedCaseId,
-          patch: pending.patch,
+          patch: [...selection.applied],
           confidence: input.confidence,
           sharedEvidenceIds: allShared,
           actor,
@@ -443,6 +456,8 @@ export function acceptProposalEffect(input: {
           {
             decidedBy: actorId,
             decidedAt,
+            leftOpIds: selection.leftOpIds,
+            rejectedOpIds: selection.rejectedOps.map((op) => op.id),
           }
         );
 
@@ -451,6 +466,12 @@ export function acceptProposalEffect(input: {
             reason: "Proposal is not pending",
           });
         }
+        yield* recordRejectedFingerprintsEffect({
+          caseId: scopedCaseId,
+          proposalId: accepted.id,
+          patch: [...selection.rejectedOps],
+          tx,
+        });
         yield* appendActivityEffect(tx, {
           caseId: scopedCaseId,
           kind: "proposal",
