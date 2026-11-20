@@ -6,12 +6,6 @@ export {
 } from "./confirmed-evidence";
 export {
   assertPatchGates,
-  assertPatchShape,
-  isOneOf,
-  requireEnum,
-  requireEntitySlug,
-  requireString,
-  requireUuid,
   CustodyViolationError,
   type PatchGateOpts,
 } from "./patch-gates";

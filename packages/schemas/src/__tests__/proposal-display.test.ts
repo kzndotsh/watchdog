@@ -8,8 +8,7 @@ describe("proposalEntityName", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: {
               entityId: "00000000-0000-4000-8000-000000000099",
@@ -17,8 +16,7 @@ describe("proposalEntityName", () => {
             },
           },
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: {
               entityId: "00000000-0000-4000-8000-000000000003",
@@ -41,10 +39,9 @@ describe("proposalEntityName", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "entity",
+            kind: "entity.create",
             id: "00000000-0000-4000-8000-000000000010",
-            data: { name: "Acme Corp", slug: "acme-corp" },
+            data: { kind: "org", name: "Acme Corp", slug: "acme-corp" },
           },
         ],
       })
@@ -55,8 +52,7 @@ describe("proposalEntityName", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: {
               entityId: "00000000-0000-4000-8000-000000000002",
@@ -76,13 +72,12 @@ describe("proposalEntityName", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "edge",
+            kind: "edge.create",
             id: "00000000-0000-4000-8000-000000000003",
             data: {
               fromId: "00000000-0000-4000-8000-000000000004",
               toId: "00000000-0000-4000-8000-000000000005",
-              predicate: "knows",
+              predicate: "associate_of",
             },
           },
         ],
@@ -100,8 +95,7 @@ describe("proposalEntityName", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: { entityId, text: "observed" },
           },
@@ -121,14 +115,12 @@ describe("proposalEntityId", () => {
       proposalEntityId({
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: { entityId: orphanId, text: "orphan" },
           },
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: { entityId: knownId, text: "known" },
           },

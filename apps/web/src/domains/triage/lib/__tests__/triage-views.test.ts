@@ -39,10 +39,9 @@ describe("triage proposal display", () => {
       capabilityId: "network.shodan.lookup",
       patch: [
         {
-          op: "create",
-          resource: "edge",
+          kind: "edge.create",
           id: testId(62),
-          data: { fromId, toId, predicate: "knows" },
+          data: { fromId, toId, predicate: "associate_of" },
         },
       ],
       entityNames: { [fromId]: "Alpha Corp", [toId]: "Beta LLC" },
@@ -79,14 +78,12 @@ describe("triage proposal display", () => {
       capabilityId: "network.shodan.lookup",
       patch: [
         {
-          op: "create",
-          resource: "claim",
+          kind: "claim.create",
           id: testId(92),
           data: { entityId: orphanId, text: "orphan" },
         },
         {
-          op: "create",
-          resource: "claim",
+          kind: "claim.create",
           id: testId(93),
           data: { entityId: knownId, text: "known" },
         },
@@ -117,8 +114,7 @@ describe("triage evidence", () => {
       evidenceIds: [`  ${evidenceId}  `],
       patch: [
         {
-          op: "create",
-          resource: "claim",
+          kind: "claim.create",
           id: testId(31),
           data: {
             entityId: testId(20),

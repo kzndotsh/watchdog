@@ -25,7 +25,7 @@ describe("interpret", () => {
     const result = interpretOembedReport(fixture, {
       input: { url: fixture.url, entityId },
     });
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(
       ids.some(
         (p) =>
@@ -50,7 +50,7 @@ describe("interpret", () => {
       { ...fixture, vendor: null },
       { input: { url: fixture.url, entityId } }
     );
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(
       ids.some(
         (p) =>

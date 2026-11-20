@@ -10,20 +10,17 @@ const opId = "11111111-1111-4111-8111-000000000030";
 describe("patchNeedsConfidence", () => {
   it("is true for claim, identifier, and edge ops", () => {
     const claim: PatchOp = {
-      op: "create",
-      resource: "claim",
+      kind: "claim.create",
       id: opId,
       data: { entityId, text: "Ada observed a host", class: "observation" },
     };
     const identifier: PatchOp = {
-      op: "create",
-      resource: "identifier",
+      kind: "identifier.create",
       id: opId,
       data: { entityId, type: "email", value: "ada@mailhost.test" },
     };
     const edge: PatchOp = {
-      op: "create",
-      resource: "edge",
+      kind: "edge.create",
       id: opId,
       data: {
         fromId: entityId,
@@ -38,20 +35,17 @@ describe("patchNeedsConfidence", () => {
 
   it("is false for entity, event, and question-only patches", () => {
     const entity: PatchOp = {
-      op: "create",
-      resource: "entity",
+      kind: "entity.create",
       id: opId,
       data: { name: "Ada", slug: "ada", kind: "person" },
     };
     const event: PatchOp = {
-      op: "create",
-      resource: "event",
+      kind: "event.create",
       id: opId,
       data: { entityId, when: "1815-12-10", what: "Born" },
     };
     const question: PatchOp = {
-      op: "create",
-      resource: "question",
+      kind: "question.create",
       id: opId,
       data: { entityId, text: "Where?" },
     };

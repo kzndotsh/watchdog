@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { virusTotalLookup } from "../cap.ts";
 import { interpretVirusTotalLookupReport } from "../interpret.ts";
 
@@ -32,8 +32,8 @@ describe("interpret", () => {
       input: { query: "8.8.8.8", entityId },
     });
     expect(result.patch.length).toBe(2);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
     expect(claimText(result, 1)).toMatch(/VirusTotal/);
     expect(claimText(result, 1)).toMatch(/reputation=0/);
     expect(claimText(result, 1)).toMatch(/harmless=60/);

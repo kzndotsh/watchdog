@@ -55,8 +55,7 @@ describe("proposalActivityLabel", () => {
         capabilityId: "network.shodan.lookup",
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: {
               entityId: "00000000-0000-4000-8000-000000000002",
@@ -78,13 +77,12 @@ describe("proposalActivityLabel", () => {
         capabilityId: "network.shodan.lookup",
         patch: [
           {
-            op: "create",
-            resource: "edge",
+            kind: "edge.create",
             id: "00000000-0000-4000-8000-000000000003",
             data: {
               fromId: "00000000-0000-4000-8000-000000000004",
               toId: "00000000-0000-4000-8000-000000000005",
-              predicate: "knows",
+              predicate: "associate_of",
             },
           },
         ],
@@ -102,8 +100,7 @@ describe("proposalActivityLabel", () => {
         capabilityId: "network.shodan.lookup",
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: {
               entityId: "00000000-0000-4000-8000-000000000002",
@@ -123,8 +120,7 @@ describe("proposalActivityLabel", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: {
               entityId: "00000000-0000-4000-8000-000000000099",
@@ -132,8 +128,7 @@ describe("proposalActivityLabel", () => {
             },
           },
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: {
               entityId: "00000000-0000-4000-8000-000000000003",
@@ -158,14 +153,12 @@ describe("proposalActivityLabel", () => {
       proposalEntityId({
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000001",
             data: { entityId: orphanId, text: "orphan" },
           },
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: "00000000-0000-4000-8000-000000000002",
             data: { entityId: knownId, text: "known" },
           },
@@ -181,10 +174,9 @@ describe("proposalActivityLabel", () => {
       proposalEntityName({
         patch: [
           {
-            op: "create",
-            resource: "entity",
+            kind: "entity.create",
             id: "00000000-0000-4000-8000-000000000010",
-            data: { name: "Acme Corp", slug: "acme-corp" },
+            data: { kind: "org", name: "Acme Corp", slug: "acme-corp" },
           },
         ],
       })
@@ -197,10 +189,9 @@ describe("proposalActivityLabel", () => {
       proposalEntityId({
         patch: [
           {
-            op: "create",
-            resource: "entity",
+            kind: "entity.create",
             id: entityId,
-            data: { name: "Acme Corp", slug: "acme-corp" },
+            data: { kind: "org", name: "Acme Corp", slug: "acme-corp" },
           },
         ],
       })
@@ -212,7 +203,16 @@ describe("proposalActivityLabel", () => {
       proposalActivityLabel({
         summary: "",
         capabilityId: null,
-        patch: [{ op: "create", resource: "claim", id: "x", data: {} }],
+        patch: [
+          {
+            kind: "claim.create",
+            id: "x",
+            data: {
+              entityId: "00000000-0000-4000-8000-000000000001",
+              text: "x",
+            },
+          },
+        ],
       })
     ).toBe("Create Claim");
   });

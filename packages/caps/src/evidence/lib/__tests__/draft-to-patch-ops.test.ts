@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { dataOf } from "../../../testing";
 import { draftToOutcome, draftToPatchOps } from "../draft-to-patch-ops.ts";
 
 describe("draft-to-patch-ops", () => {
@@ -30,14 +31,14 @@ describe("draft-to-patch-ops", () => {
     );
     expect(patch.length).toBe(1);
     const op = patch[0];
-    expect(op.resource).toBe("identifier");
-    expect(op.data.type).toBe("handle");
-    expect(op.data.value).toBe("@alice");
-    expect(op.data.platform).toBe("discord");
-    expect(op.data.status).toBe("former");
-    expect(typeof op.data.notes === "string").toBeTruthy();
-    expect(op.data.notes).toMatch(/bio/);
-    expect(op.data.notes).toMatch(/quote:/);
+    expect(op.kind).toBe("identifier.create");
+    expect(dataOf(op).type).toBe("handle");
+    expect(dataOf(op).value).toBe("@alice");
+    expect(dataOf(op).platform).toBe("discord");
+    expect(dataOf(op).status).toBe("former");
+    expect(typeof dataOf(op).notes === "string").toBeTruthy();
+    expect(dataOf(op).notes).toMatch(/bio/);
+    expect(dataOf(op).notes).toMatch(/quote:/);
   });
 
   it("draftToPatchOps defaults platform to empty string when omitted", () => {
@@ -48,8 +49,8 @@ describe("draft-to-patch-ops", () => {
       },
       { evidenceId, entityId }
     );
-    expect(patch[0].data.platform).toBe("");
-    expect(patch[0].data.status).toBe(undefined);
+    expect(dataOf(patch[0]).platform).toBe("");
+    expect(dataOf(patch[0]).status).toBe(undefined);
   });
 
   it("draftToPatchOps normalizes platform aliases and keeps customs", () => {
@@ -60,7 +61,7 @@ describe("draft-to-patch-ops", () => {
       },
       { evidenceId, entityId }
     );
-    expect(aliasPatch[0].data.platform).toBe("twitter");
+    expect(dataOf(aliasPatch[0]).platform).toBe("twitter");
 
     const customPatch = draftToPatchOps(
       {
@@ -69,7 +70,7 @@ describe("draft-to-patch-ops", () => {
       },
       { evidenceId, entityId }
     );
-    expect(customPatch[0].data.platform).toBe("boy_moment");
+    expect(dataOf(customPatch[0]).platform).toBe("boy_moment");
   });
 
   it("draftToPatchOps skips handles without a platform", () => {
@@ -84,8 +85,8 @@ describe("draft-to-patch-ops", () => {
       { evidenceId, entityId }
     );
     expect(patch).toHaveLength(1);
-    expect(patch[0].resource).toBe("identifier");
-    expect(patch[0].data.type).toBe("email");
+    expect(patch[0].kind).toBe("identifier.create");
+    expect(dataOf(patch[0]).type).toBe("email");
   });
 
   it("draftToPatchOps trims padded entity and evidence ids", () => {
@@ -97,7 +98,7 @@ describe("draft-to-patch-ops", () => {
       { evidenceId: `  ${evidenceId}  `, entityId: `  ${entityId}  ` }
     );
     expect(patch).toHaveLength(1);
-    expect(patch[0].data.entityId).toBe(entityId);
+    expect(dataOf(patch[0]).entityId).toBe(entityId);
     expect(patch[0].evidenceIds).toEqual([evidenceId]);
   });
 
@@ -113,8 +114,8 @@ describe("draft-to-patch-ops", () => {
       { evidenceId, entityId }
     );
     expect(patch).toHaveLength(1);
-    expect(patch[0].data.type).toBe("domain");
-    expect(patch[0].data.value).toBe("example.com");
+    expect(dataOf(patch[0]).type).toBe("domain");
+    expect(dataOf(patch[0]).value).toBe("example.com");
   });
 
   it("draftToPatchOps ignores whitespace-only notes and evidence quotes", () => {
@@ -139,8 +140,8 @@ describe("draft-to-patch-ops", () => {
       { evidenceId, entityId }
     );
     expect(patch).toHaveLength(2);
-    expect(patch[0].data.notes).toBeUndefined();
-    expect(patch[1].data.text).toBe("observed activity");
+    expect(dataOf(patch[0]).notes).toBeUndefined();
+    expect(dataOf(patch[1]).text).toBe("observed activity");
   });
 
   it("draftToPatchOps skips whitespace-only claims and questions", () => {
@@ -154,7 +155,7 @@ describe("draft-to-patch-ops", () => {
       { evidenceId, entityId }
     );
     expect(patch).toHaveLength(1);
-    expect(patch[0].resource).toBe("identifier");
+    expect(patch[0].kind).toBe("identifier.create");
   });
 
   it("draftToPatchOps returns [] when entityId is present but invalid", () => {

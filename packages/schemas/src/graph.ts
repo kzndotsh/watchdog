@@ -4,7 +4,13 @@ export {
   entityTitleMapFromRows,
 } from "./entity-display";
 export type { EntitySearchRow, EntityTitleRow } from "./entity-display";
-export type { PatchOp } from "./patch";
+export type {
+  PatchOp,
+  PatchOpKind,
+  PatchOpOf,
+  PatchResource,
+  PatchVerb,
+} from "./patch";
 export type { IdentifierTypeCounts } from "./graph-records";
 export {
   patchOpDependencies,
@@ -17,7 +23,10 @@ export {
   patchOpHeadline,
   patchOpRelatedEntityIds,
   patchInputSchema,
-  patchOpInputSchema,
+  PATCH_OP_KINDS,
+  isPatchOpOf,
+  patchOpResource,
+  patchOpVerb,
   patchOpSchema,
   patchOpSearchText,
   patchOpText,

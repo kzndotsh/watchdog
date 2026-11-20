@@ -24,7 +24,7 @@ describe("interpret", () => {
     const result = interpretUnshortenReport(fixture, {
       input: { url: "https://t.co/abc", entityId },
     });
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(ids.map((p) => p.data.value)).toEqual([
       "https://t.co/abc",
       "https://example.com",

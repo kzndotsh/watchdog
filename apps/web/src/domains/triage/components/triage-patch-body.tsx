@@ -20,7 +20,11 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { listInvalidIdentifierOps, patchOpText } from "@watchdog/schemas/graph";
+import {
+  isPatchOpOf,
+  listInvalidIdentifierOps,
+  patchOpText,
+} from "@watchdog/schemas/graph";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 import {
   Alert,
@@ -32,7 +36,9 @@ function summaryIsRedundant(proposal: ProposalRecord): boolean {
   const summary = proposal.summary?.trim();
   if (!summary) return true;
   return proposalPatch(proposal).some((op) => {
-    if (op.resource !== "claim" && op.resource !== "question") return false;
+    if (!isPatchOpOf(op, "claim") && !isPatchOpOf(op, "question")) {
+      return false;
+    }
     const text = patchOpText(op);
     return text !== undefined && text.trim() === summary;
   });

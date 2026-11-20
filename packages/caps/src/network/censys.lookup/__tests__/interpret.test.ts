@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { censysLookup } from "../cap.ts";
 import { interpretCensysLookupReport } from "../interpret.ts";
 
@@ -28,11 +28,11 @@ describe("interpret", () => {
     const result = interpretCensysLookupReport(fixture, {
       input: { ip: "8.8.8.8", entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("8.8.8.8");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("8.8.8.8");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
     expect(claimText(result, 2)).toMatch(/15169/);
     expect(claimText(result, 2)).toMatch(/HTTPS/);
   });

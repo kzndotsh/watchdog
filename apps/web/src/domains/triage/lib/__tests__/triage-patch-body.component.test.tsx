@@ -103,8 +103,7 @@ describe("TriagePatchBody", () => {
         confidence="confirmed"
         row={proposal([
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: testId(30),
             data: {
               entityId: testId(20),
@@ -124,8 +123,7 @@ describe("TriagePatchBody", () => {
         confidence="unverified"
         row={proposal([
           {
-            op: "create",
-            resource: "identifier",
+            kind: "identifier.create",
             id: testId(31),
             data: {
               entityId: testId(20),
@@ -146,8 +144,7 @@ describe("TriagePatchBody", () => {
         confidence="unverified"
         row={proposal([
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: testId(32),
             data: {
               entityId: testId(20),
@@ -178,20 +175,17 @@ describe("TriagePatchBody", () => {
 
   describe("partial Accept", () => {
     const entityOp: ProposalRecord["patch"][number] = {
-      op: "create",
-      resource: "entity",
+      kind: "entity.create",
       id: testId(40),
       data: { name: "Acme", slug: "acme", kind: "org" },
     };
     const onEntity: ProposalRecord["patch"][number] = {
-      op: "create",
-      resource: "identifier",
+      kind: "identifier.create",
       id: testId(41),
       data: { entityId: testId(40), type: "domain", value: "acme.example" },
     };
     const invalid: ProposalRecord["patch"][number] = {
-      op: "create",
-      resource: "identifier",
+      kind: "identifier.create",
       id: testId(42),
       data: { entityId: testId(20), type: "email", value: "not-an-email" },
     };

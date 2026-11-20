@@ -234,8 +234,12 @@ describe.each(["triage_accept", "agent_write"] as const)(
           confidence: "unverified",
           actor: REVIEWER,
           patch: [
-            { ...identifier, op: "upsert", evidenceIds: [second.id] },
-            { ...edge, op: "upsert", evidenceIds: [second.id] },
+            {
+              ...identifier,
+              kind: "identifier.upsert",
+              evidenceIds: [second.id],
+            },
+            { ...edge, kind: "edge.upsert", evidenceIds: [second.id] },
           ],
         })
       );

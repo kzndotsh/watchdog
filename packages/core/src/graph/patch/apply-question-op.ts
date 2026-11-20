@@ -1,26 +1,25 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOpOf } from "@watchdog/schemas/graph";
 
 import { assertEntityInCaseEffect } from "../../cases/access";
-import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
+import type { DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { questionsTable } from "../mutation/tables";
-import { decodeOpData, questionOpData } from "./op-data";
 
 export function applyQuestionOpEffect(
   w: JoinedGraphWriter,
-  op: PatchOp
+  op: PatchOpOf<"question">
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyQuestionOpGen() {
-    if (op.op !== "create") {
-      return yield* new InvalidError({
-        reason: "question only supports create",
-      });
-    }
-    const data = yield* decodeOpData(questionOpData, op.data);
-    yield* assertEntityInCaseEffect(w.caseId, data.entityId, w.tx);
-    yield* w.insert(questionsTable, { id: op.id, ...data, status: "open" });
+    const { entityId, text } = op.data;
+    yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
+    yield* w.insert(questionsTable, {
+      id: op.id,
+      entityId,
+      text,
+      status: "open",
+    });
   });
 }

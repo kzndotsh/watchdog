@@ -120,8 +120,7 @@ async function seedPopulatedCase(slug: string, n = 0) {
     cased.id,
     [
       {
-        op: "create",
-        resource: "question",
+        kind: "question.create",
         id: testId(300 + n),
         data: { entityId: entity.id, text: "Who?" },
       },
@@ -130,8 +129,7 @@ async function seedPopulatedCase(slug: string, n = 0) {
   );
   await seedGraphWrite(testDb, cased.id, [
     {
-      op: "create",
-      resource: "question",
+      kind: "question.create",
       id: testId(301 + n),
       data: { entityId: entity.id, text: "Seed" },
     },

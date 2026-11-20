@@ -2,7 +2,7 @@ import { Effect } from "effect";
 
 import { graphWriteListRepo } from "@watchdog/db";
 import type { GraphWriteRow } from "@watchdog/db";
-import { graphWriteList } from "@watchdog/schemas/graph";
+import { graphWriteList, type PatchOp } from "@watchdog/schemas/graph";
 import {
   PAGE_LIMIT_DEFAULT,
   trimmedOrNull,
@@ -30,7 +30,7 @@ import {
 import { createAttestationEffect } from "../evidence/evidence";
 import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
-import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
+import { parseAgentPatch } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
@@ -103,13 +103,13 @@ export function createAgentProposalEffect(input: {
   caseId: CaseId;
   organizationId: OrganizationId;
   actorId: string;
-  patch: unknown;
+  patch: PatchOp[];
   summary?: string;
   evidenceIds?: string[];
 }): Effect.Effect<{ proposal: ProposalRecord }, DomainTag, Db> {
   return Effect.gen(function* createAgentProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const plan = yield* parseAgentPatchEffect({
+    const plan = parseAgentPatch({
       patch: input.patch,
       summary: input.summary,
       evidenceIds: input.evidenceIds,
@@ -164,7 +164,7 @@ export function writeGraphFromAgentEffect(input: {
   actorLabel?: string | null;
   /** The API key (`apikey.id`) that made the write; recorded on the history rows and activity entries. */
   actorKeyId?: string | null;
-  patch: unknown;
+  patch: PatchOp[];
   summary?: string;
   evidenceIds?: string[];
   userOverride: true;
@@ -187,7 +187,7 @@ export function writeGraphFromAgentEffect(input: {
       actorKeyId: input.actorKeyId ?? undefined,
     };
 
-    const plan = yield* parseAgentPatchEffect({
+    const plan = parseAgentPatch({
       patch: input.patch,
       summary: input.summary,
       evidenceIds: input.evidenceIds,

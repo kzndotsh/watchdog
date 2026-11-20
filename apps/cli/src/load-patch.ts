@@ -70,9 +70,14 @@ export function loadPatch(args: {
 
   const patchResult = patchInputSchema.safeParse(parsed);
   if (!patchResult.success) {
-    fail("USAGE", "Patch must be a non-empty array of patch operations", {
-      help: PATCH_HELP,
-    });
+    // Name the first refused field (`0.data.text: ...`) so the author can fix the op.
+    const [issue] = patchResult.error.issues;
+    const where = issue === undefined ? "" : `${issue.path.join(".")}: `;
+    fail(
+      "USAGE",
+      `Patch must be an array of patch operations (${where}${issue?.message ?? "invalid"})`,
+      { help: PATCH_HELP }
+    );
   }
   if (patchResult.data.length === 0) {
     fail("USAGE", "Patch must contain at least one operation", {

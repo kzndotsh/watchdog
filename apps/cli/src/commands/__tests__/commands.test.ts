@@ -789,8 +789,7 @@ describe("wd graph", () => {
     });
     const patch = [
       {
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: "00000000-0000-4000-8000-000000000002",
         data: { entityId: ENTITY, text: "observed" },
       },

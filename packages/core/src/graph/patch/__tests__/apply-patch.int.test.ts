@@ -115,33 +115,6 @@ describe("applyPatch", () => {
     });
   });
 
-  it("normalizes entity create slugs from patch ops", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entityOp = buildEntityCreateOp(
-        "Alpha Corp",
-        "  Alpha Corp  ",
-        "org",
-        {
-          id: testId(37),
-        }
-      );
-
-      await runDomain(
-        applyPatchEffect({
-          channel: "triage_accept",
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [entityOp],
-        })
-      );
-
-      const entities = await entitiesRepo.listForCase(tx, cased.id);
-      expect(entities.some((row) => row.slug === "alpha-corp")).toBe(true);
-    });
-  });
-
   it("rejects entity upsert when slug belongs to a different id", async () => {
     await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -158,8 +131,7 @@ describe("applyPatch", () => {
             confidence: "unverified",
             patch: [
               {
-                op: "upsert",
-                resource: "entity",
+                kind: "entity.upsert",
                 id: testId(61),
                 data: {
                   name: "Other",
@@ -209,7 +181,7 @@ describe("applyPatch", () => {
           patch: [
             {
               ...createOp,
-              op: "upsert",
+              kind: "identifier.upsert",
               id: testId(42),
               data: { ...createOp.data, notes: "updated" },
             },
@@ -223,35 +195,6 @@ describe("applyPatch", () => {
       expect(matches).toHaveLength(1);
       expect(matches[0]?.notes).toBe("updated");
       expect(matches[0]?.confidence).toBe("possible");
-    });
-  });
-
-  it("normalizes padded identifier type on patch apply", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(43) });
-      const createOp = buildIdentifierCreateOp(
-        entity.id,
-        "  email  ",
-        "padded-type@example.com",
-        { id: testId(44), data: { platform: "" } }
-      );
-      await runDomain(
-        applyPatchEffect({
-          channel: "triage_accept",
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [createOp],
-        })
-      );
-      const identifiers = await identifiersRepo.listForEntity(tx, entity.id);
-      expect(
-        identifiers.some(
-          (row) =>
-            row.type === "email" && row.value === "padded-type@example.com"
-        )
-      ).toBe(true);
     });
   });
 
@@ -285,7 +228,7 @@ describe("applyPatch", () => {
           patch: [
             {
               ...createOp,
-              op: "upsert",
+              kind: "identifier.upsert",
               id: testId(48),
               data: { ...createOp.data, notes: "updated" },
             },
@@ -344,7 +287,7 @@ describe("applyPatch", () => {
           patch: [
             {
               ...createOp,
-              op: "upsert",
+              kind: "edge.upsert",
               id: testId(52),
               data: { ...createOp.data, notes: "updated" },
             },
@@ -417,32 +360,6 @@ describe("applyPatch", () => {
     });
   });
 
-  it("rejects a self-linked edge", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const person = await seedEntity(tx, cased.id, {
-        id: testId(53),
-        kind: "person",
-        slug: "ada",
-      });
-      await expect(
-        runDomain(
-          applyPatchEffect({
-            channel: "triage_accept",
-            tx,
-            caseId: cased.id,
-            confidence: "unverified",
-            patch: [
-              buildEdgeCreateOp(person.id, person.id, "same_as", {
-                id: testId(54),
-              }),
-            ],
-          })
-        )
-      ).rejects.toThrow(/itself/i);
-    });
-  });
-
   it("requires confidence for a claim", async () => {
     await withSystemTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -512,39 +429,6 @@ describe("applyPatch", () => {
     expect(claims.some((row) => row.text === "Should roll back")).toBe(false);
   });
 
-  it("stores null entity summary and notes when create patch sends blanks", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entityOp = buildEntityCreateOp(
-        "Blank Fields",
-        "blank-fields",
-        "org",
-        {
-          id: testId(55),
-          data: {
-            name: "Blank Fields",
-            slug: "blank-fields",
-            kind: "org",
-            summary: "   ",
-            notes: "",
-          },
-        }
-      );
-      await runDomain(
-        applyPatchEffect({
-          channel: "triage_accept",
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [entityOp],
-        })
-      );
-      const created = await entitiesRepo.getInCase(tx, cased.id, testId(55));
-      expect(created?.summary).toBeNull();
-      expect(created?.notes).toBeNull();
-    });
-  });
-
   it("rejects entity update patch when the entity is in another case", async () => {
     await withSystemTestTx(async (tx) => {
       const caseA = await seedCase(tx);
@@ -562,8 +446,7 @@ describe("applyPatch", () => {
             confidence: "unverified",
             patch: [
               {
-                op: "update",
-                resource: "entity",
+                kind: "entity.update",
                 id: entityB.id,
                 data: { summary: "cross-case write" },
               },
@@ -573,34 +456,6 @@ describe("applyPatch", () => {
       ).rejects.toThrow(/Entity not found/i);
       const unchanged = await entitiesRepo.getInCase(tx, caseB.id, entityB.id);
       expect(unchanged?.summary).not.toBe("cross-case write");
-    });
-  });
-
-  it("clears entity summary on update patch with blank summary", async () => {
-    await withSystemTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, {
-        id: testId(56),
-        summary: "Lead subject",
-      });
-      await runDomain(
-        applyPatchEffect({
-          channel: "triage_accept",
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [
-            {
-              op: "update",
-              resource: "entity",
-              id: entity.id,
-              data: { summary: "   " },
-            },
-          ],
-        })
-      );
-      const updated = await entitiesRepo.getInCase(tx, cased.id, entity.id);
-      expect(updated?.summary).toBeNull();
     });
   });
 

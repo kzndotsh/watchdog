@@ -28,10 +28,12 @@ describe("interpret", () => {
     const result = interpretWhoisXmlReport(fixture, {
       input: { host: "example.com", entityId },
     });
-    expect(result.patch.filter((p) => p.resource === "identifier").length).toBe(
-      0
+    expect(
+      result.patch.filter((p) => p.kind === "identifier.create").length
+    ).toBe(0);
+    expect(result.patch.filter((p) => p.kind === "claim.create").length).toBe(
+      1
     );
-    expect(result.patch.filter((p) => p.resource === "claim").length).toBe(1);
     expectNoConfidenceOnPatch(result);
     expect(String(result.summary)).toMatch(/WhoisXML for example\.com/);
   });

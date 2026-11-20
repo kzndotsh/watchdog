@@ -4,6 +4,7 @@ import { testId } from "@watchdog/test-kit";
 
 import {
   claimText,
+  dataOf,
   expectNoConfidenceOnPatch,
   expectProposesIdentifier,
   itRejectsIncompleteReport,
@@ -52,7 +53,7 @@ describe("interpret", () => {
       type: "url",
       value: "https://twitter.com/gravatar",
     });
-    expect(result.patch.some((p) => p.resource === "claim")).toBeTruthy();
+    expect(result.patch.some((p) => p.kind === "claim.create")).toBeTruthy();
     expectNoConfidenceOnPatch(result);
   });
 
@@ -61,9 +62,9 @@ describe("interpret", () => {
       { ...fixture, found: false, profileUrl: null, emails: [], accounts: [] },
       { input: { email: fixture.email, entityId } }
     );
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(ids).toHaveLength(1);
-    expect(ids[0]?.data.type).toBe("email");
+    expect(dataOf(ids[0]).type).toBe("email");
     expect(claimText(result, 1)).toMatch(/no public profile/);
   });
 
@@ -81,7 +82,7 @@ describe("interpret", () => {
       /proposed 40 of 43 handles; the rest are only in the Job report/
     );
     const handles = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "handle"
+      (p) => p.kind === "identifier.create" && p.data.type === "handle"
     );
     expect(handles).toHaveLength(40);
   });
@@ -100,7 +101,7 @@ describe("interpret", () => {
       /proposed 40 of 42 urls; the rest are only in the Job report/
     );
     const urls = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "url"
+      (p) => p.kind === "identifier.create" && p.data.type === "url"
     );
     expect(urls).toHaveLength(40);
   });

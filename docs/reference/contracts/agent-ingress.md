@@ -44,7 +44,7 @@ An API key carries scopes (`resource:level`); a session carries none and is neve
 
 ## Pure prep
 
-- `parseAgentPatch` + `assertPatchShape` (policy). Cap Jobs still set `agentSourced=false`.
+- The API input parses each op with the typed union (`patchOpSchema`, [`custody`](custody.md#identifier--patch-gates)): a malformed op is HTTP 400 before core, and no Proposal is created. `parseAgentPatch` (core) refuses an empty patch and normalizes the summary and shared Evidence ids. Cap Jobs still set `agentSourced=false`.
 - CLI output: compact JSON by default; see [`apps/cli/AGENTS.md`](../../../apps/cli/AGENTS.md).
 
 ## Enforced by

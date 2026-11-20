@@ -28,10 +28,10 @@ Where to find things:
 | Need | File |
 | --- | --- |
 | Enums, confidence tiers, task/job/playbook vocab, edge predicates + metadata (`EDGE_PREDICATES`, `EDGE_PREDICATE_META`) | [`packages/schemas/src/vocab.ts`](../../../packages/schemas/src/vocab.ts), `enums.ts` |
-| `PatchOp` / `patchOpSchema` (incl. the rule that claim/identifier/edge ops carry no `confidence`) | [`packages/schemas/src/patch.ts`](../../../packages/schemas/src/patch.ts) |
+| `PatchOp` / `patchOpSchema`: the op union on `kind` (`<resource>.<op>`, `PATCH_OP_KINDS`), strict per-kind `data` (no `confidence`), `patchOpResource` / `patchOpVerb` / `isPatchOpOf` | [`packages/schemas/src/patch.ts`](../../../packages/schemas/src/patch.ts) |
 | Identifier value rules per type (email, phone, url, domain, ip, pgp; soft types), handle→platform | [`packages/schemas/src/validate-identifier.ts`](../../../packages/schemas/src/validate-identifier.ts), `normalize-identifier.ts`, `platforms.ts` |
 | Cap/Job artifact id constants, `isJobInternalArtifact` | `packages/schemas/src/job-artifacts.ts` |
-| Accept gates | `@watchdog/policy` (`assertPatchGates`, `assertPatchShape`) |
+| Accept gates (rules across ops) | `@watchdog/policy` (`assertPatchGates`) |
 | Patch application | `packages/core/src/graph/patch/apply-*-op.ts`, `parse-agent-patch.ts` |
 | Edge update validation | `packages/core/src/graph/edge-update.ts` |
 | Producer report shapes | `@watchdog/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from a `@watchdog/tools/<domain>` subpath directly (no Cap-local re-export) |

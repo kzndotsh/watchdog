@@ -34,7 +34,7 @@ describe("interpret", () => {
       input: { host: "example.com", entityId },
     });
     expect(result.patch.length).toBe(1);
-    expect(result.patch[0]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("claim.create");
     expect(claimText(result, 0)).toMatch(/Google Search Console/);
     expect(claimText(result, 0)).toMatch(/SPF/);
   });

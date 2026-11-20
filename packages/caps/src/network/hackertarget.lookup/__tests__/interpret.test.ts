@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { hackertargetLookup } from "../cap.ts";
 import { interpretHackertargetLookupReport } from "../interpret.ts";
 
@@ -22,12 +22,12 @@ describe("interpret", () => {
       input: { ip: "1.1.1.1", entityId },
     });
     expect(result.patch.length).toBe(4);
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("1.1.1.1");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
-    expect(result.patch[3]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("1.1.1.1");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
+    expect(result.patch[3]?.kind).toBe("claim.create");
     expect(claimText(result, 3)).toMatch(/2 host/);
   });
 
@@ -48,7 +48,7 @@ describe("interpret", () => {
     );
     expect(
       result.patch.filter(
-        (p) => p.resource === "identifier" && p.data.type === "domain"
+        (p) => p.kind === "identifier.create" && p.data.type === "domain"
       )
     ).toHaveLength(80);
     expect(String(result.summary)).toMatch(

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { torExitLookup } from "../cap.ts";
 import { interpretTorExitLookupReport } from "../interpret.ts";
 
@@ -22,10 +22,10 @@ describe("interpret", () => {
     const result = interpretTorExitLookupReport(exitFixture, {
       input: { ip: exitFixture.ip, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("1.2.3.4");
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("1.2.3.4");
+    expect(result.patch[1]?.kind).toBe("claim.create");
     expect(claimText(result, 1)).toMatch(/is a current Tor exit node/);
   });
 
@@ -33,7 +33,7 @@ describe("interpret", () => {
     const result = interpretTorExitLookupReport(nonExitFixture, {
       input: { ip: nonExitFixture.ip, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
     expect(claimText(result, 1)).toMatch(/is not a current Tor exit node/);
   });
 

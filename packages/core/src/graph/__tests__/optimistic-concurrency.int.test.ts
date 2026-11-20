@@ -32,8 +32,7 @@ describe("optimistic concurrency on patch ops", () => {
         actor: { actorId: TEST_ACTOR_ID },
         patch: [
           {
-            op: "update",
-            resource: "entity",
+            kind: "entity.update",
             id: fx.entityId,
             data: { summary },
             ...(version === undefined ? {} : { expectedVersion: version }),

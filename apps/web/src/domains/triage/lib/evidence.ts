@@ -1,6 +1,10 @@
 import { proposalPatch } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  CONFIDENCE_GATED_RESOURCES,
+  patchOpResource,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 export { evidenceLabel } from "@/shared/ui/intake/evidence-option";
@@ -24,11 +28,7 @@ export function evidenceIdsForOp(
 ): string[] {
   const own = normalizeUuidList(op.evidenceIds ?? []);
   if (own.length > 0) return own;
-  if (
-    op.resource === "claim" ||
-    op.resource === "identifier" ||
-    op.resource === "edge"
-  ) {
+  if (CONFIDENCE_GATED_RESOURCES.has(patchOpResource(op))) {
     return normalizeUuidList(sharedEvidenceIds);
   }
   return [];

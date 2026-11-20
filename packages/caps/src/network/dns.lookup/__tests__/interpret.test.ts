@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 import {
+  dataOf,
   expectNoConfidenceOnPatch,
   expectProposesIdentifier,
   itRejectsIncompleteReport,
@@ -32,9 +33,11 @@ describe("interpretDnsReport", () => {
       type: "ip",
       value: "2606:2800:220:1:248:1893:25c8:1946",
     });
-    const ids = result.patch.filter((p) => p.resource === "identifier");
+    const ids = result.patch.filter((p) => p.kind === "identifier.create");
     expect(ids).toHaveLength(3);
-    expect(result.patch.filter((p) => p.resource === "claim")).toHaveLength(1);
+    expect(result.patch.filter((p) => p.kind === "claim.create")).toHaveLength(
+      1
+    );
     expect(String(result.summary)).toMatch(/93\.184\.216\.34/);
     expect(String(result.summary)).toMatch(/a\.iana-servers\.net/);
     expectNoConfidenceOnPatch(result);
@@ -56,10 +59,12 @@ describe("interpretDnsReport", () => {
     expectProposesIdentifier(result, { type: "domain", value: "example.com" });
     expect(
       result.patch.filter(
-        (p) => p.resource === "identifier" && p.data.type === "ip"
+        (p) => p.kind === "identifier.create" && p.data.type === "ip"
       )
     ).toEqual([]);
-    expect(result.patch.filter((p) => p.resource === "claim")).toHaveLength(1);
+    expect(result.patch.filter((p) => p.kind === "claim.create")).toHaveLength(
+      1
+    );
   });
 
   it("dedupes duplicate A records into one ip identifier", () => {
@@ -68,10 +73,10 @@ describe("interpretDnsReport", () => {
       { input: { host: "example.com", entityId } }
     );
     const ips = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "ip"
+      (p) => p.kind === "identifier.create" && p.data.type === "ip"
     );
     expect(ips).toHaveLength(1);
-    expect(ips[0]?.data.value).toBe("93.184.216.34");
+    expect(dataOf(ips[0]).value).toBe("93.184.216.34");
   });
 
   it("dedupes equivalent IPv6 AAAA spellings into one ip identifier", () => {
@@ -84,10 +89,10 @@ describe("interpretDnsReport", () => {
       { input: { host: "example.com", entityId } }
     );
     const ips = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "ip"
+      (p) => p.kind === "identifier.create" && p.data.type === "ip"
     );
     expect(ips).toHaveLength(1);
-    expect(ips[0]?.data.value).toBe("2001:db8::1");
+    expect(dataOf(ips[0]).value).toBe("2001:db8::1");
   });
 
   it("caps IP identifiers and notes truncation in the claim", () => {
@@ -101,7 +106,7 @@ describe("interpretDnsReport", () => {
     );
     expect(
       result.patch.filter(
-        (p) => p.resource === "identifier" && p.data.type === "ip"
+        (p) => p.kind === "identifier.create" && p.data.type === "ip"
       )
     ).toHaveLength(80);
     expect(String(result.summary)).toMatch(

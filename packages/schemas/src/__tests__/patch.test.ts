@@ -3,145 +3,337 @@ import { describe, expect, it } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 import {
+  PATCH_OP_KINDS,
+  patchInputSchema,
   patchOpSchema,
   patchEntityOpDisplayLabel,
   patchOpHeadline,
   patchOpRelatedEntityIds,
+  patchOpResource,
   patchOpSearchText,
+  patchOpVerb,
+  type PatchOp,
 } from "../patch.ts";
 
-describe("patchOpSchema", () => {
-  it("rejects confidence smuggled onto a claim op", () => {
-    const parsed = patchOpSchema.safeParse({
-      op: "create",
-      resource: "claim",
-      id: testId(30),
-      data: {
-        entityId: testId(20),
-        text: "Ada observed a host",
-        class: "observation",
-        confidence: "confirmed",
-      },
-    });
-    expect(parsed.success).toBe(false);
+const entityId = testId(20);
+const otherEntityId = testId(21);
+const opId = testId(30);
+
+/** The first issue of a refused op: its path (dotted) and message. */
+function refusal(raw: unknown): { path: string; message: string } | null {
+  const parsed = patchOpSchema.safeParse(raw);
+  if (parsed.success) return null;
+  const [issue] = parsed.error.issues;
+  return {
+    path: (issue?.path ?? []).join("."),
+    message: issue?.message ?? "",
+  };
+}
+
+function op(kind: string, data: Record<string, unknown>, extra = {}) {
+  return { kind, id: opId, data, ...extra };
+}
+
+const COMPLETE: Record<PatchOp["kind"], Record<string, unknown>> = {
+  "entity.create": { kind: "person", name: "Ada", slug: "ada" },
+  "entity.upsert": { kind: "person", name: "Ada", slug: "ada" },
+  "entity.update": { summary: "Analyst" },
+  "identifier.create": { entityId, type: "email", value: "a@mailhost.test" },
+  "identifier.upsert": { entityId, type: "email", value: "a@mailhost.test" },
+  "edge.create": {
+    fromId: entityId,
+    toId: otherEntityId,
+    predicate: "associate_of",
+  },
+  "edge.upsert": {
+    fromId: entityId,
+    toId: otherEntityId,
+    predicate: "associate_of",
+  },
+  "claim.create": { entityId, text: "observed host" },
+  "event.create": { entityId, when: "2026-01-01", what: "Met" },
+  "question.create": { entityId, text: "Who?" },
+};
+
+describe("patchOpSchema kinds", () => {
+  it("lists exactly the kinds a patch can carry", () => {
+    expect([...PATCH_OP_KINDS].sort()).toEqual(Object.keys(COMPLETE).sort());
   });
 
-  it("rejects confidence smuggled onto an entity op", () => {
-    const parsed = patchOpSchema.safeParse({
-      op: "create",
-      resource: "entity",
-      id: testId(44),
-      data: {
-        kind: "org",
-        name: "Acme",
-        slug: "acme",
-        confidence: "confirmed",
-      },
+  for (const kind of PATCH_OP_KINDS) {
+    it(`accepts the complete form of ${kind}`, () => {
+      expect(refusal(op(kind, COMPLETE[kind]))).toBeNull();
     });
-    expect(parsed.success).toBe(false);
+  }
+
+  for (const kind of [
+    "edge.update",
+    "identifier.update",
+    "claim.update",
+    "claim.upsert",
+    "event.update",
+    "question.upsert",
+    "claim.retract",
+  ]) {
+    it(`refuses the kind ${kind}`, () => {
+      expect(refusal(op(kind, COMPLETE["claim.create"]))?.path).toBe("kind");
+    });
+  }
+
+  it("refuses the old resource + op envelope", () => {
+    expect(
+      refusal({
+        resource: "claim",
+        op: "create",
+        id: opId,
+        data: COMPLETE["claim.create"],
+      })
+    ).not.toBeNull();
   });
 
-  it("accepts an event op without confidence", () => {
-    const parsed = patchOpSchema.safeParse({
-      op: "create",
-      resource: "event",
-      id: testId(31),
-      data: {
-        entityId: testId(20),
-        when: "1815-12-10",
-        what: "Born",
-      },
+  it("splits a kind into resource and verb", () => {
+    expect(patchOpResource({ kind: "edge.upsert" })).toBe("edge");
+    expect(patchOpVerb({ kind: "edge.upsert" })).toBe("upsert");
+  });
+});
+
+describe("patchOpSchema data", () => {
+  const cases: [name: string, raw: unknown, path: string][] = [
+    ["a claim without text", op("claim.create", { entityId }), "data.text"],
+    [
+      "a claim with whitespace-only text",
+      op("claim.create", { entityId, text: "  \n\t " }),
+      "data.text",
+    ],
+    [
+      "a claim with non-string text",
+      op("claim.create", { entityId, text: 42 }),
+      "data.text",
+    ],
+    [
+      "a claim without an entity",
+      op("claim.create", { text: "observed" }),
+      "data.entityId",
+    ],
+    [
+      "a claim with an unknown class",
+      op("claim.create", { entityId, text: "observed", class: "rumour" }),
+      "data.class",
+    ],
+    [
+      "an event with a malformed entity id",
+      op("event.create", { entityId: "nope", when: "2026", what: "Met" }),
+      "data.entityId",
+    ],
+    [
+      "an event with a blank time",
+      op("event.create", { entityId, when: "  ", what: "Met" }),
+      "data.when",
+    ],
+    [
+      "an event without a description",
+      op("event.create", { entityId, when: "2026" }),
+      "data.what",
+    ],
+    [
+      "a question without text",
+      op("question.create", { entityId }),
+      "data.text",
+    ],
+    [
+      "an identifier without a type",
+      op("identifier.create", { entityId, value: "a@mailhost.test" }),
+      "data.type",
+    ],
+    [
+      "an identifier with an unknown type",
+      op("identifier.create", { entityId, type: "telepathy", value: "x" }),
+      "data.type",
+    ],
+    [
+      "an identifier without a value",
+      op("identifier.create", { entityId, type: "email" }),
+      "data.value",
+    ],
+    [
+      "an identifier with an unknown status",
+      op("identifier.upsert", {
+        ...COMPLETE["identifier.upsert"],
+        status: "maybe",
+      }),
+      "data.status",
+    ],
+    [
+      "an edge without a target",
+      op("edge.create", { fromId: entityId, predicate: "associate_of" }),
+      "data.toId",
+    ],
+    [
+      "an edge with an unknown predicate",
+      op("edge.create", {
+        fromId: entityId,
+        toId: otherEntityId,
+        predicate: "x",
+      }),
+      "data.predicate",
+    ],
+    [
+      "an edge from an Entity to itself",
+      op("edge.create", {
+        fromId: entityId,
+        toId: entityId,
+        predicate: "associate_of",
+      }),
+      "data.toId",
+    ],
+    [
+      "an entity with an unknown kind",
+      op("entity.create", { kind: "spaceship", name: "Ada", slug: "ada" }),
+      "data.kind",
+    ],
+    [
+      "an entity without a slug",
+      op("entity.create", { kind: "person", name: "Ada" }),
+      "data.slug",
+    ],
+    [
+      "an entity with non-string notes",
+      op("entity.create", { kind: "person", name: "Ada", slug: "a", notes: 7 }),
+      "data.notes",
+    ],
+    ["an entity update with nothing to set", op("entity.update", {}), "data"],
+    [
+      "an entity update that sets the slug",
+      op("entity.update", { name: "Ada", slug: "ada" }),
+      "data",
+    ],
+    [
+      "a field the op does not take",
+      op("question.create", { entityId, text: "Who?", status: "open" }),
+      "data",
+    ],
+    [
+      "a malformed op id",
+      { ...op("question.create", COMPLETE["question.create"]), id: "op-1" },
+      "id",
+    ],
+    [
+      "an expected version on a create",
+      op("claim.create", COMPLETE["claim.create"], { expectedVersion: 2 }),
+      "",
+    ],
+  ];
+
+  for (const [name, raw, path] of cases) {
+    it(`refuses ${name}`, () => {
+      expect(refusal(raw)?.path).toBe(path);
     });
-    expect(parsed.success).toBe(true);
+  }
+
+  for (const kind of ["claim.create", "identifier.upsert", "entity.create"]) {
+    it(`refuses confidence in the data of ${kind}`, () => {
+      expect(
+        refusal(
+          op(kind, {
+            ...COMPLETE[kind as PatchOp["kind"]],
+            confidence: "confirmed",
+          })
+        )
+      ).toEqual({
+        path: "data",
+        message:
+          "op.data.confidence is forbidden — confidence is chosen at Inbox Accept",
+      });
+    });
+  }
+
+  for (const [name, notes] of [
+    ["missing", undefined],
+    ["empty", ""],
+    ["whitespace-only", "   \t "],
+    ["null", null],
+  ] as const) {
+    it(`refuses related_to with ${name} notes`, () => {
+      expect(
+        refusal(
+          op("edge.create", {
+            fromId: entityId,
+            toId: otherEntityId,
+            predicate: "related_to",
+            ...(notes === undefined ? {} : { notes }),
+          })
+        )
+      ).toEqual({ path: "data.notes", message: "related_to requires notes" });
+    });
+  }
+
+  it("accepts an expected version on an update or upsert", () => {
+    expect(
+      refusal(op("entity.update", { name: "Ada" }, { expectedVersion: 3 }))
+    ).toBeNull();
+    expect(
+      refusal(
+        op("edge.upsert", COMPLETE["edge.upsert"], { expectedVersion: 3 })
+      )
+    ).toBeNull();
   });
 
-  it("trims padded op ids and evidenceIds", () => {
-    const opId = testId(45);
+  it("normalizes ids, vocabulary, slugs and blank text", () => {
     const evidenceId = testId(46);
     const parsed = patchOpSchema.parse({
-      op: "create",
-      resource: "claim",
+      kind: "entity.create",
       id: `  ${opId}  `,
       data: {
-        entityId: testId(20),
-        text: "observed",
-        class: "observation",
+        kind: " ORG ",
+        name: " Acme ",
+        slug: "Acme Corp",
+        summary: "  ",
       },
-      evidenceIds: [`  ${evidenceId}  `],
+      evidenceIds: [`  ${evidenceId}  `, ""],
     });
-    expect(parsed.id).toBe(opId);
-    expect(parsed.evidenceIds).toEqual([evidenceId]);
+    expect(parsed).toEqual({
+      kind: "entity.create",
+      id: opId,
+      data: { kind: "org", name: "Acme", slug: "acme-corp", summary: null },
+      evidenceIds: [evidenceId],
+    });
   });
+
+  it("bounds the ops of an input patch", () => {
+    const one = op("question.create", COMPLETE["question.create"]);
+    expect(
+      patchInputSchema.safeParse(Array.from({ length: 1001 }, () => one))
+        .success
+    ).toBe(false);
+  });
+});
+
+const edge = (
+  data: Partial<Extract<PatchOp, { kind: "edge.create" }>["data"]> = {}
+): PatchOp => ({
+  kind: "edge.create",
+  id: testId(32),
+  data: {
+    fromId: entityId,
+    toId: otherEntityId,
+    predicate: "hosted_on",
+    ...data,
+  },
 });
 
 describe("patchOpRelatedEntityIds", () => {
   it("collects entityId and edge endpoint ids", () => {
-    expect(
-      patchOpRelatedEntityIds({
-        op: "create",
-        resource: "edge",
-        id: testId(32),
-        data: {
-          fromId: testId(20),
-          toId: testId(21),
-          predicate: "knows",
-        },
-      })
-    ).toEqual([testId(20), testId(21)]);
+    expect(patchOpRelatedEntityIds(edge())).toEqual([entityId, otherEntityId]);
   });
 
-  it("includes entity op id for entity resource ops", () => {
-    const entityId = testId(40);
+  it("includes entity op id for entity ops", () => {
     expect(
       patchOpRelatedEntityIds({
-        op: "create",
-        resource: "entity",
-        id: entityId,
-        data: { name: "Acme", slug: "acme" },
+        kind: "entity.update",
+        id: testId(40),
+        data: { name: "Acme" },
       })
-    ).toEqual([entityId]);
-  });
-
-  it("trims padded entity and edge endpoint ids", () => {
-    const fromId = testId(20);
-    const toId = testId(21);
-    const entityId = testId(40);
-    expect(
-      patchOpRelatedEntityIds({
-        op: "create",
-        resource: "edge",
-        id: testId(32),
-        data: {
-          fromId: `  ${fromId}  `,
-          toId: `  ${toId}  `,
-          predicate: "knows",
-        },
-      })
-    ).toEqual([fromId, toId]);
-    expect(
-      patchOpRelatedEntityIds({
-        op: "create",
-        resource: "entity",
-        id: `  ${entityId}  `,
-        data: { name: "Acme", slug: "acme" },
-      })
-    ).toEqual([entityId]);
-  });
-
-  it("drops invalid entity and edge endpoint ids", () => {
-    const fromId = testId(20);
-    expect(
-      patchOpRelatedEntityIds({
-        op: "create",
-        resource: "edge",
-        id: testId(32),
-        data: {
-          fromId,
-          toId: "ent-2",
-          predicate: "knows",
-        },
-      })
-    ).toEqual([fromId]);
+    ).toEqual([testId(40)]);
   });
 });
 
@@ -149,10 +341,9 @@ describe("patchEntityOpDisplayLabel", () => {
   it("returns display label from entity patch op body", () => {
     expect(
       patchEntityOpDisplayLabel({
-        op: "create",
-        resource: "entity",
+        kind: "entity.create",
         id: testId(41),
-        data: { name: "Acme Corp", slug: "acme-corp" },
+        data: { kind: "org", name: "Acme Corp", slug: "acme-corp" },
       })
     ).toBe("Acme Corp");
   });
@@ -160,118 +351,25 @@ describe("patchEntityOpDisplayLabel", () => {
   it("returns null for non-entity ops", () => {
     expect(
       patchEntityOpDisplayLabel({
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: testId(42),
-        data: { entityId: testId(20), text: "observed" },
+        data: { entityId, text: "observed" },
       })
     ).toBeNull();
   });
 });
 
 describe("patchOpSearchText", () => {
-  it("includes claim text, identifier values, and edge notes", () => {
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "edge",
-        id: testId(33),
-        data: {
-          fromId: testId(20),
-          toId: testId(21),
-          notes: "shared registrar",
-        },
-      })
-    ).toBe("shared registrar");
+  it("includes edge notes and predicates", () => {
+    expect(patchOpSearchText(edge({ notes: "shared registrar" }))).toBe(
+      "shared registrar hosted_on Hosted on"
+    );
   });
 
-  it("includes event when and entity name fields", () => {
+  it("includes entity fields with their labels", () => {
     expect(
       patchOpSearchText({
-        op: "create",
-        resource: "event",
-        id: testId(35),
-        data: {
-          entityId: testId(20),
-          when: "2024-01-15",
-        },
-      })
-    ).toBe("2024-01-15");
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "entity",
-        id: testId(36),
-        data: {
-          kind: "person",
-          name: "Ada Lovelace",
-        },
-      })
-    ).toBe("Ada Lovelace person Person");
-  });
-
-  it("includes edge predicates and identifier platform", () => {
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "edge",
-        id: testId(37),
-        data: {
-          fromId: testId(20),
-          toId: testId(21),
-          predicate: "hosted_on",
-          notes: "shared registrar",
-        },
-      })
-    ).toBe("shared registrar hosted_on Hosted on");
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "identifier",
-        id: testId(38),
-        data: {
-          entityId: testId(20),
-          type: "handle",
-          value: "acme-corp",
-          platform: "twitter",
-        },
-      })
-    ).toBe("acme-corp twitter x / twitter x twitter twit handle Handle");
-  });
-
-  it("includes claim class and identifier status", () => {
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "claim",
-        id: testId(42),
-        data: {
-          entityId: testId(20),
-          text: "Uses a Delaware shell",
-          class: "assessment",
-        },
-      })
-    ).toBe("Uses a Delaware shell assessment Assessment");
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "identifier",
-        id: testId(43),
-        data: {
-          entityId: testId(20),
-          type: "email",
-          value: "ops@acme.test",
-          status: "current",
-        },
-      })
-    ).toBe("ops@acme.test email Email current Current");
-  });
-
-  it("includes entity summary and event where fields", () => {
-    expect(
-      patchOpSearchText({
-        op: "create",
-        resource: "entity",
+        kind: "entity.create",
         id: testId(39),
         data: {
           kind: "org",
@@ -281,58 +379,63 @@ describe("patchOpSearchText", () => {
         },
       })
     ).toBe("Acme acme-corp Shell company for the fraud thread org Org");
+  });
+
+  it("includes event fields", () => {
     expect(
       patchOpSearchText({
-        op: "create",
-        resource: "event",
+        kind: "event.create",
         id: testId(40),
         data: {
-          entityId: testId(20),
+          entityId,
           when: "2024-01-15",
           what: "Registered domain",
           where: "Delaware",
         },
       })
     ).toBe("Registered domain 2024-01-15 Delaware");
-    expect(
-      patchOpSearchText({
-        op: "update",
-        resource: "question",
-        id: testId(41),
-        data: {
-          entityId: testId(20),
-          text: "Who owns the domain?",
-          resolvedNote: "Delaware shell filing",
-        },
-      })
-    ).toBe("Who owns the domain? Delaware shell filing");
   });
 
-  it("ignores whitespace-only claim text", () => {
+  it("includes identifier platform, type and status labels", () => {
     expect(
       patchOpSearchText({
-        op: "create",
-        resource: "claim",
-        id: testId(47),
+        kind: "identifier.create",
+        id: testId(38),
         data: {
-          entityId: testId(20),
-          text: "   ",
-          class: "observation",
+          entityId,
+          type: "handle",
+          value: "acme-corp",
+          platform: "twitter",
         },
       })
-    ).toBe("observation Observation");
+    ).toBe("acme-corp twitter x / twitter x twitter twit handle Handle");
+    expect(
+      patchOpSearchText({
+        kind: "identifier.create",
+        id: testId(43),
+        data: {
+          entityId,
+          type: "email",
+          value: "ops@acme.test",
+          status: "current",
+        },
+      })
+    ).toBe("ops@acme.test email Email current Current");
+  });
+
+  it("includes claim text and class", () => {
+    expect(
+      patchOpSearchText({
+        kind: "claim.create",
+        id: testId(42),
+        data: { entityId, text: "Uses a Delaware shell", class: "assessment" },
+      })
+    ).toBe("Uses a Delaware shell assessment Assessment");
   });
 });
 
 describe("patchOpHeadline", () => {
   it("title-cases verb and resource labels", () => {
-    expect(
-      patchOpHeadline({
-        op: "create",
-        resource: "edge",
-        id: testId(34),
-        data: {},
-      })
-    ).toBe("Create Connection");
+    expect(patchOpHeadline(edge())).toBe("Create Connection");
   });
 });

@@ -20,8 +20,7 @@ test.describe("Triage", () => {
         summary,
         patch: [
           {
-            op: "create",
-            resource: "claim",
+            kind: "claim.create",
             id: testId(42),
             data: {
               entityId: entity.id,

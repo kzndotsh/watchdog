@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { hashlookupLookup } from "../cap.ts";
 import { interpretHashlookupLookupReport } from "../interpret.ts";
 
@@ -37,10 +37,10 @@ describe("interpret", () => {
     const result = interpretHashlookupLookupReport(foundFixture, {
       input: { hash: foundFixture.hash, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("other");
-    expect(result.patch[0]?.data.value).toBe(foundFixture.hash);
-    expect(result.patch[1]?.resource).toBe("claim");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("other");
+    expect(dataOf(result.patch[0]).value).toBe(foundFixture.hash);
+    expect(result.patch[1]?.kind).toBe("claim.create");
     expect(claimText(result, 1)).toMatch(/known file/);
     expect(claimText(result, 1)).toMatch(/EICAR Test File/);
   });
@@ -49,7 +49,7 @@ describe("interpret", () => {
     const result = interpretHashlookupLookupReport(notFoundFixture, {
       input: { hash: notFoundFixture.hash, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
     expect(claimText(result, 1)).toMatch(/not a known file/);
     expect(claimText(result, 1)).not.toMatch(/malware/i);
   });

@@ -61,8 +61,7 @@ function pendingProposal(
     status: "pending",
     patch: [
       {
-        op: "create",
-        resource: "claim",
+        kind: "claim.create",
         id: testId(30),
         data: {
           entityId: testId(20),
@@ -170,10 +169,9 @@ function proposalWithoutConfidence(): ProposalRecord {
   return pendingProposal({
     patch: [
       {
-        op: "create",
-        resource: "entity",
+        kind: "entity.create",
         id: testId(20),
-        data: { kind: "person", name: "Ada" },
+        data: { kind: "person", name: "Ada", slug: "ada" },
         evidenceIds: [],
       },
     ],

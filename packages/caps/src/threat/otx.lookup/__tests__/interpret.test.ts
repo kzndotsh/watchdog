@@ -56,7 +56,7 @@ describe("interpret", () => {
     );
     expect(
       result.patch.some(
-        (p) => p.resource === "identifier" && p.data.type === "url"
+        (p) => p.kind === "identifier.create" && p.data.type === "url"
       )
     ).toBe(true);
   });

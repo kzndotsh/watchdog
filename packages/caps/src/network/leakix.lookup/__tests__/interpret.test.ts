@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { claimText, itRejectsIncompleteReport } from "../../../testing";
+import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { leakixLookup } from "../cap.ts";
 import { interpretLeakixLookupReport } from "../interpret.ts";
 
@@ -25,11 +25,11 @@ describe("interpret", () => {
     const result = interpretLeakixLookupReport(fixture, {
       input: { query: fixture.query, entityId },
     });
-    expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("ip");
-    expect(result.patch[0]?.data.value).toBe("1.2.3.4");
-    expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[1]?.data.type).toBe("domain");
+    expect(result.patch[0]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[0]).type).toBe("ip");
+    expect(dataOf(result.patch[0]).value).toBe("1.2.3.4");
+    expect(result.patch[1]?.kind).toBe("identifier.create");
+    expect(dataOf(result.patch[1]).type).toBe("domain");
     expect(claimText(result, 2)).toMatch(/LeakIX/);
     expect(claimText(result, 2)).toMatch(/3 service\(s\)/);
   });

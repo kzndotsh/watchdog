@@ -22,7 +22,6 @@ import {
   URL_MAX,
 } from "../limits";
 import type { InputLimitName } from "../limits";
-import { patchOpInputSchema, patchOpSchema } from "../patch";
 import {
   httpUrlSchema,
   inputJsonValueSchema,
@@ -36,8 +35,7 @@ import { testCaseId } from "../testing";
 const caseId = testCaseId(1);
 const entityId = "00000000-0000-4000-8000-000000000001";
 const op0 = {
-  op: "create",
-  resource: "entity",
+  kind: "entity.update",
   id: entityId,
   data: { name: "x" },
 };
@@ -190,12 +188,6 @@ describe("named input limits", () => {
       expect(graphHistorySnapshotSchema.safeParse(snapshot).success).toBe(true);
       expect(jsonObjectSchema.safeParse(snapshot).success).toBe(true);
       expect(inputJsonValueSchema.safeParse(snapshot).success).toBe(false);
-    });
-
-    it("reads a stored patch op with more Evidence ids than an input may carry", () => {
-      const op = { ...op0, evidenceIds: bigIds };
-      expect(patchOpSchema.safeParse(op).success).toBe(true);
-      expect(patchOpInputSchema.safeParse(op).success).toBe(false);
     });
   });
 });

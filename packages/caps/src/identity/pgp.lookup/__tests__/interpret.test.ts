@@ -67,7 +67,7 @@ const entityId = testId(1);
 
 const identifiers = (result: ReturnType<typeof interpretPgpLookupReport>) =>
   result.patch.flatMap((op) =>
-    op.resource === "identifier" &&
+    op.kind === "identifier.create" &&
     typeof op.data.type === "string" &&
     typeof op.data.value === "string"
       ? [`${op.data.type}:${op.data.value}`]
@@ -86,7 +86,7 @@ describe("interpret", () => {
     expectProposesIdentifier(result, { type: "pgp", value: FP_A });
     expect(result.patch).toHaveLength(3);
     expect(result.patch.at(-1)).toMatchObject({
-      resource: "claim",
+      kind: "claim.create",
       data: { class: "observation" },
     });
     expectNoConfidenceOnPatch(result);
@@ -227,7 +227,7 @@ describe("interpret", () => {
       /proposed 20 of 25; the rest are only in the Job report/
     );
     const pgps = result.patch.filter(
-      (p) => p.resource === "identifier" && p.data.type === "pgp"
+      (p) => p.kind === "identifier.create" && p.data.type === "pgp"
     );
     expect(pgps).toHaveLength(20);
   });

@@ -1,30 +1,36 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOpOf } from "@watchdog/schemas/graph";
 
-import {
-  ConflictError,
-  InvalidError,
-  type DomainTag,
-} from "../../errors/tagged-errors";
+import { ConflictError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
 import { entitiesRepoFx } from "../../infra/repos-fx";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
 import type { JoinedGraphWriter } from "../mutation/run-graph-mutation";
 import { entitiesTable } from "../mutation/tables";
 import { seedDefaultQuestionsEffect } from "../questions";
-import { decodeOpData, entityUpdateOpData, entityWriteOpData } from "./op-data";
 
 const SLUG_TAKEN =
   "Entity slug already belongs to a different Entity in this Case";
 const ID_IN_USE = "Entity id is already in use";
 
+type EntityWriteOp = Extract<
+  PatchOpOf<"entity">,
+  { kind: "entity.create" | "entity.upsert" }
+>;
+
 function applyEntityWriteEffect(
   w: JoinedGraphWriter,
-  op: PatchOp
+  op: EntityWriteOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityWriteGen() {
-    const data = yield* decodeOpData(entityWriteOpData, op.data);
+    const data = {
+      kind: op.data.kind,
+      name: op.data.name,
+      slug: op.data.slug,
+      summary: op.data.summary ?? null,
+      notes: op.data.notes ?? null,
+    };
     const slugOwner = yield* entitiesRepoFx.getByCaseSlug(
       w.tx,
       w.caseId,
@@ -33,7 +39,7 @@ function applyEntityWriteEffect(
     if (slugOwner && slugOwner.id !== op.id) {
       return yield* new ConflictError({ reason: SLUG_TAKEN });
     }
-    if (op.op === "upsert" && slugOwner) {
+    if (op.kind === "entity.upsert" && slugOwner) {
       if (slugOwner.kind !== data.kind) {
         yield* assertEntityKindChangeAllowedEffect(
           w.caseId,
@@ -80,21 +86,21 @@ function applyEntityWriteEffect(
 
 export function applyEntityOpEffect(
   w: JoinedGraphWriter,
-  op: PatchOp
+  op: PatchOpOf<"entity">
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* applyEntityOpGen() {
-    if (op.op === "create" || op.op === "upsert") {
-      return yield* applyEntityWriteEffect(w, op);
-    }
-    if (op.op === "update") {
-      const patch = yield* decodeOpData(entityUpdateOpData, op.data);
-      yield* w.update(entitiesTable, op.id, patch, {
-        expectedVersion: op.expectedVersion,
-      });
-      return;
-    }
-    return yield* new InvalidError({
-      reason: `entity does not support op: ${String(op.op)}`,
-    });
-  });
+  if (op.kind !== "entity.update") return applyEntityWriteEffect(w, op);
+  // Only the fields the op carries: an absent key leaves the column as it is.
+  const { name, summary, notes } = op.data;
+  return w
+    .update(
+      entitiesTable,
+      op.id,
+      {
+        ...(name === undefined ? {} : { name }),
+        ...(summary === undefined ? {} : { summary }),
+        ...(notes === undefined ? {} : { notes }),
+      },
+      { expectedVersion: op.expectedVersion }
+    )
+    .pipe(Effect.asVoid);
 }
