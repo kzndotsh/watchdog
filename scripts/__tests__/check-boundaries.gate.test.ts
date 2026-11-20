@@ -313,7 +313,10 @@ describe("check-boundaries gate", () => {
           db: {},
           api: {
             deps: ["db"],
-            files: { "src/a.ts": 'import { x } from "@watchdog/db";\n' },
+            files: {
+              "src/a.ts": 'import { x } from "@watchdog/db";\n',
+              "src/b.ts": 'import { sql } from "drizzle-orm";\n',
+            },
           },
           core: {
             files: { "src/b.ts": 'import { sql } from "drizzle-orm";\n' },
@@ -323,6 +326,7 @@ describe("check-boundaries gate", () => {
       ).run(GATE);
       expect(res.code).toBe(1);
       expect(res.output).toContain('packages/api/src/a.ts:1: "@watchdog/db"');
+      expect(res.output).toContain('packages/api/src/b.ts:1: "drizzle-orm"');
       expect(res.output).toContain('packages/core/src/b.ts:1: "drizzle-orm"');
     });
 
