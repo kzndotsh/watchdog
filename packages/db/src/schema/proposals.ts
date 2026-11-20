@@ -69,7 +69,7 @@ export const proposals = pgTable(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
-    // `q`: trigram indexes over the Proposal list's search fields (`pg_trgm`, migration 0002).
+    // `q`: trigram indexes over the Proposal list's search fields (`pg_trgm`, the baseline migration).
     index("proposals_summary_trgm_idx").using(
       "gin",
       t.summary.op("gin_trgm_ops")

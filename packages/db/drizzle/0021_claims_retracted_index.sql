@@ -1,1 +1,0 @@
-CREATE INDEX "claims_case_retracted_created_idx" ON "claims" USING btree ("case_id","created_at","id") WHERE "claims"."retracted";

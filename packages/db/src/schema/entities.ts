@@ -48,7 +48,7 @@ export const entities = pgTable(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
-    // `q`: trigram indexes over the Entity list's search fields (`pg_trgm`, migration 0002).
+    // `q`: trigram indexes over the Entity list's search fields (`pg_trgm`, the baseline migration).
     index("entities_name_trgm_idx").using("gin", t.name.op("gin_trgm_ops")),
     index("entities_summary_trgm_idx").using(
       "gin",

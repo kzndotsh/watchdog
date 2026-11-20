@@ -71,7 +71,7 @@ export const identifiers = pgTable(
     ),
     // The selective `entityId` filter (the Dossier tab) under the default sort.
     index("identifiers_entity_value_idx").on(t.entityId, t.value, t.id),
-    // `q`: trigram indexes over the search fields (`pg_trgm`, created by migration 0002).
+    // `q`: trigram indexes over the search fields (`pg_trgm`, created by the baseline migration).
     index("identifiers_value_trgm_idx").using(
       "gin",
       t.value.op("gin_trgm_ops")

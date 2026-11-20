@@ -7,7 +7,7 @@ import { defineListRepo } from "./_list-query";
 
 /**
  * One Graph row's history (`graphHistoryList`, ADR-0007), newest first: the table's rows, one
- * each. Read side only: the table is written by the Graph triggers (`0001_database_logic`) and
+ * each. Read side only: the table is written by the Graph triggers (`0000_baseline`) and
  * the app role has no INSERT on it. The sort key is the history id itself, a bigint the driver
  * reads as text, so `listKey` is read back as a number (an id stays under 2^53). The scope is
  * three equalities, so one index serves the page in both directions:

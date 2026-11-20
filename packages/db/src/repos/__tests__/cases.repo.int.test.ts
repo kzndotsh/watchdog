@@ -27,7 +27,7 @@ import { casesRepo, type CaseRow } from "../cases.repo.ts";
 import { deletedCaseListRepo } from "../deleted-case-list.repo.ts";
 import { entitiesRepo } from "../entities.repo.ts";
 
-/** The record the database demands in the transaction of a lifecycle change (`0001_database_logic`). */
+/** The record the database demands in the transaction of a lifecycle change (`0000_baseline`). */
 async function log(
   tx: DbExec,
   row: CaseRow,
