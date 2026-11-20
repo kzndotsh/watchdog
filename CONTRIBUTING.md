@@ -15,7 +15,7 @@ Then `just env`, `just dev`, and `just admin --email you@example.com` for the fi
 
 ## Run the checks
 
-Before you push, run `pnpm check`, `pnpm typecheck` and `pnpm test`. The git hooks run the fast checks on every commit; CI is the merge gate. What each gate does, and which run where: [`ci-gates.md`](docs/contributing/ci-gates.md). How tests are written: [`testing/standards.md`](docs/contributing/testing/standards.md). Integration and e2e tests need a local Postgres and S3 (`just test-db`); CI runs them if you cannot.
+Before you push, run `pnpm verify`: lint and format on what you changed, the static gates, typecheck, and the tests of the packages you touched. `pnpm verify --full` runs what the CI gates job runs. Pre-commit only formats the staged files; pre-push typechecks; CI is the merge gate. What each gate does, and which run where: [`ci-gates.md`](docs/contributing/ci-gates.md). How tests are written: [`testing/standards.md`](docs/contributing/testing/standards.md). Integration and e2e tests need a local Postgres and S3 (`just test-db`); CI runs them if you cannot.
 
 ## Pull requests
 

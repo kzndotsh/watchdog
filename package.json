@@ -57,6 +57,7 @@
     "check:design-tokens": "node ./scripts/check-design-tokens.mjs",
     "lint:design": "node ./scripts/lint-design.mjs",
     "changed": "node ./scripts/changed-packages.mjs",
+    "verify": "node ./scripts/verify.mjs",
     "check:size": "node ./scripts/check-size-budget.mjs",
     "check:bundle": "node ./scripts/check-bundle-budget.mjs",
     "check:docs:strict": "node ./scripts/check-docs.mjs --strict --fail-length",

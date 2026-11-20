@@ -177,15 +177,23 @@ describe("typecheck contract gate", () => {
     }
   });
 
-  it("fails if pre-push or the CI gates job stop running pnpm typecheck", () => {
+  it("fails if pre-push or the CI gates job (through pnpm verify --full) stop running pnpm typecheck", () => {
     const lefthook = parse(read("lefthook.yml")) as {
       "pre-push": { commands: { typecheck: { run: string } } };
     };
     const ci = parse(read(".github/workflows/ci.yml")) as {
       jobs: { gates: { steps: { run?: string }[] } };
     };
+    const verify = spawnSync(
+      process.execPath,
+      ["scripts/verify.mjs", "--full", "--dry-run"],
+      { cwd: repoRoot, encoding: "utf-8" }
+    );
 
     expect(lefthook["pre-push"].commands.typecheck.run).toBe("pnpm typecheck");
-    expect(ci.jobs.gates.steps.map((s) => s.run)).toContain("pnpm typecheck");
+    expect(
+      ci.jobs.gates.steps.some((s) => s.run?.startsWith("pnpm verify --full"))
+    ).toBe(true);
+    expect(verify.stdout).toContain("typecheck: pnpm run --silent typecheck");
   });
 });

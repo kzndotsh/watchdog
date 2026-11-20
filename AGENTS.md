@@ -17,7 +17,7 @@ Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine an
 | Local `.env` · first admin · vault key | `just env` (generated secrets) · `just admin --email you@example.com` (no signup) · `WD_MASTER_VAULT_KEY_OLD=... just vault-rekey` (rotate) |
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
-| Affected packages | `pnpm changed` (list, with dependents) · `pnpm changed --run` (typecheck + unit tests for them only) |
+| Verify (done?) | `pnpm verify` (lint and format on changed files, static gates, typecheck, tests of affected packages; the agent stop hook runs it) · `pnpm verify --full` (what the CI `gates` job runs) · `pnpm changed` (affected packages, with dependents) |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:tagged-errors:strict` · `pnpm check:design-tokens` · `pnpm lint:design` · `pnpm check:size` · `pnpm check:bundle` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` · `pnpm check:env` · `pnpm check:licenses` · `pnpm check:notices` |
 | Container images (web, worker) | `docker build --target web .` · `docker build --target worker .` · prod stack: [`self-host`](docs/how-to/self-host.md) · smoke: `docker/smoke.sh` |
@@ -68,7 +68,7 @@ The rules agents break most. The full set, with enforcers, is the [conventions t
 ## Gotchas
 
 - `pnpm test` runs the unit, web-unit, e2e-parser, property and gate projects in one vitest invocation and reports every failing project; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` checks each package once on `tsconfig.test.json` (source and tests, incremental cache in `node_modules/.cache`), plus `scripts/` and `e2e/`, with the test-coverage guard in parallel: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error, not a typecheck one.
-- The formatter ignores `docs/glossary.md`, `.agents/`, `.cursor/` and `.claude/`: `ultracite` run on only those files exits 2 (the pre-commit hook excludes them). `.mjs` scripts and `e2e/` lint correctly by path (`scripts/tsconfig.json` and `e2e/tsconfig.json` give them type context; they are lint programs, never typechecked or emitted), and the pre-commit hook lints only the staged ones.
+- Pre-commit only formats the staged files (`oxfmt`); lint and every other gate run in `pnpm verify` and CI. The formatter ignores `docs/glossary.md`, `.agents/`, `.cursor/` and `.claude/`. `.mjs` scripts and `e2e/` lint correctly by path (`scripts/tsconfig.json` and `e2e/tsconfig.json` give them type context; they are lint programs, never typechecked or emitted), so `pnpm verify` lints only the changed files.
 - A dependency declared by two or more packages (root included) takes its version from the default `catalog:` in `pnpm-workspace.yaml` (`"effect": "catalog:"`); a literal range there fails `pnpm check:workspace`. Peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
 - `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value). It ignores `.claude/worktrees/`.
 
