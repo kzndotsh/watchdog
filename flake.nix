@@ -27,7 +27,7 @@
 
             # Hooks and repo tooling
             pkgs.git
-            pkgs.lefthook          # pre-commit / commit-msg / pre-push gates
+            pkgs.lefthook          # pre-commit / pre-push gates
             pkgs.jq
             pkgs.ripgrep
 

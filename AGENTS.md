@@ -19,10 +19,10 @@ Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine an
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Affected packages | `pnpm changed` (list, with dependents) · `pnpm changed --run` (typecheck + unit tests for them only) |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:tagged-errors:strict` · `pnpm check:design-tokens` · `pnpm lint:design` · `pnpm check:size` · `pnpm check:bundle` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` · `pnpm check:env` · `pnpm check:licenses` · `pnpm check:notices` |
+| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:tagged-errors:strict` · `pnpm check:design-tokens` · `pnpm lint:design` · `pnpm check:size` · `pnpm check:bundle` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` · `pnpm check:env` · `pnpm check:licenses` · `pnpm check:notices` |
 | Container images (web, worker) | `docker build --target web .` · `docker build --target worker .` · prod stack: [`self-host`](docs/how-to/self-host.md) · smoke: `docker/smoke.sh` |
 | Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
-| Regenerate | `pnpm generate:caps` · `pnpm generate:client` · `pnpm generate:env` (`env.example`, configuration reference) |
+| Regenerate | `pnpm generate:caps` · `pnpm generate:client` (gitignored; install, `typecheck` and `build:cli` run it) · `pnpm generate:env` (`env.example`, configuration reference) |
 | Desloppify (local, advisory) | `pnpm desloppify:bootstrap` · `:scan` · `:status` · `:next` |
 
 Package manager: **pnpm** only. Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` (first account is the instance admin; see [`auth-setup`](docs/how-to/auth-setup.md)). Vitest projects share workers: tests must restore any `process.env`, `globalThis`, timers, or DOM they change ([`standards.md`](docs/contributing/testing/standards.md)).
@@ -64,12 +64,10 @@ The rules agents break most. The full set, with enforcers, is the [conventions t
 - A server-side failure is `InternalError` (500, fixed message), never `InvalidError`, which is only for caller input. The mapping is tested in `packages/api/src/__tests__/map-domain-error.test.ts`; choosing the right error is guidance.
 - Never silence a test type error with a cast or `@ts-expect-error`; fix the types. Guidance (`pnpm typecheck` covers tests).
 - Tracked `src` files stay at most 600 lines: `check:size`.
-- Code mapped in `scripts/doc-map.mjs` changes with its doc: `check:docs-affected:strict`.
 
 ## Gotchas
 
 - `pnpm test` runs the unit, web-unit, e2e-parser, property and gate projects in one vitest invocation and reports every failing project; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` checks each package once on `tsconfig.test.json` (source and tests, incremental cache in `node_modules/.cache`), plus `scripts/` and `e2e/`, with the test-coverage guard in parallel: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error, not a typecheck one.
-- `docs-affect` runs at **commit-msg**, not pre-commit. When no mapped doc applies, put `docs:allow-affect — <reason>` in that commit's own message.
 - The formatter ignores `docs/glossary.md`, `.agents/`, `.cursor/` and `.claude/`: `ultracite` run on only those files exits 2 (the pre-commit hook excludes them). `.mjs` scripts and `e2e/` lint correctly by path (`scripts/tsconfig.json` and `e2e/tsconfig.json` give them type context; they are lint programs, never typechecked or emitted), and the pre-commit hook lints only the staged ones.
 - A dependency declared by two or more packages (root included) takes its version from the default `catalog:` in `pnpm-workspace.yaml` (`"effect": "catalog:"`); a literal range there fails `pnpm check:workspace`. Peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
 - `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value). It ignores `.claude/worktrees/`.

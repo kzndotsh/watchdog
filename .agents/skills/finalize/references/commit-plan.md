@@ -14,9 +14,8 @@ of untracked files. Exclude secrets (`.env*`, credentials, keys).
 
 Each commit is one reviewable concern.
 
-Keep together: a behavior + its tests; mapped docs with the code that
-triggered `scripts/doc-map.mjs` (commit-msg `docs-affect` fails if the code
-lands first); a generator run with its artifact.
+Keep together: a behavior + its tests; docs with the code they describe;
+a generator run with its artifact.
 
 Split: shared primitive vs first consumer vs later surfaces; `fix` vs
 `feat`; docs-only vs product; CI/config vs app code.
@@ -32,9 +31,6 @@ Conventional: `type(scope): subject`. Types: `feat` `fix` `docs`
 `api`, `db`, `core`, `cli`, `worker`, `scripts`, `e2e`; match `git log`
 when unsure. Subject: imperative, lowercase after the colon, no trailing
 period, ~72 chars. Body (when needed): why, not a file list. No emojis.
-
-Use `docs:allow-affect — <reason>` in the body only when mapped docs are
-intentionally omitted.
 
 ## Approval gate
 

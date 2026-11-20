@@ -17,7 +17,7 @@ From the October 2026 audit. The custody and hardening specs ([#288](https://git
 ## Open gaps
 
 - **MCP server:** not built. Agents use the OpenAPI surface (`/api/v1`).
-- **Contract-first oRPC:** the generated client contract is shipped; designing ahead of handlers is not. Until then the router is SoT (`minifyContractRouter` → `@watchdog/client`); CI diffs the OpenAPI spec for breaking changes (oasdiff, [`ci-gates`](contributing/ci-gates.md#openapi-breaking-changes)).
+- **Contract-first oRPC:** the generated client contract is shipped; designing ahead of handlers is not. Until then the router is SoT (`minifyContractRouter` → `@watchdog/client`); the contract and OpenAPI document are build output, not committed (#713).
 - **Playbooks:** linear chains only; no branching, no visual DAG. A failed step skips only the steps that read its output, and a run finishes `succeeded`, `partial` or `failed`.
 - **URL dump → Evidence:** Enrich is a separate verb (UI + `wd evidence enrich`); the URL row carries no hash.
 - **Partial Accept:** a reviewer applies some of a Proposal's ops and leaves or rejects the rest, in one transaction; there is no later Accept of the left ops from the same Proposal (a new run proposes them again).

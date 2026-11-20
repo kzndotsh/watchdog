@@ -5,8 +5,7 @@
 #     cannot be fixed yet,
 #   - the date it was reviewed,
 #   - the condition that removes it (a fixed base image or dependency).
-# Prefer fixing: bump the base image digest in the Dockerfile or the dependency. The gate test
-# scripts/__tests__/ci-workflow.gate.test.ts fails on an entry without such a comment.
+# Prefer fixing: bump the base image digest in the Dockerfile or the dependency.
 #
 # Format: one id per line (CVE-YYYY-NNNN), a trailing `exp:YYYY-MM-DD` makes it expire.
 #

@@ -31,7 +31,7 @@ May edit any file a failing gate points at, to make that gate pass. Does not cha
 ## Instructions
 
 1. Get the changed-file list: `git status --porcelain` for uncommitted work, or `git diff --name-only <base>...HEAD` for a branch.
-2. Map paths to gates from the sources, never from memory: the globs in `lefthook.yml` (pre-commit, commit-msg, pre-push), the path filters and jobs in `.github/workflows/ci.yml` (CI wins on divergence), and the command list in [`docs/contributing/ci-gates.md`](../../../docs/contributing/ci-gates.md). Union the commands for all changed paths.
+2. Map paths to gates from the sources, never from memory: the globs in `lefthook.yml` (pre-commit, pre-push), the path filters and jobs in `.github/workflows/ci.yml` (CI wins on divergence), and the command list in [`docs/contributing/ci-gates.md`](../../../docs/contributing/ci-gates.md). Union the commands for all changed paths.
 3. Run fastest first: lint/typecheck before tests, integration and e2e last.
 4. On failure, read the actual error output before editing.
 5. Fix, then rerun only the gate that failed.
@@ -42,7 +42,6 @@ May edit any file a failing gate points at, to make that gate pass. Does not cha
 - Pre-commit runs `pnpm fix` on staged files, not `pnpm check`; Knip, typecheck, tests, drift, and e2e are CI / pre-push.
 - `test:integration` needs Postgres (`just test-db`). If services are down, report **Blocked**; do not skip silently.
 - The list plan gate (`list-conformance-plans.scale.int.test.ts`, in the `scale` vitest project: `pnpm test:scale`, not part of `test:integration`) needs `WD_PERF_DATABASE_URL` at a perf-seeded database (`PERF_SEED_DIV=1 just perf-seed`); without it the file skips locally, and CI seeds one.
-- `generate:caps` / `generate:client` fail on drift: run the generator and commit the artifact; do not hand-edit generated output. `generate-routes` is not a CI drift job; run it when route files change.
-- `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` in that commit's own message). It runs at commit-msg on the staged diff, and on mapped **code** paths, not only `docs/**`.
+- `generate:caps` fails on drift: run the generator and commit the artifact; do not hand-edit generated output. `generate:client` output (`packages/client/src/generated/`) is gitignored and rebuilt by install, `pnpm typecheck` and `pnpm build:cli`. `generate-routes` is not a CI drift job; run it when route files change.
 - The `watchdog/db-repo-*` lint rules (part of `pnpm check`) are mechanical only; passing does not satisfy the review-only repo rules in `packages/db/AGENTS.md`.
 - `pnpm doctor:react` and desloppify are advisory (CI Advisory job / main only), not merge gates.
