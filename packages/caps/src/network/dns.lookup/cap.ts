@@ -4,6 +4,7 @@ import { resolveDnsRecordsEffect, dnsRecordsSchema } from "@watchdog/tools/dns";
 import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { foundOfType } from "../../lib/collect/found-values";
 import { systemResolver } from "../../providers";
 import { contact } from "../../sdk";
 import { dnsLookupInput } from "./input";
@@ -39,4 +40,14 @@ export const dnsLookup = defineCollectCap({
       return { snap, artifactName: `dns-${host}.json` };
     }),
   interpretSnap: interpretDnsReport,
+  foundSnap: (snap) => [
+    ...foundOfType("ip", snap.a, "A record"),
+    ...foundOfType("ip", snap.aaaa, "AAAA record"),
+    ...foundOfType("domain", snap.ns, "NS record"),
+    ...foundOfType(
+      "domain",
+      snap.mx.map((mx) => mx.exchange),
+      "MX record"
+    ),
+  ],
 });

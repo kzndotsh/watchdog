@@ -363,6 +363,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.jobs.listProviderCalls({ caseId, jobId: ids.jobA }),
     ],
     [
+      "jobs.listFound",
+      async () => b.jobs.listFound({ caseId, jobId: ids.jobA }),
+    ],
+    [
       "jobs.start",
       async () =>
         b.jobs.start({

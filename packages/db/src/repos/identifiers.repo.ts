@@ -79,6 +79,16 @@ export type IdentifierNaturalKey = {
   value: string;
 };
 
+/** An Entity holding an Identifier, by the Identifier's natural value. */
+export type IdentifierHolderRow = {
+  type: IdentifierType;
+  platform: string;
+  value: string;
+  entityId: string;
+  entityName: string;
+  entitySlug: string;
+};
+
 export const identifiersRepo = {
   /** Every Identifier of one Entity, by type, value, then id: the Entity export's whole read. */
   async listForEntity(
@@ -234,6 +244,38 @@ export const identifiersRepo = {
       )
       .limit(1);
     return row ?? null;
+  },
+
+  /**
+   * The Identifiers of a Case whose value is one of `values`, with their Entity's name and slug:
+   * which Entities already hold a value a Job found. The values bind as one array (`textInAny`),
+   * so a long list never passes the bind-parameter limit; `identifiers_case_value_idx` serves it.
+   */
+  async listHoldersByValues(
+    exec: DbExec,
+    caseId: CaseId,
+    values: readonly string[]
+  ): Promise<IdentifierHolderRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined || values.length === 0) return [];
+    return exec
+      .select({
+        type: identifiers.type,
+        platform: identifiers.platform,
+        value: identifiers.value,
+        entityId: entities.id,
+        entityName: entities.name,
+        entitySlug: entities.slug,
+      })
+      .from(identifiers)
+      .innerJoin(entities, eq(identifiers.entityId, entities.id))
+      .where(
+        and(
+          eq(identifiers.caseId, scopedCaseId),
+          textInAny(identifiers.value, values)
+        )
+      )
+      .orderBy(asc(entities.name), asc(entities.id));
   },
 
   /** Natural keys for FP suppress — scoped to case + entity ids. */

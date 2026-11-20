@@ -8,6 +8,7 @@ import {
 import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { foundOfType } from "../../lib/collect/found-values";
 import { eligiblePivotHosts } from "../../lib/collect/query-seed-batches";
 import { crtsh } from "../../providers";
 import { contact } from "../../sdk";
@@ -49,6 +50,7 @@ export const ctLookup = defineCollectCap({
       return { snap, artifactName: `ct-${host}.json` };
     }),
   interpretSnap: interpretCtReport,
+  foundSnap: (snap) => foundOfType("domain", snap.domains, "Certificate name"),
   pivots(report): JobPivots | undefined {
     const parsed = ctLookupSnapshotSchema.safeParse(report);
     if (!parsed.success) return undefined;

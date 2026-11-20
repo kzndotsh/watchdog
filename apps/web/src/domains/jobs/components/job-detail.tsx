@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
+import { FoundValuesSection } from "@/domains/jobs/components/found-values/found-values-section";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
 import { JobDetailFooterBar } from "@/domains/jobs/components/job-detail-footer";
 import { JobPlaybookSpine } from "@/domains/jobs/components/job-playbook-spine";
@@ -38,7 +39,7 @@ import {
 } from "@/shared/ui/vocab";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord, PlaybookRunView } from "@watchdog/schemas/jobs";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
@@ -75,6 +76,8 @@ type JobDetailProps = {
   onEditAndRerun?: () => void;
   /** The credit the Cap provider asks for; shown with the output. */
   attribution?: CapProviderInfo["attribution"] | null;
+  /** Offer "Add to Entity" on the Found tab's values (the composing screen owns the dialog). */
+  onAddFoundValue?: (value: FoundValueRecord) => void;
 };
 
 type JobLogTabBodyProps = {
@@ -306,6 +309,7 @@ function JobDetailHeader({ job, view, playbookRun }: JobDetailHeaderProps) {
               className="absolute top-1/2 left-[calc(100%+0.35rem)] ml-0 -translate-y-1/2"
             />
           </TabsTrigger>
+          <TabsTrigger value="found">Found</TabsTrigger>
           <TabsTrigger value="calls">Calls</TabsTrigger>
         </TabsList>
       </div>
@@ -331,6 +335,7 @@ function JobDetailLoaded({
   isRetryBusy: retryBusy,
   onEditAndRerun,
   attribution,
+  onAddFoundValue,
 }: Omit<JobDetailProps, "job"> & { job: JobRecord }) {
   const [tab, setTab] = useState<JobDetailTab>("log");
   const [isLogPinned, setIsLogPinned] = useState(false);
@@ -388,7 +393,13 @@ function JobDetailLoaded({
         value={effectiveTab}
         onValueChange={(v) => {
           if (typeof v !== "string") return;
-          if (v !== "log" && v !== "input" && v !== "output" && v !== "calls") {
+          if (
+            v !== "log" &&
+            v !== "input" &&
+            v !== "output" &&
+            v !== "found" &&
+            v !== "calls"
+          ) {
             return;
           }
           setTab(v);
@@ -471,6 +482,17 @@ function JobDetailLoaded({
               </ActiveTabBody>
             </TabsContent>
 
+            <TabsContent value="found" className="mt-0">
+              <ActiveTabBody isActive={effectiveTab === "found"}>
+                <FoundValuesSection
+                  caseId={job.caseId}
+                  jobId={job.id}
+                  isLive={view.isLive}
+                  onAdd={onAddFoundValue}
+                />
+              </ActiveTabBody>
+            </TabsContent>
+
             <TabsContent value="calls" className="mt-0">
               <ActiveTabBody isActive={effectiveTab === "calls"}>
                 <ProviderCallsSection
@@ -516,6 +538,7 @@ export function JobDetail({
   isRetryBusy,
   onEditAndRerun,
   attribution,
+  onAddFoundValue,
 }: JobDetailProps) {
   if (!job) {
     return (
@@ -546,6 +569,7 @@ export function JobDetail({
       isRetryBusy={isRetryBusy}
       onEditAndRerun={onEditAndRerun}
       attribution={attribution}
+      onAddFoundValue={onAddFoundValue}
     />
   );
 }

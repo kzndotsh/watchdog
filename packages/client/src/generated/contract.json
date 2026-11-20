@@ -1472,6 +1472,22 @@
         }
       }
     },
+    "listFound": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/jobs/{jobId}/found",
+          "summary": "Every typed value a Job's report holds (not only the ones its Proposal carries), with the Entities that already hold each",
+          "tags": [
+            "jobs"
+          ]
+        }
+      }
+    },
     "start": {
       "~orpc": {
         "errorMap": {},

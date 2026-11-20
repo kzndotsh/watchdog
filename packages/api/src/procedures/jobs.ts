@@ -5,6 +5,7 @@ import {
   cancelPlaybookRunEffect,
   getJobForCaseEffect,
   getPlaybookRunForCaseEffect,
+  listJobFoundValuesEffect,
   listJobProviderCallsEffect,
   listJobsForCaseEffect,
   retryJobEffect,
@@ -16,6 +17,7 @@ import {
   cancelPlaybookInputSchema,
   getJobInputSchema,
   getPlaybookRunInputSchema,
+  jobFoundValuesSchema,
   playbookRunSchema,
   retryJobInputSchema,
   startJobInputSchema,
@@ -81,6 +83,27 @@ export const listProviderCalls = authed
   .handler(async ({ input, context }) =>
     runApp(
       listJobProviderCallsEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.jobId
+      )
+    )
+  );
+
+export const listFound = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/jobs/{jobId}/found",
+    summary:
+      "Every typed value a Job's report holds (not only the ones its Proposal carries), with the Entities that already hold each",
+    tags: ["jobs"],
+  })
+  .input(getJobInputSchema)
+  .output(jobFoundValuesSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      listJobFoundValuesEffect(
         input.caseId,
         context.actor.organizationId,
         input.jobId

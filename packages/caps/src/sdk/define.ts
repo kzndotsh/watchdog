@@ -5,6 +5,7 @@ import type { z } from "zod";
 import type { CapContact } from "@watchdog/schemas/caps";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { FoundValue } from "@watchdog/schemas/jobs";
 import type {
   CaseId,
   EvidenceKind,
@@ -281,6 +282,13 @@ export type CapabilityDef<
    * success (including cache hits). Independent of `produces`.
    */
   pivots?: (report: JsonValue) => JobPivots | undefined;
+  /**
+   * Every typed value the report holds, for the Job's Found tab: complete (no batch limit),
+   * normalized like an Identifier write, each with where in the report it came from. Pure; core
+   * runs it on read, so a reader added later also covers Jobs that already ran. Independent of
+   * `interpret` and `pivots`. `undefined` for a report it cannot read.
+   */
+  found?: (report: JsonValue) => readonly FoundValue[] | undefined;
   /** How a Case Export redacts this Cap's artifact; required for a breach Cap (`BreachRedactorDecl`). */
   exportRedactor?: BreachExportRedactor;
 };

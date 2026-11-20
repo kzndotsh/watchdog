@@ -7,7 +7,7 @@ import type {
   JobRecord,
   ProviderCallList,
 } from "@watchdog/core/jobs";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { JobFoundValues, PlaybookRunView } from "@watchdog/schemas/jobs";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
@@ -60,6 +60,16 @@ export const listJobProviderCallsFn = createServerFn({ method: "GET" })
   .handler(
     async ({ data, context }): Promise<ProviderCallList> =>
       await orpcFromContext(context).jobs.listProviderCalls({
+        caseId: data.caseId,
+        jobId: data.jobId,
+      })
+  );
+
+export const listJobFoundValuesFn = createServerFn({ method: "GET" })
+  .validator(getJobInputSchema)
+  .handler(
+    async ({ data, context }): Promise<JobFoundValues> =>
+      await orpcFromContext(context).jobs.listFound({
         caseId: data.caseId,
         jobId: data.jobId,
       })

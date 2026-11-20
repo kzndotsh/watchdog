@@ -120,6 +120,7 @@ export { eventsRepo } from "./events.repo";
 export type { EventPatch, EventRow, NewEvent } from "./events.repo";
 export { identifiersRepo } from "./identifiers.repo";
 export type {
+  IdentifierHolderRow,
   IdentifierListRow,
   IdentifierNaturalKey,
   IdentifierPatch,

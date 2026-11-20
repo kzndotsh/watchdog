@@ -126,6 +126,7 @@ const factories: readonly Factory[] = [
     k.detail(CASE, ID),
     k.playbookRun(CASE, ID),
     k.providerCalls(CASE, ID),
+    k.found(CASE, ID),
   ]),
   factory("artifactKeys", artifactKeys.all, artifactKeys, (k) => [
     k.job(CASE, ID, "sha", "text/plain"),

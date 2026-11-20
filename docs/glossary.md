@@ -144,6 +144,10 @@ _Avoid_: Workflow, pipeline, canvas
 A value a Job found that the next step can start from: a host, IP, URL, email, hash or handle, stored on the Job (`jobs.pivots`) and bound into the next Playbook step's input when it is enqueued. Not the Job's artifacts (`jobs.output`). Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
 _Avoid_: Handoff, step output
 
+**Found value**:
+A typed value a Job's report holds (an IP, a certificate name, a scanned URL), listed on the Job's Found tab with where it came from and which Entities already hold it; read from the report through the Cap's `found` reader, complete where the Proposal carries a capped batch. Not a Graph row, a Proposal or a Pivot: Add to Entity writes it as an Identifier at `unverified`. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#found-values).
+_Avoid_: Lead, candidate, finding
+
 **Playbook run**:
 One start of a Playbook in a Case. Its steps are created one at a time; a step whose dependency failed or was cancelled is skipped, never stored. A finished run has an outcome of `succeeded`, `failed` or `partial`; retrying a step reopens the run. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#playbooks).
 _Avoid_: Workflow run, pipeline run

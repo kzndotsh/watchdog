@@ -54,6 +54,8 @@ const CAPPED_ENVELOPES: Readonly<Record<string, string>> = {
     "the Dossier ego graph draws one star around an Entity, so it cannot arrive a page at a time: at most GRAPH_EGO_EDGE_MAX (60) of its Connections, most recently updated first, with isTruncated past it; the Connections tab pages them all",
   "graph.snapshot":
     "the Graph page draws one picture, so it cannot arrive a page at a time: at most GRAPH_SNAPSHOT_ENTITY_MAX (150) most connected Entities and GRAPH_SNAPSHOT_EDGE_MAX (600) Connections between them, with isTruncated past either",
+  "jobs.listFound":
+    "every value one Job's report holds, read from that one report: at most FOUND_VALUES_MAX (2000), with total and isTruncated past it",
   "jobs.listProviderCalls":
     "one Job's provider calls: a handful per Job; at most PROVIDER_CALL_LIST_MAX (200), with isTruncated past it",
   "tasks.board":
