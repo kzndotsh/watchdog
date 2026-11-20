@@ -160,4 +160,36 @@ describe("partial Accept", () => {
     expect(accepted.leftOpIds).toEqual([]);
     expect(await identifiersRepo.listForEntity(db, testId(40))).toHaveLength(1);
   });
+
+  it("refuses an id two ops share when one of them needs an Entity that is not chosen", async () => {
+    const cased = await seedCase(db);
+    const existing = await seedEntity(db, cased.id, { id: testId(20) });
+    const { id: proposalId } = await seedProposal(db, cased.id, [
+      buildEntityCreateOp("Acme", "acme", "org", { id: testId(40) }),
+      buildIdentifierCreateOp(testId(40), "domain", "acme.example", {
+        id: testId(41),
+      }),
+      buildIdentifierCreateOp(existing.id, "domain", "other.example", {
+        id: testId(41),
+      }),
+    ]);
+
+    await expect(
+      runDomain(
+        acceptProposalEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          proposalId,
+          actorId: TEST_ACTOR_ID,
+          confidence: "unverified",
+          opIds: [testId(41)],
+        })
+      )
+    ).rejects.toThrow(/depends on/);
+
+    const row = await proposalsRepo.getInCase(db, cased.id, proposalId);
+    expect(row?.proposal.status).toBe("pending");
+    expect(await entitiesRepo.getById(db, testId(40))).toBeFalsy();
+    expect(await identifiersRepo.listForEntity(db, existing.id)).toEqual([]);
+  });
 });
