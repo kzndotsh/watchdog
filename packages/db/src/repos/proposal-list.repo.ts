@@ -14,6 +14,7 @@ import type {
   ListRow,
   ListSelect,
 } from "./_list-query";
+import { playbookRunProposalCount } from "./_proposal-run-counts";
 import { proposalColumns } from "./proposals.repo";
 
 /**
@@ -71,7 +72,7 @@ export const proposalListRepo = defineListRepo(
 
 /**
  * The same list for the Triage queue, the Dashboard and the Case overview (#580): what a queue row
- * shows (status, summary, Cap or playbook, time, the count of each kind of op and of cited
+ * shows (status, summary, Cap or playbook and its run, time, the count of each kind of op and of cited
  * Evidence) and never the patch, so a page stays small however long the patches are.
  */
 export const proposalQueueListRepo = defineListRepo(
@@ -85,6 +86,9 @@ export const proposalQueueListRepo = defineListRepo(
         createdAt: proposals.createdAt,
         capabilityId: jobs.capabilityId,
         playbookId: playbookRuns.playbookId,
+        playbookRunId: jobs.playbookRunId,
+        runProposalCount: playbookRunProposalCount(),
+        runPendingCount: playbookRunProposalCount("pending"),
         opCounts: proposalOpCounts,
         evidenceCount: proposalEvidenceCount,
         listKey,

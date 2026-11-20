@@ -12,6 +12,17 @@ export const proposalQueueItemSchema = z.object({
   summary: z.string().nullable(),
   capabilityId: z.string().nullable(),
   playbookId: z.string().nullable(),
+  /**
+   * The Playbook run whose step proposed it, with the run's Proposal counts over every status and
+   * page: Triage folds a run's Proposals into one row.
+   */
+  playbookRun: z
+    .object({
+      id: z.uuid(),
+      proposalCount: z.number().int(),
+      pendingCount: z.number().int(),
+    })
+    .nullable(),
   createdAt: z.string(),
   opCounts: z.record(z.string(), z.number().int()),
   evidenceCount: z.number().int(),

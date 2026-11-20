@@ -76428,6 +76428,37 @@
                               }
                             ]
                           },
+                          "playbookRun": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "proposalCount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "pendingCount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "proposalCount",
+                                  "pendingCount"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "createdAt": {
                             "type": "string"
                           },
@@ -76454,6 +76485,7 @@
                           "summary",
                           "capabilityId",
                           "playbookId",
+                          "playbookRun",
                           "createdAt",
                           "opCounts",
                           "evidenceCount"
