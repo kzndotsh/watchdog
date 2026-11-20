@@ -8,6 +8,7 @@ import {
   JobQueueWorker,
   makeJobQueueLayers,
   queueAbortOf,
+  stopGivesUpAt,
   type BossDriver,
   type QueueTx,
 } from "../job-queue";
@@ -444,5 +445,20 @@ describe("queueAbortOf: pg-boss's abort reason", () => {
     controller.abort();
     expect(queueAbortOf(controller.signal.reason, false)).toBe("expired");
     expect(queueAbortOf(controller.signal.reason, true)).toBe("stopping");
+  });
+});
+
+describe("stopGivesUpAt: when a stop stops waiting for handlers", () => {
+  it("a graceful stop gives up after its timeout, so an expiry while draining stays an expiry", () => {
+    expect(stopGivesUpAt({ graceful: true, timeout: 5000 }, 1000)).toBe(6000);
+  });
+
+  it("uses pg-boss's 30 s default when no timeout is given", () => {
+    expect(stopGivesUpAt(undefined, 1000)).toBe(31_000);
+    expect(stopGivesUpAt({}, 1000)).toBe(31_000);
+  });
+
+  it("a non-graceful stop gives up at once", () => {
+    expect(stopGivesUpAt({ graceful: false, timeout: 5000 }, 1000)).toBe(1000);
   });
 });
