@@ -66,7 +66,10 @@ export function IdentifierTypeGroups({
   }
   return (
     <div className="flex flex-col gap-2">
+      {/* Keyed by Case and Entity: another Entity's groups start from their own counts, even
+          when its counts are cached and never pass through the loading state. */}
       <ul
+        key={`${caseId}:${query.filters.entityId ?? ""}`}
         aria-label="Identifiers by type"
         className="divide-border overflow-hidden rounded-lg border"
       >
