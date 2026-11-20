@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
 import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
+import { EvidenceOutputTab } from "@/domains/intake/components/evidence-output-tab";
 import { ProcessRunCard } from "@/domains/intake/components/process-run-card";
 import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
@@ -21,7 +22,7 @@ import {
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import { evidenceProviderCallsQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
+import { FoundValuesSection } from "@/domains/jobs/components/found-values/found-values-section";
 import { ProviderCallsSection } from "@/domains/jobs/components/provider-calls/provider-calls-section";
 import { cn } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
@@ -52,16 +53,15 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord } from "@watchdog/schemas/jobs";
 import {
   isLiveJobStatus,
   isOpenJobStatus,
   type EgressClass,
 } from "@watchdog/schemas/shared";
-import { Spinner } from "@watchdog/ui/components/spinner";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
-type DetailTab = "content" | "output" | "jobs" | "calls";
+type DetailTab = "content" | "output" | "jobs" | "found" | "calls";
 
 function noPreviewMessage(canEnrich: boolean, hasUri: boolean) {
   if (canEnrich) {
@@ -82,57 +82,9 @@ export type EvidenceDetailProps = {
   entityPort: PickerPort<EntityOption>;
   allowedEgress?: readonly EgressClass[];
   actions: IntakeEvidenceActions;
+  /** Offer "Add to Entity" on the Found tab (the producing Job's values); Collect owns the dialog. */
+  onAddFoundValue?: (jobId: string, value: FoundValueRecord) => void;
 };
-
-type EvidenceOutputTabProps = {
-  caseId: string;
-  isEnrichRunning: boolean;
-  enrichOutput: ReturnType<typeof latestEnrichOutput>;
-};
-
-function EvidenceOutputTab({
-  caseId,
-  isEnrichRunning,
-  enrichOutput,
-}: EvidenceOutputTabProps) {
-  if (isEnrichRunning && !enrichOutput) {
-    return (
-      <div className="text-muted-foreground flex items-center gap-2 py-6 text-xs">
-        <Spinner className="size-3.5" />
-        Enrich running — combined markdown appears here when done.
-      </div>
-    );
-  }
-  if (enrichOutput) {
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-muted-foreground text-xs">
-          Combined live + Wayback from Enrich · Job{" "}
-          <IdChip value={enrichOutput.job.id} isCopyable />
-          {enrichOutput.artifact.name === ENRICHED_MD_ARTIFACT
-            ? null
-            : ` · fallback ${enrichOutput.artifact.name}`}
-        </p>
-        <ArtifactContent
-          caseId={caseId}
-          jobId={enrichOutput.job.id}
-          sha256={enrichOutput.artifact.sha256}
-          mime={enrichOutput.artifact.mime}
-          name={enrichOutput.artifact.name}
-        />
-      </div>
-    );
-  }
-  return (
-    <EmptyState
-      size="sm"
-      intent="blank-slate"
-      items="enrich output"
-      title="No Enrich output yet"
-      description="Run Enrich to fetch live + Wayback. Result stays on this dump (Output) — not a new Intake row. Then Harvest reads from it."
-    />
-  );
-}
 
 type EvidenceJobsTabProps = {
   relatedJobs: JobListRecord[];
@@ -328,6 +280,7 @@ export function EvidenceDetail({
   entityPort,
   allowedEgress,
   actions,
+  onAddFoundValue,
 }: EvidenceDetailProps) {
   // Callers remount this component with `key={evidence.id}` on selection
   // change, so this only needs to compute the initial tab once per evidence.
@@ -446,6 +399,7 @@ export function EvidenceDetail({
             v === "content" ||
             v === "output" ||
             v === "jobs" ||
+            v === "found" ||
             v === "calls"
           ) {
             setTab(v);
@@ -509,6 +463,28 @@ export function EvidenceDetail({
               />
             </ActiveTabBody>
           </TabsContent>
+
+          {producingCap === null ? null : (
+            <TabsContent value="found" className="mt-0">
+              <ActiveTabBody isActive={tab === "found"}>
+                <FoundValuesSection
+                  caseId={caseId}
+                  jobId={producingCap.id}
+                  isLive={
+                    producingCap.status === "queued" ||
+                    producingCap.status === "running"
+                  }
+                  onAdd={
+                    onAddFoundValue === undefined
+                      ? undefined
+                      : (value) => {
+                          onAddFoundValue(producingCap.id, value);
+                        }
+                  }
+                />
+              </ActiveTabBody>
+            </TabsContent>
+          )}
 
           <TabsContent value="calls" className="mt-0">
             <ActiveTabBody isActive={tab === "calls"}>

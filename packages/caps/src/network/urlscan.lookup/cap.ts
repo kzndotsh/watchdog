@@ -7,6 +7,7 @@ import {
 import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { foundOfType } from "../../lib/collect/found-values";
 import { urlscan } from "../../providers";
 import { contact } from "../../sdk";
 import { urlscanLookupInput } from "./input";
@@ -46,4 +47,8 @@ export const urlscanLookup = defineCollectCap({
       return { snap, artifactName: `urlscan-${host}.json` };
     }),
   interpretSnap: interpretUrlscanLookupReport,
+  foundSnap: (snap) => [
+    ...foundOfType("domain", snap.domains, "Domain seen in a scan"),
+    ...foundOfType("url", snap.urls, "Scanned URL"),
+  ],
 });

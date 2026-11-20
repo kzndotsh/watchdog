@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
+import type { FoundValue } from "@watchdog/schemas/jobs";
 import type { JsonValue } from "@watchdog/schemas/shared";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 import type { ToolsTag } from "@watchdog/tools/errors";
@@ -49,7 +50,7 @@ type BreachExportRedactionDecl<
 
 type CollectCapDef<TSchema extends z.ZodType, TSnap, TId extends string> = Omit<
   CapabilityDef<TSchema, TId>,
-  "run" | "interpret" | "exportRedactor"
+  "run" | "interpret" | "exportRedactor" | "found"
 > &
   BreachExportRedactionDecl<TId, TSnap> & {
     schema: z.ZodType<TSnap>;
@@ -63,6 +64,8 @@ type CollectCapDef<TSchema extends z.ZodType, TSnap, TId extends string> = Omit<
       snap: TSnap,
       opts: CapInterpretOpts<z.infer<TSchema>>
     ) => CapInterpretResult;
+    /** The Cap's `found` reader over the parsed snapshot (see `CapabilityDef.found`). */
+    foundSnap?: (snap: TSnap) => readonly FoundValue[];
   };
 
 function exportRedactorFor<TSnap>(
@@ -93,6 +96,7 @@ export function defineCollectCap<
     reportLabel: label,
     fetch,
     interpretSnap,
+    foundSnap,
     exportRedaction,
     ...meta
   } = def;
@@ -104,6 +108,14 @@ export function defineCollectCap<
   const declared: CapabilityDef<TSchema, TId> = {
     ...meta,
     ...(exportRedactor === undefined ? {} : { exportRedactor }),
+    ...(foundSnap === undefined
+      ? {}
+      : {
+          found: (report: JsonValue) => {
+            const parsed = schema.safeParse(report);
+            return parsed.success ? foundSnap(parsed.data) : undefined;
+          },
+        }),
     kind: meta.kind ?? "collect",
     run: (ctx: CapContext<z.infer<TSchema>>) =>
       Effect.gen(function* collectCapRun() {

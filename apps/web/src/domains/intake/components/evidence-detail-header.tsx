@@ -103,6 +103,9 @@ export function EvidenceDetailHeader({
             Jobs
             <TabCount n={relatedJobs.length} />
           </TabsTrigger>
+          {producingCap === null ? null : (
+            <TabsTrigger value="found">Found</TabsTrigger>
+          )}
           <TabsTrigger value="calls">Calls</TabsTrigger>
         </TabsList>
       </div>

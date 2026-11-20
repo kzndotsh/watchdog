@@ -5,6 +5,7 @@ import {
   getJobFn,
   getPlaybookRunFn,
   listCapabilitiesFn,
+  listJobFoundValuesFn,
   listJobProviderCallsFn,
   listPlaybooksFn,
   listRecentJobsFn,
@@ -63,6 +64,23 @@ export const jobDetailQuery = (caseId: string, jobId: string) => {
     queryKey,
     queryFn: async () =>
       getJobFn({ data: parseGetJobInput(scoped.caseId, scoped.jobId) }),
+    enabled: scopeJobDetailEnabled(caseId, jobId),
+    staleTime: STALE_REALTIME,
+    gcTime: GC_REALTIME,
+    placeholderData: placeholderDataForQueryKey(queryKey),
+  });
+};
+
+/** Every typed value the Job's report holds, with who already holds each (`jobs.listFound`). */
+export const jobFoundValuesQuery = (caseId: string, jobId: string) => {
+  const scoped = scopeJobDetail(caseId, jobId);
+  const queryKey = jobsKeys.found(scoped.caseId, scoped.jobId);
+  return queryOptions({
+    queryKey,
+    queryFn: async () =>
+      listJobFoundValuesFn({
+        data: parseGetJobInput(scoped.caseId, scoped.jobId),
+      }),
     enabled: scopeJobDetailEnabled(caseId, jobId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,

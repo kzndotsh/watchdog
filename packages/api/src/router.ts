@@ -144,6 +144,7 @@ export const router = {
     listForCase: jobs.listForCase,
     get: jobs.get,
     listProviderCalls: jobs.listProviderCalls,
+    listFound: jobs.listFound,
     start: jobs.start,
     cancel: jobs.cancel,
     retry: jobs.retry,

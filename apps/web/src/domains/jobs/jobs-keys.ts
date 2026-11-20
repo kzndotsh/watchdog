@@ -10,6 +10,9 @@ export const jobsKeys = {
   /** Under `all`, so a Job's status change (SSE) refreshes the calls it made. */
   providerCalls: (caseId: string, jobId: string) =>
     ["jobs", caseId, "provider-calls", jobId] as const,
+  /** Under `all`. Names who holds each value, so Add to Entity refreshes it too. */
+  found: (caseId: string, jobId: string) =>
+    ["jobs", caseId, "found", jobId] as const,
 };
 
 /**

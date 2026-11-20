@@ -200,6 +200,15 @@ Catalog growth is gated by this table, not by a size ceiling.
 
 **DNS / WHOIS interpret:** DNS A/AAAA → `ip` Identifiers; NS/MX stay in the Claim. Shared `interpretWhoisSnapshot`: observation Claim (NS in prose) + optional Event when `expiresAt` is in the past or within 90 days. Cached reports may omit dates (`.nullish()`); invalid WHOIS dates parse to `null`.
 
+## Found values
+
+A Cap's report usually holds more values than its Proposal carries: `interpret` proposes at most a batch of each type (`lib/collect/query-seed-batches.ts`, 80 domains, 40 of the rest) and says so in its Claim (`identifierTruncationNote`). A Cap may also declare `found(report)` (`foundSnap` on `defineCollectCap`): every typed value the report holds, with no limit, each normalized like an Identifier write (`foundOfType` in `lib/collect/found-values.ts`) and named by where it came from (`source`: "NS record", "Certificate name").
+
+- **Read on demand, never stored:** `GET /cases/{caseId}/jobs/{jobId}/found` (`jobs.listFound`, scope `cases:read`, `listJobFoundValuesEffect`) loads the Job's `report.json`, runs the reader, merges a value seen in several places into one row with all its `sources`, and names the Case's Entities that already hold it (`identifiersRepo.listHoldersByValues`). At most `FOUND_VALUES_MAX` (2000) rows, with `total` and `isTruncated`. A reader added later also covers Jobs that already ran. A Cap without one answers `hasReader: false`.
+- **Not a Graph row and not a Proposal:** Collect's Job detail lists them on its Found tab, and **Add to Entity** writes one as an Identifier through the Dossier path (`unverified`, status `unknown`, citing the Job's Evidence). Nothing is promoted or staged.
+- **Separate from `pivots`:** `pivots` feed Playbook bind and fan-out (six kinds, persisted on the Job); `found` is for people, complete and typed. Neither changes what `interpret` proposes.
+- **Readers today:** `network.ct.lookup` (certificate names), `network.dns.lookup` (A, AAAA, NS and MX values), `network.urlscan.lookup` (domains and URLs its scans saw).
+
 ## Playbooks
 
 Curated linear recipes (`packages/caps/src/playbooks/definitions.ts`). Caps stay individually runnable from Jobs. `planPlaybook` validates the whole recipe and emits step 0 only; later Jobs are created when the step before them has settled and the steps it reads succeeded.

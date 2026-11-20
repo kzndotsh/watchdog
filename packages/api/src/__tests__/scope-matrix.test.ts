@@ -128,6 +128,7 @@ describe("declared scopes", () => {
         "jobs.get": "cases:read",
         "jobs.getPlaybookRun": "cases:read",
         "jobs.listForCase": "cases:read",
+        "jobs.listFound": "cases:read",
         "jobs.listProviderCalls": "cases:read",
         "jobs.retry": "evidence:write",
         "jobs.start": "evidence:write",
