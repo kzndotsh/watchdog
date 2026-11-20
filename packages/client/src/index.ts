@@ -29,7 +29,7 @@ function resolveBaseUrl(explicit?: string): string {
 
 /**
  * Typed OpenAPI client for agents/CLI.
- * Regenerated contract: `pnpm generate:client` → `packages/client/src/generated/`.
+ * Contract: `pnpm generate:client` → `packages/client/src/generated/` (gitignored build output).
  */
 export function createWatchdogClient(
   opts: CreateWatchdogClientOptions

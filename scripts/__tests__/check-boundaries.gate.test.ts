@@ -267,6 +267,97 @@ describe("check-boundaries gate", () => {
     expect(repo.run(GATE).code).toBe(1);
   });
 
+  describe("denied imports", () => {
+    it("fails a Cap importing the database package even when declared", () => {
+      const res = workspace(
+        {
+          db: {},
+          caps: {
+            deps: ["db"],
+            files: { "src/a.ts": 'import { x } from "@watchdog/db";\n' },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("packages/caps/src/a.ts:1");
+      expect(res.output).toContain("Caps never write the Graph");
+    });
+
+    it("fails the ORM and the Postgres driver in Caps, subpaths and tests included", () => {
+      const res = workspace(
+        {
+          caps: {
+            files: {
+              "src/a.ts": 'import { eq } from "drizzle-orm";\n',
+              "src/b.ts": 'import { pgTable } from "drizzle-orm/pg-core";\n',
+              "src/__tests__/c.test.ts": 'import postgres from "postgres";\n',
+              "src/d.ts": 'const pg = await import("pg");\n',
+            },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain('packages/caps/src/a.ts:1: "drizzle-orm"');
+      expect(res.output).toContain('"drizzle-orm/pg-core"');
+      expect(res.output).toContain(
+        'packages/caps/src/__tests__/c.test.ts:1: "postgres"'
+      );
+      expect(res.output).toContain('packages/caps/src/d.ts:1: "pg"');
+    });
+
+    it("fails api reaching the database or ORM, and core reaching the ORM", () => {
+      const res = workspace(
+        {
+          db: {},
+          api: {
+            deps: ["db"],
+            files: {
+              "src/a.ts": 'import { x } from "@watchdog/db";\n',
+              "src/b.ts": 'import { sql } from "drizzle-orm";\n',
+            },
+          },
+          core: {
+            files: { "src/b.ts": 'import { sql } from "drizzle-orm";\n' },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain('packages/api/src/a.ts:1: "@watchdog/db"');
+      expect(res.output).toContain('packages/api/src/b.ts:1: "drizzle-orm"');
+      expect(res.output).toContain('packages/core/src/b.ts:1: "drizzle-orm"');
+    });
+
+    it("lets other packages use the database, ORM and driver, and core use the database package", () => {
+      const res = workspace(
+        {
+          db: {
+            files: {
+              "src/a.ts":
+                'import { sql } from "drizzle-orm";\nimport postgres from "postgres";\n',
+            },
+          },
+          core: {
+            deps: ["db"],
+            files: { "src/b.ts": 'import { x } from "@watchdog/db";\n' },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(0);
+    });
+
+    it("does not deny a package whose name only starts with a denied one", () => {
+      const res = workspace(
+        { caps: { files: { "src/a.ts": 'import x from "pg-format";\n' } } },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(0);
+    });
+  });
+
   describe("specifier forms", () => {
     const BAD = "@watchdog/lib/src/secret";
     const forms: Record<string, string> = {

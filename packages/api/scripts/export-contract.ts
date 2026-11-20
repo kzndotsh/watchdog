@@ -1,12 +1,16 @@
 /**
- * Export a minified oRPC contract (+ OpenAPI JSON + AppRouter type entry)
- * for @watchdog/client.
- * Run: pnpm --filter @watchdog/api export-contract
+ * Generate the minified oRPC contract, the OpenAPI document and the AppRouter
+ * type entry into `packages/client/src/generated/` (gitignored build output).
+ * Run: `pnpm generate:client`. Also runs on `pnpm install` (`@watchdog/client`
+ * `prepare`), before `pnpm typecheck` and before `pnpm build:cli`.
  */
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { exportContract } from "../src/export-contract.ts";
+// Importing the router loads the server env; the output does not depend on it,
+// so a fresh clone with no `.env` can generate the contract.
+process.env.SKIP_ENV_VALIDATION = "1";
+const { exportContract } = await import("../src/export-contract.ts");
 
 const here = import.meta.dirname;
 const outDir = path.join(here, "../../client/src/generated");

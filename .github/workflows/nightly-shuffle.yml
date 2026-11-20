@@ -5,8 +5,7 @@
 #
 # Advisory: it never gates a pull request. It runs only on a schedule or by hand, `ci-ok` in
 # ci.yml does not wait for it, and it opens no issues: a red run is read by a person, who files
-# the flake (docs/contributing/testing/flaky-tests.md). scripts/__tests__/ci-workflow.gate.test.ts
-# keeps it that way.
+# the flake (docs/contributing/testing/flaky-tests.md).
 name: nightly-shuffle
 
 on:

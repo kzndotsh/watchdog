@@ -8,7 +8,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 ## Enforcement
 
 - **Declared `dependencies`** are the matrix: pnpm's strict `node_modules` means an undeclared `@watchdog/*` import does not resolve (`pnpm typecheck` fails). Declaring a forbidden dependency fails nothing, so the rows below are guidance unless another bullet names a gate.
-- **`pnpm check:boundaries`** (`scripts/check-boundaries.mjs`, pre-commit and CI): an import of `@watchdog/*` must name a workspace package the importer declares, through a path its `exports` map lists; the failure names the public entry points. Packages and apps never import an app.
+- **`pnpm check:boundaries`** (`scripts/check-boundaries.mjs`, pre-commit and CI): an import of `@watchdog/*` must name a workspace package the importer declares, through a path its `exports` map lists; the failure names the public entry points. Packages and apps never import an app. Its `DENIED_IMPORTS` list fails an import whatever the package declares: caps imports no `@watchdog/db`, `drizzle-orm`, `postgres` or `pg`; api no `@watchdog/db` or `drizzle-orm`; core no `drizzle-orm`.
 - **oxlint `no-restricted-imports`** (`oxlint.config.ts`): `apps/web` may not import `@watchdog/db` or unwrapped primitives; `apps/cli` may not import `core`, `db`, `api`, `log` or `env`; `packages/ui` wrappers may not import `db`.
 - **`import/no-cycle: error`** across the workspace.
 - **oxlint `watchdog/db-repo-*` rules** (`scripts/oxlint-plugin/`, scoped to `packages/db/src/repos/*.repo.ts` in `oxlint.config.ts`, so `pnpm check`) enforce the repos rules: no `SQL` type, no transaction, no throw, no notify, `exec: DbExec` first, no `.toISOString()` (its only DTO check), no `trimmedOrNull`, `trimmedOrUndefined` only in lookup methods, no job status set literal, no zod import, and no raw `sql` fragment (baselined).
@@ -23,7 +23,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | `@watchdog/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle ([`packages/test-db/AGENTS.md`](../../../packages/test-db/AGENTS.md)) |
 | `@watchdog/ai` | db, caps, core |
 | `@watchdog/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
-| `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | **db**, core, api, apps |
+| `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | **db**, `drizzle-orm`, `postgres`, `pg` (`check:boundaries` rule 8), core, api, apps |
 | `@watchdog/auth` | api, core, caps, apps, `@tanstack/*`. Depends on db (Better Auth adapter), env, log, schemas |
 | `@watchdog/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); callers import per-domain subpaths (`@watchdog/core/cases`, `/graph`, `/jobs`, ...); the worker imports the same entry points and `/maintenance` |
 | `@watchdog/api` | apps, **db**, drizzle-orm (goes through core) |

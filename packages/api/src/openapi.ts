@@ -57,9 +57,8 @@ const EXTENSIBLE_ERROR_DATA_PROPERTIES = ["entity", "requiredScope", "scope"];
 
 /**
  * In every error `data` schema (an object whose `code` is a constant), move the `enum` of the
- * properties above to `x-extensible-enum`. oasdiff reports a value added to `enum` in a response
- * as breaking and one added to `x-extensible-enum` as safe; a client must handle a value it does
- * not know. Mutates the spec.
+ * properties above to `x-extensible-enum`, which tells a client that a value it does not know can
+ * appear and must be handled. Mutates the spec.
  */
 export function markExtensibleEnums(node: unknown): void {
   if (Array.isArray(node)) {

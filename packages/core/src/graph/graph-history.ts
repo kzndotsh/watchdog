@@ -45,7 +45,7 @@ import {
 
 /**
  * The read side of `graph_history`. The table is written only by the database
- * triggers (`0001_database_logic`); who and through which door
+ * triggers (`0000_baseline`); who and through which door
  * come from `setHistoryContextEffect` (`graph-activity.ts`), called first in
  * every Graph write transaction.
  */

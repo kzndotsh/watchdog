@@ -23,8 +23,8 @@ and grep for the export name. Prefer the matching `pnpm test:*` over the
 whole suite. If a gate fails: code bug → fix code; obsolete assertion →
 update the test; unclear product → **Blocked**.
 
-## Docs (mapped pages only)
+## Docs (affected pages only)
 
-After patching `scripts/doc-map.mjs` targets, check those pages against
+After patching the pages that describe the dirty code, check them against
 the diff: commands/paths/nouns still true, no unverified examples. Run
 `pnpm check:docs:strict` via check-gates; do not crawl every `docs/**` page.

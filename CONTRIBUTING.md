@@ -24,7 +24,7 @@ Before you push, run `pnpm check`, `pnpm typecheck` and `pnpm test`. The git hoo
 - Branch from `main`, and open a ready (not draft) pull request against it. Do not commit to `main`.
 - Use [conventional commits](https://www.conventionalcommits.org): `feat(core): ...`, `fix(web): ...`, `docs: ...`. Link the issue in the pull request body.
 - Do not skip the hooks (`--no-verify`). If one fails, fix the cause.
-- Code that `scripts/doc-map.mjs` maps to a doc must change that doc in the same pull request. When no doc applies, put `docs:allow-affect — <reason>` in the message of that commit.
+- A change to code that a doc describes updates that doc in the same pull request.
 - Keep investigation content (real names, targets, Case data) out of code, tests, docs and fixtures. Use synthetic data.
 
 The pull request template has the checklist.

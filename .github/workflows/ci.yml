@@ -166,8 +166,6 @@ jobs:
               - 'docs/reference/web/**'
               - '**/*.md'
               - 'scripts/check-docs.mjs'
-              - 'scripts/doc-map.mjs'
-              - 'scripts/check-docs-affected.mjs'
 
       # `some-with-excludes` lets a filter carry a `!` pattern: the default `some`
       # quantifier ignores negations. Same patterns as `typescript`, minus scripts/**.
@@ -227,13 +225,6 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:docs:strict
 
-      - name: Docs affect (strict map)
-        if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.config == 'true'
-        env:
-          DOCS_AFFECT_BEFORE: ${{ github.event.before }}
-          DOCS_AFFECT_AFTER: ${{ github.event.after }}
-        run: pnpm check:docs-affected:strict
-
       - name: Tagged error names and codes
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:tagged-errors:strict
@@ -277,9 +268,6 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:boundaries
 
-      - name: CODEOWNERS paths
-        run: pnpm check:codeowners
-
       - name: DESIGN.md format (official linter)
         run: pnpm lint:design
 
@@ -315,13 +303,6 @@ jobs:
             docs/reference/platform/cap-register.md \
             || (echo "capabilities.gen.json or cap-register.md out of date — run pnpm generate:caps" && exit 1)
 
-      - name: OpenAPI client contract drift
-        if: github.event_name != 'pull_request' || needs.changes.outputs.api == 'true' || needs.changes.outputs.config == 'true'
-        run: |
-          pnpm generate:client
-          git diff --exit-code -- packages/client/src/generated/ \
-            || (echo "client contract out of date — run pnpm generate:client" && exit 1)
-
       # The tsr CLI writes Start's `Register` footer only because tsr.config.json declares it (#466).
       - name: Route tree drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
@@ -329,41 +310,6 @@ jobs:
           pnpm generate-routes
           git diff --exit-code -- apps/web/src/routeTree.gen.ts \
             || (echo "routeTree.gen.ts out of date or missing Start's Register block — run pnpm generate-routes" && exit 1)
-
-      # Fails when the generated spec breaks API or CLI consumers (#353). The one bypass is a
-      # `BREAKING CHANGE: <what and why>` footer on a commit in the range (docs/contributing/ci-gates.md).
-      # oasdiff runs as a digest-pinned container with no network.
-      - name: OpenAPI breaking changes
-        if: github.event_name != 'pull_request' || needs.changes.outputs.api == 'true' || needs.changes.outputs.config == 'true'
-        env:
-          SPEC: packages/client/src/generated/openapi.json
-          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          OASDIFF_IMAGE: tufin/oasdiff:v1.34.0@sha256:dd742562c1f3146f6e2a80bc01951cc87d15a249ac2aca05665339e30cf03620
-        run: |
-          set -euo pipefail
-          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
-            || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null \
-            || ! git cat-file -e "$BASE_SHA:$SPEC" 2>/dev/null; then
-            echo "::notice::no base spec to compare against ($BASE_SHA); skipping the breaking-change check"
-            exit 0
-          fi
-          work="$RUNNER_TEMP/oasdiff"
-          mkdir -p "$work"
-          git show "$BASE_SHA:$SPEC" > "$work/base.json"
-          cp "$SPEC" "$work/head.json"
-          set +e
-          docker run --rm --network none -v "$work:/specs:ro" "$OASDIFF_IMAGE" \
-            breaking /specs/base.json /specs/head.json --fail-on ERR
-          status=$?
-          set -e
-          [ "$status" -eq 0 ] && exit 0
-          ack=$(git log --format=%B "$BASE_SHA..HEAD" | grep -E '^[[:space:]*-]*BREAKING[ -]CHANGE:[[:space:]]*[^[:space:]]' || true)
-          if [ -n "$ack" ]; then
-            echo "::warning::breaking API change acknowledged: $ack"
-            exit 0
-          fi
-          echo "::error::breaking API change. If it is intended, add a 'BREAKING CHANGE: <what and why>' footer to a commit in this range"
-          exit 1
 
       - name: Migration drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'

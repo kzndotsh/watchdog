@@ -30,7 +30,6 @@ reviews:
     - "!skills-lock.json"
     - "!apps/web/src/routeTree.gen.ts"
     - "!packages/caps/capabilities.gen.json"
-    - "!packages/client/src/generated/**"
     - "!packages/db/drizzle/meta/**"
     - "!packages/ui/src/components/**"
     - "!packages/ui/src/hooks/**"

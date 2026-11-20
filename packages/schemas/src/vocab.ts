@@ -581,7 +581,7 @@ export type GraphActor = {
 };
 
 /**
- * SQLSTATE the database raises (`0001_database_logic`) when the application
+ * SQLSTATE the database raises (`0000_baseline`) when the application
  * role writes the Graph in a transaction that set no history context. A server bug, never caller
  * input: core maps it to `InternalError`.
  */

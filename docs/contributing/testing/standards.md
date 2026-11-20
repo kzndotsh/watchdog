@@ -4,7 +4,7 @@ How to write tests in this repo so they catch regressions instead of existing to
 
 Tiers, what each command runs and file layout: [`index.md`](index.md). What each tier may touch (small, medium, large): [ADR-0006](../../adr/0006-test-tiers-and-sizes.md).
 
-**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: the three mock-policy baselines ([Mock policy](#mock-policy)), typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule through the leak canary ([below](#test-speed-shared-workers)). The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
+**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: the three mock-policy baselines ([Mock policy](#mock-policy)), typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`) and the shared-worker restore rule through the leak canary ([below](#test-speed-shared-workers)). The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
 
 ## AAA, one behavior
 
@@ -78,7 +78,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | --- | --- |
 | `*.test.ts` | Unit: small, in-process, no database or spawned process. Under `packages/*`, `apps/worker` and `apps/cli` it runs in the `unit` project; under `apps/web` in `web-unit` (node), except the hook and DOM files listed as `webDomTestGlobs` in `vitest.config.ts`, which run in `component`. `pnpm test:unit` runs `unit` and `web-unit`. |
 | `*.property.test.ts` | fast-check |
-| `*.gate.test.ts` | Medium: a gate script run as a CLI, or oxlint run over a fixture, in a temp git repo (`scripts/__tests__/`), named after the script; needs a must-fail test (enforced by `gate-coverage.gate.test.ts`). Never writes into the working tree |
+| `*.gate.test.ts` | Medium: a gate script run as a CLI, or oxlint run over a fixture, in a temp git repo (`scripts/__tests__/`), named after the script; needs a must-fail test (guidance). Never writes into the working tree |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
 | `*.component.test.tsx` | Small: happy-dom + Testing Library (`component` project) |
 | `*.compiled.test.tsx` | Small: as `*.component.test.tsx`, transformed by React Compiler (`component-compiled` project). Use it only when the bug needs the memoization; a stale cell or skipped re-render passes in `component` |

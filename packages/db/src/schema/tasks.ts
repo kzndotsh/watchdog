@@ -74,7 +74,7 @@ export const tasks = pgTable(
     index("tasks_case_open_due_idx")
       .on(t.caseId, t.dueDate, t.id)
       .where(openTaskStatus(t.status)),
-    // `q`: trigram indexes over the Task list's search fields (`pg_trgm`, migration 0002).
+    // `q`: trigram indexes over the Task list's search fields (`pg_trgm`, the baseline migration).
     index("tasks_title_trgm_idx").using("gin", t.title.op("gin_trgm_ops")),
     index("tasks_description_trgm_idx").using(
       "gin",

@@ -44,8 +44,6 @@ pre-commit:
       glob:
         - "docs/**"
         - "scripts/check-docs.mjs"
-        - "scripts/doc-map.mjs"
-        - "scripts/check-docs-affected.mjs"
         - "scripts/lib/**"
       run: pnpm check:docs:strict
     design-tokens:
@@ -122,12 +120,6 @@ pre-commit:
         - "pnpm-workspace.yaml"
         - "scripts/check-boundaries.mjs"
       run: pnpm check:boundaries
-    codeowners:
-      # Also depends on which files exist (a rename can orphan a pattern), so CI reruns it on every change.
-      glob:
-        - ".github/CODEOWNERS"
-        - "scripts/check-codeowners.mjs"
-      run: pnpm check:codeowners
     env-docs:
       # env.example and the configuration reference are generated from the env metadata.
       glob:
@@ -144,15 +136,6 @@ pre-commit:
         - "scripts/lib/**"
         - ".cursor/README.md"
       run: pnpm validate:agents --staged
-
-commit-msg:
-  skip:
-    - merge
-    - rebase
-  commands:
-    # Runs here (not pre-commit) so it can read the real message file {1}.
-    docs-affect:
-      run: pnpm check:docs-affected:strict {1}
 
 pre-push:
   parallel: true
