@@ -42,6 +42,30 @@ export function memoryListPage<T>(
   };
 }
 
+/**
+ * `memoryListPage` for a list read through its oRPC procedure (`procedureDouble("claims.list")`
+ * from `@/testing/orpc-client`): the double receives the procedure's input itself.
+ */
+export function memoryListProcedure<T>(
+  rows: readonly T[],
+  options: MemoryListOptions<T>
+) {
+  const page = memoryListPage(rows, options);
+  return async (input: ListPageData): Promise<ListPage<T>> =>
+    page({ data: input });
+}
+
+/** The input a list procedure double received last: what the screen asked the server for. */
+export function lastProcedureInput(fn: {
+  readonly mock: { readonly lastCall?: readonly unknown[] };
+}): Record<string, unknown> {
+  const input: unknown = fn.mock.lastCall?.[0];
+  if (typeof input !== "object" || input === null) {
+    throw new Error("no list request yet");
+  }
+  return { ...input };
+}
+
 /** `q` as the server reads it: a case-insensitive substring of any of `fields`. */
 export function matchesQ(
   data: ListPageData,

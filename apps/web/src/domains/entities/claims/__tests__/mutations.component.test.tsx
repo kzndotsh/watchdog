@@ -1,12 +1,8 @@
 import { describe, it, vi } from "vitest";
 
-const fns = vi.hoisted(() => ({
-  createClaimFn: vi.fn(),
-  retractClaimFn: vi.fn(),
-  updateClaimFn: vi.fn(),
-}));
-
-vi.mock("@/domains/entities/claims/claims.functions", () => fns);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -21,13 +17,21 @@ import {
   SCOPE_A,
   expectSettlesStartingCase,
 } from "@/domains/entities/hooks/__tests__/helpers/entity-write-harness";
+import { procedureDouble } from "@/testing/orpc-client";
 import { testId } from "@watchdog/test-kit";
+
+const procedures = {
+  create: procedureDouble("claims.create"),
+  retract: procedureDouble("claims.retract"),
+  update: procedureDouble("claims.update"),
+};
 
 describe("claims Graph child mutations", () => {
   it("settles the Case the claim was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useCreateClaim({ onSuccess: onDone }),
-      serverFn: fns.createClaimFn,
+      serverFn: procedures.create,
+      isProcedure: true,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -47,7 +51,8 @@ describe("claims Graph child mutations", () => {
         useRetractClaim({
           onSuccess: onDone,
         }),
-      serverFn: fns.retractClaimFn,
+      serverFn: procedures.retract,
+      isProcedure: true,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -61,7 +66,8 @@ describe("claims Graph child mutations", () => {
   it("settles the Case the claim was edited in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useUpdateClaim({ onSuccess: onDone }),
-      serverFn: fns.updateClaimFn,
+      serverFn: procedures.update,
+      isProcedure: true,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,

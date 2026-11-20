@@ -65,6 +65,12 @@ function isEvidenceQuery(
   );
 }
 
+/** A key's domain: its first segment, or the first part of an oRPC key's procedure path. */
+function keyRoot(queryKey: readonly unknown[]): string {
+  const [head] = queryKey;
+  return String(Array.isArray(head) ? head[0] : head);
+}
+
 /** One settled first page of a list view, with its total. */
 function listPage(count: number) {
   return {
@@ -99,7 +105,7 @@ function renderShell() {
   };
   useInfiniteQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) =>
-      listPage(totals[String(options.queryKey[0])] ?? 0)
+      listPage(totals[keyRoot(options.queryKey)] ?? 0)
   );
   useQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) => {

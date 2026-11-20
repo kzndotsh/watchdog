@@ -25,6 +25,7 @@ import { Route as ProtectedCasesCaseSlugRouteImport } from './routes/_protected/
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedUiIndexRouteImport } from './routes/_protected/ui/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1.$'
 import { Route as AuthAcceptInvitationInvitationIdRouteImport } from './routes/auth/accept-invitation.$invitationId'
 import { Route as ProtectedCasesCaseSlugIndexRouteImport } from './routes/_protected/cases/$caseSlug/index'
@@ -119,6 +120,11 @@ const ProtectedUiIndexRoute = ProtectedUiIndexRouteImport.update({
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
+  id: '/api/rpc/$',
+  path: '/api/rpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/auth/$path': typeof AuthPathRoute
   '/cases/$caseSlug': typeof ProtectedCasesCaseSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/cases/': typeof ProtectedCasesIndexRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/auth/$path': typeof AuthPathRoute
   '/': typeof ProtectedIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/cases': typeof ProtectedCasesIndexRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/_protected/': typeof ProtectedIndexRoute
   '/_protected/cases/$caseSlug': typeof ProtectedCasesCaseSlugRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/_protected/cases/': typeof ProtectedCasesIndexRoute
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/cases/$caseSlug'
     | '/api/auth/$'
+    | '/api/rpc/$'
     | '/api/v1/$'
     | '/auth/accept-invitation/$invitationId'
     | '/cases/'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/auth/$path'
     | '/'
     | '/api/auth/$'
+    | '/api/rpc/$'
     | '/api/v1/$'
     | '/auth/accept-invitation/$invitationId'
     | '/cases'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/_protected/'
     | '/_protected/cases/$caseSlug'
     | '/api/auth/$'
+    | '/api/rpc/$'
     | '/api/v1/$'
     | '/auth/accept-invitation/$invitationId'
     | '/_protected/cases/'
@@ -429,6 +441,7 @@ export interface RootRouteChildren {
   ApiV1Route: typeof ApiV1RouteWithChildren
   AuthPathRoute: typeof AuthPathRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiRpcSplatRoute: typeof ApiRpcSplatRoute
   AuthAcceptInvitationInvitationIdRoute: typeof AuthAcceptInvitationInvitationIdRoute
 }
 
@@ -544,6 +557,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/rpc/$': {
+      id: '/api/rpc/$'
+      path: '/api/rpc/$'
+      fullPath: '/api/rpc/$'
+      preLoaderRoute: typeof ApiRpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/$': {
@@ -751,6 +771,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1Route: ApiV1RouteWithChildren,
   AuthPathRoute: AuthPathRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiRpcSplatRoute: ApiRpcSplatRoute,
   AuthAcceptInvitationInvitationIdRoute: AuthAcceptInvitationInvitationIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,21 +1,22 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-const listClaimsPageFn = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-vi.mock("@/domains/entities/claims/claims.functions", () => ({
-  listClaimsPageFn,
-}));
-
-import { claimListView } from "@/domains/entities/claims/queries";
+import { claimListView, claimsKeys } from "@/domains/entities/claims/queries";
+import { procedureDouble } from "@/testing/orpc-client";
 import { claimList } from "@watchdog/schemas/graph";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+const listClaims = procedureDouble("claims.list");
+
 describe("claims queries", () => {
-  it("sends one page of the view with its fixed Entity and the Case", async () => {
+  it("sends one page of the view with its fixed Entity and the Case to claims.list", async () => {
     const caseId = testCaseId(1);
-    listClaimsPageFn.mockResolvedValue({
+    listClaims.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: { count: 0, isCapped: false },
@@ -28,16 +29,44 @@ describe("claims queries", () => {
       )
     );
     await new QueryClient().infiniteQuery(options);
-    expect(listClaimsPageFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(listClaims).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId,
         entityId: testId(2),
         q: "domain",
         sort: "created.desc",
-      }),
-    });
-    expect(listClaimsPageFn.mock.lastCall?.[0]).not.toHaveProperty(
-      "data.cursor"
+      })
     );
+    expect(listClaims.mock.lastCall?.[0]).not.toHaveProperty("cursor");
+  });
+
+  it("keys a view by the procedure path and its input, under the Case's claims key", () => {
+    const caseId = testCaseId(1);
+    const key = claimListView.key(
+      { caseId },
+      claimList.queryOf({}, { entityId: testId(2) })
+    );
+    expect(key).toEqual([
+      ["claims", "list"],
+      {
+        type: "infinite",
+        input: expect.objectContaining({ caseId, entityId: testId(2) }),
+      },
+    ]);
+
+    const client = new QueryClient();
+    client.setQueryData(key, { pages: [], pageParams: [] });
+    client.setQueryData(
+      claimListView.key(
+        { caseId: testCaseId(2) },
+        claimList.queryOf({}, { entityId: testId(2) })
+      ),
+      { pages: [], pageParams: [] }
+    );
+    const matched = client
+      .getQueryCache()
+      .findAll({ queryKey: claimsKeys.all(caseId) })
+      .map((query) => query.queryKey);
+    expect(matched).toEqual([key]);
   });
 });

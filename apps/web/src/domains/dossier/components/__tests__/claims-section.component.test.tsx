@@ -9,14 +9,11 @@ import type { ClaimRecord } from "@/domains/entities/claims/types";
 import { testId } from "@watchdog/test-kit";
 
 // Only the network boundary is faked: the section reads claims through the real
-// `claimListView` under a real QueryClient, so a wrong query key or a broken fetch shows
-// as a missing claim (docs/contributing/testing/standards.md Mock policy).
-vi.mock("@/domains/entities/claims/claims.functions", () => ({
-  listClaimsPageFn: vi.fn(),
-  createClaimFn: vi.fn(),
-  updateClaimFn: vi.fn(),
-  retractClaimFn: vi.fn(),
-}));
+// `claimListView` and the real oRPC utils under a real QueryClient, so a wrong query key or a
+// broken fetch shows as a missing claim (docs/contributing/testing/standards.md Mock policy).
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 // Linked titles come from `evidence.getMany` (#559): never the Case's whole Evidence list.
 vi.mock("@/domains/intake/intake.functions", () => ({
@@ -31,19 +28,15 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
-import {
-  listClaimsPageFn,
-  retractClaimFn,
-  updateClaimFn,
-} from "@/domains/entities/claims/claims.functions";
 import { getEvidenceManyFn } from "@/domains/intake/intake.functions";
 import { toast } from "@/shared/ui/toast";
 import {
-  lastListRequest,
+  lastProcedureInput,
   matchesChoice,
   matchesQ,
-  memoryListPage,
+  memoryListProcedure,
 } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildClaimRecord, buildEvidenceRecord } from "@/testing/records";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -63,10 +56,14 @@ const ACTIVE: ClaimRecord = {
   retractedAt: null,
 };
 
+const listClaims = procedureDouble("claims.list");
+const retractClaim = procedureDouble("claims.retract");
+const updateClaim = procedureDouble("claims.update");
+
 /** The Claim list on the "server": the live Claims unless `retracted`, this Entity's only. */
 function serve(claims: readonly ClaimRecord[]) {
-  vi.mocked(listClaimsPageFn).mockImplementation(
-    memoryListPage(claims, {
+  listClaims.mockImplementation(
+    memoryListProcedure(claims, {
       pageSize: 5,
       matches: (row, data) =>
         row.retracted === (data.retracted === true) &&
@@ -81,7 +78,7 @@ function serve(claims: readonly ClaimRecord[]) {
   );
 }
 
-const lastRequest = () => lastListRequest(vi.mocked(listClaimsPageFn));
+const lastRequest = () => lastProcedureInput(listClaims);
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -214,7 +211,7 @@ describe("ClaimsSection", () => {
     ["Retract", "Couldn't retract claim"],
   ])("reads %s failures as house failure copy", async (label, expected) => {
     // Non-Error rejection, so the fallback copy is what renders.
-    vi.mocked(retractClaimFn).mockRejectedValueOnce("boom");
+    retractClaim.mockRejectedValueOnce("boom");
     const user = userEvent.setup();
     renderClaims([ACTIVE]);
 
@@ -230,7 +227,7 @@ describe("ClaimsSection", () => {
 
   it("refetches the list after a retract so the claim leaves it", async () => {
     // The refetch happens only if the mutation invalidates the key the list reads.
-    vi.mocked(retractClaimFn).mockResolvedValueOnce({
+    retractClaim.mockResolvedValueOnce({
       ...ACTIVE,
       retracted: true,
       retractKind: "retracted",
@@ -266,7 +263,7 @@ describe("ClaimsSection", () => {
         },
       }
     );
-    vi.mocked(updateClaimFn).mockRejectedValueOnce(stale);
+    updateClaim.mockRejectedValueOnce(stale);
     const user = userEvent.setup();
     renderClaims([opened]);
 
@@ -278,12 +275,9 @@ describe("ClaimsSection", () => {
     serve([{ ...opened, version: 8, text: "Changed by someone else" }]);
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(updateClaimFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        claimId: ACTIVE.id,
-        expectedVersion: 7,
-      }),
-    });
+    expect(updateClaim).toHaveBeenCalledWith(
+      expect.objectContaining({ claimId: ACTIVE.id, expectedVersion: 7 })
+    );
     expect(
       await screen.findByText("Claim changed since you opened it")
     ).toBeInTheDocument();

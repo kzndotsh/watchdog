@@ -30,7 +30,7 @@ describe("warmDossierQueries", () => {
     ]);
     // Each list tab's count and first view: one first page each, never every page (#585).
     expect(firstPages.mock.calls.map(([query]) => query.queryKey[0])).toEqual([
-      "claims",
+      ["claims", "list"],
       "identifiers",
       "edges",
       "evidence",

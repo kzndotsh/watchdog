@@ -2,6 +2,7 @@ import {
   hashKey,
   infiniteQueryOptions,
   keepPreviousData,
+  partialMatchKey,
   type InfiniteData,
   type QueryClient,
   type QueryKey,
@@ -26,9 +27,10 @@ import {
 export type ListPages<Item> = InfiniteData<ListPage<Item>, string | undefined>;
 
 /**
- * What a list's ServerFn receives for one page: the scope, the list params of the canonical
- * query (`def.toSearch(query)` without fixed filters, so the wire carries every filter) and the
- * cursor. The domain spreads `params` into its oRPC input next to the scope ids.
+ * What a list's page fetch (its procedure input, or its ServerFn) receives for one page: the
+ * scope, the list params of the canonical query (`def.toSearch(query)` without fixed filters,
+ * so the wire carries every filter) and the cursor. The domain spreads `params` into its oRPC
+ * input next to the scope ids.
  */
 export type ListPageRequest<D extends AnyListDef, Scope> = {
   readonly scope: Scope;
@@ -41,7 +43,8 @@ export type ListPageRequest<D extends AnyListDef, Scope> = {
  * Built once in the domain's `queries.ts` (the only module that owns Query keys), consumed by
  * `useList` and the route loader's warm.
  *
- * Keys are `[domain, ...scopeKey(scope), "list", def.name, def.keyOf(query)]`. The
+ * Keys are the procedure's (`[path, { input, type: "infinite" }]`) for a list read through oRPC,
+ * otherwise `[domain, ...scopeKey(scope), "list", def.name, def.keyOf(query)]`. The
  * `[domain, ...scope]` prefix is what the invalidation contracts already name
  * (`evidenceKeys.all(caseId)`), so SSE and mutations refresh every view of the list without
  * knowing its filters, and `softInvalidate` throttles the refetch per view (`meta.isListView`).
@@ -65,16 +68,53 @@ export type ListView<D extends AnyListDef, Scope, Item> = {
   ) => void;
 };
 
-type ListViewOptions<D extends AnyListDef, Scope, Item> = {
+/**
+ * A list procedure as the oRPC TanStack Query utils expose it (`orpc.claims.list`): the call and
+ * the keys, `[path, { input, type }]`.
+ */
+export type ListProcedure<Input, Item> = {
+  readonly call: (input: Input) => Promise<ListPage<Item>>;
+  readonly key: (options: {
+    readonly type: "infinite";
+    readonly input: Partial<Input>;
+  }) => QueryKey;
+  readonly infiniteKey: (options: {
+    readonly input: (cursor: string | undefined) => Input;
+    readonly initialPageParam: string | undefined;
+  }) => QueryKey;
+};
+
+/** A list read through a ServerFn, keyed under the domain's own key root. */
+type ServerFnListSource<D extends AnyListDef, Scope, Item> = {
   /** The domain's key root (`"evidence"`): the first segment every key of the domain shares. */
   readonly domain: string;
   /** Scope ids after the root (`[caseId]`); empty when the scope is not ready yet. */
   readonly scopeKey: (scope: Scope) => readonly string[];
-  /** False while the scope is incomplete (no Case yet): the query does not run. */
-  readonly isScopeReady?: (scope: Scope) => boolean;
   readonly fetchPage: (
     request: ListPageRequest<D, Scope>
   ) => Promise<ListPage<Item>>;
+};
+
+/**
+ * A list read through its oRPC procedure (`orpc.claims.list`), keyed by the procedure's path and
+ * input: a view is `procedure.infiniteKey`, and every view of a scope is the partial key
+ * `procedure.key({ input: scopeInput(scope) })`, which the domain's `key({ input: { caseId } })`
+ * covers.
+ */
+type ProcedureListSource<D extends AnyListDef, Scope, Item, Input> = {
+  readonly procedure: ListProcedure<Input, Item>;
+  /** The procedure's input for one page: the scope ids, `params` and the cursor. */
+  readonly input: (request: ListPageRequest<D, Scope>) => Input;
+  /** The scope part of the input (`{ caseId }`): what every view of the scope shares. */
+  readonly scopeInput: (scope: Scope) => Partial<Input>;
+};
+
+type ListViewOptions<D extends AnyListDef, Scope, Item, Input> = (
+  | ServerFnListSource<D, Scope, Item>
+  | ProcedureListSource<D, Scope, Item, Input>
+) & {
+  /** False while the scope is incomplete (no Case yet): the query does not run. */
+  readonly isScopeReady?: (scope: Scope) => boolean;
   readonly getId: (item: Item) => string;
   readonly staleTime: number;
   readonly gcTime: number;
@@ -105,17 +145,6 @@ export function nextListCursor<Item>(
 ): string | undefined {
   if (pages.length >= maxPages) return undefined;
   return last.nextCursor ?? undefined;
-}
-
-function startsWithKey(
-  key: readonly unknown[] | undefined,
-  prefix: readonly unknown[]
-): boolean {
-  return (
-    key !== undefined &&
-    key.length >= prefix.length &&
-    prefix.every((part, index) => part === key[index])
-  );
 }
 
 function listInfiniteOptions<Item>(opts: {
@@ -160,7 +189,9 @@ function listInfiniteOptions<Item>(opts: {
     // only for a new sort of the same rows, which is empty too: before another filter's first
     // page lands, the list is pending, never "Nothing matches".
     placeholderData: (previousData, previousQuery) => {
-      const isSameList = startsWithKey(previousQuery?.queryKey, opts.prefix);
+      const isSameList =
+        previousQuery !== undefined &&
+        partialMatchKey(previousQuery.queryKey, opts.prefix);
       const isEmpty = (previousData?.pages ?? []).every(
         (page) => page.items.length === 0
       );
@@ -172,28 +203,57 @@ function listInfiniteOptions<Item>(opts: {
   });
 }
 
-export function listView<D extends AnyListDef, Scope, Item>(
+/** A view's keys and page fetch, from its oRPC procedure or its ServerFn. */
+function listSource<D extends AnyListDef, Scope, Item, Input>(
   def: D,
-  opts: ListViewOptions<D, Scope, Item>
-): ListView<D, Scope, Item> {
+  opts: ListViewOptions<D, Scope, Item, Input>
+) {
   const ops = opsOf(def);
+  if ("procedure" in opts) {
+    const { procedure, input, scopeInput } = opts;
+    return {
+      prefix: (scope: Scope): QueryKey =>
+        procedure.key({ type: "infinite", input: scopeInput(scope) }),
+      key: (scope: Scope, query: ListQuery<D>): QueryKey => {
+        const params = ops.toSearch(query);
+        return procedure.infiniteKey({
+          input: (cursor) => input({ scope, params, cursor }),
+          initialPageParam: undefined,
+        });
+      },
+      fetchPage: async (request: ListPageRequest<D, Scope>) =>
+        procedure.call(input(request)),
+    };
+  }
   const prefix = (scope: Scope): QueryKey => [
     opts.domain,
     ...opts.scopeKey(scope),
     "list",
     def.name,
   ];
-  const key = (scope: Scope, query: ListQuery<D>): QueryKey => [
-    ...prefix(scope),
-    ops.keyOf(query),
-  ];
+  return {
+    prefix,
+    key: (scope: Scope, query: ListQuery<D>): QueryKey => [
+      ...prefix(scope),
+      ops.keyOf(query),
+    ],
+    fetchPage: opts.fetchPage,
+  };
+}
+
+export function listView<D extends AnyListDef, Scope, Item, Input = never>(
+  def: D,
+  opts: ListViewOptions<D, Scope, Item, Input>
+): ListView<D, Scope, Item> {
+  const ops = opsOf(def);
+  const { prefix, key, fetchPage } = listSource(def, opts);
   const infinite = (scope: Scope, query: ListQuery<D>) =>
     listInfiniteOptions<Item>({
       queryKey: key(scope, query),
       prefix: prefix(scope),
       rowsKey: hashKey([query.filters, query.q]),
       fetch: async (cursor) =>
-        opts.fetchPage({ scope, params: ops.toSearch(query), cursor }),
+        fetchPage({ scope, params: ops.toSearch(query), cursor }),
       isEnabled: opts.isScopeReady?.(scope) ?? true,
       maxPages: opts.maxPages ?? LIST_MAX_PAGES,
       staleTime: opts.staleTime,

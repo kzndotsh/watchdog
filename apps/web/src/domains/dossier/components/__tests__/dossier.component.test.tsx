@@ -22,8 +22,10 @@ import {
   matchesChoice,
   matchesQ,
   memoryListPage,
+  memoryListProcedure,
   type ListPageData,
 } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   buildCaseIdentifierRecord,
   buildEntityRecord,
@@ -87,8 +89,8 @@ vi.mock("@/domains/entities/entities.functions", () =>
     "listEntitiesPageFn listEntitiesPickerPageFn matchEntityNamesFn getEntitiesFn getEntityBySlugFn createEntityFn updateEntityFieldsFn recordOpenInFn deleteEntityFn"
   )
 );
-vi.mock("@/domains/entities/claims/claims.functions", () =>
-  stubFns("listClaimsPageFn createClaimFn retractClaimFn updateClaimFn")
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
 vi.mock("@/domains/entities/edges/edges.functions", () =>
   stubFns(
@@ -169,8 +171,10 @@ beforeAll(preloadSharedLazyChunks);
 
 beforeEach(() => {
   getEntityBySlugFn.mockReset().mockResolvedValue(ENTITY);
+  procedureDouble("claims.list")
+    .mockReset()
+    .mockImplementation(memoryListProcedure([], { matches: () => false }));
   for (const name of [
-    "listClaimsPageFn",
     "listEdgesPageFn",
     "listEventsPageFn",
     "listQuestionsPageFn",

@@ -158,6 +158,21 @@ describe("createAuth session start", () => {
       (await auth.api.getSession({ headers }))?.session.activeOrganizationId
     ).toBeNull();
   });
+
+  it("sets every sign-in cookie SameSite=Lax (the browser's /api/rpc calls ride on it)", async () => {
+    const plain = await seedUser();
+
+    const { headers } = await auth.api.signInEmail({
+      body: { email: plain.email, password: PASSWORD },
+      returnHeaders: true,
+    });
+
+    const cookies = headers.getSetCookie();
+    expect(cookies.length).toBeGreaterThan(0);
+    for (const cookie of cookies) {
+      expect(cookie).toMatch(/;\s*SameSite=Lax/i);
+    }
+  });
 });
 
 describe("createAuth organization deletion", () => {

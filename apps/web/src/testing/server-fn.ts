@@ -44,11 +44,11 @@ type ProcedureAt<T, P extends string> = P extends `${infer H}.${infer R}`
 /** The path of one procedure of the API, as written at the call site (`tasks.list`). */
 export type OrpcPath = ProcedurePath<Client>;
 
-type OrpcInput<P extends OrpcPath> =
+export type OrpcInput<P extends OrpcPath> =
   ProcedureAt<Client, P> extends (input: infer I, ...rest: never[]) => unknown
     ? I
     : never;
-type OrpcOutput<P extends OrpcPath> =
+export type OrpcOutput<P extends OrpcPath> =
   ProcedureAt<Client, P> extends (...args: never[]) => infer R
     ? Awaited<R>
     : never;
