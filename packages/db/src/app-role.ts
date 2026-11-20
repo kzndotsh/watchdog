@@ -22,7 +22,7 @@ const APP_SCHEMAS = ["public", "auth", "pgboss"] as const;
  * arrive in a later migration; it is applied again after every migration run.
  */
 const AUDIT_TABLES = [
-  "graph_writes",
+  "changesets",
   "case_deletion_records",
   "provider_calls",
   "provider_call_outcomes",

@@ -160,6 +160,7 @@ export function purgeTombstonedCaseEffect(
             actorId: actorId ?? undefined,
             actorLabel: actorLabel ?? undefined,
             channel: "system",
+            changeset: { caseId },
           });
           const counts = yield* caseDeletionRecordsRepoFx.countPurgeContent(
             tx,

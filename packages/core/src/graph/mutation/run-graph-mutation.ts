@@ -432,6 +432,7 @@ export function runGraphMutation<A, E extends DomainTag, R>(
         yield* setHistoryContextEffect(tx, {
           ...graphActorFields(scope.actor),
           channel: scope.channel,
+          changeset: { caseId },
         });
         return yield* body(makeCore(tx, caseId, scope.actor, new Set(), true));
       })

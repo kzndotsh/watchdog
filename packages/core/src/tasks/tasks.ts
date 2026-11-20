@@ -311,11 +311,13 @@ export function createTaskEffect(
 
     const created = yield* transact((tx) =>
       Effect.gen(function* createTaskTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
+        // The Case lock comes before the history context: the changeset insert takes a key-share
+        // lock on the Case, which would deadlock two writers waiting for the Case lock.
+        yield* setHistoryContextEffect(tx, dossierHistory(scopedCaseId, input));
         const row = yield* tasksRepoFx
           .create(tx, {
             caseId: scopedCaseId,
@@ -376,7 +378,6 @@ export function updateTaskEffect(
 
     const updated = yield* transact((tx) =>
       Effect.gen(function* updateTaskTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
         // Lock order is Case, then Task (as in reorder), so a status move
         // cannot deadlock a reorder. The Task row lock makes "did the status
         // change" atomic: the entry's `from_value` is the status this
@@ -399,6 +400,9 @@ export function updateTaskEffect(
         if (input.status !== undefined && !current) {
           return yield* new NotFoundError({ entity: "Task", id: taskId });
         }
+        // The Case lock comes before the history context: the changeset insert takes a key-share
+        // lock on the Case, which would deadlock two writers waiting for the Case lock.
+        yield* setHistoryContextEffect(tx, dossierHistory(scopedCaseId, input));
         const statusChanged =
           current !== null && input.status !== current.status;
         const destStatus = input.status;
@@ -473,7 +477,7 @@ export function deleteTaskEffect(
       Effect.gen(function* deleteTaskTx() {
         yield* setHistoryContextEffect(
           tx,
-          dossierHistory({ actorId, actorLabel, actorKeyId })
+          dossierHistory(scopedCaseId, { actorId, actorLabel, actorKeyId })
         );
         const deleted = yield* tasksRepoFx.removeInCase(
           tx,
@@ -528,11 +532,13 @@ export function reorderTasksEffect(
 
     const records = yield* transact((tx) =>
       Effect.gen(function* reorderTasksTx() {
-        yield* setHistoryContextEffect(tx, dossierHistory(input));
         const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
           return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
+        // The Case lock comes before the history context: the changeset insert takes a key-share
+        // lock on the Case, which would deadlock two writers waiting for the Case lock.
+        yield* setHistoryContextEffect(tx, dossierHistory(scopedCaseId, input));
         const column = yield* tasksRepoFx.listColumn(
           tx,
           scopedCaseId,

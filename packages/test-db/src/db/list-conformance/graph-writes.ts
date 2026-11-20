@@ -1,4 +1,4 @@
-import { graphWrites, type DbExec } from "@watchdog/db";
+import { changesets, type DbExec } from "@watchdog/db";
 import type { CaseId, ConfidenceTier } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit/fixtures";
 
@@ -92,7 +92,6 @@ function insertValues(seeded: Seeded, caseId: CaseId) {
     actorId: seeded.actor,
     actorLabel: seeded.actorLabel,
     channel: "agent_write" as const,
-    userOverridden: true,
     confidence: seeded.confidence,
     summary: seeded.summary,
     patch: [],
@@ -112,10 +111,27 @@ export const graphWriteConformance: ListConformance = {
     const owner = await seedCase(exec, { name: "List conformance" });
     const other = await seedCase(exec, { name: "List conformance decoy" });
     await exec
-      .insert(graphWrites)
+      .insert(changesets)
       .values(ROWS.map((seeded) => insertValues(seeded, owner.id)));
+    // A decoy in the same Case on another channel: the list holds agent writes only.
+    await exec.insert(changesets).values({
+      ...insertValues(
+        {
+          n: 91,
+          actor: "actor-a",
+          actorLabel: "aaa bravo example.test 100% n_a",
+          confidence: "confirmed",
+          summary: "aaa bravo example.test 100% n_a kilo",
+          minute: 1,
+        },
+        owner.id
+      ),
+      channel: "dossier",
+      patch: null,
+      confidence: null,
+    });
     // A decoy in another Case that matches every search and sits first in the ascending order.
-    await exec.insert(graphWrites).values(
+    await exec.insert(changesets).values(
       insertValues(
         {
           n: 90,

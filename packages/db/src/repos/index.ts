@@ -173,8 +173,8 @@ export type {
 } from "./cap-cache.repo";
 export { credentialsRepo } from "./credentials.repo";
 export type { CredentialMetaRow, NewCredential } from "./credentials.repo";
-export { graphWritesRepo } from "./graph-writes.repo";
-export type { GraphWriteRow, NewGraphWrite } from "./graph-writes.repo";
+export { changesetsRepo } from "./changesets.repo";
+export type { ChangesetRow } from "./changesets.repo";
 export { findingSuppressionsRepo } from "./finding-suppressions.repo";
 export type {
   FindingSuppressionRow,

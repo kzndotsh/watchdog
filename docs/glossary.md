@@ -189,8 +189,12 @@ The human act in Triage that applies a Proposal to the Case Graph and sets its c
 _Avoid_: Approve, merge, commit
 
 **graph write**:
-The explicit agent escape hatch (`wd graph write`, `userOverride`) that writes the Case Graph at `unverified` with a `graph_writes` audit row. Detail: [`agent-ingress.md`](reference/contracts/agent-ingress.md).
+The explicit agent escape hatch (`wd graph write`, `userOverride`) that writes the Case Graph at `unverified` with an `agent_write` changeset (its audit row, `changesets`). Detail: [`agent-ingress.md`](reference/contracts/agent-ingress.md).
 _Avoid_: Direct write, silent write
+
+**changeset**:
+The provenance record of one Graph write transaction in a Case: through which door (Dossier, Triage Accept, graph write, system), by whom, and for an Accept which Proposal. Every Graph history row names its changeset. Detail: [`custody.md`](reference/contracts/custody.md#attribution-and-history).
+_Avoid_: Commit, batch
 
 **Dossier**:
 The human edit surface for one Entity's Graph records, written directly rather than through a Proposal; never the source of truth for the Case Graph. Detail: [`ingress.md`](reference/contracts/ingress.md).
@@ -217,7 +221,7 @@ A list screen or read whose filters, sorts and search are declared once in `@wat
 _Avoid_: Table, grid
 
 **Activity**:
-The append-only log of what changed on a Case: one entry per domain change (a subject noun, a verb, who, a short label), written in the same transaction as the change. It is the one source of Recent activity and of the live-update signal, pruned after 90 days; it is not the Graph audit (`graph_writes` is) and holds no Evidence bodies or patches. Detail: [`ADR-0005`](adr/0005-unified-activity-log.md).
+The append-only log of what changed on a Case: one entry per domain change (a subject noun, a verb, who, a short label), written in the same transaction as the change. It is the one source of Recent activity and of the live-update signal, pruned after 90 days; it is not the Graph audit (`graph_history` and `changesets` are) and holds no Evidence bodies or patches. Detail: [`ADR-0005`](adr/0005-unified-activity-log.md).
 _Avoid_: Changes, audit log, event stream
 
 ## Custody tiers

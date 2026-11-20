@@ -6,7 +6,7 @@ import {
   createAgentProposalEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
-import { claimsRepo, db, graphWritesRepo, proposalsRepo } from "@watchdog/db";
+import { claimsRepo, db, proposalsRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
@@ -50,9 +50,9 @@ describe("writeGraphFromAgent", () => {
     expect(written.confidence).toBe("unverified");
     expect(written.opCount).toBe(1);
 
-    const audit = await graphWritesRepo.get(db, written.writeId);
+    const [audit] = await listCaseGraphWrites(db, cased.id);
+    expect(audit?.id).toBe(written.writeId);
     expect(audit?.channel).toBe("agent_write");
-    expect(audit?.userOverridden).toBe(true);
     expect(audit?.confidence).toBe("unverified");
 
     const claims = await claimsRepo.listForEntity(db, entity.id);

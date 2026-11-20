@@ -121,17 +121,21 @@ ORDER BY a.id;
 
 -- Row history (`graphHistoryList`, ADR-0007), loaded directly because the triggers are off: every
 -- Entity's create entry, and 60 later summary edits of each Case's first Entity (a history long
--- enough to page; the other Entities keep one entry). Snapshots are the table's `to_jsonb`.
-INSERT INTO graph_history (case_id, kind, row_id, op, channel, before, after, at)
-SELECT e.case_id, 'entity', e.id, 'create', 'system', NULL, to_jsonb(e), e.created_at
-FROM entities e ORDER BY e.case_id, e.id;
-INSERT INTO graph_history (case_id, kind, row_id, op, channel, before, after, at)
-SELECT e.case_id, 'entity', e.id, 'update', 'system',
+-- enough to page; the other Entities keep one entry). Snapshots are the table's `to_jsonb`. Every
+-- entry names one `system` changeset of its Case (#724).
+INSERT INTO changesets (id, case_id, channel, created_at)
+SELECT pg_temp.uid('cs-' || c.slug), c.id, 'system', pg_temp.ts('cs-' || c.slug)
+FROM cases c WHERE EXISTS (SELECT 1 FROM entities e WHERE e.case_id = c.id) ORDER BY c.slug;
+INSERT INTO graph_history (case_id, kind, row_id, op, changeset_id, channel, before, after, at)
+SELECT e.case_id, 'entity', e.id, 'create', pg_temp.uid('cs-' || c.slug), 'system', NULL, to_jsonb(e), e.created_at
+FROM entities e JOIN cases c ON c.id = e.case_id ORDER BY e.case_id, e.id;
+INSERT INTO graph_history (case_id, kind, row_id, op, changeset_id, channel, before, after, at)
+SELECT e.case_id, 'entity', e.id, 'update', pg_temp.uid('cs-' || c.slug), 'system',
        CASE WHEN k = 1 THEN to_jsonb(e)
             ELSE to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || (k - 1)) END,
        to_jsonb(e) || jsonb_build_object('summary', 'Edit ' || k),
        e.created_at + k * interval '1 hour'
-FROM entities e CROSS JOIN generate_series(1, 60) AS k
+FROM entities e JOIN cases c ON c.id = e.case_id CROSS JOIN generate_series(1, 60) AS k
 WHERE e.slug = 'entity-1' ORDER BY e.case_id, k;
 
 -- Tasks (the board and the Task list, ADR-0007): of every 20, 6 backlog, 3 in progress, 2 blocked,
@@ -196,12 +200,12 @@ SELECT pg_temp.uid('job-' || c.slug || '-' || n), c.id, 'perf.synthetic', jsonb_
        CASE WHEN n <= :jobs / 2 THEN (n - 1) % 5 END
 FROM cases c CROSS JOIN logs CROSS JOIN LATERAL generate_series(1, :jobs) AS n ORDER BY c.slug, n;
 
--- The Graph write log (the list standard's graph-writes list): agent writes by three actors, in
--- three confidence tiers, with an empty patch (the log's rows are not read for their patch).
-INSERT INTO graph_writes (id, case_id, actor_id, actor_label, channel, user_overridden, confidence, summary, patch,
-                          created_at)
+-- The Graph write log (the list standard's graph-writes list): agent write changesets by three
+-- actors, in three confidence tiers, with an empty patch (the log's rows are not read for their patch).
+INSERT INTO changesets (id, case_id, actor_id, actor_label, channel, confidence, summary, patch,
+                        created_at)
 SELECT pg_temp.uid('gw-' || c.slug || '-' || n), c.id, (ARRAY['perf-user','api-key:perf-a','api-key:perf-b'])[1 + n % 3],
-       (ARRAY['Perf User','Perf agent A','Perf agent B'])[1 + n % 3], 'agent_write', true,
+       (ARRAY['Perf User','Perf agent A','Perf agent B'])[1 + n % 3], 'agent_write',
        (ARRAY['unverified','unverified','possible'])[1 + n % 3], 'Synthetic graph write ' || n, '[]'::jsonb,
        pg_temp.ts('gw-' || c.slug || '-' || n)
 FROM cases c CROSS JOIN LATERAL generate_series(1, :writes) AS n ORDER BY c.slug, n;

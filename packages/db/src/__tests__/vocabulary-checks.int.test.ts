@@ -117,7 +117,7 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
   }),
   proposals: (c) => ({ case_id: c.caseId, patch: EMPTY_LIST }),
   tasks: (c, n) => ({ case_id: c.caseId, title: `task ${n}` }),
-  graph_writes: (c) => ({
+  changesets: (c) => ({
     case_id: c.caseId,
     actor_id: "a",
     channel: "agent_write",
@@ -293,6 +293,8 @@ describe("vocabulary CHECK constraints: drift", () => {
       "activity.kind",
       "auth_event.kind",
       "case_deletion_records.event",
+      "changesets.channel",
+      "changesets.confidence",
       "claims.class",
       "claims.confidence",
       "claims.retract_kind",
@@ -305,8 +307,6 @@ describe("vocabulary CHECK constraints: drift", () => {
       "graph_history.channel",
       "graph_history.kind",
       "graph_history.op",
-      "graph_writes.channel",
-      "graph_writes.confidence",
       "identifiers.confidence",
       "identifiers.status",
       "identifiers.type",

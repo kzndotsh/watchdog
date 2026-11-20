@@ -50,7 +50,7 @@ reviews:
       instructions: |
         Flag any path where a Cap, machine, agent or the CLI writes to the Case Graph or sets
         `confirmed` without going through Proposal -> Triage Accept, or a graph write that skips
-        `userOverride` / `unverified` / `graph_writes`. See docs/reference/contracts/custody.md.
+        `userOverride` / `unverified` / `changesets`. See docs/reference/contracts/custody.md.
         Flag secrets or Evidence bodies passed to `@watchdog/log`.
     - path: "**/__tests__/**"
       instructions: |
@@ -81,7 +81,7 @@ reviews:
           Fail if the PR adds or changes code that lets a Cap, worker job, agent or CLI command
           write Case Graph rows or set an Accept tier of `confirmed` outside the Triage Accept
           path, or adds a graph write without `userOverride` that lands anything other than
-          `unverified` with a `graph_writes` record. Pass otherwise, including when the PR does
+          `unverified` with an `agent_write` changeset. Pass otherwise, including when the PR does
           not touch graph write paths.
 
   finishing_touches:

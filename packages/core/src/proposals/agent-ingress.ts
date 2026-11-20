@@ -1,12 +1,13 @@
 import { Effect } from "effect";
 
 import { graphWriteListRepo } from "@watchdog/db";
-import type { GraphWriteRow } from "@watchdog/db";
 import { graphWriteList, type PatchOp } from "@watchdog/schemas/graph";
 import {
   PAGE_LIMIT_DEFAULT,
   trimmedOrNull,
   type CaseId,
+  type ConfidenceTier,
+  type GraphWriteChannel,
   type GraphActor,
   type ListInput,
   type ListPage,
@@ -35,7 +36,7 @@ import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { graphWritesRepoFxDb, graphWritesRepoFx } from "../infra/repos-fx";
+import { changesetsRepoFxDb } from "../infra/repos-fx";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 import { suppressAndProposeStageEffect } from "./suppress-and-propose";
 
@@ -44,9 +45,9 @@ export type GraphWriteRecord = {
   caseId: CaseId;
   actorId: string;
   actorLabel: string;
-  channel: GraphWriteRow["channel"];
+  channel: GraphWriteChannel;
   userOverridden: boolean;
-  confidence: GraphWriteRow["confidence"];
+  confidence: ConfidenceTier;
   summary: string | null;
   createdAt: string;
 };
@@ -71,16 +72,18 @@ export function listGraphWritesForCaseEffect(
       toItems: (rows) =>
         Effect.gen(function* graphWriteItemsGen() {
           const users = yield* loadActorUsersEffect(
-            rows.map((row) => row.actorId)
+            rows.flatMap((row) => (row.actorId === null ? [] : [row.actorId]))
           );
+          // The list holds `agent_write` changesets, which carry a confidence
+          // (`changesets_agent_write_shape`).
           return rows.map((row) => ({
             id: row.id,
             caseId: row.caseId,
-            actorId: row.actorId,
-            actorLabel: labelForActor(row.actorId, users, row.actorLabel),
-            channel: row.channel,
-            userOverridden: row.userOverridden,
-            confidence: row.confidence,
+            actorId: row.actorId ?? "",
+            actorLabel: labelForActor(row.actorId ?? "", users, row.actorLabel),
+            channel: "agent_write" as const,
+            userOverridden: true,
+            confidence: row.confidence ?? "unverified",
             summary: row.summary,
             createdAt: row.createdAt.toISOString(),
           }));
@@ -89,7 +92,7 @@ export function listGraphWritesForCaseEffect(
   });
 }
 
-const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
+const GRAPH_WRITE_IDEMPOTENCY_INDEX = "changesets_case_actor_idem_uidx";
 
 export type AgentGraphWriteResult = {
   writeId: string;
@@ -204,7 +207,7 @@ export function writeGraphFromAgentEffect(input: {
 
     const idempotencyKey = trimmedOrNull(input.idempotencyKey);
     if (idempotencyKey !== null) {
-      const existingId = yield* graphWritesRepoFxDb.findIdByIdempotency({
+      const existingId = yield* changesetsRepoFxDb.findIdByIdempotency({
         caseId: scopedCaseId,
         actorId,
         idempotencyKey,
@@ -223,10 +226,19 @@ export function writeGraphFromAgentEffect(input: {
     const result = yield* transact(
       (tx) =>
         Effect.gen(function* writeGraphTx() {
-          yield* setHistoryContextEffect(tx, {
+          // The changeset is the write's record: patch, tier and idempotency key. A repeated key
+          // fails here, on the first statement, with nothing written.
+          const writeId = yield* setHistoryContextEffect(tx, {
             ...actor,
             actorLabel: actorLabelForPersist(input.actorLabel) ?? undefined,
             channel: "agent_write",
+            changeset: {
+              caseId: scopedCaseId,
+              confidence: "unverified",
+              summary: plan.summary,
+              patch: plan.patch,
+              idempotencyKey,
+            },
           });
           const sharedEvidenceIds = [...plan.evidenceIds];
 
@@ -241,20 +253,6 @@ export function writeGraphFromAgentEffect(input: {
             sharedEvidenceIds.push(attestation.id);
           }
 
-          const write = yield* graphWritesRepoFx
-            .create(tx, {
-              caseId: scopedCaseId,
-              actorId,
-              actorLabel: actorLabelForPersist(input.actorLabel),
-              channel: "agent_write",
-              userOverridden: true,
-              confidence: "unverified",
-              summary: plan.summary,
-              patch: plan.patch,
-              idempotencyKey,
-            })
-            .pipe(requireWritten("record graph write"));
-
           yield* applyPatchEffect({
             caseId: scopedCaseId,
             patch: plan.patch,
@@ -265,7 +263,7 @@ export function writeGraphFromAgentEffect(input: {
             tx,
           });
 
-          return write.id;
+          return writeId;
         }),
       {
         uniqueIndex: GRAPH_WRITE_IDEMPOTENCY_INDEX,
@@ -286,7 +284,7 @@ export function writeGraphFromAgentEffect(input: {
           if (idempotencyKey === null) {
             return yield* conflict;
           }
-          const existingId = yield* graphWritesRepoFxDb.findIdByIdempotency({
+          const existingId = yield* changesetsRepoFxDb.findIdByIdempotency({
             caseId: scopedCaseId,
             actorId,
             idempotencyKey,

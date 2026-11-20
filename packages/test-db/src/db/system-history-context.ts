@@ -21,13 +21,15 @@ export async function withSystemHistoryContext<T>(
     const [before] = await tx.execute<Record<string, string | null>>(sql`select
       current_setting('watchdog.actor_id', true) as actor_id,
       current_setting('watchdog.actor_label', true) as actor_label,
-      current_setting('watchdog.channel', true) as channel`);
+      current_setting('watchdog.channel', true) as channel,
+      current_setting('watchdog.changeset_id', true) as changeset_id`);
     await setGraphHistoryContext(tx, { channel: "system" });
     const result = await fn(tx);
     await tx.execute(sql`select
       set_config('watchdog.actor_id', ${before?.actor_id ?? ""}, true),
       set_config('watchdog.actor_label', ${before?.actor_label ?? ""}, true),
-      set_config('watchdog.channel', ${before?.channel ?? ""}, true)`);
+      set_config('watchdog.channel', ${before?.channel ?? ""}, true),
+      set_config('watchdog.changeset_id', ${before?.changeset_id ?? ""}, true)`);
     return result;
   });
 }

@@ -42,7 +42,7 @@ const REVERSE_LOOKUPS = [
   ["evidence", "entity_id"],
   ["proposals", "job_id"],
   ["playbook_runs", "case_id"],
-  ["graph_writes", "case_id"],
+  ["changesets", "case_id"],
   ["finding_suppressions", "proposal_id"],
   ["claim_evidence", "evidence_id"],
   ["identifier_evidence", "evidence_id"],

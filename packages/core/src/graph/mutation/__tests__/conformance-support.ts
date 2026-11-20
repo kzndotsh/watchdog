@@ -133,7 +133,15 @@ export function makeHarness<
     }
     return transact((tx) =>
       Effect.gen(function* joinedGen() {
-        yield* setHistoryContextEffect(tx, { ...ACTOR, channel });
+        yield* setHistoryContextEffect(tx, {
+          ...ACTOR,
+          channel,
+          changeset: {
+            caseId: ctx.caseId,
+            confidence: "unverified",
+            patch: [],
+          },
+        });
         return yield* runGraphMutationInTx(
           tx,
           { caseId: ctx.caseId, actor: ACTOR },

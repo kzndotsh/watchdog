@@ -61,7 +61,10 @@ describe("appendActivityEffect", () => {
     const result = await runDomain(
       transact((tx) =>
         Effect.gen(function* rolledBackWrite() {
-          yield* setHistoryContextEffect(tx, { channel: "system" });
+          yield* setHistoryContextEffect(tx, {
+            channel: "system",
+            changeset: { caseId: cased.id },
+          });
           const task = yield* tryDb(() =>
             tasksRepo.create(tx, {
               caseId: cased.id,

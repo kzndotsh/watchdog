@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   check,
+  foreignKey,
   index,
   jsonb,
   pgTable,
@@ -22,6 +23,7 @@ import {
 import { timestamptz } from "./_helpers";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
+import { changesets } from "./changesets";
 
 /** A Graph row as JSON at one moment (dates as ISO text). */
 export type GraphHistorySnapshotJson = Record<string, unknown>;
@@ -51,6 +53,8 @@ export const graphHistory = pgTable(
     kind: text("kind").$type<GraphHistoryKind>().notNull(),
     rowId: uuid("row_id").notNull(),
     op: text("op").$type<GraphHistoryOp>().notNull(),
+    /** The write transaction's provenance row (#724), in the same Case. */
+    changesetId: uuid("changeset_id").notNull(),
     channel: text("channel").$type<GraphHistoryChannel>().notNull(),
     /** The user; null for a system write. A key's user is recorded here, the key in `actorLabel`. */
     actorId: text("actor_id"),
@@ -71,6 +75,13 @@ export const graphHistory = pgTable(
       t.rowId,
       t.id.desc().nullsFirst()
     ),
+    // The changeset's rows (an Accept's or an agent write's) and the FK check.
+    index("graph_history_changeset_idx").on(t.changesetId),
+    foreignKey({
+      name: "graph_history_changeset_id_case_id_fk",
+      columns: [t.changesetId, t.caseId],
+      foreignColumns: [changesets.id, changesets.caseId],
+    }),
     vocabCheck(t.kind, GRAPH_HISTORY_KINDS),
     vocabCheck(t.op, GRAPH_HISTORY_OPS),
     vocabCheck(t.channel, GRAPH_HISTORY_CHANNELS),

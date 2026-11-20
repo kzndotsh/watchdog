@@ -59,7 +59,10 @@ describe("a Graph write that forgot the history context", () => {
     await runDomain(
       transact((tx) =>
         Effect.gen(function* withContext() {
-          yield* setHistoryContextEffect(tx, { channel: "system" });
+          yield* setHistoryContextEffect(tx, {
+            channel: "system",
+            changeset: { caseId: cased.id },
+          });
           yield* tryDb(() => entitiesRepo.create(tx, newEntity(cased.id)));
         })
       )

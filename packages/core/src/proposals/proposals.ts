@@ -376,10 +376,7 @@ export function acceptProposalEffect(input: {
     const attestationText = trimmedOrUndefined(input.attestationText);
     const updated = yield* transact((tx) =>
       Effect.gen(function* acceptProposalTx() {
-        yield* setHistoryContextEffect(tx, {
-          ...actor,
-          channel: "triage_accept",
-        });
+        // The Proposal lock comes first (a read): the changeset names the Proposal.
         const pending = yield* proposalsRepoFx.lockInCase(
           tx,
           scopedCaseId,
@@ -391,6 +388,11 @@ export function acceptProposalEffect(input: {
             id: proposalId,
           });
         }
+        yield* setHistoryContextEffect(tx, {
+          ...actor,
+          channel: "triage_accept",
+          changeset: { caseId: scopedCaseId, proposalId },
+        });
         if (pending.status !== "pending") {
           return yield* new ConflictError({
             reason: `Proposal is already ${pending.status}`,

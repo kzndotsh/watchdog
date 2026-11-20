@@ -31,7 +31,7 @@ const ALL_ACTIVITY_ACTIONS: readonly string[] = [
  * in the same transaction as the change by `activityLogRepo.append`. The
  * `AFTER INSERT` trigger `activity_notify` sends the NOTIFY (the baseline
  * migration, `0000_baseline`), so a rolled-back write leaves neither a
- * row nor a signal. Not a Graph audit (see `graph_writes`).
+ * row nor a signal. Not a Graph audit (see `graph_history` and `changesets`).
  *
  * `(xid, id)` is the commit-safe cursor: `xid` is the writing transaction, and
  * the tailer only reads rows whose xid is below every still-running transaction.

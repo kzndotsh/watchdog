@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   createEntity: vi.fn(),
   createEvidence: vi.fn(),
   getEntity: vi.fn(),
-  createGraphWrite: vi.fn(),
+  setGraphHistoryContext: vi.fn(),
   createIdentifier: vi.fn(),
   createJob: vi.fn(),
   createPlaybookRun: vi.fn(),
@@ -19,8 +19,7 @@ vi.mock("@watchdog/db", () => ({
   casesRepo: { create: mocks.createCase },
   entitiesRepo: { create: mocks.createEntity, getById: mocks.getEntity },
   evidenceRepo: { create: mocks.createEvidence },
-  setGraphHistoryContext: vi.fn().mockResolvedValue(undefined),
-  graphWritesRepo: { create: mocks.createGraphWrite },
+  setGraphHistoryContext: mocks.setGraphHistoryContext,
   identifiersRepo: { create: mocks.createIdentifier },
   jobsRepo: { create: mocks.createJob },
   playbookRunsRepo: { create: mocks.createPlaybookRun },
@@ -98,14 +97,19 @@ describe("test-kit db seeds", () => {
     );
   });
 
-  it("seedGraphWrite inserts a graph write patch", async () => {
-    mocks.createGraphWrite.mockResolvedValueOnce({ id: "gw-1" });
+  it("seedGraphWrite records an agent write changeset with the patch", async () => {
+    mocks.setGraphHistoryContext
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce("gw-1");
     const patch = [buildClaimCreateOp(testId(20), "observation")];
     const row = await seedGraphWrite(exec, testCaseId(1), patch);
     expect(row.id).toBe("gw-1");
-    expect(mocks.createGraphWrite).toHaveBeenCalledWith(
+    expect(mocks.setGraphHistoryContext).toHaveBeenLastCalledWith(
       exec,
-      expect.objectContaining({ caseId: testCaseId(1), patch })
+      expect.objectContaining({
+        channel: "agent_write",
+        changeset: expect.objectContaining({ caseId: testCaseId(1), patch }),
+      })
     );
   });
 
