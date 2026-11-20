@@ -93,4 +93,59 @@ describe("TriageQueueList", () => {
       "step 2"
     );
   });
+
+  it("keeps a member row mounted when it becomes the selection", async () => {
+    const user = userEvent.setup();
+    const proposals = [PROPOSAL, member(1), member(2)];
+    const { rerender } = render(
+      <TriageQueueList
+        proposals={proposals}
+        selectedId={PROPOSAL.id}
+        onSelect={vi.fn()}
+      />
+    );
+    await user.click(screen.getByRole("button", { name: /run: 5 Proposals/ }));
+    const row = screen.getByRole("option", { name: /step 2/ });
+    row.focus();
+
+    rerender(
+      <TriageQueueList
+        proposals={proposals}
+        selectedId={testId(2)}
+        onSelect={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("option", { name: /step 2/ })).toBe(row);
+    expect(row).toHaveFocus();
+  });
+
+  it("closes a run by hand even while it holds the selection, and shows no pending count when none is", async () => {
+    const user = userEvent.setup();
+    const done = { id: testId(81), proposalCount: 2, pendingCount: 0 };
+    const rows = [1, 2].map((n) =>
+      buildProposalQueueItem({
+        id: testId(n),
+        summary: `done ${String(n)}`,
+        status: "accepted",
+        playbookId: "domain-recon",
+        playbookRun: done,
+      })
+    );
+    render(
+      <TriageQueueList
+        proposals={rows}
+        selectedId={testId(1)}
+        density="compact"
+        onSelect={vi.fn()}
+      />
+    );
+    const run = screen.getByRole("button", {
+      name: /run: 2 Proposals, 0 pending/,
+    });
+    expect(run).toHaveAttribute("aria-expanded", "true");
+    expect(screen.queryByText(/pending$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/more from this run/)).not.toBeInTheDocument();
+    await user.click(run);
+    expect(run).toHaveAttribute("aria-expanded", "false");
+  });
 });

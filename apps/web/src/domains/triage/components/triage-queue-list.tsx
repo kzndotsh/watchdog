@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
+import { useState } from "react";
 
 import { opLabel, proposalTitle } from "@/domains/triage/lib/filters";
 import {
@@ -78,8 +79,8 @@ function runHoldsSelection(
 
 /**
  * One Playbook run's Proposals under one row: the run's counts come from the server (every status
- * and page), the rows under it are the ones this view loaded. It starts open when it holds the
- * selection; the parent keys it on that, so selecting a member (by key or URL) opens it.
+ * and page), the rows under it are the ones this view loaded. It opens when the selection moves
+ * onto one of its Proposals (by key or URL), without remounting, so a focused row keeps focus.
  */
 function RunGroup({
   entry,
@@ -88,11 +89,19 @@ function RunGroup({
   onSelect,
 }: Omit<RowProps, "proposal"> & { entry: RunEntry }) {
   const { run } = entry;
+  const holdsSelection = runHoldsSelection(entry, selectedId);
+  const [isOpen, setIsOpen] = useState(holdsSelection);
+  // Adjusted while rendering, not in an effect: the run opens in the same commit as the selection.
+  const [heldSelection, setHeldSelection] = useState(holdsSelection);
+  if (holdsSelection !== heldSelection) {
+    setHeldSelection(holdsSelection);
+    if (holdsSelection) setIsOpen(true);
+  }
   const label = `${playbookLabel(entry.playbookId)} run`;
   const notShown = run.proposalCount - entry.proposals.length;
   return (
     <li>
-      <Collapsible defaultOpen={runHoldsSelection(entry, selectedId)}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleRowTrigger
           aria-label={`${label}: ${proposalsLabel(run.proposalCount)}, ${run.pendingCount} pending`}
         >
@@ -170,8 +179,7 @@ export function TriageQueueList({
           {day.items.map((entry) =>
             entry.kind === "run" ? (
               <RunGroup
-                // Remounts when the selection moves in or out: a run opens on its member.
-                key={`${entry.run.id}:${runHoldsSelection(entry, selectedId) ? "in" : "out"}`}
+                key={entry.run.id}
                 entry={entry}
                 selectedId={selectedId}
                 density={density}
