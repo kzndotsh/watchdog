@@ -54,6 +54,13 @@ export function EntityIdentifierTypeValues({
   }
   return (
     <div className="flex flex-col gap-1">
+      {/* A failed Load more keeps the loaded values and says so above them. */}
+      <FetchErrorAlert
+        error={list.error}
+        onRetry={() => {
+          list.retry();
+        }}
+      />
       <ul className="flex flex-col gap-0.5">
         {list.rows.map((row) => (
           <li key={row.id} className="flex min-w-0 items-baseline gap-2">

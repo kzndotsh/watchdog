@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 
 import {
   countIdentifierTypesFn,
@@ -43,7 +43,8 @@ export const identifierListView = listView(identifierList, {
 /**
  * The Identifiers a view of the list matches, per type (`identifiers.typeCounts`): the group
  * headers of an Entity's Identifiers grouped by type. Under `identifiersKeys.all`, so it refreshes
- * with the list; a new view keeps the previous counts until its own arrive.
+ * with the list. A new filter or search keeps the same Entity's previous counts until its own
+ * arrive; another Entity never shows this one's (its groups would open by the wrong counts).
  */
 export const identifierTypeCountsQuery = (
   caseId: string,
@@ -51,10 +52,12 @@ export const identifierTypeCountsQuery = (
 ) => {
   const scopedCaseId = scopeCaseId(caseId);
   const ops = opsOf(identifierList);
+  const entityId = query.filters.entityId ?? null;
   return queryOptions({
     queryKey: [
       ...identifiersKeys.all(scopedCaseId),
       "type-counts",
+      entityId,
       ops.keyOf(query),
     ] as const,
     queryFn: async () =>
@@ -62,7 +65,8 @@ export const identifierTypeCountsQuery = (
         data: { ...ops.toSearch(query), caseId: scopedCaseId },
       }),
     enabled: scopeCaseIdEnabled(caseId),
-    placeholderData: keepPreviousData,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[3] === entityId ? previous : undefined,
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
   });

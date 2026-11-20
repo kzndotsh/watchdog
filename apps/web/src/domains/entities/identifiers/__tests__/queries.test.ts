@@ -7,7 +7,11 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   listIdentifiersPageFn,
 }));
 
-import { identifierListView } from "@/domains/entities/identifiers/queries";
+import {
+  identifierListView,
+  identifierTypeCountsQuery,
+} from "@/domains/entities/identifiers/queries";
+import { placeholderFor } from "@/testing/query-placeholder";
 import { identifierList } from "@watchdog/schemas/graph";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -40,5 +44,26 @@ describe("identifiers queries", () => {
     expect(listIdentifiersPageFn.mock.lastCall?.[0]).not.toHaveProperty(
       "data.cursor"
     );
+  });
+
+  it("keeps an Entity's previous type counts for its next view, never for another Entity", () => {
+    const caseId = testCaseId(1);
+    const countsOf = (entityId: string, q?: string) =>
+      identifierTypeCountsQuery(
+        caseId,
+        identifierList.queryOf(q === undefined ? {} : { q }, { entityId })
+      );
+    const previous = {
+      counts: [{ type: "email" as const, count: 1 }],
+      isCapped: false,
+    };
+    const next = countsOf(testId(2), "acme");
+
+    expect(
+      placeholderFor(next, previous, countsOf(testId(2)).queryKey)
+    ).toEqual(previous);
+    expect(
+      placeholderFor(next, previous, countsOf(testId(3)).queryKey)
+    ).toBeUndefined();
   });
 });

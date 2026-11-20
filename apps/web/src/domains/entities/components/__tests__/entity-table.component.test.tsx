@@ -416,4 +416,44 @@ describe("EntityTable (the list standard)", () => {
     );
     expect(screen.queryByText("ops1@example.com")).not.toBeInTheDocument();
   });
+
+  it("keeps an expanded group's values and shows the failure when Load more fails", async () => {
+    const user = userEvent.setup();
+    const [first] = entities(1);
+    if (first === undefined) throw new Error("no Entity");
+    const emails = Array.from({ length: 8 }, (_, n) =>
+      buildCaseIdentifierRecord({
+        id: testId(5100 + n),
+        entityId: first.id,
+        type: "email",
+        value: `ops${n}@example.com`,
+      })
+    );
+    identifierReads.countIdentifierTypesFn.mockReset();
+    identifierReads.countIdentifierTypesFn.mockResolvedValue({
+      counts: [{ type: "email", count: 8 }],
+      isCapped: false,
+    });
+    const firstPage = memoryListPage(emails, {
+      pageSize: PAGE_SIZE,
+      matches: () => true,
+      compare: () => (a, b) => a.value.localeCompare(b.value),
+    });
+    identifierReads.listIdentifiersPageFn.mockReset();
+    identifierReads.listIdentifiersPageFn
+      .mockImplementationOnce(firstPage)
+      .mockRejectedValue(new Error("network down"));
+    renderPage(entities(1));
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: `Show identifiers of ${first.name}`,
+      })
+    );
+    expect(await screen.findByText("ops0@example.com")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(await screen.findByText("network down")).toBeInTheDocument();
+    expect(screen.getByText("ops0@example.com")).toBeInTheDocument();
+  });
 });

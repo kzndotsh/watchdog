@@ -1,10 +1,17 @@
+import { useMemo } from "react";
+
 import { identifierListView } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
 import { useList } from "@/shared/hooks/list/use-list";
 import type { ListDisplay } from "@/shared/hooks/list/use-list-display";
 import { useListTable } from "@/shared/hooks/list/use-list-table";
+import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
 import type { AppAction } from "@/shared/lib/app-action";
-import { dossierIdentifierColumns } from "@/shared/ui/identifiers/identifier-cells";
+import {
+  dossierIdentifierColumns,
+  IdentifierTableActionsProvider,
+  useIdentifierTableActions,
+} from "@/shared/ui/identifiers/identifier-cells";
 import { ListTable } from "@/shared/ui/list";
 import type { identifierList } from "@watchdog/schemas/graph";
 import type {
@@ -28,8 +35,9 @@ type IdentifierTypeGroupTableProps = {
 
 /**
  * One type's group on the Dossier Identifiers tab: the Identifier list with the Entity and the
- * type fixed, a page at a time, with the tab's columns and row actions. The cells read their
- * actions from the section's `IdentifierTableActionsProvider`.
+ * type fixed, a page at a time, with the tab's columns and row actions. The cells read the
+ * section's actions, with the Evidence titles of this group's own loaded rows (the section's
+ * first page may hold none of them).
  */
 export function IdentifierTypeGroupTable({
   caseId,
@@ -47,6 +55,16 @@ export function IdentifierTypeGroupTable({
     search: rest,
     onSearchChange,
   });
+  const sectionActions = useIdentifierTableActions();
+  const { port } = sectionActions.evidence;
+  const titles = useRecordsByIds(
+    port,
+    list.rows.flatMap((row) => row.evidenceIds.slice(0, 1))
+  );
+  const actions = useMemo(
+    () => ({ ...sectionActions, evidence: { port, titles } }),
+    [sectionActions, port, titles]
+  );
   const { table } = useListTable(list, {
     columns: dossierIdentifierColumns,
     sortColumns: {
@@ -57,11 +75,13 @@ export function IdentifierTypeGroupTable({
     display,
   });
   return (
-    <ListTable
-      list={list}
-      table={table}
-      density={display.density}
-      getRowActions={getRowActions}
-    />
+    <IdentifierTableActionsProvider value={actions}>
+      <ListTable
+        list={list}
+        table={table}
+        density={display.density}
+        getRowActions={getRowActions}
+      />
+    </IdentifierTableActionsProvider>
   );
 }
