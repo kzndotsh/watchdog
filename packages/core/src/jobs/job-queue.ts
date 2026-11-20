@@ -113,8 +113,10 @@ function queueOptions() {
  * upgrades pg-boss's schema (`migrate: false`): the migrator does that as the owner role
  * (`installJobQueueSchema` in @watchdog/db), so the application role never needs DDL. A database
  * the migrator has not reached fails at start with pg-boss's "not installed" error.
+ * Exported for integration tests that wrap it (a short graceful stop); production code uses the
+ * role Layers.
  */
-function pgBossDriver(role: BossRole): BossDriver {
+export function pgBossDriver(role: BossRole): BossDriver {
   const boss = new PgBoss({
     connectionString: env.DATABASE_URL,
     application_name: role === "producer" ? "watchdog-web" : "watchdog-worker",
