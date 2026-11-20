@@ -9,7 +9,11 @@ import type postgres from "postgres";
  */
 export const APP_ROLE = "watchdog_app";
 
-/** Schemas the application reads and writes: product tables, Better Auth and pg-boss. */
+/**
+ * Schemas the application reads and writes: product tables, Better Auth and pg-boss. The data
+ * privileges on `pgboss` are all a Job's enqueue needs: the delivery is inserted into
+ * `pgboss.job` on the application's own transaction (`jobQueueTx`, #721).
+ */
 const APP_SCHEMAS = ["public", "auth", "pgboss"] as const;
 
 /**

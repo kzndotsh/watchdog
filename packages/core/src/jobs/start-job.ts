@@ -33,7 +33,6 @@ import {
   requireTrimmedGraphId,
 } from "../cases/access";
 import {
-  type InternalError,
   ConflictError,
   InvalidError,
   NotFoundError,
@@ -52,7 +51,6 @@ import { parseValidatedCapInputEffect } from "./cap-input";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import { joinPlaybookRunEffect, type PlaybookSlot } from "./retry-resume";
-import { failJobEffect } from "./stages/helpers";
 import { takeJobStartEffect } from "./start-limits";
 
 export type StartJobInput = {
@@ -135,24 +133,6 @@ export function toJobRecord(
   };
 }
 
-/** Enqueue a freshly created job row; mark it failed when pg-boss send fails. */
-export function enqueueCreatedJobEffect(
-  caseId: CaseId,
-  job: Pick<JobRow, "id" | "logs">,
-  capabilityId: string
-): Effect.Effect<void, DomainTag, Db | JobQueue> {
-  return enqueueCapJobEffect(job.id, capabilityId).pipe(
-    Effect.tapError((error: InternalError | InvalidError) =>
-      failJobEffect(
-        job.id,
-        error.reason,
-        { caseId, cause: "queue_aborted" },
-        job.logs ?? []
-      )
-    )
-  );
-}
-
 export function startJobEffect(
   input: StartJobInput
 ): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
@@ -224,13 +204,13 @@ export function startJobEffect(
           })
           .pipe(requireWritten("create Job"));
         yield* appendJobActivityEffect(tx, created, "queued");
-        // Last, after the run lock: see takeJobStartEffect.
+        // After the run lock: see takeJobStartEffect.
         yield* takeJobStartEffect(tx, input);
+        // Queued in this transaction: a failed send rolls the start back (#721).
+        yield* enqueueCapJobEffect(tx, created.id, capabilityId);
         return { row: created, run: joined };
       })
     );
-
-    yield* enqueueCreatedJobEffect(scopedCaseId, row, capabilityId);
 
     const users = yield* loadActorUsersEffect([row.actorId]);
     return toJobRecord(

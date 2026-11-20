@@ -49,15 +49,12 @@ import {
   playbookRunsRepoFx,
 } from "../infra/repos-fx";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
+import { enqueueCapJobEffect } from "./boss";
 import { formatCapAvailabilityError } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
-import {
-  enqueueCreatedJobEffect,
-  toJobRecord,
-  type JobRecord,
-} from "./start-job";
+import { toJobRecord, type JobRecord } from "./start-job";
 import { takeJobStartEffect } from "./start-limits";
 
 export type RunPlaybookInput = {
@@ -263,14 +260,9 @@ export function runPlaybookEffect(
         yield* appendJobActivityEffect(tx, row, "queued");
         // The run is the start: its later steps are created by the chain and are not counted.
         yield* takeJobStartEffect(tx, input);
+        yield* enqueueCapJobEffect(tx, row.id, row.capabilityId);
         return { run, jobRows: [row] };
       })
-    );
-
-    yield* Effect.forEach(
-      result.jobRows.filter((row) => row.status === "queued"),
-      (row) => enqueueCreatedJobEffect(scopedCaseId, row, row.capabilityId),
-      { concurrency: "unbounded" }
     );
 
     return {

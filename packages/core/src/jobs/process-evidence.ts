@@ -36,16 +36,12 @@ import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, evidenceRepoFx, jobsRepoFx } from "../infra/repos-fx";
 import type { Vault } from "../infra/vault";
+import { enqueueCapJobEffect } from "./boss";
 import { assertCapAvailabilityEffect } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
 import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
-import {
-  enqueueCreatedJobEffect,
-  NO_PLAYBOOK,
-  toJobRecord,
-  type JobRecord,
-} from "./start-job";
+import { NO_PLAYBOOK, toJobRecord, type JobRecord } from "./start-job";
 import { takeJobStartEffect } from "./start-limits";
 
 function startCapForEvidenceEffect(input: {
@@ -144,6 +140,7 @@ function startCapForEvidenceEffect(input: {
         yield* appendJobActivityEffect(tx, row, "queued");
         // Only a new Job is a start: the existing one returned above took nothing.
         yield* takeJobStartEffect(tx, input);
+        yield* enqueueCapJobEffect(tx, row.id, input.capabilityId);
         return { kind: "created" as const, job: row };
       })
     );
@@ -153,11 +150,6 @@ function startCapForEvidenceEffect(input: {
       return toJobRecord(outcome.job, NO_PLAYBOOK, users);
     }
 
-    yield* enqueueCreatedJobEffect(
-      scopedCaseId,
-      outcome.job,
-      input.capabilityId
-    );
     const users = yield* loadActorUsersEffect([outcome.job.actorId]);
     return toJobRecord(outcome.job, NO_PLAYBOOK, users);
   });

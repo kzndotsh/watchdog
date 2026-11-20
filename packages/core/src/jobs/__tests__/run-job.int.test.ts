@@ -12,7 +12,6 @@ import {
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
-  backdateJob,
   forceJobStatus,
   resetTestDb,
   seedCase,
@@ -73,54 +72,6 @@ async function dnsState(jobId: string): Promise<PreflightState> {
     reclaimEvidenceIds: [],
   };
 }
-
-describe("reconcileOrphanedQueuedJobs", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("listQueuedStale returns only queued jobs past the grace window", async () => {
-    const cased = await seedCase(db);
-    const stale = await seedJob(db, cased.id, { status: "queued" });
-    await backdateJob(db, stale.id, {
-      updatedAt: new Date(Date.now() - 3 * 60 * 1000),
-    });
-    const fresh = await seedJob(db, cased.id, { status: "queued" });
-    await backdateJob(db, fresh.id, { updatedAt: new Date() });
-
-    const rows = await jobsRepo.listQueuedStale(
-      db,
-      new Date(Date.now() - 120_000)
-    );
-    expect(rows.map((row) => row.id).sort()).toEqual([stale.id]);
-  });
-
-  it("listQueuedStale skips queued jobs on finished playbook runs", async () => {
-    const cased = await seedCase(db);
-    const run = await seedPlaybookRun(db, cased.id, {
-      playbookId: "host-footprint",
-      seed: { host: "example.com" },
-      status: "cancelled",
-    });
-    const orphan = await seedJob(db, cased.id, {
-      status: "queued",
-      playbookRunId: run.id,
-    });
-    await backdateJob(db, orphan.id, {
-      updatedAt: new Date(Date.now() - 3 * 60 * 1000),
-    });
-    const standalone = await seedJob(db, cased.id, { status: "queued" });
-    await backdateJob(db, standalone.id, {
-      updatedAt: new Date(Date.now() - 3 * 60 * 1000),
-    });
-
-    const rows = await jobsRepo.listQueuedStale(
-      db,
-      new Date(Date.now() - 120_000)
-    );
-    expect(rows.map((row) => row.id)).toEqual([standalone.id]);
-  });
-});
 
 describe("advancePlaybookTail", () => {
   beforeEach(async () => {

@@ -3,13 +3,12 @@ import { Context, Effect, Exit, Fiber, Layer, Option, Scope } from "effect";
 import { vi } from "vitest";
 
 import { InternalError } from "../../errors/tagged-errors";
-import { enqueueCapJobEffect } from "../boss";
 import {
   JobQueue,
   JobQueueWorker,
   makeJobQueueLayers,
-  recordingJobQueue,
   type BossDriver,
+  type QueueTx,
 } from "../job-queue";
 import { gracefulStopTimeoutMs } from "../timeouts";
 
@@ -19,6 +18,8 @@ vi.mock("@watchdog/env/server", () => ({
 
 const JOB_ID = "11111111-1111-4111-8111-000000000001";
 const DRIVER_TEXT = "connect ECONNREFUSED 10.0.0.7:5432 (user=boss)";
+/** A producing transaction the fake driver never runs SQL on. */
+const TX: QueueTx = { executeSql: async () => ({ rows: [] }) };
 
 function fakeDriver() {
   const start = vi.fn(async () => {});
@@ -69,12 +70,12 @@ describe("JobQueue producer Layer", () => {
         expireInSeconds: 90,
         singletonKey: JOB_ID,
       };
-      yield* queue.send({ jobId: JOB_ID }, options);
-      yield* queue.send({ jobId: JOB_ID }, options);
+      yield* queue.send(TX, { jobId: JOB_ID }, options);
+      yield* queue.send(TX, { jobId: JOB_ID }, options);
       expect(fake.start).toHaveBeenCalledTimes(1);
       expect(fake.ensureQueue).toHaveBeenCalledTimes(1);
       expect(fake.send).toHaveBeenCalledTimes(2);
-      expect(fake.send).toHaveBeenCalledWith({ jobId: JOB_ID }, options);
+      expect(fake.send).toHaveBeenCalledWith(TX, { jobId: JOB_ID }, options);
       yield* built.close;
     })
   );
@@ -95,10 +96,10 @@ describe("JobQueue producer Layer", () => {
           singletonKey: JOB_ID,
         };
         const failure = yield* Effect.flip(
-          queue.send({ jobId: JOB_ID }, options)
+          queue.send(TX, { jobId: JOB_ID }, options)
         );
         expect(failure).toBeInstanceOf(InternalError);
-        yield* queue.send({ jobId: JOB_ID }, options);
+        yield* queue.send(TX, { jobId: JOB_ID }, options);
         expect(fake.start).toHaveBeenCalledTimes(2);
         expect(fake.send).toHaveBeenCalledTimes(1);
         yield* built.close;
@@ -119,7 +120,7 @@ describe("JobQueue producer Layer", () => {
           expireInSeconds: 90,
           singletonKey: JOB_ID,
         };
-        yield* queue.send({ jobId: JOB_ID }, options);
+        yield* queue.send(TX, { jobId: JOB_ID }, options);
         yield* built.close;
 
         expect(fake.stop).toHaveBeenCalledTimes(1);
@@ -129,7 +130,7 @@ describe("JobQueue producer Layer", () => {
         });
 
         const failure = yield* Effect.flip(
-          queue.send({ jobId: JOB_ID }, options)
+          queue.send(TX, { jobId: JOB_ID }, options)
         );
         expect(failure).toBeInstanceOf(InternalError);
         expect(fake.send).toHaveBeenCalledTimes(1);
@@ -175,10 +176,10 @@ describe("JobQueue producer Layer start races", () => {
         );
         const queue = Context.get(built.context, JobQueue);
         const failure = yield* Effect.flip(
-          queue.send({ jobId: JOB_ID }, options)
+          queue.send(TX, { jobId: JOB_ID }, options)
         );
         expect(failure).toBeInstanceOf(InternalError);
-        yield* queue.send({ jobId: JOB_ID }, options);
+        yield* queue.send(TX, { jobId: JOB_ID }, options);
         expect(fake.start).toHaveBeenCalledTimes(1);
         expect(fake.ensureQueue).toHaveBeenCalledTimes(2);
         yield* built.close;
@@ -196,7 +197,7 @@ describe("JobQueue producer Layer start races", () => {
           makeJobQueueLayers(() => fake.driver).producerLayer
         );
         const queue = Context.get(built.context, JobQueue);
-        yield* Effect.flip(queue.send({ jobId: JOB_ID }, options));
+        yield* Effect.flip(queue.send(TX, { jobId: JOB_ID }, options));
         yield* built.close;
         expect(fake.stop).toHaveBeenCalledTimes(1);
       })
@@ -224,7 +225,7 @@ describe("JobQueue producer Layer start races", () => {
         );
         const queue = Context.get(built.context, JobQueue);
         const sending = yield* Effect.forkChild(
-          Effect.result(queue.send({ jobId: JOB_ID }, options))
+          Effect.result(queue.send(TX, { jobId: JOB_ID }, options))
         );
         yield* Effect.yieldNow;
         const closing = yield* Effect.forkChild(built.close);
@@ -252,19 +253,19 @@ describe("JobQueue producer Layer start races", () => {
       );
       const queue = Context.get(built.context, JobQueue);
       const first = yield* Effect.forkChild(
-        queue.send({ jobId: JOB_ID }, options)
+        queue.send(TX, { jobId: JOB_ID }, options)
       );
       yield* Effect.yieldNow;
       const interrupting = yield* Effect.forkChild(Fiber.interrupt(first));
       const second = yield* Effect.forkChild(
-        queue.send({ jobId: JOB_ID }, options)
+        queue.send(TX, { jobId: JOB_ID }, options)
       );
       yield* Effect.yieldNow;
       finishStart();
       yield* Fiber.await(interrupting);
       yield* Fiber.await(second);
       expect(fake.start).toHaveBeenCalledTimes(1);
-      yield* queue.send({ jobId: JOB_ID }, options);
+      yield* queue.send(TX, { jobId: JOB_ID }, options);
       expect(fake.start).toHaveBeenCalledTimes(1);
       yield* built.close;
     })
@@ -339,7 +340,7 @@ describe("JobQueue worker Layer", () => {
           singletonKey: JOB_ID,
         };
         const sendFailure = yield* Effect.flip(
-          queue.send({ jobId: JOB_ID }, options)
+          queue.send(TX, { jobId: JOB_ID }, options)
         );
         expect(sendFailure).toBeInstanceOf(InternalError);
         const workFailure = yield* Effect.flip(
@@ -369,7 +370,7 @@ describe("JobQueue worker Layer", () => {
           singletonKey: JOB_ID,
         };
         fake.stop.mockImplementationOnce(async () => {
-          await Effect.runPromise(queue.send({ jobId: JOB_ID }, options));
+          await Effect.runPromise(queue.send(TX, { jobId: JOB_ID }, options));
         });
         yield* built.close;
         expect(fake.send).toHaveBeenCalledTimes(1);
@@ -394,55 +395,5 @@ describe("JobQueue worker Layer", () => {
       );
       yield* built.close;
     })
-  );
-});
-
-describe("enqueueCapJobEffect", () => {
-  it.effect(
-    "sends the trimmed job id with the Cap-derived expire and singleton key",
-    () =>
-      Effect.gen(function* enqueueGen() {
-        const recording = recordingJobQueue();
-        yield* enqueueCapJobEffect(`  ${JOB_ID}  `, "network.dns.lookup").pipe(
-          Effect.provide(recording.layer)
-        );
-        expect(recording.sends).toHaveLength(1);
-        expect(recording.sends[0]?.payload).toEqual({ jobId: JOB_ID });
-        expect(recording.sends[0]?.options.singletonKey).toBe(JOB_ID);
-        expect(recording.sends[0]?.options.expireInSeconds).toBeGreaterThan(60);
-      })
-  );
-
-  it.effect("rejects a blank job id without reaching the queue", () =>
-    Effect.gen(function* enqueueBlankGen() {
-      const recording = recordingJobQueue();
-      const failure = yield* Effect.flip(
-        enqueueCapJobEffect("   ", "network.dns.lookup").pipe(
-          Effect.provide(recording.layer)
-        )
-      );
-      expect(failure._tag).toBe("InvalidError");
-      expect(recording.sends).toHaveLength(0);
-    })
-  );
-
-  it.effect(
-    "fails with InternalError, keeping driver text out of the reason, when the queue driver fails",
-    () =>
-      Effect.gen(function* enqueueDriverFailGen() {
-        const fake = fakeDriver();
-        fake.start.mockRejectedValue(new Error(DRIVER_TEXT));
-        const { producerLayer } = makeJobQueueLayers(() => fake.driver);
-        const failure = yield* Effect.flip(
-          enqueueCapJobEffect(JOB_ID, "network.dns.lookup").pipe(
-            Effect.provide(producerLayer)
-          )
-        );
-        expect(failure).toBeInstanceOf(InternalError);
-        expect(failure).toMatchObject({
-          reason: "pg-boss failed",
-          cause: expect.objectContaining({ message: DRIVER_TEXT }),
-        });
-      })
   );
 });

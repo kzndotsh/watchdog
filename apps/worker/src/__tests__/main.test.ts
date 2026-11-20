@@ -215,7 +215,6 @@ workerMocks.reconcileJobsEffect.mockReturnValue(
     stale: 0,
     accessRevoked: 0,
     stuckPlaybooks: 0,
-    orphanedQueued: 0,
     collectQueueRebuilt: 0,
   })
 );

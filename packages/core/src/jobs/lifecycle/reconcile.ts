@@ -1,4 +1,4 @@
-import { Cause, Clock, Effect, Result } from "effect";
+import { Cause, Clock, Effect } from "effect";
 
 import type { jobsRepo } from "@watchdog/db";
 import {
@@ -20,7 +20,6 @@ import {
   jobsRepoFxDb,
   playbookRunsRepoFxDb,
 } from "../../infra/repos-fx";
-import { enqueueCapJobEffect } from "../boss";
 import { jobAccessLostReasonEffect } from "../job-access";
 import type { JobQueue } from "../job-queue";
 import { ACT_LOST_MESSAGE, isActJob } from "../lanes";
@@ -34,9 +33,6 @@ export const JOB_RECONCILE_INTERVAL = "60 seconds" as const;
 
 const STALE_ERROR =
   "This Job ran past its Capability time window and no worker finished it";
-
-/** Avoid re-enqueueing jobs still in the normal web→boss hand-over window. */
-const ORPHAN_QUEUED_GRACE_MS = 120_000;
 
 /** Repairs run a few at a time: the tick's lock transaction already holds one connection. */
 const REPAIR_CONCURRENCY = 4;
@@ -55,8 +51,6 @@ export type JobReconcileResult = {
   readonly accessRevoked: number;
   /** Playbook runs with no open Job that were advanced again. */
   readonly stuckPlaybooks: number;
-  /** Queued Jobs with no delivery that were enqueued again. */
-  readonly orphanedQueued: number;
   /** Cases whose Collect queue projection had drifted (or whose flush failed) and was rebuilt. */
   readonly collectQueueRebuilt: number;
 };
@@ -66,7 +60,6 @@ const SKIPPED: JobReconcileResult = {
   stale: 0,
   accessRevoked: 0,
   stuckPlaybooks: 0,
-  orphanedQueued: 0,
   collectQueueRebuilt: 0,
 };
 
@@ -166,40 +159,6 @@ function repairRunningJobsEffect(): Effect.Effect<
       stale: verdicts.filter((v) => v === "stale").length,
       accessRevoked: verdicts.filter((v) => v === "access_revoked").length,
     };
-  });
-}
-
-/**
- * Re-enqueue product Jobs left `queued` without a pg-boss delivery (enqueue
- * failed after commit). `singletonKey` on send makes repeat enqueue safe.
- */
-export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
-  number,
-  DomainTag,
-  Db | JobQueue
-> {
-  return Effect.gen(function* reconcileOrphanedQueuedJobsGen() {
-    const now = yield* Clock.currentTimeMillis;
-    // Drizzle `listQueuedStale` expects a JS Date; Clock supplies the millis.
-    // oxlint-disable-next-line effecttsgo/global-date-in-effect -- repo boundary Date interop
-    const updatedBefore = new Date(now - ORPHAN_QUEUED_GRACE_MS);
-    const rows = yield* jobsRepoFxDb.listQueuedStale(updatedBefore);
-    let enqueued = 0;
-    for (const row of rows) {
-      const outcome = yield* Effect.result(
-        enqueueCapJobEffect(row.id, row.capabilityId)
-      );
-      if (Result.isFailure(outcome)) {
-        yield* Effect.sync(() => {
-          logSwallowed("reconcile.orphan_queued", outcome.failure, {
-            jobId: row.id,
-          });
-        });
-        continue;
-      }
-      enqueued += 1;
-    }
-    return enqueued;
   });
 }
 
@@ -305,8 +264,9 @@ function guarded<A>(
 
 /**
  * One reconcile tick: fail stale running Jobs, cancel running Jobs whose creator lost access
- * to the Case (`access_revoked`), re-advance stuck playbook runs, re-enqueue orphaned
- * queued Jobs and rebuild Cases whose Collect queue projection drifted. Every status change goes through `settleJobEffect`: one guarded write and one
+ * to the Case (`access_revoked`), re-advance stuck playbook runs and rebuild Cases whose
+ * Collect queue projection drifted. A queued Job needs no repair: its delivery was inserted in
+ * the transaction that saved it (#721). Every status change goes through `settleJobEffect`: one guarded write and one
  * activity entry per repair, and a second tick changes nothing.
  *
  * A transaction-scoped advisory lock lets one worker reconcile at a time: a worker that does
@@ -334,11 +294,6 @@ export function reconcileJobsEffect(): Effect.Effect<
             reconcileStuckPlaybookRunsEffect(),
             0
           );
-          const orphanedQueued = yield* guarded(
-            "orphan_queued",
-            reconcileOrphanedQueuedJobsEffect(),
-            0
-          );
           const collectQueueRebuilt = yield* guarded(
             "collect_queue",
             repairCollectQueueEffect(),
@@ -348,7 +303,6 @@ export function reconcileJobsEffect(): Effect.Effect<
             ran: true,
             ...running,
             stuckPlaybooks,
-            orphanedQueued,
             collectQueueRebuilt,
           };
         })

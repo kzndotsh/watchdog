@@ -14,6 +14,7 @@ export {
   type BossDriver,
   type BossRole,
   type QueuedJob,
+  type QueueTx,
   type RecordedSend,
 } from "./job-queue";
 export {

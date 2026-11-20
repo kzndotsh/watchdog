@@ -192,7 +192,7 @@ describe("reconcileJobsEffect", () => {
     });
   });
 
-  describe("stuck playbook runs and orphaned queued Jobs", () => {
+  describe("stuck playbook runs", () => {
     it("enqueues the next step when advance was skipped after success", async () => {
       const cased = await seedCase(db);
       const run = await seedPlaybookRun(db, cased.id, {
@@ -233,23 +233,6 @@ describe("reconcileJobsEffect", () => {
       await markEntries();
       const result = await tickWith(recordingJobQueue())();
       expect(result.stuckPlaybooks).toBe(0);
-    });
-
-    it("re-enqueues a queued Job past the grace window and leaves its status", async () => {
-      const cased = await seedCase(db);
-      const job = await seedJob(db, cased.id, { status: "queued" });
-      await backdateJob(db, job.id, {
-        updatedAt: new Date(Date.now() - 3 * 60_000),
-      });
-      await markEntries();
-      const queue = recordingJobQueue();
-
-      const result = await tickWith(queue)();
-
-      expect(result.orphanedQueued).toBe(1);
-      expect(queue.sends.map((s) => s.payload.jobId)).toEqual([job.id]);
-      expect((await jobsRepo.get(db, job.id))?.status).toBe("queued");
-      expect(await jobEntryCount()).toBe(0);
     });
   });
 });

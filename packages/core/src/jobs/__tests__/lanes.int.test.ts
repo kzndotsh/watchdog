@@ -18,6 +18,7 @@ import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";
 import { Db } from "../../infra/db-service.ts";
+import { transact } from "../../infra/postgres-tx.ts";
 import { vaultLayer } from "../../infra/vault.ts";
 import { enqueueCapJobEffect } from "../boss.ts";
 import { JobFibers } from "../job-fibers.ts";
@@ -102,7 +103,7 @@ function startJob(caseId: CaseId, capabilityId: string, host: string) {
     const job = yield* Effect.promise(() =>
       seedJob(db, caseId, { capabilityId, input: { host } })
     );
-    yield* enqueueCapJobEffect(job.id, capabilityId);
+    yield* transact((tx) => enqueueCapJobEffect(tx, job.id, capabilityId));
     return job.id;
   });
 }
@@ -110,7 +111,7 @@ function startJob(caseId: CaseId, capabilityId: string, host: string) {
 /** Run `body` with the worker's handler on every lane at the given concurrency. */
 function withLanes(
   concurrency: (lane: JobLane) => number,
-  body: Effect.Effect<void, unknown, JobQueue>
+  body: Effect.Effect<void, unknown, Db | JobQueue>
 ) {
   return Effect.gen(function* withLanesGen() {
     const context = yield* Effect.context<

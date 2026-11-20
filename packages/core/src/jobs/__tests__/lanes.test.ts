@@ -4,12 +4,7 @@ import { vi } from "vitest";
 
 import { JOB_LANES } from "@watchdog/caps/sdk";
 
-import { enqueueCapJobEffect } from "../boss";
-import {
-  makeJobQueueLayers,
-  recordingJobQueue,
-  type BossDriver,
-} from "../job-queue";
+import { makeJobQueueLayers, type BossDriver } from "../job-queue";
 import {
   jobLane,
   laneConcurrency,
@@ -27,8 +22,6 @@ vi.mock("@watchdog/env/server", () => ({
     WD_WORKER_ACT_CONCURRENCY: 1,
   },
 }));
-
-const JOB_ID = "11111111-1111-4111-8111-000000000001";
 
 describe("worker lanes", () => {
   it("names every lane's queue alike, one queue per lane", () => {
@@ -66,26 +59,6 @@ describe("worker lanes", () => {
     expect(jobLane("archive.url.submit")).toBe("act");
     expect(jobLane("evidence.eml.analyze")).toBe("heavy");
   });
-
-  it.effect("enqueues a Job to the lane of its capability", () =>
-    Effect.gen(function* enqueueLaneGen() {
-      const recording = recordingJobQueue();
-      for (const capabilityId of [
-        "network.dns.lookup",
-        "archive.url.submit",
-        CASE_EXPORT_JOB,
-      ]) {
-        yield* enqueueCapJobEffect(JOB_ID, capabilityId).pipe(
-          Effect.provide(recording.layer)
-        );
-      }
-      expect(recording.sends.map((send) => send.options.lane)).toEqual([
-        "quick",
-        "act",
-        "heavy",
-      ]);
-    })
-  );
 
   it.effect(
     "registers the handler once per lane with that lane's concurrency",

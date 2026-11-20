@@ -20,27 +20,15 @@ export type MaintenanceReport = {
 export function reconcileReport(
   result: JobReconcileResult
 ): MaintenanceReport | undefined {
-  const {
-    ran,
-    stale,
-    accessRevoked,
-    stuckPlaybooks,
-    orphanedQueued,
-    collectQueueRebuilt,
-  } = result;
-  const changed =
-    stale +
-    accessRevoked +
-    stuckPlaybooks +
-    orphanedQueued +
-    collectQueueRebuilt;
+  const { ran, stale, accessRevoked, stuckPlaybooks, collectQueueRebuilt } =
+    result;
+  const changed = stale + accessRevoked + stuckPlaybooks + collectQueueRebuilt;
   if (!ran || changed === 0) return undefined;
   return {
-    message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${stuckPlaybooks} stuck playbook run(s), ${orphanedQueued} orphaned queued re-enqueued, ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
+    message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${stuckPlaybooks} stuck playbook run(s), ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
     stale,
     accessRevoked,
     stuckPlaybooks,
-    orphanedQueued,
     collectQueueRebuilt,
   };
 }
