@@ -24,9 +24,18 @@ export const EMAIL_IDENTIFIER_BATCH_LIMIT = 40;
 /** Default per-batch Identifier cap for related handle rows. */
 export const HANDLE_IDENTIFIER_BATCH_LIMIT = 40;
 
-/** Claim suffix when proposed Identifiers are capped below the report total. */
-export function identifierTruncationNote(total: number, limit: number): string {
-  return total > limit ? ` (showing ${limit} of ${total} in Identifiers)` : "";
+/**
+ * Claim suffix when proposed Identifiers are capped below the report total. The values past the
+ * limit are never proposed: they stay only in the Job's report, so the note says so.
+ */
+export function identifierTruncationNote(
+  total: number,
+  limit: number,
+  noun?: string
+): string {
+  if (total <= limit) return "";
+  const counted = noun === undefined ? `${total}` : `${total} ${noun}`;
+  return ` (proposed ${limit} of ${counted}; the rest are only in the Job report)`;
 }
 
 function batchValueCount(batches: readonly IdentifierBatch[]): number {

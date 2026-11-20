@@ -178,10 +178,17 @@ describe("eligibleEmailCount", () => {
 });
 
 describe("identifierTruncationNote", () => {
-  it("notes when proposed identifiers are capped", () => {
+  it("says the values past the limit are only in the Job report", () => {
     expect(identifierTruncationNote(120, 80)).toBe(
-      " (showing 80 of 120 in Identifiers)"
+      " (proposed 80 of 120; the rest are only in the Job report)"
     );
+    expect(identifierTruncationNote(120, 40, "emails")).toBe(
+      " (proposed 40 of 120 emails; the rest are only in the Job report)"
+    );
+  });
+
+  it("is empty when nothing was cut", () => {
+    expect(identifierTruncationNote(80, 80)).toBe("");
     expect(identifierTruncationNote(10, 80)).toBe("");
   });
 });

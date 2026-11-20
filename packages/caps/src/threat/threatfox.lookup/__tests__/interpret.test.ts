@@ -233,7 +233,7 @@ describe("interpret", () => {
       ].sort((a, b) => a.localeCompare(b))
     );
     expect(claimText(result, ips.length)).toMatch(/5 IOC\(s\)/);
-    expect(claimText(result, ips.length)).not.toMatch(/showing 5 of 50/);
+    expect(claimText(result, ips.length)).not.toMatch(/proposed 5 of 50/);
   });
 
   it("seeds hash queries as other Identifiers", () => {
@@ -248,5 +248,21 @@ describe("interpret", () => {
       { input: { query: hash, entityId } }
     );
     expectProposesIdentifier(result, { type: "other", value: hash });
+  });
+
+  it("counts an IOC the feed repeats once toward the cap and the note", () => {
+    const ioc = fixture.iocs[0];
+    if (ioc === undefined) throw new Error("fixture has an IOC");
+    const iocs = Array.from({ length: 50 }, (_, i) => ({
+      ...ioc,
+      id: String(i),
+      ioc: `203.0.113.${i % 20}:443`,
+    }));
+    const result = interpretThreatfoxLookupReport(
+      { ...fixture, query: "evil.test", kind: "domain", iocs },
+      { input: { query: "evil.test", entityId } }
+    );
+    expect(String(result.summary)).toMatch(/20 IOC\(s\)/);
+    expect(String(result.summary)).not.toMatch(/the rest are only/);
   });
 });

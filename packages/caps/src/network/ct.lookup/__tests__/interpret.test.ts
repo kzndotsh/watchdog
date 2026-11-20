@@ -85,7 +85,9 @@ describe("interpretCtReport", () => {
     expect(
       result.patch.filter((p) => p.resource === "identifier")
     ).toHaveLength(80);
-    expect(String(result.summary)).toMatch(/showing 80 of 86 in Identifiers/);
+    expect(String(result.summary)).toMatch(
+      /proposed 80 of 86; the rest are only in the Job report/
+    );
   });
 
   it("emits an empty patch when entityId is omitted", () => {

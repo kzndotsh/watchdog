@@ -102,4 +102,23 @@ describe("interpret", () => {
     { query: "chris" },
     { query: "chris" }
   );
+
+  it("notes proof handles against what the primary handle leaves of the limit", () => {
+    const proofs = Array.from({ length: 41 }, (_, i) => ({
+      platform: "github",
+      username: `p${i}`,
+      url: `https://github.com/p${i}`,
+    }));
+    const result = interpretKeybaseLookupReport(
+      { ...fixture, proofs },
+      { input: { query: "chris", entityId } }
+    );
+    expect(String(result.summary)).toMatch(
+      /proposed 39 of 41 proof handles; the rest are only in the Job report/
+    );
+    const handles = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "handle"
+    );
+    expect(handles).toHaveLength(40);
+  });
 });

@@ -77,7 +77,9 @@ describe("interpret", () => {
       { ...fixture, accounts },
       { input: { email: fixture.email, entityId } }
     );
-    expect(String(result.summary)).toMatch(/showing 40 of 43 handles/);
+    expect(String(result.summary)).toMatch(
+      /proposed 40 of 43 handles; the rest are only in the Job report/
+    );
     const handles = result.patch.filter(
       (p) => p.resource === "identifier" && p.data.type === "handle"
     );
@@ -94,7 +96,9 @@ describe("interpret", () => {
       { ...fixture, accounts },
       { input: { email: fixture.email, entityId } }
     );
-    expect(String(result.summary)).toMatch(/showing 40 of 42 urls/);
+    expect(String(result.summary)).toMatch(
+      /proposed 40 of 42 urls; the rest are only in the Job report/
+    );
     const urls = result.patch.filter(
       (p) => p.resource === "identifier" && p.data.type === "url"
     );
@@ -106,4 +110,17 @@ describe("interpret", () => {
     { email: "a@b.com" },
     { email: "a@b.com" }
   );
+
+  it("counts a URL repeated across accounts once, so no URL is called cut", () => {
+    const accounts = Array.from({ length: 41 }, (_, i) => ({
+      shortname: "web",
+      url: fixture.profileUrl ?? "https://gravatar.com/x",
+      username: `user-${i}`,
+    }));
+    const result = interpretGravatarLookupReport(
+      { ...fixture, accounts },
+      { input: { email: fixture.email, entityId } }
+    );
+    expect(String(result.summary)).not.toMatch(/urls; the rest/);
+  });
 });

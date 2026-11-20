@@ -7,6 +7,7 @@ import {
   HANDLE_IDENTIFIER_BATCH_LIMIT,
   URL_IDENTIFIER_BATCH_LIMIT,
   domainValuesBatch,
+  eligibleUrlCount,
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
@@ -20,7 +21,7 @@ const HANDLE_LIMIT = HANDLE_IDENTIFIER_BATCH_LIMIT;
 
 function summarize(
   report: KeybaseLookupSnapshot,
-  proofHandleTotal: number,
+  proofs: { total: number; budget: number },
   primaryHandleTotal: number,
   urlTotal: number
 ): string {
@@ -42,9 +43,13 @@ function summarize(
     HANDLE_LIMIT
   ).trim();
   if (primaryNote !== "") bits.push(primaryNote.replaceAll(/^\(|\)$/g, ""));
-  if (proofHandleTotal > HANDLE_LIMIT) {
-    bits.push(`showing ${HANDLE_LIMIT} of ${proofHandleTotal} proof handles`);
-  }
+  // Primary handles take their slots first; proofs get what is left of the limit.
+  const proofNote = identifierTruncationNote(
+    proofs.total,
+    proofs.budget,
+    "proof handles"
+  ).trim();
+  if (proofNote !== "") bits.push(proofNote.replaceAll(/^\(|\)$/g, ""));
   const urlNote = identifierTruncationNote(urlTotal, URL_LIMIT).trim();
   if (urlNote !== "") bits.push(urlNote.replaceAll(/^\(|\)$/g, ""));
   if (report.pgpFingerprints.length > 5) {
@@ -128,9 +133,9 @@ export function interpretKeybaseLookupReport(
     ],
     claimText: summarize(
       report,
-      proofHandleCandidates.length,
+      { total: proofHandleCandidates.length, budget: proofHandleBudget },
       primaryHandleValues.length,
-      urlValues.length
+      eligibleUrlCount(urlValues)
     ),
     noEntitySummary: "Keybase lookup captured; no Entity to attach Identifiers",
   });

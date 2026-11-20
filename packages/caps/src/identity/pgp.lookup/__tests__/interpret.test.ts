@@ -223,7 +223,9 @@ describe("interpret", () => {
     const result = interpretPgpLookupReport(report({ keys }), {
       input: { query: "alice@example.com", entityId },
     });
-    expect(String(result.summary)).toMatch(/showing 20 of 25 in Identifiers/);
+    expect(String(result.summary)).toMatch(
+      /proposed 20 of 25; the rest are only in the Job report/
+    );
     const pgps = result.patch.filter(
       (p) => p.resource === "identifier" && p.data.type === "pgp"
     );
@@ -239,4 +241,42 @@ describe("interpret", () => {
   });
 
   itRejectsIncompleteReport(pgpLookup, { query: "x" }, { query: "x" });
+
+  describe("the email note counts the seed email as proposed", () => {
+    const uidEmails = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        text: `U${i} <u${i}@example.com>`,
+        name: `U${i}`,
+        email: `u${i}@example.com`,
+        revoked: false,
+      }));
+    const seedUid = {
+      text: "Alice <alice@example.com>",
+      name: "Alice",
+      email: "alice@example.com",
+      revoked: false,
+    };
+    const emails = (result: ReturnType<typeof interpretPgpLookupReport>) =>
+      identifiers(result).filter((id) => id.startsWith("email:"));
+
+    it("adds no note when the seed and 40 more are all proposed", () => {
+      const result = interpretPgpLookupReport(
+        report({ keys: [key({ uids: [seedUid, ...uidEmails(40)] })] }),
+        { input: { query: "alice@example.com", entityId } }
+      );
+      expect(emails(result)).toHaveLength(41);
+      expect(String(result.summary)).not.toMatch(/emails; the rest/);
+    });
+
+    it("counts the seed among the proposed when the UIDs pass the limit", () => {
+      const result = interpretPgpLookupReport(
+        report({ keys: [key({ uids: [seedUid, ...uidEmails(41)] })] }),
+        { input: { query: "alice@example.com", entityId } }
+      );
+      expect(emails(result)).toHaveLength(41);
+      expect(String(result.summary)).toMatch(
+        /proposed 41 of 42 emails; the rest are only in the Job report/
+      );
+    });
+  });
 });

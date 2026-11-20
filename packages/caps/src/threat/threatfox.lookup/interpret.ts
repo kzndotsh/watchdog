@@ -7,6 +7,7 @@ import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifi
 import {
   domainValuesBatch,
   hashSeedBatch,
+  identifierTruncationNote,
   ipValuesBatch,
   querySeedBatches,
   urlValuesBatch,
@@ -52,7 +53,7 @@ function summarize(
   });
   const shownNote =
     proposed < eligibleTotal
-      ? `showing ${proposed} of ${eligibleTotal}`
+      ? `${eligibleTotal} IOC(s)${identifierTruncationNote(eligibleTotal, proposed)}`
       : `${eligibleTotal} IOC(s)`;
   return `ThreatFox (abuse.ch) for ${report.query}: ${shownNote} — ${top.join("; ")}`;
 }
@@ -69,13 +70,16 @@ export function interpretThreatfoxLookupReport(
   };
   let collected = 0;
   let eligibleTotal = 0;
+  // A value the feed lists twice counts once, so the note's totals match what is proposed.
+  const seen = new Set<string>();
   for (const ioc of report.iocs) {
     const kind = iocKind(ioc.iocType);
     if (kind === null) continue;
     const value = kind === "ip" ? stripPortFromIpIoc(ioc.ioc) : ioc.ioc;
     if (value.trim() === "") continue;
     const normalized = validatedIdentifierValue(kind, value);
-    if (normalized === null) continue;
+    if (normalized === null || seen.has(`${kind}|${normalized}`)) continue;
+    seen.add(`${kind}|${normalized}`);
     eligibleTotal += 1;
     if (collected >= IOC_LIMIT) continue;
     buckets[kind].push(normalized);

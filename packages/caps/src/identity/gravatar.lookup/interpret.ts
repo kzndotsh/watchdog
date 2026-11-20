@@ -9,6 +9,7 @@ import {
   URL_IDENTIFIER_BATCH_LIMIT,
   emailValuesBatch,
   eligibleEmailCount,
+  eligibleUrlCount,
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
@@ -37,11 +38,11 @@ function summarize(
   bits.push(`accounts=${report.accounts.length}`);
   const emailNote = identifierTruncationNote(emailTotal, EMAIL_LIMIT).trim();
   if (emailNote !== "") bits.push(emailNote.replaceAll(/^\(|\)$/g, ""));
-  if (handleTotal > HANDLE_LIMIT) {
-    bits.push(`showing ${HANDLE_LIMIT} of ${handleTotal} handles`);
-  }
-  if (urlTotal > URL_LIMIT) {
-    bits.push(`showing ${URL_LIMIT} of ${urlTotal} urls`);
+  for (const note of [
+    identifierTruncationNote(handleTotal, HANDLE_LIMIT, "handles"),
+    identifierTruncationNote(urlTotal, URL_LIMIT, "urls"),
+  ]) {
+    if (note !== "") bits.push(note.trim().replaceAll(/^\(|\)$/g, ""));
   }
   return `Gravatar for ${report.email}: ${bits.join("; ")}`;
 }
@@ -59,7 +60,7 @@ export function interpretGravatarLookupReport(
     (value): value is string =>
       value !== null && value !== undefined && value !== ""
   );
-  const urlTotal = urlValues.length;
+  const urlTotal = eligibleUrlCount(urlValues);
   const emailCandidates = report.found
     ? [report.email, ...report.emails]
     : [report.email];

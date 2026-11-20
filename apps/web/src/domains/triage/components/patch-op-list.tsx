@@ -1,15 +1,25 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronDownIcon } from "lucide-react";
 
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
+import {
+  groupPatchOps,
+  type PatchOpGroup,
+} from "@/domains/triage/lib/patch-op-groups";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Chip } from "@/shared/ui/chip";
+import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { IdChip } from "@/shared/ui/id-chip";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@watchdog/ui/components/collapsible";
 
 const EMPTY_IDS: string[] = [];
 
@@ -122,6 +132,67 @@ function PatchOpRow({
   );
 }
 
+type PatchOpGroupSectionProps = {
+  group: PatchOpGroup;
+  sharedEvidenceIds: string[];
+  bundleSet: ReadonlySet<string>;
+  collidingSet: ReadonlySet<string>;
+  invalidSet: ReadonlySet<string>;
+  evidenceById?: ReadonlyMap<string, EvidenceOption>;
+  onEvidenceClick?: (evidenceId: string) => void;
+};
+
+function PatchOpGroupSection({
+  group,
+  sharedEvidenceIds,
+  bundleSet,
+  collidingSet,
+  invalidSet,
+  evidenceById,
+  onEvidenceClick,
+}: PatchOpGroupSectionProps) {
+  return (
+    <div className="border-border border-b last:border-b-0">
+      <Collapsible defaultOpen={group.isOpenByDefault}>
+        <CollapsibleRowTrigger
+          aria-label={`${group.label} (${group.ops.length})`}
+        >
+          <ChevronDownIcon
+            className="text-muted-foreground mt-0.5 size-3.5 shrink-0 transition-transform group-aria-expanded/row-trigger:rotate-180"
+            aria-hidden
+          />
+          <span className="text-foreground text-xs">{group.label}</span>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {group.ops.length}
+          </span>
+          {group.flaggedCount > 0 ? (
+            <Chip size="sm">{group.flaggedCount} flagged</Chip>
+          ) : null}
+        </CollapsibleRowTrigger>
+        <CollapsibleContent>
+          <div className="border-border border-t">
+            {group.ops.map((op) => {
+              const allIds = evidenceIdsForOp(op, sharedEvidenceIds);
+              const localIds = allIds.filter((id) => !bundleSet.has(id));
+              return (
+                <PatchOpRow
+                  key={op.id}
+                  op={op}
+                  localIds={localIds}
+                  evidenceById={evidenceById}
+                  onEvidenceClick={onEvidenceClick}
+                  isColliding={collidingSet.has(op.id)}
+                  isInvalid={invalidSet.has(op.id)}
+                />
+              );
+            })}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
 type PatchOpListProps = {
   patch: PatchOp[];
   sharedEvidenceIds?: string[];
@@ -133,7 +204,8 @@ type PatchOpListProps = {
 };
 
 /**
- * Patch ledger — flat Changes section with optional Collect link for the job.
+ * Patch ledger: the Changes section, grouped by resource and Identifier type (a big group starts
+ * collapsed behind its count, flagged ops first), with an optional Collect link for the Job.
  */
 export function PatchOpList({
   patch,
@@ -155,6 +227,8 @@ export function PatchOpList({
   const bundleSet = new Set(bundleIds);
   const collidingSet = new Set(collidingOpIds);
   const invalidSet = new Set(invalidOpIds);
+  const flaggedSet = new Set([...collidingOpIds, ...invalidOpIds]);
+  const groups = groupPatchOps(patch, flaggedSet);
   const hasJob = jobId !== null && jobId !== undefined && jobId !== "";
 
   return (
@@ -183,21 +257,21 @@ export function PatchOpList({
       />
 
       <div className="border-border overflow-hidden rounded-md border">
-        {patch.map((op) => {
-          const allIds = evidenceIdsForOp(op, sharedEvidenceIds);
-          const localIds = allIds.filter((id) => !bundleSet.has(id));
-          return (
-            <PatchOpRow
-              key={op.id}
-              op={op}
-              localIds={localIds}
-              evidenceById={evidenceById}
-              onEvidenceClick={onEvidenceClick}
-              isColliding={collidingSet.has(op.id)}
-              isInvalid={invalidSet.has(op.id)}
-            />
-          );
-        })}
+        {groups.map((group) => (
+          <PatchOpGroupSection
+            // The open state starts from `isOpenByDefault`; keying on whether the group holds a
+            // flagged op remounts it when a flag arrives (or clears), so a newly flagged group
+            // opens. Toggles are kept while the flagged state stays the same.
+            key={`${group.key}:${group.flaggedCount > 0 ? "flagged" : "clear"}`}
+            group={group}
+            sharedEvidenceIds={sharedEvidenceIds}
+            bundleSet={bundleSet}
+            collidingSet={collidingSet}
+            invalidSet={invalidSet}
+            evidenceById={evidenceById}
+            onEvidenceClick={onEvidenceClick}
+          />
+        ))}
       </div>
     </section>
   );
