@@ -125,7 +125,7 @@ export const jobs = pgTable(
       t.id.desc().nullsFirst()
     ),
     // The Job list's `created` sort (`jobList`, ADR-0007), and `q` over its three search fields
-    // (`pg_trgm`, migration 0002).
+    // (`pg_trgm`, the baseline migration).
     index("jobs_case_created_idx").on(
       t.caseId,
       t.createdAt.desc().nullsFirst(),

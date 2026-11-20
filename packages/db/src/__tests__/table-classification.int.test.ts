@@ -187,7 +187,7 @@ describe("public table classification", () => {
       .map((t) => t.name);
     expect(
       untouched,
-      "attach touch_updated_at (see 0018_touch_updated_at.sql) to each"
+      "attach touch_updated_at (see 0000_baseline.sql) to each"
     ).toEqual([]);
   });
 

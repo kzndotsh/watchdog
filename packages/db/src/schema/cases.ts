@@ -88,7 +88,7 @@ export const cases = pgTable(
       .where(sql`${t.deletedAt} IS NULL`),
     // The Case list (`caseList`, ADR-0007): the name sort is `cases_organization_name_idx`; the
     // time sorts are btrees led by the organization over visible Cases, and `q` is `pg_trgm`
-    // (migration 0002) over the three search fields.
+    // (the baseline migration) over the three search fields.
     index("cases_organization_created_idx")
       .on(t.organizationId, t.createdAt, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
@@ -125,7 +125,7 @@ export const cases = pgTable(
     index("cases_deleted_name_idx")
       .on(t.organizationId, t.name, t.id)
       .where(sql`${t.deletedAt} IS NOT NULL`),
-    // `q` over the Deleted Cases list's search fields (`pg_trgm`, migration 0002), tombstones only.
+    // `q` over the Deleted Cases list's search fields (`pg_trgm`, the baseline migration), tombstones only.
     index("cases_deleted_name_trgm_idx")
       .using("gin", t.name.op("gin_trgm_ops"))
       .where(sql`${t.deletedAt} IS NOT NULL`),

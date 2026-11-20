@@ -77,7 +77,7 @@ export const evidence = pgTable(
       t.capturedAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
-    // `q`: trigram indexes over the search fields (`pg_trgm`, created by migration 0002). Global,
+    // `q`: trigram indexes over the search fields (`pg_trgm`, created by the baseline migration). Global,
     // not Case-scoped: see ADR-0007 "Reopen when" for the budget that decides it.
     index("evidence_label_trgm_idx").using("gin", t.label.op("gin_trgm_ops")),
     index("evidence_notes_trgm_idx").using("gin", t.notes.op("gin_trgm_ops")),
@@ -86,7 +86,7 @@ export const evidence = pgTable(
       t.sourceUrl.op("gin_trgm_ops")
     ),
     // `ON DELETE SET NULL (entity_id)`: only the Entity column is cleared, never the Case id.
-    // HAND EDIT: drizzle cannot spell the column list, so the custom migration (`database_logic`)
+    // HAND EDIT: drizzle cannot spell the column list, so the hand-written part of `0000_baseline`
     // replaces the generated key with one that has `("entity_id")`. A regeneration that drops it
     // fails `same-case-integrity.int.test.ts` (it reads `confdelsetcols`).
     foreignKey({

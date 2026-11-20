@@ -53,7 +53,7 @@ export const graphWrites = pgTable(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()
     ),
-    // `q` over the Graph write list's search fields (`graphWriteList`, `pg_trgm`, migration 0002).
+    // `q` over the Graph write list's search fields (`graphWriteList`, `pg_trgm`, the baseline migration).
     index("graph_writes_summary_trgm_idx").using(
       "gin",
       t.summary.op("gin_trgm_ops")
