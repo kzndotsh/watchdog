@@ -19,7 +19,10 @@ import {
   CollapsibleContent,
 } from "@watchdog/ui/components/collapsible";
 
-/** A group this small starts open; a bigger one (80 domains from a sweep) starts closed. */
+/**
+ * A group this small starts open; a bigger one (80 domains from a sweep) starts closed, unless it
+ * is the only group: then there is nothing else to show, so it opens whatever its size.
+ */
 const IDENTIFIER_GROUP_OPEN_MAX = 10;
 
 type IdentifierTypeGroupsProps = {
