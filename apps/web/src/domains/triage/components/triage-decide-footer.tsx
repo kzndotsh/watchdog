@@ -2,6 +2,7 @@ import { CheckIcon, GaugeIcon, XIcon } from "lucide-react";
 
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
 import { EvidenceCiteChips } from "@/domains/triage/components/evidence-cite-chips";
+import { UntickedOutcomeSelect } from "@/domains/triage/components/unticked-outcome-select";
 import type {
   TriageAcceptForm,
   TriageRejectForm,
@@ -16,6 +17,7 @@ import {
   type DecideEvidenceMode,
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalPatch } from "@/domains/triage/lib/filters";
+import { tickedPatch } from "@/domains/triage/lib/op-selection";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { hotkeyAttrs, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ComposerShell } from "@/shared/ui/composer-shell";
@@ -45,18 +47,28 @@ function gateForForm(
     confidence: ConfidenceTier;
     evidenceIds: string[];
     attestationText: string;
+    skippedOpIds: readonly string[];
   }
 ): AcceptGateResult {
-  const patch = proposalPatch(proposal);
-  return acceptGate(
+  // The gates read the ops the Accept applies: an unticked invalid op no longer blocks it.
+  const patch = tickedPatch(proposalPatch(proposal), values.skippedOpIds);
+  const gate = acceptGate(
     gatedAcceptInput({
-      ...values,
+      confidence: values.confidence,
+      evidenceIds: values.evidenceIds,
+      attestationText: values.attestationText,
       linkedIds,
       patch,
       isConfidenceNeeded: patchNeedsConfidence(patch),
-      identifierCollisions: proposal.identifierCollisions,
+      identifierCollisions: proposal.identifierCollisions?.filter(
+        (hit) => !values.skippedOpIds.includes(hit.opId)
+      ),
     })
   );
+  // Every op unticked: nothing to accept (Reject is the way to decline them all).
+  return patch.length === 0 && values.skippedOpIds.length > 0
+    ? { ...gate, canAccept: false }
+    : gate;
 }
 
 function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
@@ -107,6 +119,7 @@ function renderAcceptEvidenceSlot({
             confidence: fieldApi.form.getFieldValue("confidence"),
             evidenceIds: value,
             attestationText: fieldApi.form.getFieldValue("attestationText"),
+            skippedOpIds: fieldApi.form.getFieldValue("skippedOpIds"),
           });
           if (gate.isConfirmedWithoutBundle) {
             return CONFIRMED_REQUIRES_EVIDENCE;
@@ -147,13 +160,15 @@ function AcceptWarnings({
         confidence: state.values.confidence,
         evidenceIds: state.values.evidenceIds,
         attestationText: state.values.attestationText,
+        skippedOpIds: state.values.skippedOpIds,
       })}
     >
-      {({ confidence, evidenceIds, attestationText }) => {
+      {({ confidence, evidenceIds, attestationText, skippedOpIds }) => {
         const gate = gateForForm(proposal, linkedIds, {
           confidence,
           evidenceIds,
           attestationText,
+          skippedOpIds,
         });
 
         return (
@@ -398,17 +413,33 @@ export function TriageDecideFooter({
             confidence: state.values.confidence,
             evidenceIds: state.values.evidenceIds,
             attestationText: state.values.attestationText,
+            skippedOpIds: state.values.skippedOpIds,
           })}
         >
-          {({ confidence, evidenceIds, attestationText }) => {
+          {({ confidence, evidenceIds, attestationText, skippedOpIds }) => {
             const gate = gateForForm(proposal, linkedIds, {
               confidence,
               evidenceIds,
               attestationText,
+              skippedOpIds,
             });
+            const total = proposalPatch(proposal).length;
+            const tickedCount = total - skippedOpIds.length;
 
             return (
               <>
+                {skippedOpIds.length > 0 ? (
+                  <acceptForm.Field name="untickedAs">
+                    {(field) => (
+                      <UntickedOutcomeSelect
+                        value={field.state.value}
+                        onChange={(next) => {
+                          field.handleChange(next);
+                        }}
+                      />
+                    )}
+                  </acceptForm.Field>
+                ) : null}
                 <Button
                   type="button"
                   {...hotkeyAttrs("triage-accept")}
@@ -426,7 +457,9 @@ export function TriageDecideFooter({
                   {acceptBusy ? null : (
                     <CheckIcon className="size-3" data-icon="inline-start" />
                   )}
-                  Accept
+                  {skippedOpIds.length > 0
+                    ? `Accept ${tickedCount} of ${total}`
+                    : "Accept"}
                   <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
                     {hotkeyDef("triage-accept").chord}
                   </Kbd>

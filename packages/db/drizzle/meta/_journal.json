@@ -155,6 +155,13 @@
       "when": 1795118955393,
       "tag": "0021_claims_retracted_index",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795186263882,
+      "tag": "0022_add_proposal_left_rejected_op_ids",
+      "breakpoints": true
     }
   ]
 }

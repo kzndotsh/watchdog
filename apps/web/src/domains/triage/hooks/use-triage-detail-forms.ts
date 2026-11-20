@@ -15,12 +15,15 @@ export function useTriageDetailForms(
 ) {
   const [isRejecting, setIsRejecting] = useState(false);
 
+  const defaultValues: AcceptFormValues = {
+    confidence: DEFAULT_CONFIDENCE,
+    evidenceIds: [],
+    attestationText: "",
+    skippedOpIds: [],
+    untickedAs: "left",
+  };
   const acceptForm = useForm({
-    defaultValues: {
-      confidence: DEFAULT_CONFIDENCE,
-      evidenceIds: [] as string[],
-      attestationText: "",
-    } satisfies AcceptFormValues,
+    defaultValues,
     onSubmit: ({ value }) => {
       onAccept(value);
     },

@@ -6,6 +6,11 @@ export {
 export type { EntitySearchRow, EntityTitleRow } from "./entity-display";
 export type { PatchOp } from "./patch";
 export {
+  patchOpDependencies,
+  patchOpDependents,
+  withPatchDependencies,
+} from "./patch-dependencies";
+export {
   patchOpEntityId,
   patchEntityOpDisplayLabel,
   patchOpHeadline,

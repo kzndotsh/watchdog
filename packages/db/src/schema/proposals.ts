@@ -32,6 +32,13 @@ export const proposals = pgTable(
     summary: text("summary"),
     suppressedCount: integer("suppressed_count").notNull().default(0),
     rejectReason: text("reject_reason"),
+    /**
+     * A partial Accept's unticked ops: `left` ops were not applied and nothing
+     * suppresses them (a later run may propose them again); `rejected` ops were fingerprinted
+     * like a Reject. Both empty for a whole Accept, a Reject and a pending Proposal.
+     */
+    leftOpIds: uuid("left_op_ids").array().notNull().default([]),
+    rejectedOpIds: uuid("rejected_op_ids").array().notNull().default([]),
     decidedBy: text("decided_by"),
     decidedAt: timestamptz("decided_at"),
     /** Re-interpret versioning — increments each time interpret reruns on the same Job. */

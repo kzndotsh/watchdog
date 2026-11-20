@@ -74382,6 +74382,20 @@
                               }
                             ]
                           },
+                          "leftOpIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
+                          },
+                          "rejectedOpIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "uuid"
+                            }
+                          },
                           "decidedBy": {
                             "anyOf": [
                               {
@@ -74517,6 +74531,8 @@
                           "suppressedCount",
                           "evidenceIds",
                           "rejectReason",
+                          "leftOpIds",
+                          "rejectedOpIds",
                           "decidedBy",
                           "decidedByLabel",
                           "decidedAt",
@@ -75566,6 +75582,20 @@
                         }
                       ]
                     },
+                    "leftOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "rejectedOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
                     "decidedBy": {
                       "anyOf": [
                         {
@@ -75701,6 +75731,8 @@
                     "suppressedCount",
                     "evidenceIds",
                     "rejectReason",
+                    "leftOpIds",
+                    "rejectedOpIds",
                     "decidedBy",
                     "decidedByLabel",
                     "decidedAt",
@@ -77367,6 +77399,20 @@
                         }
                       ]
                     },
+                    "leftOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "rejectedOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
                     "decidedBy": {
                       "anyOf": [
                         {
@@ -77502,6 +77548,8 @@
                     "suppressedCount",
                     "evidenceIds",
                     "rejectReason",
+                    "leftOpIds",
+                    "rejectedOpIds",
                     "decidedBy",
                     "decidedByLabel",
                     "decidedAt",
@@ -78091,7 +78139,7 @@
     "/cases/{caseId}/proposals/{proposalId}/accept": {
       "post": {
         "operationId": "proposals.accept",
-        "summary": "Accept a pending Proposal",
+        "summary": "Accept a pending Proposal, whole or the chosen changes",
         "tags": [
           "inbox"
         ],
@@ -78142,6 +78190,22 @@
                   "attestationText": {
                     "type": "string",
                     "maxLength": 20000
+                  },
+                  "opIds": {
+                    "type": "array",
+                    "maxItems": 1000,
+                    "items": {
+                      "type": "string",
+                      "maxLength": 256
+                    }
+                  },
+                  "untickedAs": {
+                    "enum": [
+                      "left",
+                      "rejected"
+                    ],
+                    "type": "string",
+                    "default": "left"
                   }
                 }
               }
@@ -78378,6 +78442,20 @@
                         }
                       ]
                     },
+                    "leftOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "rejectedOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
                     "decidedBy": {
                       "anyOf": [
                         {
@@ -78513,6 +78591,8 @@
                     "suppressedCount",
                     "evidenceIds",
                     "rejectReason",
+                    "leftOpIds",
+                    "rejectedOpIds",
                     "decidedBy",
                     "decidedByLabel",
                     "decidedAt",
@@ -79372,6 +79452,20 @@
                         }
                       ]
                     },
+                    "leftOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "rejectedOpIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
                     "decidedBy": {
                       "anyOf": [
                         {
@@ -79507,6 +79601,8 @@
                     "suppressedCount",
                     "evidenceIds",
                     "rejectReason",
+                    "leftOpIds",
+                    "rejectedOpIds",
                     "decidedBy",
                     "decidedByLabel",
                     "decidedAt",

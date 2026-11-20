@@ -1,13 +1,17 @@
 import { useMemo } from "react";
 
 import { LazyEvidencePreviewDrawer } from "@/domains/triage/components/evidence-preview-drawer-lazy";
-import { PatchOpList } from "@/domains/triage/components/patch-op-list";
+import {
+  PatchOpList,
+  type PatchOpChoice,
+} from "@/domains/triage/components/patch-op-list";
 import { TriageDecideFooter } from "@/domains/triage/components/triage-decide-footer";
 import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
 import { proposalPatch } from "@/domains/triage/lib/filters";
+import { setOpsTicked, toggleOpSkip } from "@/domains/triage/lib/op-selection";
 import { cn } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -32,6 +36,38 @@ function summaryIsRedundant(proposal: ProposalRecord): boolean {
     const text = patchOpText(op);
     return text !== undefined && text.trim() === summary;
   });
+}
+
+/**
+ * Tick boxes while the Proposal is pending (ticking an op ticks what it needs; unticking it
+ * unticks what needs it), the left / rejected chips once a partial Accept decided it.
+ */
+function patchOpChoice(
+  proposal: ProposalRecord,
+  skippedOpIds: readonly string[],
+  onSkippedChange: (next: string[]) => void
+): PatchOpChoice | undefined {
+  const patch = proposalPatch(proposal);
+  if (proposal.status === "pending") {
+    return {
+      kind: "choosing",
+      skipped: new Set(skippedOpIds),
+      onToggle: (opId) => {
+        onSkippedChange(toggleOpSkip(patch, skippedOpIds, opId));
+      },
+      onSetGroup: (opIds, isTicked) => {
+        onSkippedChange(setOpsTicked(patch, skippedOpIds, opIds, isTicked));
+      },
+    };
+  }
+  if (proposal.leftOpIds.length + proposal.rejectedOpIds.length === 0) {
+    return undefined;
+  }
+  return {
+    kind: "decided",
+    left: new Set(proposal.leftOpIds),
+    rejected: new Set(proposal.rejectedOpIds),
+  };
 }
 
 type TriagePatchBodyProps = {
@@ -160,10 +196,18 @@ export function TriagePatchBody({
             </Alert>
           ) : null}
 
-          <acceptForm.Subscribe selector={(state) => state.values.evidenceIds}>
-            {(evidenceIds) => (
+          <acceptForm.Subscribe
+            selector={(state) => ({
+              evidenceIds: state.values.evidenceIds,
+              skippedOpIds: state.values.skippedOpIds,
+            })}
+          >
+            {({ evidenceIds, skippedOpIds }) => (
               <PatchOpList
                 patch={patch}
+                choice={patchOpChoice(proposal, skippedOpIds, (next) => {
+                  acceptForm.setFieldValue("skippedOpIds", next);
+                })}
                 collidingOpIds={collisions.map((hit) => hit.opId)}
                 invalidOpIds={invalidIdentifierOps.map((hit) => hit.opId)}
                 sharedEvidenceIds={normalizeUuidList([

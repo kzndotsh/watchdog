@@ -15,7 +15,8 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 ## Identifier / patch gates
 
-- Invalid Identifier ops **block** Accept (`listInvalidIdentifierOps`).
+- Invalid Identifier ops **block** Accept (`listInvalidIdentifierOps`), unless the reviewer unticks them (partial Accept, below).
+- **Partial Accept.** `proposals.accept` takes `opIds`, the ops to apply (omitted: the whole patch), and `untickedAs` for the rest: `left` (default) records nothing against them, so a later run may propose them again; `rejected` fingerprints them like a Reject (`finding_suppressions`). Core refuses an empty choice, an id that is not an op of the Proposal, and a choice without an op one of its ops names (an Identifier on an Entity the patch creates, without that Entity: `withPatchDependencies`, `packages/schemas/src/patch-dependencies.ts`); Triage ticks and unticks those together. The gates, confidence and the transaction are the same as a whole Accept, over the chosen ops only. The Proposal becomes `accepted` and keeps the unticked ids (`proposals.left_op_ids`, `rejected_op_ids`). Tests: `partial-accept.int.test.ts`.
 - Identifier collisions **warn** (Alert + chip); Accept still allowed.
 - Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`, `childWriteViolation` for the agent/CLI child-write rule shared by API and CLI): pure, DB-free. Browser UI imports `patchNeedsConfidence` from `@watchdog/policy/patch-needs-confidence` only (package root pulls Effect-tagged gates into the client).
 

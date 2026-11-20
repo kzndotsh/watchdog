@@ -383,6 +383,8 @@ export const buildProposalRecord = (
   suppressedCount: 0,
   evidenceIds: [testId(41)],
   rejectReason: null,
+  leftOpIds: [],
+  rejectedOpIds: [],
   decidedBy: null,
   decidedByLabel: null,
   decidedAt: null,

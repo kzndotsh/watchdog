@@ -70,6 +70,8 @@ vi.mock("@/domains/triage/components/triage-detail", () => ({
       confidence: "possible";
       evidenceIds: string[];
       attestationText: string;
+      skippedOpIds: string[];
+      untickedAs: "left";
     }) => void;
     onReject: (reason: string) => void;
   }) => (
@@ -86,6 +88,8 @@ vi.mock("@/domains/triage/components/triage-detail", () => ({
             confidence: "possible",
             evidenceIds: [],
             attestationText: "",
+            skippedOpIds: [],
+            untickedAs: "left",
           });
         }}
       >

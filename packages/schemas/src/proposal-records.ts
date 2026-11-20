@@ -49,6 +49,10 @@ export const proposalSchema = z.object({
   suppressedCount: z.number().int(),
   evidenceIds: z.array(z.uuid()),
   rejectReason: z.string().nullable(),
+  /** A partial Accept's unticked ops: not applied, and nothing suppresses them. */
+  leftOpIds: z.array(z.uuid()),
+  /** A partial Accept's unticked ops that were fingerprinted like a Reject. */
+  rejectedOpIds: z.array(z.uuid()),
   decidedBy: z.string().nullable(),
   decidedByLabel: z.string().nullable(),
   decidedAt: z.string().nullable(),

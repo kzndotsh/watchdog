@@ -7,6 +7,7 @@ import {
   type PatchOpGroup,
 } from "@/domains/triage/lib/patch-op-groups";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
+import { cn } from "@/lib/utils";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { Chip } from "@/shared/ui/chip";
 import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
@@ -16,6 +17,7 @@ import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
@@ -90,6 +92,23 @@ function EvidenceChips({
   );
 }
 
+/**
+ * Which ops a pending Proposal's Accept applies (tick boxes), or how a decided partial Accept
+ * left the rest (chips). Absent: a plain ledger.
+ */
+export type PatchOpChoice =
+  | {
+      kind: "choosing";
+      skipped: ReadonlySet<string>;
+      onToggle: (opId: string) => void;
+      onSetGroup: (opIds: readonly string[], isTicked: boolean) => void;
+    }
+  | {
+      kind: "decided";
+      left: ReadonlySet<string>;
+      rejected: ReadonlySet<string>;
+    };
+
 type PatchOpRowProps = {
   op: PatchOp;
   localIds: string[];
@@ -97,6 +116,7 @@ type PatchOpRowProps = {
   onEvidenceClick?: (evidenceId: string) => void;
   isColliding?: boolean;
   isInvalid?: boolean;
+  choice?: PatchOpChoice;
 };
 
 function PatchOpRow({
@@ -106,17 +126,40 @@ function PatchOpRow({
   onEvidenceClick,
   isColliding,
   isInvalid,
+  choice,
 }: PatchOpRowProps) {
   const meta = PATCH_RESOURCE_META[op.resource];
   const summary = summarizePatchOpData(op.resource, op.data);
+  const isSkipped = choice?.kind === "choosing" && choice.skipped.has(op.id);
 
   return (
-    <div className="border-border flex flex-col gap-1.5 border-b px-2.5 py-2 last:border-b-0">
+    <div
+      className={cn(
+        "border-border flex flex-col gap-1.5 border-b px-2.5 py-2 last:border-b-0",
+        isSkipped && "opacity-60"
+      )}
+    >
       <div className="flex flex-wrap items-center gap-1.5">
+        {choice?.kind === "choosing" ? (
+          <Checkbox
+            className="size-3.5 shrink-0"
+            aria-label={`Accept: ${meta.label} ${summary}`}
+            checked={!isSkipped}
+            onCheckedChange={() => {
+              choice.onToggle(op.id);
+            }}
+          />
+        ) : null}
         <PatchOpBadge op={op.op} />
         <span className="text-foreground text-xs">{meta.label}</span>
         {isColliding ? <Chip size="sm">On another Entity</Chip> : null}
         {isInvalid ? <Chip size="sm">Invalid value</Chip> : null}
+        {choice?.kind === "decided" && choice.left.has(op.id) ? (
+          <Chip size="sm">Left</Chip>
+        ) : null}
+        {choice?.kind === "decided" && choice.rejected.has(op.id) ? (
+          <Chip size="sm">Rejected</Chip>
+        ) : null}
       </div>
       <p className="text-muted-foreground text-xs leading-snug break-words whitespace-pre-wrap">
         {summary}
@@ -132,6 +175,42 @@ function PatchOpRow({
   );
 }
 
+function PatchOpGroupTrigger({
+  group,
+  tickedCount,
+}: {
+  group: PatchOpGroup;
+  /** While choosing: how many of the group's ops are ticked. */
+  tickedCount?: number;
+}) {
+  const count =
+    tickedCount === undefined || tickedCount === group.ops.length
+      ? `${group.ops.length}`
+      : `${tickedCount} of ${group.ops.length}`;
+  return (
+    <CollapsibleRowTrigger aria-label={`${group.label} (${count})`}>
+      <ChevronDownIcon
+        className="text-muted-foreground mt-0.5 size-3.5 shrink-0 transition-transform group-aria-expanded/row-trigger:rotate-180"
+        aria-hidden
+      />
+      <span className="text-foreground text-xs">{group.label}</span>
+      <span className="text-muted-foreground text-xs tabular-nums">
+        {count}
+      </span>
+      {group.flaggedCount > 0 ? (
+        <Chip size="sm">{group.flaggedCount} flagged</Chip>
+      ) : null}
+    </CollapsibleRowTrigger>
+  );
+}
+
+function groupTickedCount(
+  group: PatchOpGroup,
+  skipped: ReadonlySet<string>
+): number {
+  return group.ops.filter((op) => !skipped.has(op.id)).length;
+}
+
 type PatchOpGroupSectionProps = {
   group: PatchOpGroup;
   sharedEvidenceIds: string[];
@@ -140,6 +219,7 @@ type PatchOpGroupSectionProps = {
   invalidSet: ReadonlySet<string>;
   evidenceById?: ReadonlyMap<string, EvidenceOption>;
   onEvidenceClick?: (evidenceId: string) => void;
+  choice?: PatchOpChoice;
 };
 
 function PatchOpGroupSection({
@@ -150,25 +230,37 @@ function PatchOpGroupSection({
   invalidSet,
   evidenceById,
   onEvidenceClick,
+  choice,
 }: PatchOpGroupSectionProps) {
   return (
     <div className="border-border border-b last:border-b-0">
       <Collapsible defaultOpen={group.isOpenByDefault}>
-        <CollapsibleRowTrigger
-          aria-label={`${group.label} (${group.ops.length})`}
-        >
-          <ChevronDownIcon
-            className="text-muted-foreground mt-0.5 size-3.5 shrink-0 transition-transform group-aria-expanded/row-trigger:rotate-180"
-            aria-hidden
-          />
-          <span className="text-foreground text-xs">{group.label}</span>
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {group.ops.length}
-          </span>
-          {group.flaggedCount > 0 ? (
-            <Chip size="sm">{group.flaggedCount} flagged</Chip>
-          ) : null}
-        </CollapsibleRowTrigger>
+        {choice?.kind === "choosing" ? (
+          <div className="flex items-start gap-2 pl-3">
+            {/* Ticked only when every op is; a partly ticked group says "2 of 4" beside it. */}
+            <Checkbox
+              className="mt-3 size-3.5 shrink-0"
+              aria-label={`Accept all ${group.label}`}
+              checked={
+                groupTickedCount(group, choice.skipped) === group.ops.length
+              }
+              onCheckedChange={(next) => {
+                choice.onSetGroup(
+                  group.ops.map((op) => op.id),
+                  next
+                );
+              }}
+            />
+            <div className="min-w-0 flex-1">
+              <PatchOpGroupTrigger
+                group={group}
+                tickedCount={groupTickedCount(group, choice.skipped)}
+              />
+            </div>
+          </div>
+        ) : (
+          <PatchOpGroupTrigger group={group} />
+        )}
         <CollapsibleContent>
           <div className="border-border border-t">
             {group.ops.map((op) => {
@@ -183,6 +275,7 @@ function PatchOpGroupSection({
                   onEvidenceClick={onEvidenceClick}
                   isColliding={collidingSet.has(op.id)}
                   isInvalid={invalidSet.has(op.id)}
+                  choice={choice}
                 />
               );
             })}
@@ -201,6 +294,8 @@ type PatchOpListProps = {
   jobId?: string | null;
   collidingOpIds?: string[];
   invalidOpIds?: string[];
+  /** Tick boxes for a pending Proposal, or the left / rejected chips of a decided one. */
+  choice?: PatchOpChoice;
 };
 
 /**
@@ -215,6 +310,7 @@ export function PatchOpList({
   jobId,
   collidingOpIds = EMPTY_IDS,
   invalidOpIds = EMPTY_IDS,
+  choice,
 }: PatchOpListProps) {
   const { slug: caseSlug } = useWorkCase();
   if (patch.length === 0) {
@@ -270,6 +366,7 @@ export function PatchOpList({
             invalidSet={invalidSet}
             evidenceById={evidenceById}
             onEvidenceClick={onEvidenceClick}
+            choice={choice}
           />
         ))}
       </div>

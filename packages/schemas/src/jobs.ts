@@ -31,6 +31,7 @@ export {
 } from "./proposal-display";
 export type {
   AcceptProposalInput,
+  UntickedOpOutcome,
   CreateProposalInput,
   RejectProposalInput,
 } from "./proposal-ingress";
@@ -49,6 +50,7 @@ export {
   createProposalInputSchema,
   proposalPatchFieldsSchema,
   rejectProposalInputSchema,
+  UNTICKED_OP_OUTCOMES,
 } from "./proposal-ingress";
 export type {
   CancelJobInput,
