@@ -2,7 +2,7 @@
 
 > Scope: `apps/web` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/reference/web/README.md)** (it wins over this file); web traps are indexed at [`README.md#traps-index`](../../docs/reference/web/README.md#traps-index). Design direction: [`DESIGN.md`](../../DESIGN.md).
+TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/reference/web/README.md)** (it wins over this file); web traps are indexed at [`README.md#traps-index`](../../docs/reference/web/README.md#traps-index). Design direction: [`DESIGN.md`](../../DESIGN.md); its front-matter tokens are generated from `src/styles/` by `pnpm generate:design` (edit the CSS, then regenerate).
 
 ## Commands
 

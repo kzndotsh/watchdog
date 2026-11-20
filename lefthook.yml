@@ -46,13 +46,11 @@ pre-commit:
         - "scripts/check-docs.mjs"
         - "scripts/lib/**"
       run: pnpm check:docs:strict
-    design-tokens:
+    design-lint:
       glob:
         - "DESIGN.md"
-        - "apps/web/src/styles/wd-*.css"
-        - "scripts/check-design-tokens.mjs"
         - "scripts/lint-design.mjs"
-      run: pnpm check:design-tokens && pnpm lint:design
+      run: pnpm lint:design
     tagged-errors:
       glob:
         - "packages/**/*.ts"
