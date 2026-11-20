@@ -38,7 +38,7 @@ describe("partial Accept", () => {
   async function seedThree() {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
-    const ops = [
+    const ops: [PatchOp, PatchOp, PatchOp] = [
       buildIdentifierCreateOp(entity.id, "domain", "a.example", {
         id: testId(31),
       }),
@@ -103,7 +103,7 @@ describe("partial Accept", () => {
       cased.id,
       fingerprints(ops)
     );
-    expect(stored).toEqual(fingerprints([ops[2] as PatchOp]));
+    expect(stored).toEqual(fingerprints([ops[2]]));
   });
 
   it("applies the whole patch when no ops are named", async () => {

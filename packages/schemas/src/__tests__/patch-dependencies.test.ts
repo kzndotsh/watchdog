@@ -48,6 +48,15 @@ describe("patch dependencies", () => {
     ]);
   });
 
+  it("joins what two ops sharing an id need", () => {
+    const sameIdElsewhere = { ...onElsewhere, id: testId(3) };
+    const shared = [entity, onAcme, sameIdElsewhere];
+    expect(patchOpDependencies(shared).get(testId(3))).toEqual([testId(1)]);
+    expect(withPatchDependencies(shared, [testId(3)])).toEqual(
+      new Set([testId(3), testId(1)])
+    );
+  });
+
   it("adds what the chosen ops need, and only ops of the patch", () => {
     expect(withPatchDependencies(patch, [testId(4)])).toEqual(
       new Set([testId(4), testId(1), testId(2)])

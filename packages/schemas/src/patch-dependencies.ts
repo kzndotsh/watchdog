@@ -27,10 +27,13 @@ export function patchOpDependencies(
   for (const op of patch) {
     const named = new Set<string>();
     collectStrings(op.data, named);
-    deps.set(
-      op.id,
-      [...named].filter((id) => id !== op.id && ids.has(id))
-    );
+    // Two ops may share an id (nothing in the patch schema refuses it): an id needs what any of
+    // its ops names, so choosing it never applies one of them without its Entity.
+    const needs = new Set(deps.get(op.id));
+    for (const id of named) {
+      if (id !== op.id && ids.has(id)) needs.add(id);
+    }
+    deps.set(op.id, [...needs]);
   }
   return deps;
 }
