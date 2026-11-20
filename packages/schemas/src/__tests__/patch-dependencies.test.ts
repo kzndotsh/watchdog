@@ -37,6 +37,17 @@ describe("patch dependencies", () => {
     expect(deps.get(testId(1))).toEqual([]);
   });
 
+  it("finds an op's id nested in arrays and objects of its data", () => {
+    const nested = {
+      ...onElsewhere,
+      id: testId(6),
+      data: { refs: [{ entity: testId(1) }, 7, null], note: "x" },
+    };
+    expect(patchOpDependencies([entity, nested]).get(testId(6))).toEqual([
+      testId(1),
+    ]);
+  });
+
   it("adds what the chosen ops need, and only ops of the patch", () => {
     expect(withPatchDependencies(patch, [testId(4)])).toEqual(
       new Set([testId(4), testId(1), testId(2)])

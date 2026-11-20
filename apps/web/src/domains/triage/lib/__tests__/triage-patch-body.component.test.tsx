@@ -245,6 +245,44 @@ describe("TriagePatchBody", () => {
       expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
     });
 
+    it("unticks and ticks a whole group, and can reject the rest", async () => {
+      const user = userEvent.setup();
+      const second: ProposalRecord["patch"][number] = {
+        ...onEntity,
+        id: testId(43),
+        data: { entityId: testId(20), type: "domain", value: "b.example" },
+      };
+      render(
+        <Harness
+          confidence="unverified"
+          row={proposal([entityOp, onEntity, second])}
+        />
+      );
+      const group = screen.getByRole("checkbox", {
+        name: /Accept all Domain Identifiers/,
+      });
+
+      await user.click(group);
+      expect(group).not.toBeChecked();
+      expect(
+        screen.getByRole("button", { name: "Accept 1 of 3" })
+      ).toBeEnabled();
+
+      await user.click(
+        screen.getByRole("combobox", { name: "Unticked changes" })
+      );
+      await user.click(
+        await screen.findByRole("option", { name: "Reject the rest" })
+      );
+      expect(
+        screen.getByRole("combobox", { name: "Unticked changes" })
+      ).toHaveTextContent("Reject the rest");
+
+      await user.click(group);
+      expect(group).toBeChecked();
+      expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
+    });
+
     it("shows which changes a decided partial Accept left or rejected, with no tick boxes", () => {
       render(
         <Harness
