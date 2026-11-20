@@ -20,7 +20,7 @@ import {
 } from "@watchdog/ui/components/collapsible";
 
 /** A group this small starts open; a bigger one (80 domains from a sweep) starts closed. */
-export const IDENTIFIER_GROUP_OPEN_MAX = 10;
+const IDENTIFIER_GROUP_OPEN_MAX = 10;
 
 type IdentifierTypeGroupsProps = {
   readonly caseId: string;
