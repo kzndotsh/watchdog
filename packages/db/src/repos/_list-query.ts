@@ -189,6 +189,12 @@ export type ListIndexNeeds = {
   readonly searchColumns: readonly string[];
 };
 
+/** One value of a `choices` filter and its matching rows (`countsBy`). */
+export type ListChoiceCount = {
+  readonly value: string;
+  readonly count: number;
+};
+
 export type ListPageWindow = {
   /** Rows to read: the service asks for one more than it shows. */
   readonly limit: number;
@@ -211,6 +217,18 @@ export type ListRepo<Def extends AnyListDef, Row> = {
     query: ListQuery<Def>,
     cap: number
   ) => Promise<number>;
+  /**
+   * Matching rows per value of a `choices` filter bound in `searchLabels` (the Identifiers by
+   * type): over the first `cap + 1` matching rows, so the counts sum to at most `cap + 1`, and a
+   * sum past `cap` means they are capped. Values with no row are left out.
+   */
+  readonly countsBy: (
+    exec: DbExec,
+    scope: ListScope<Def>,
+    query: ListQuery<Def>,
+    key: ChoicesKey<Def>,
+    cap: number
+  ) => Promise<ListChoiceCount[]>;
   /**
    * Rows of the scope by id (at most `ARRAY_MAX`; ids that are not uuids, or for an `idType: "int"` list not positive safe integers as text, are skipped), in the
    * default sort. Filters do not apply: a URL-selected row shows even when a filter hides it.
@@ -242,6 +260,13 @@ export type AnyListRepo = {
     query: never,
     cap: number
   ) => Promise<number>;
+  readonly countsBy: (
+    exec: DbExec,
+    scope: never,
+    query: never,
+    key: never,
+    cap: number
+  ) => Promise<readonly ListChoiceCount[]>;
   readonly byIds: (
     exec: DbExec,
     scope: never,
@@ -386,6 +411,25 @@ export function defineListRepo<
         .as("capped");
       const [row] = await exec.select({ n: count() }).from(capped);
       return row?.n ?? 0;
+    },
+    async countsBy(exec, scope, query, key, cap) {
+      const column = labels[key];
+      if (column === undefined) {
+        throw new Error(`${def.name}: no searchLabels column for ${key}`);
+      }
+      const table: PgTable = binding.table;
+      const capped = exec
+        .select({ value: sql<string>`${column}`.as("value") })
+        .from(table)
+        .where(matching(scope, query))
+        .limit(cap + 1)
+        .as("capped");
+      const rows = await exec
+        .select({ value: capped.value, count: count() })
+        .from(capped)
+        .groupBy(capped.value)
+        .orderBy(capped.value);
+      return rows;
     },
     async byIds(exec, scope, ids) {
       const wanted = (

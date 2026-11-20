@@ -129,6 +129,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.identifiers.list({ caseId, entityId: ids.entityA }),
     ],
     [
+      "identifiers.typeCounts",
+      async () => b.identifiers.typeCounts({ caseId, entityId: ids.entityA }),
+    ],
+    [
       "identifiers.getMany",
       async () => b.identifiers.getMany({ caseId, ids: [ids.identifierA] }),
     ],

@@ -234,6 +234,19 @@ const PROJECTIONS: Readonly<Record<string, { list: string; reason: string }>> =
     },
   };
 
+/**
+ * Procedures that count one view of a declared list instead of paging it (same `input`, so the
+ * counts match the pages; cursor, limit and sort are ignored), each with its list and reason.
+ */
+const VIEW_COUNTS: Readonly<Record<string, { list: string; reason: string }>> =
+  {
+    "identifiers.typeCounts": {
+      list: "identifiers",
+      reason:
+        "an Entity's Identifiers grouped by type head each group with its count before the group's rows are read",
+    },
+  };
+
 describe("paged lists are declared lists", () => {
   const paths = procedurePaths(router);
   const paged = paths.filter((path) => {
@@ -264,14 +277,18 @@ describe("paged lists are declared lists", () => {
       const serving = paths.filter(
         (path) =>
           procedureAt(path)?.["~orpc"].inputSchema === def.input &&
-          !(path in PROJECTIONS)
+          !(path in PROJECTIONS) &&
+          !(path in VIEW_COUNTS)
       );
       expect(serving, `list ${def.name}`).toHaveLength(1);
     }
   });
 
-  it("keeps every projection a procedure over a declared list's input", () => {
-    for (const [path, { list }] of Object.entries(PROJECTIONS)) {
+  it("keeps every projection and view count a procedure over a declared list's input", () => {
+    for (const [path, { list }] of Object.entries({
+      ...PROJECTIONS,
+      ...VIEW_COUNTS,
+    })) {
       const def = LIST_DEFS.find((candidate) => candidate.name === list);
       expect(def, `${path} names a declared list`).toBeDefined();
       expect(

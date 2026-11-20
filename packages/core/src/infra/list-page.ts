@@ -1,6 +1,12 @@
 import { Effect } from "effect";
 
-import type { ListPageWindow, ListRepo, ListRow } from "@watchdog/db";
+import type {
+  ChoicesKey,
+  ListChoiceCount,
+  ListPageWindow,
+  ListRepo,
+  ListRow,
+} from "@watchdog/db";
 import { ARRAY_MAX, opsOf } from "@watchdog/schemas/shared";
 import type {
   AnyListDef,
@@ -45,6 +51,12 @@ function listRepoFx<Def extends AnyListDef, Row extends ListRow>(
     ) => tryDbWith((exec) => repo.page(exec, scope, query, window)),
     countCapped: (scope: ListScope<Def>, query: ListQuery<Def>, cap: number) =>
       tryDbWith((exec) => repo.countCapped(exec, scope, query, cap)),
+    countsBy: (
+      scope: ListScope<Def>,
+      query: ListQuery<Def>,
+      key: ChoicesKey<Def>,
+      cap: number
+    ) => tryDbWith((exec) => repo.countsBy(exec, scope, query, key, cap)),
     byIds: (scope: ListScope<Def>, ids: readonly string[]) =>
       tryDbWith((exec) => repo.byIds(exec, scope, ids)),
   };
@@ -187,4 +199,33 @@ export function listCappedEffect<
     const items = yield* args.toItems(rows.slice(0, args.cap));
     return { items: [...items], isTruncated: rows.length > args.cap };
   });
+}
+
+/**
+ * Matching rows per value of one `choices` filter of a declared list (an Entity's Identifiers by
+ * type), over the first `cap + 1` matching rows: `isCapped` means the counts stop there. The
+ * caller authorises the scope and builds the query through `opsOf(def).queryOf`.
+ */
+export function listCountsByEffect<
+  Def extends AnyListDef,
+  Row extends ListRow,
+>(args: {
+  readonly repo: ListRepo<Def, Row>;
+  readonly scope: ListScope<Def>;
+  readonly query: ListQuery<NoInfer<Def>>;
+  readonly key: ChoicesKey<NoInfer<Def>>;
+  readonly cap: number;
+}): Effect.Effect<
+  { readonly counts: ListChoiceCount[]; readonly isCapped: boolean },
+  DomainTag,
+  Db
+> {
+  return listRepoFx(args.repo)
+    .countsBy(args.scope, args.query, args.key, args.cap)
+    .pipe(
+      Effect.map((counts) => ({
+        counts,
+        isCapped: counts.reduce((sum, row) => sum + row.count, 0) > args.cap,
+      }))
+    );
 }

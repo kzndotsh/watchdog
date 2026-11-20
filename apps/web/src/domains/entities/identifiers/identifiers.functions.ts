@@ -11,6 +11,7 @@ import {
   identifierList,
   updateIdentifierInputSchema,
 } from "@watchdog/schemas/graph";
+import type { IdentifierTypeCounts } from "@watchdog/schemas/graph";
 import type { ListPage } from "@watchdog/schemas/shared";
 
 export type {
@@ -26,6 +27,16 @@ export const listIdentifiersPageFn = createServerFn({ method: "GET" })
   .validator(identifierList.input)
   .handler(async ({ data, context }): Promise<ListPage<CaseIdentifierRecord>> =>
     orpcFromContext(context).identifiers.list(data)
+  );
+
+/**
+ * The Identifiers the list's filters and `q` match, per type: the group headers of an Entity's
+ * Identifiers grouped by type (`entityId` set).
+ */
+export const countIdentifierTypesFn = createServerFn({ method: "GET" })
+  .validator(identifierList.input)
+  .handler(async ({ data, context }): Promise<IdentifierTypeCounts> =>
+    orpcFromContext(context).identifiers.typeCounts(data)
   );
 
 export const createIdentifierFn = createServerFn({ method: "POST" })

@@ -2,7 +2,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -17,11 +25,13 @@ import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
+const countIdentifierTypesFn = vi.hoisted(() => vi.fn());
 const createIdentifierFn = vi.hoisted(() => vi.fn());
 const deleteIdentifierFn = vi.hoisted(() => vi.fn());
 
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   listIdentifiersPageFn,
+  countIdentifierTypesFn,
   createIdentifierFn,
   updateIdentifierFn: vi.fn(),
   deleteIdentifierFn,
@@ -48,6 +58,7 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
+import { listDisplayStorageKey } from "@/shared/lib/list/list-display-store";
 import { toast } from "@/shared/ui/toast";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
@@ -76,15 +87,41 @@ function entityIdentifiers(count: number): CaseIdentifierRecord[] {
 /** Five rows a page: enough to prove paging, small enough that each step renders fast. */
 const PAGE_SIZE = 5;
 
+/** The tab's rows match a request: its type, Entity and search. */
+function matchesRequest(
+  row: CaseIdentifierRecord,
+  data: Readonly<Record<string, unknown>>
+): boolean {
+  return (
+    matchesChoice(row.type, data.type) &&
+    (data.entityId === undefined || data.entityId === row.entityId) &&
+    matchesQ(data, [row.value, row.platform, row.notes])
+  );
+}
+
 function serve(rows: readonly CaseIdentifierRecord[]) {
+  countIdentifierTypesFn.mockReset();
+  countIdentifierTypesFn.mockImplementation(
+    async ({ data }: { data: Readonly<Record<string, unknown>> }) => {
+      const byType = new Map<string, number>();
+      for (const row of rows) {
+        if (matchesRequest(row, data)) {
+          byType.set(row.type, (byType.get(row.type) ?? 0) + 1);
+        }
+      }
+      return {
+        counts: [...byType]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([type, count]) => ({ type, count })),
+        isCapped: false,
+      };
+    }
+  );
   listIdentifiersPageFn.mockReset();
   listIdentifiersPageFn.mockImplementation(
     memoryListPage(rows, {
       pageSize: PAGE_SIZE,
-      matches: (row, data) =>
-        matchesChoice(row.type, data.type) &&
-        (data.entityId === undefined || data.entityId === row.entityId) &&
-        matchesQ(data, [row.value, row.platform, row.notes]),
+      matches: matchesRequest,
       compare: (sort) => (a, b) =>
         sort === "value.desc"
           ? b.value.localeCompare(a.value)
@@ -159,7 +196,24 @@ function renderSection() {
 
 beforeAll(preloadSharedLazyChunks);
 
+const DISPLAY_KEY = listDisplayStorageKey("dossier-identifiers");
+
 describe("IdentifiersSection", () => {
+  // These cases read the flat table; the grouped view has its own cases below.
+  beforeEach(() => {
+    window.localStorage.setItem(
+      DISPLAY_KEY,
+      JSON.stringify({
+        hiddenColumns: [],
+        toggles: { "group-by-type": false },
+        density: "comfortable",
+      })
+    );
+  });
+  afterEach(() => {
+    window.localStorage.removeItem(DISPLAY_KEY);
+  });
+
   it("shows inline empty copy and add controls when there are no identifiers", async () => {
     renderSection();
     expect(
@@ -372,5 +426,107 @@ describe("IdentifiersSection", () => {
       await screen.findByText("Nothing Matches These Filters")
     ).toBeInTheDocument();
     expect(screen.queryByText("No Identifiers Yet")).not.toBeInTheDocument();
+  });
+});
+
+describe("IdentifiersSection grouped by type", () => {
+  afterEach(() => {
+    window.localStorage.removeItem(DISPLAY_KEY);
+  });
+
+  /** 12 domains and 2 emails of ENTITY. */
+  function domainsAndEmails(): CaseIdentifierRecord[] {
+    return [
+      ...Array.from({ length: 12 }, (_, n) =>
+        buildCaseIdentifierRecord({
+          id: testId(4000 + n),
+          entityId: ENTITY.id,
+          type: "domain",
+          value: `host${String(n).padStart(2, "0")}.example`,
+        })
+      ),
+      ...Array.from({ length: 2 }, (_, n) =>
+        buildCaseIdentifierRecord({
+          id: testId(4100 + n),
+          entityId: ENTITY.id,
+          type: "email",
+          value: `ops${n}@example.com`,
+        })
+      ),
+    ];
+  }
+
+  function typedRequests(): unknown[] {
+    return listIdentifiersPageFn.mock.calls.flatMap(([arg]) => {
+      const data = (arg as { data: Record<string, unknown> }).data;
+      return data.type === undefined ? [] : [data.type];
+    });
+  }
+
+  it("heads each type with the server's count; a small group opens, a big one waits to be opened", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderTab(domainsAndEmails());
+
+    const domains = await screen.findByRole("button", { name: "Domain (12)" });
+    expect(domains).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Email (2)" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    expect(
+      await screen.findByDisplayValue("ops0@example.com")
+    ).toBeInTheDocument();
+    // The closed group has read nothing.
+    expect(typedRequests()).toEqual([["email"]]);
+
+    await user.click(domains);
+    expect(
+      await screen.findByDisplayValue("host00.example")
+    ).toBeInTheDocument();
+    expect(lastRequest()).toEqual({
+      caseId: CASE_ID,
+      entityId: ENTITY.id,
+      type: ["domain"],
+    });
+    expect(screen.getByText("Showing 5 of 12")).toBeInTheDocument();
+  });
+
+  it("counts and fills the groups under the tab's search", async () => {
+    renderTab(domainsAndEmails(), { q: "ops1" });
+
+    expect(
+      await screen.findByRole("button", { name: "Email (1)" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Domain/ })
+    ).not.toBeInTheDocument();
+    expect(countIdentifierTypesFn).toHaveBeenLastCalledWith({
+      data: { caseId: CASE_ID, entityId: ENTITY.id, q: "ops1" },
+    });
+    expect(
+      await screen.findByDisplayValue("ops1@example.com")
+    ).toBeInTheDocument();
+    expect(lastRequest()).toEqual({
+      caseId: CASE_ID,
+      entityId: ENTITY.id,
+      type: ["email"],
+      q: "ops1",
+    });
+  });
+
+  it("shows the flat table when Group by type is turned off", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderTab(domainsAndEmails());
+    await screen.findByRole("button", { name: "Domain (12)" });
+
+    await user.click(screen.getByRole("button", { name: /^Display/ }));
+    await user.click(
+      await screen.findByRole("switch", { name: "Group by type" })
+    );
+
+    expect(await screen.findByText("Showing 5 of 14")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Domain (12)" })
+    ).not.toBeInTheDocument();
   });
 });

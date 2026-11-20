@@ -5,6 +5,7 @@ export {
 } from "./entity-display";
 export type { EntitySearchRow, EntityTitleRow } from "./entity-display";
 export type { PatchOp } from "./patch";
+export type { IdentifierTypeCounts } from "./graph-records";
 export {
   patchOpDependencies,
   patchOpDependents,
@@ -209,6 +210,7 @@ export {
   eventListPageSchema,
   eventSchema,
   identifierListPageSchema,
+  identifierTypeCountsSchema,
   identifierSchema,
   questionListPageSchema,
   questionSchema,

@@ -100,7 +100,7 @@ vi.mock("@/domains/entities/events/events.functions", () =>
 );
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () =>
   stubFns(
-    "listIdentifiersPageFn createIdentifierFn updateIdentifierFn deleteIdentifierFn"
+    "listIdentifiersPageFn countIdentifierTypesFn createIdentifierFn updateIdentifierFn deleteIdentifierFn"
   )
 );
 vi.mock("@/domains/entities/questions/questions.functions", () =>
@@ -160,6 +160,7 @@ const IDENTIFIERS = [
 
 const getEntityBySlugFn = serverFn("getEntityBySlugFn");
 const listIdentifiersPageFn = serverFn("listIdentifiersPageFn");
+const countIdentifierTypesFn = serverFn("countIdentifierTypesFn");
 const getTaskBoardFn = serverFn("getTaskBoardFn");
 
 const emptyPage = memoryListPage<unknown>([], { matches: () => false });
@@ -184,6 +185,14 @@ beforeEach(() => {
         matchesQ(data, [row.value, row.platform, row.notes]),
     })
   );
+  // The Identifiers tab groups by type: one email, one phone, each group open.
+  countIdentifierTypesFn.mockReset().mockResolvedValue({
+    counts: [
+      { type: "email", count: 1 },
+      { type: "phone", count: 1 },
+    ],
+    isCapped: false,
+  });
   getTaskBoardFn
     .mockReset()
     .mockResolvedValue({ items: [], isTruncated: false });
@@ -275,7 +284,7 @@ describe("Dossier", () => {
     expect(
       await screen.findByRole("searchbox", { name: "Search identifiers" })
     ).toBeInTheDocument();
-    expect(screen.getByDisplayValue("alpha@example.com")).toBeVisible();
+    expect(await screen.findByDisplayValue("alpha@example.com")).toBeVisible();
   });
 
   it("asks before deleting the Entity", async () => {

@@ -122,6 +122,7 @@ describe("declared scopes", () => {
         "identifiers.delete": "graph:write",
         "identifiers.getMany": "cases:read",
         "identifiers.list": "cases:read",
+        "identifiers.typeCounts": "cases:read",
         "identifiers.update": "graph:write",
         "jobs.cancel": "evidence:write",
         "jobs.cancelPlaybook": "evidence:write",

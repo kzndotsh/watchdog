@@ -47,6 +47,7 @@ export {
 } from "./child-lists";
 export {
   getIdentifiersByIdsEffect,
+  countIdentifiersByTypeEffect,
   listIdentifiersEffect,
 } from "./identifier-list";
 export {

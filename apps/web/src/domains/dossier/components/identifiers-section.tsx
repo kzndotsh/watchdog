@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
+import { IdentifierTypeGroupTable } from "@/domains/dossier/components/identifier-type-group-table";
 import { RowHistory } from "@/domains/dossier/components/row-history";
 import {
   useSectionListView,
@@ -14,6 +15,7 @@ import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { LazyBulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-lazy";
 import { warmBulkAddDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog-load";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
+import { IdentifierTypeGroups } from "@/domains/entities/components/identifier-type-groups";
 import {
   useCreateIdentifier,
   useUpdateIdentifier,
@@ -25,7 +27,10 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { evidencePickerPort } from "@/domains/intake/queries";
 import { errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
-import { useListDisplay } from "@/shared/hooks/list/use-list-display";
+import {
+  useListDisplay,
+  type ListDisplayToggle,
+} from "@/shared/hooks/list/use-list-display";
 import { useListTable } from "@/shared/hooks/list/use-list-table";
 import { copyText } from "@/shared/hooks/use-copy-text";
 import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
@@ -70,6 +75,13 @@ export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
 
 const NO_SEARCH: DossierIdentifiersSearch = {};
 
+const GROUP_BY_TYPE: ListDisplayToggle = {
+  id: "group-by-type",
+  label: "Group by type",
+  isDefaultOn: true,
+};
+const DISPLAY_TOGGLES = [GROUP_BY_TYPE];
+
 export function IdentifiersSection({
   caseId,
   entityId,
@@ -91,7 +103,7 @@ export function IdentifiersSection({
     search,
     onSearchChange,
   });
-  const display = useListDisplay("dossier-identifiers");
+  const display = useListDisplay("dossier-identifiers", DISPLAY_TOGGLES);
   const evidencePort = useMemo(() => evidencePickerPort(caseId), [caseId]);
   // The Evidence cell names each row's first link: titles of those ids on the loaded page only.
   const evidenceTitles = useRecordsByIds(
@@ -285,6 +297,15 @@ export function IdentifiersSection({
     addRow
   );
 
+  // The tab groups its rows by type (a Display option, on by default). The composer is a row of
+  // the flat table, so adding one shows the flat table until it closes; so do the list's own
+  // pending, empty and error states.
+  const isGrouped =
+    view !== undefined &&
+    display.isToggleOn(GROUP_BY_TYPE.id) &&
+    list.status === "ready" &&
+    !isComposing;
+
   // The Overview's nest reads "None" inline; the tab's table shows the list's own empty states.
   const isEmpty =
     emptyPresentation === "inline" && list.status === "blank" && !isComposing;
@@ -347,14 +368,32 @@ export function IdentifiersSection({
             <ListToolbar list={list} display={display} table={table} />
           )}
           <IdentifierTableActionsProvider value={tableActions}>
-            <ListTable
-              list={list}
-              table={table}
-              density={display.density}
-              appendRow={appendRow}
-              blankSlateAction={addButton}
-              getRowActions={getRowActions}
-            />
+            {isGrouped ? (
+              <IdentifierTypeGroups
+                caseId={caseId}
+                query={list.query}
+                renderGroup={(type) => (
+                  <IdentifierTypeGroupTable
+                    caseId={caseId}
+                    entityId={entityId}
+                    type={type}
+                    search={search}
+                    onSearchChange={onSearchChange}
+                    display={display}
+                    getRowActions={getRowActions}
+                  />
+                )}
+              />
+            ) : (
+              <ListTable
+                list={list}
+                table={table}
+                density={display.density}
+                appendRow={appendRow}
+                blankSlateAction={addButton}
+                getRowActions={getRowActions}
+              />
+            )}
           </IdentifierTableActionsProvider>
         </div>
       </DossierSection>

@@ -562,6 +562,22 @@
         }
       }
     },
+    "typeCounts": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {
+          "scope": "cases:read"
+        },
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/identifiers/type-counts",
+          "summary": "Count identifiers in a case by type",
+          "tags": [
+            "identifiers"
+          ]
+        }
+      }
+    },
     "getMany": {
       "~orpc": {
         "errorMap": {},

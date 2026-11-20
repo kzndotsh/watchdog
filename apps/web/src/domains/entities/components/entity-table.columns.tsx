@@ -4,14 +4,17 @@ import type {
   ColumnDef,
   HeaderContext,
 } from "@tanstack/react-table";
+import { ChevronRightIcon } from "lucide-react";
 
 import { EntityConnectionsCell } from "@/domains/entities/components/entity-connections-cell";
+import { warmEntityIdentifiersPreview } from "@/domains/entities/components/entity-identifiers-preview-load";
 import type {
   CreateEntityConnectionInput,
   UpdateEntityConnectionInput,
 } from "@/domains/entities/lib/edge-write";
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityListItem, EntityRecord } from "@/domains/entities/types";
+import { cn } from "@/lib/utils";
 import {
   DataTableColumnHeader,
   EditableSelectCell,
@@ -20,6 +23,7 @@ import {
 import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-features";
 import { createTableActionsContext } from "@/shared/ui/data-table/table-actions-context";
 import { NotesIconCell } from "@/shared/ui/identifiers/notes-icon-cell";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   formatFullLocalDateTime,
   formatRelativeTime,
@@ -58,6 +62,9 @@ export type EntityTableActions = {
   onCopyEntityLink: (entity: EntityRecord) => void;
   onCopyEntityMarkdown: (entity: EntityRecord) => void;
   onDeleteEntity: (entity: EntityRecord) => void;
+  /** Rows showing their Identifiers by type under them. */
+  expandedIds: ReadonlySet<string>;
+  toggleExpanded: (entityId: string) => void;
 };
 
 export const {
@@ -113,11 +120,30 @@ function notesColumnHeader({
   );
 }
 
-function renderNameCell(ctx: CellContext<ServerTableFeatures, EntityListItem>) {
+function NameCell(ctx: CellContext<ServerTableFeatures, EntityListItem>) {
+  const meta = useEntityTableActions();
   const row = ctx.row.original;
   const label = entityDisplayLabel(row);
+  const isExpanded = meta.expandedIds.has(row.id);
   return (
     <div className="flex min-w-0 items-center gap-1.5">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        aria-expanded={isExpanded}
+        aria-label={`${isExpanded ? "Hide" : "Show"} identifiers of ${label}`}
+        onPointerEnter={warmEntityIdentifiersPreview}
+        onFocus={warmEntityIdentifiersPreview}
+        onClick={() => {
+          meta.toggleExpanded(row.id);
+        }}
+      >
+        <ChevronRightIcon
+          className={cn("transition-transform", isExpanded && "rotate-90")}
+          aria-hidden
+        />
+      </Button>
       <EntityKindGlyph kind={row.kind} />
       <span className="block min-w-0 truncate text-sm">{label}</span>
     </div>
@@ -256,7 +282,7 @@ export const entityTableColumns: ColumnDef<
     id: "name",
     accessorFn: (row) => entityDisplayLabel(row),
     header: nameColumnHeader,
-    cell: renderNameCell,
+    cell: NameCell,
     meta: { label: "Name" },
     enableHiding: false,
     size: 150,

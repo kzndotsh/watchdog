@@ -44,6 +44,17 @@ export function useEntityTable(
   const navigate = useNavigate();
   const caseSlug = active.slug;
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
+  // Rows showing their Identifiers by type (the name cell's expand button).
+  const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  );
+  const toggleExpanded = useCallback((entityId: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(entityId)) next.add(entityId);
+      return next;
+    });
+  }, []);
   const list = useList(entityListView, {
     scope: { caseId: active.id },
     search,
@@ -108,8 +119,18 @@ export function useEntityTable(
       onCopyEntityLink,
       onCopyEntityMarkdown,
       onDeleteEntity: setDeleteTarget,
+      expandedIds,
+      toggleExpanded,
     }),
-    [active.id, mutations, onOpenEntity, onCopyEntityLink, onCopyEntityMarkdown]
+    [
+      active.id,
+      mutations,
+      onOpenEntity,
+      onCopyEntityLink,
+      onCopyEntityMarkdown,
+      expandedIds,
+      toggleExpanded,
+    ]
   );
 
   return {
@@ -120,6 +141,7 @@ export function useEntityTable(
     tableActions,
     columns: entityTableColumns,
     onRowClick: onOpenEntity,
+    expandedIds,
     caseId: active.id,
     deleteTarget,
     setDeleteTarget,

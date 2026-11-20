@@ -1,5 +1,6 @@
 import { flexRender } from "@tanstack/react-table";
 import type { ReactTable, RowData } from "@tanstack/react-table";
+import { Fragment } from "react";
 import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
@@ -202,6 +203,8 @@ function renderTableBodyRows<TData extends RowData>({
   selectedRowIds,
   onRowClick,
   getRowActions,
+  expandedRowIds,
+  renderExpanded,
   empty,
 }: {
   isPending: boolean;
@@ -212,6 +215,8 @@ function renderTableBodyRows<TData extends RowData>({
   selectedRowIds: ReadonlySet<string> | undefined;
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
+  expandedRowIds: ReadonlySet<string> | undefined;
+  renderExpanded: ((row: TData) => ReactNode) | undefined;
   empty: ReactNode;
 }) {
   if (isPending) {
@@ -233,13 +238,24 @@ function renderTableBodyRows<TData extends RowData>({
 
   if (hasRows) {
     return bodyRowsOf(table).map((row) => (
-      <DataTableBodyRow
-        key={row.id}
-        row={row}
-        isSelected={selectedRowIds?.has(row.id) === true}
-        onRowClick={onRowClick}
-        getRowActions={getRowActions}
-      />
+      <Fragment key={row.id}>
+        <DataTableBodyRow
+          row={row}
+          isSelected={selectedRowIds?.has(row.id) === true}
+          onRowClick={onRowClick}
+          getRowActions={getRowActions}
+        />
+        {renderExpanded !== undefined && expandedRowIds?.has(row.id) ? (
+          <TableRow
+            data-slot="data-table-expanded-row"
+            className="hover:bg-transparent"
+          >
+            <TableCell colSpan={leafColumns.length} className="bg-muted/20">
+              {renderExpanded(row.original)}
+            </TableCell>
+          </TableRow>
+        ) : null}
+      </Fragment>
     ));
   }
 
@@ -271,6 +287,10 @@ type Props<TData extends RowData> = {
   getRowActions?: (row: TData) => readonly AppAction[];
   /** Extra row(s) appended after data rows — used for inline add composers. */
   appendRow?: ReactNode;
+  /** Row ids whose `renderExpanded` content shows in a full-width row under them. */
+  expandedRowIds?: ReadonlySet<string>;
+  /** An expanded row's content (the Entities table: the Entity's Identifiers by type). */
+  renderExpanded?: (row: TData) => ReactNode;
   /** When true, tbody renders skeleton rows; colgroup + header stay mounted. */
   isPending?: boolean;
   skeletonRows?: number;
@@ -288,6 +308,8 @@ export function DataTable<TData extends RowData>({
   onRowClick,
   getRowActions,
   appendRow,
+  expandedRowIds,
+  renderExpanded,
   isPending = false,
   skeletonRows = TABLE_BODY_SKELETON_ROW_COUNT,
   pendingLabel = "Loading table",
@@ -350,6 +372,8 @@ export function DataTable<TData extends RowData>({
             selectedRowIds,
             onRowClick,
             getRowActions,
+            expandedRowIds,
+            renderExpanded,
             empty: emptyText,
           })}
           {appendRow}

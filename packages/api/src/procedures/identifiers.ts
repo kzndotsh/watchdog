@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  countIdentifiersByTypeEffect,
   createIdentifierEffect,
   deleteIdentifierEffect,
   getIdentifiersByIdsEffect,
@@ -16,6 +17,7 @@ import {
   identifierSchema,
   caseIdentifierSchema,
   identifierListPageSchema,
+  identifierTypeCountsSchema,
 } from "@watchdog/schemas/graph";
 import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 
@@ -42,6 +44,30 @@ export const list = authed
   .handler(async ({ input, context }) =>
     runApp(
       listIdentifiersEffect(input.caseId, context.actor.organizationId, input)
+    )
+  );
+
+/**
+ * The Identifiers the list's filters and `q` match, per type: an Entity's Identifiers grouped by
+ * type (`entityId` set). Takes the list's input; cursor, limit and sort are ignored.
+ */
+export const typeCounts = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/identifiers/type-counts",
+    summary: "Count identifiers in a case by type",
+    tags: ["identifiers"],
+  })
+  .input(identifierList.input)
+  .output(identifierTypeCountsSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      countIdentifiersByTypeEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input
+      )
     )
   );
 
