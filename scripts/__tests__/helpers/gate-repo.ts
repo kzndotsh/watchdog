@@ -60,11 +60,11 @@ export type GateRepo = {
 
 /**
  * Ambient variables a gate must never inherit: `GIT_*` would aim fixture git at the
- * real repository; `CI` / `GITHUB_*` / `DOCS_AFFECT_*` would silently switch gates
+ * real repository; `CI` / `GITHUB_*` would silently switch gates
  * into CI mode when the suite itself runs under GitHub Actions. A test that wants
  * CI mode passes them explicitly through the `env` option.
  */
-const AMBIENT = /^(GIT_|GITHUB_|DOCS_AFFECT_)/;
+const AMBIENT = /^(GIT_|GITHUB_)/;
 
 function cleanEnv(extra: Record<string, string> = {}) {
   const inherited = Object.entries(process.env).filter(

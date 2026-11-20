@@ -4,8 +4,6 @@ Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that match
 
 Policy: every stated convention is enforced by a lint rule or gate, labeled guidance, or deleted; the one table is [`reference/platform/conventions.md`](reference/platform/conventions.md).
 
-Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced by `pnpm check:docs-affected:strict` ([`contributing/ci-gates.md`](contributing/ci-gates.md)).
-
 ## Start by role
 
 | Role | Start here | Then |

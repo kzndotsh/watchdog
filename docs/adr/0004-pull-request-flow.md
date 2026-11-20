@@ -1,6 +1,6 @@
 # ADR-0004: Pull requests for everything; tiny fixes may go straight to main
 
-**Status:** accepted (2026-10-05) · closes [#49](https://github.com/kzndotsh/watchdog/issues/49) **What this is:** how changes reach `main`, who decides a merge, and which changes may skip a pull request. **What this is not:** branch-protection configuration (not enabled) or the contents of the PR body (the `pr` skill owns that).
+**Status:** accepted (2026-10-05) · closes [#49](https://github.com/kzndotsh/watchdog/issues/49) · superseded in part by [#713](https://github.com/kzndotsh/watchdog/issues/713): the docs-affect gate, the commit-msg hook and the API breaking-change diff were deleted **What this is:** how changes reach `main`, who decides a merge, and which changes may skip a pull request. **What this is not:** branch-protection configuration (not enabled) or the contents of the PR body (the `pr` skill owns that).
 
 ## Context
 

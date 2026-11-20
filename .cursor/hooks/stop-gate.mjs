@@ -235,11 +235,6 @@ function main() {
     }
   }
 
-  // docs-affected stays on lefthook commit-msg / CI. Surfacing WARN here as
-  // followup_message spams every stop while mapped package.json files stay
-  // dirty, and the usual fix (`docs:allow-affect` in the commit message) is
-  // not something the agent can apply mid-turn.
-
   respond(render(client, parts.join("\n")));
 }
 

@@ -1,8 +1,9 @@
 /**
- * Shared git helpers for gate scripts (docs-affect, validate-agents, the Cursor
- * stop hook). One rule: a git failure is never read as "nothing changed". Every
- * helper here THROWS (with git's stderr) instead of returning an empty answer, so
- * a gate that calls them fails loudly when its diff is broken. Callers decide
+ * Shared git helpers for gate scripts (validate-agents, changed-packages, the
+ * Cursor stop hook). One rule: a git failure is never read as "nothing changed". Every
+ * helper here THROWS (with git's stderr) instead of returning an empty answer, except
+ * `tryGit`, which returns null for probes where failure is a real answer (does this ref
+ * exist?), so a gate that calls them fails loudly when its diff is broken. Callers decide
  * how to surface the error (the gates `die`; the stop hook deliberately fails open).
  */
 import { spawnSync } from "node:child_process";
@@ -124,37 +125,5 @@ export function resolvePushRange(
 export function changedPaths(diffArgs, cwd = process.cwd()) {
   return lines(
     git(["diff", "--name-only", "--diff-filter=ACMR", ...diffArgs, "--"], cwd)
-  );
-}
-
-/**
- * True only when `file` has a non-whitespace change in the diff: `git diff --quiet
- * -w --ignore-blank-lines` exit 1. Exit 0 is false. Any other outcome (broken
- * repo, unreadable object, bad range) THROWS, so it can never be counted as a touch.
- * @param {string} file
- * @param {readonly string[]} diffArgs
- * @param {string} [cwd]
- * @returns {boolean}
- */
-export function hasSubstantiveChange(file, diffArgs, cwd = process.cwd()) {
-  const args = [
-    "diff",
-    "--quiet",
-    "-w",
-    "--ignore-blank-lines",
-    ...diffArgs,
-    "--",
-    file,
-  ];
-  const res = spawnSync("git", args, { cwd, encoding: "utf-8" });
-  if (res.error) {
-    throw new Error(
-      `git ${args.join(" ")} could not run: ${res.error.message}`
-    );
-  }
-  if (res.status === 0) return false;
-  if (res.status === 1) return true;
-  throw new Error(
-    `git ${args.join(" ")} exited ${res.status}: ${(res.stderr || "").trim()}`
   );
 }
