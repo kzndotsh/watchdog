@@ -17,9 +17,10 @@ export type QueueWorkOptions = {
  *   claim (a cancel in the cancel transaction, or another instance failed it);
  * - `expired`: pg-boss's own timer aborted the batch (it aborts with no reason) because the
  *   handler outlived `expireInSeconds`;
- * - `stopping`: the same reasonless abort once a stop has given up on its handlers (a graceful
- *   stop's timeout ran out, or a non-graceful stop). An expiry while a graceful stop still drains
- *   stays `expired`, so the Job records `cap_timeout`.
+ * - `stopping`: a reasonless abort while the queue stops, before the attempt's own expiry: the
+ *   stop gave up on its handlers. One whose expiry has passed stays `expired` (`cap_timeout`),
+ *   even during a stop: pg-boss's grace timer starts after other shutdown work, so a deadline
+ *   computed from the stop's options would misfile it.
  */
 export type QueueAbort = "claim_lost" | "expired" | "stopping";
 
@@ -28,28 +29,14 @@ export type QueueAbort = "claim_lost" | "expired" | "stopping";
  * reason (a `DOMException` named `AbortError`) on expiry and when a stop gives up; it aborts one
  * Job's own controller with an `Error` when the heartbeat finds its claim gone.
  */
-export function queueAbortOf(reason: unknown, stopGaveUp: boolean): QueueAbort {
+export function queueAbortOf(
+  reason: unknown,
+  state: { readonly stopping: boolean; readonly pastExpiry: boolean }
+): QueueAbort {
   const reasonless =
     reason instanceof DOMException && reason.name === "AbortError";
   if (!reasonless) return "claim_lost";
-  return stopGaveUp ? "stopping" : "expired";
-}
-
-/** pg-boss's `stop` timeout when none is given. */
-const PG_BOSS_STOP_TIMEOUT_MS = 30_000;
-
-/**
- * When a stop begun at `startedAt` stops waiting for running handlers and aborts them: at once
- * for a non-graceful stop, else after its timeout (pg-boss's default when none is given).
- */
-export function stopGivesUpAt(
-  options:
-    | { readonly graceful?: boolean; readonly timeout?: number }
-    | undefined,
-  startedAt: number
-): number {
-  if (options?.graceful === false) return startedAt;
-  return startedAt + (options?.timeout ?? PG_BOSS_STOP_TIMEOUT_MS);
+  return state.stopping && !state.pastExpiry ? "stopping" : "expired";
 }
 
 /** One delivered pg-boss job, as the worker handler sees it. */

@@ -9,7 +9,6 @@ import { logProcessWarning, logSwallowed } from "../infra/process-log";
 import {
   JobQueueWorker,
   queueAbortOf,
-  stopGivesUpAt,
   type QueueWorkHandler,
   type QueueWorkOptions,
 } from "./job-queue-worker";
@@ -19,7 +18,6 @@ import { queueExpireSeconds, gracefulStopTimeoutMs } from "./timeouts";
 export {
   JobQueueWorker,
   queueAbortOf,
-  stopGivesUpAt,
   type QueuedJob,
 } from "./job-queue-worker";
 
@@ -133,15 +131,13 @@ function pgBossDriver(role: BossRole): BossDriver {
   boss.on("warning", (warn) => {
     logProcessWarning(`pg-boss:${role}`, warn.message, { data: warn.data });
   });
-  // When a stop gives up on running handlers: a reasonless abort from then on is the stop, not
-  // an expiry. An expiry while a graceful stop still drains stays an expiry (`cap_timeout`).
-  let stopGivesUp: number | undefined;
-  const stopGaveUp = () =>
-    stopGivesUp !== undefined && Date.now() >= stopGivesUp;
+  // Set before `boss.stop`. A reasonless abort while stopping is the stop giving up only before
+  // the attempt's own expiry (`queueAbortOf`); past it, it stays an expiry.
+  let stopping = false;
   return {
     start: () => boss.start(),
     stop: (options) => {
-      stopGivesUp = stopGivesUpAt(options, Date.now());
+      stopping = true;
       return boss.stop(options);
     },
     ensureQueue: () => {
@@ -165,16 +161,23 @@ function pgBossDriver(role: BossRole): BossDriver {
           ...options,
           heartbeatRefreshSeconds: QUEUE_HEARTBEAT_REFRESH_SECONDS,
         },
-        (jobs) =>
-          handler(
+        (jobs) => {
+          const startedAt = Date.now();
+          return handler(
             jobs.map((job) => ({
               id: job.id,
               data: job.data,
               expireInSeconds: job.expireInSeconds,
               signal: job.signal,
-              abortReason: () => queueAbortOf(job.signal.reason, stopGaveUp()),
+              abortReason: () =>
+                queueAbortOf(job.signal.reason, {
+                  stopping,
+                  pastExpiry:
+                    Date.now() - startedAt >= job.expireInSeconds * 1000,
+                }),
             }))
-          )
+          );
+        }
       ),
   };
 }
