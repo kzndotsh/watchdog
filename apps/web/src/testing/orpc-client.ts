@@ -50,5 +50,5 @@ export function orpcClientModuleDouble() {
   const orpcClient: RouterClient<AppRouter> = createORPCClient({
     call: async (path, input) => doubleAt(path.join("."))(input),
   });
-  return { orpcClient, orpc: createTanstackQueryUtils(orpcClient) };
+  return { orpc: createTanstackQueryUtils(orpcClient) };
 }

@@ -40,7 +40,7 @@ const getOrpcClient = createIsomorphicFn()
     )
   );
 
-export const orpcClient: RouterClient<AppRouter> = getOrpcClient();
+const orpcClient: RouterClient<AppRouter> = getOrpcClient();
 
 /**
  * TanStack Query utils over every procedure: `orpc.claims.list.call`, `.key`, `.infiniteKey`.
