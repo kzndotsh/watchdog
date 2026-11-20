@@ -158,9 +158,11 @@ jobs:
               - '**/.agents/skills/**'
               - 'scripts/validate-agents.mjs'
               - '.cursor/README.md'
-            # DESIGN.md is checked in Gates (lint:design, check:design-tokens) and is not under docs/.
+            # DESIGN.md is checked in Gates (lint:design, token drift) and is not under docs/;
+            # its token region is generated from the CSS.
             design:
               - 'DESIGN.md'
+              - 'apps/web/src/styles/wd-*.css'
             docs:
               - 'docs/**'
               - 'docs/reference/web/**'
@@ -271,9 +273,6 @@ jobs:
       - name: DESIGN.md format (official linter)
         run: pnpm lint:design
 
-      - name: DESIGN.md tokens match the CSS
-        run: pnpm check:design-tokens
-
       - name: Dependency licenses
         run: pnpm check:licenses
 
@@ -302,6 +301,13 @@ jobs:
           git diff --exit-code -- packages/caps/capabilities.gen.json \
             docs/reference/platform/cap-register.md \
             || (echo "capabilities.gen.json or cap-register.md out of date — run pnpm generate:caps" && exit 1)
+
+      - name: DESIGN.md token drift
+        if: github.event_name != 'pull_request' || needs.changes.outputs.design == 'true' || needs.changes.outputs.config == 'true'
+        run: |
+          pnpm generate:design
+          git diff --exit-code -- DESIGN.md \
+            || (echo "DESIGN.md tokens out of date — run pnpm generate:design" && exit 1)
 
       # The tsr CLI writes Start's `Register` footer only because tsr.config.json declares it (#466).
       - name: Route tree drift

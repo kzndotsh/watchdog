@@ -2,8 +2,10 @@
 version: alpha
 name: Watchdog
 description: Dense, quiet, exact operator UI for long OSINT investigation sessions. Dark-first, flat surfaces, one cyan accent, one amber signal.
+# BEGIN GENERATED design tokens
+# Written by `pnpm generate:design` from the CSS; do not edit by hand.
 colors:
-  # Dark theme (primary scene). Source of truth: apps/web/src/styles/wd-dark.css
+  # Dark theme (primary scene): apps/web/src/styles/wd-dark.css
   background: "oklch(0.19 0.012 250)"
   foreground: "oklch(0.96 0.01 250)"
   surface-raised: "oklch(0.23 0.012 250)"
@@ -15,7 +17,7 @@ colors:
   signal: "oklch(0.78 0.14 75)"
   success: "oklch(0.76 0.13 155)"
   destructive: "oklch(0.76 0.16 25)"
-  # Light theme. Source of truth: apps/web/src/styles/wd-tokens.css
+  # Light theme: apps/web/src/styles/wd-tokens.css
   light-background: "oklch(0.985 0.004 250)"
   light-foreground: "oklch(0.14 0.01 250)"
   light-muted: "oklch(0.96 0.006 250)"
@@ -28,7 +30,7 @@ colors:
   light-success: "oklch(0.52 0.13 155)"
   light-destructive: "oklch(0.55 0.2 25)"
 typography:
-  # Vanilla Tailwind scale; sizes are rem, so they scale with --wd-display-scale. Families: --font-sans / --font-mono in wd-theme.css. text-2xs (0.8125rem) is the theme's own step.
+  # Tailwind's text-*, font-*, leading-* and tracking-* scale (tailwindcss/theme.css); text-2xs and the families (--font-sans / --font-mono) from wd-theme.css. Sizes are rem, so they scale with --wd-display-scale.
   dossier-heading:
     fontFamily: Geist Variable
     fontSize: 1.5rem
@@ -92,6 +94,7 @@ rounded:
   md: 0.375rem
   lg: 0.5625rem
   full: 9999px
+# END GENERATED design tokens
 omitted:
   - section: spacing
     reason: "Tailwind's 0.25rem spacing scale, scaled by --wd-display-scale; no custom steps, so there is no CSS source to mirror"
@@ -179,7 +182,7 @@ components:
 
 # Watchdog
 
-The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. The front matter follows the [DESIGN.md format](https://github.com/google-labs-code/design.md) (version `alpha`) and `pnpm lint:design` runs the official linter over it, failing on any error or warning. `pnpm check:design-tokens` checks the values that have a CSS source against the CSS: every `colors` token (`wd-tokens.css` light and ramps, `wd-dark.css` dark), `rounded.sm` / `md` / `lg` (`wd-theme.css`), every `typography` `fontFamily`, and the `text-2xs` size and line height. Type sizes, weights and line heights from the Tailwind scale, `rounded.full` and the component colour pairs have no CSS source to compare, so they are not value-checked (the linter checks the pairs' contrast). Everything below the front matter is prose.
+The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values.** The front-matter token region (`colors`, `typography`, `rounded`, between the `BEGIN` / `END GENERATED design tokens` comments) is written from it by `pnpm generate:design`: change the CSS (or, for a typography role's Tailwind steps, `scripts/generate-design-tokens.mjs`) and regenerate; CI fails when the committed region drifts. The rest of the front matter (`omitted`, the `components` colour pairs) and everything below it is hand-written. The front matter follows the [DESIGN.md format](https://github.com/google-labs-code/design.md) (version `alpha`) and `pnpm lint:design` runs the official linter over it, failing on any error or warning.
 
 ## Overview
 
