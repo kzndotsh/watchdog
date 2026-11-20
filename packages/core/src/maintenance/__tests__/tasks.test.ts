@@ -31,6 +31,7 @@ const QUIET = {
   ran: true,
   stale: 0,
   accessRevoked: 0,
+  undelivered: 0,
   stuckPlaybooks: 0,
   collectQueueRebuilt: 0,
 };
@@ -119,6 +120,7 @@ describe("maintenance reports", () => {
     for (const counter of [
       "stale",
       "accessRevoked",
+      "undelivered",
       "stuckPlaybooks",
       "collectQueueRebuilt",
     ] as const) {

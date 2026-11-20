@@ -20,14 +20,22 @@ export type MaintenanceReport = {
 export function reconcileReport(
   result: JobReconcileResult
 ): MaintenanceReport | undefined {
-  const { ran, stale, accessRevoked, stuckPlaybooks, collectQueueRebuilt } =
-    result;
-  const changed = stale + accessRevoked + stuckPlaybooks + collectQueueRebuilt;
-  if (!ran || changed === 0) return undefined;
-  return {
-    message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${stuckPlaybooks} stuck playbook run(s), ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
+  const {
+    ran,
     stale,
     accessRevoked,
+    undelivered,
+    stuckPlaybooks,
+    collectQueueRebuilt,
+  } = result;
+  const changed =
+    stale + accessRevoked + undelivered + stuckPlaybooks + collectQueueRebuilt;
+  if (!ran || changed === 0) return undefined;
+  return {
+    message: `reconciled Jobs: ${stale} stale, ${accessRevoked} access revoked, ${undelivered} queued without a delivery failed, ${stuckPlaybooks} stuck playbook run(s), ${collectQueueRebuilt} Collect queue Case(s) rebuilt`,
+    stale,
+    accessRevoked,
+    undelivered,
     stuckPlaybooks,
     collectQueueRebuilt,
   };

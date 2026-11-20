@@ -3,6 +3,7 @@ import { Cause, Clock, Effect } from "effect";
 import type { jobsRepo } from "@watchdog/db";
 import {
   findCollectQueueDrift,
+  listQueuedJobsWithoutDelivery,
   rebuildCollectQueue,
   tryLockJobReconcile,
 } from "@watchdog/db";
@@ -49,6 +50,8 @@ export type JobReconcileResult = {
   readonly stale: number;
   /** Running Jobs cancelled because their creator lost access to the Case. */
   readonly accessRevoked: number;
+  /** Queued Jobs failed because their pg-boss delivery ended or is gone (never re-sent). */
+  readonly undelivered: number;
   /** Playbook runs with no open Job that were advanced again. */
   readonly stuckPlaybooks: number;
   /** Cases whose Collect queue projection had drifted (or whose flush failed) and was rebuilt. */
@@ -59,9 +62,14 @@ const SKIPPED: JobReconcileResult = {
   ran: false,
   stale: 0,
   accessRevoked: 0,
+  undelivered: 0,
   stuckPlaybooks: 0,
   collectQueueRebuilt: 0,
 };
+
+/** The failure text of a queued Job whose delivery ended or is gone before a worker took it. */
+const UNDELIVERED_ERROR =
+  "This Job's queue delivery ended before a worker started it; start it again";
 
 function capExpireOrUnknown(
   capabilityId: string
@@ -159,6 +167,46 @@ function repairRunningJobsEffect(): Effect.Effect<
       stale: verdicts.filter((v) => v === "stale").length,
       accessRevoked: verdicts.filter((v) => v === "access_revoked").length,
     };
+  });
+}
+
+/**
+ * Fail every `queued` Job with no pending pg-boss delivery (`listQueuedJobsWithoutDelivery`:
+ * its delivery failed for good, completed or was cancelled without the row being claimed, for
+ * example after a worker died before its claim, or was deleted by retention). Nothing would
+ * ever deliver it again, so it ends `failed` (`orphaned`) instead of sitting queued; it is never
+ * re-sent. A settle that moved nothing (a worker claimed it meanwhile) counts nothing.
+ */
+function failUndeliveredJobsEffect(): Effect.Effect<
+  number,
+  DomainTag,
+  Db | JobQueue
+> {
+  return Effect.gen(function* failUndeliveredJobsGen() {
+    const rows = yield* tryDbWith((exec) =>
+      listQueuedJobsWithoutDelivery(exec)
+    );
+    const failed = yield* Effect.forEach(
+      rows,
+      (row) =>
+        Effect.gen(function* failUndeliveredGen() {
+          const finishedAt = yield* nowDateEffect;
+          const settled = yield* settleJobEffect(
+            { jobId: row.id, caseId: row.caseId },
+            { kind: "fail", cause: "orphaned" },
+            { error: UNDELIVERED_ERROR, logs: [], finishedAt }
+          );
+          if (settled === null) return false;
+          yield* advancePlaybookTailEffect({
+            jobId: row.id,
+            caseId: row.caseId,
+            playbookRunId: row.playbookRunId,
+          });
+          return true;
+        }),
+      { concurrency: REPAIR_CONCURRENCY }
+    );
+    return failed.filter(Boolean).length;
   });
 }
 
@@ -264,9 +312,10 @@ function guarded<A>(
 
 /**
  * One reconcile tick: fail stale running Jobs, cancel running Jobs whose creator lost access
- * to the Case (`access_revoked`), re-advance stuck playbook runs and rebuild Cases whose
- * Collect queue projection drifted. A queued Job needs no repair: its delivery was inserted in
- * the transaction that saved it (#721). Every status change goes through `settleJobEffect`: one guarded write and one
+ * to the Case (`access_revoked`), fail queued Jobs whose pg-boss delivery ended or is gone
+ * (`orphaned`; the delivery is inserted with the Job row, #721, so nothing is re-sent),
+ * re-advance stuck playbook runs and rebuild Cases whose Collect queue projection drifted.
+ * Every status change goes through `settleJobEffect`: one guarded write and one
  * activity entry per repair, and a second tick changes nothing.
  *
  * A transaction-scoped advisory lock lets one worker reconcile at a time: a worker that does
@@ -289,6 +338,11 @@ export function reconcileJobsEffect(): Effect.Effect<
             stale: 0,
             accessRevoked: 0,
           });
+          const undelivered = yield* guarded(
+            "undelivered",
+            failUndeliveredJobsEffect(),
+            0
+          );
           const stuckPlaybooks = yield* guarded(
             "playbook_advance",
             reconcileStuckPlaybookRunsEffect(),
@@ -302,6 +356,7 @@ export function reconcileJobsEffect(): Effect.Effect<
           return {
             ran: true,
             ...running,
+            undelivered,
             stuckPlaybooks,
             collectQueueRebuilt,
           };

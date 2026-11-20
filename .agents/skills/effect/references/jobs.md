@@ -97,7 +97,8 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `JobFibers.attemptFor(jobId).settled` and `executeJobOnMap` reads it after
   `Fiber.await`. Acquire is uninterruptible, so an interrupt during preflight
   lands at the start of the body. A fiber interrupted before it starts claims
-  nothing (the Job stays `queued`; its delivery is pg-boss's to retry).
+  nothing (the Job stays `queued`; pg-boss retries the delivery, and once no
+  delivery is pending, reconcile fails the Job `orphaned`, never re-sending it).
 - Log lines (#479): `lifecycle/run.ts` wraps each body in `withLogFlusher` (`jobs/job-log.ts`): a child fiber saves new `jobLog` lines every `WD_JOB_LOG_FLUSH_MS`, and an `ensuring` stops it and saves once more before the settle, on every exit (finish, failure, interrupt). The lines are bounded in `createJobLog`.
 - Collect yields `cap.run(ctx)` under `httpClientLayer` over the worker's
   `OutboundClient` (no `runCap` in the worker path; `OutboundClient` is in

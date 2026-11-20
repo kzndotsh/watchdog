@@ -214,6 +214,7 @@ workerMocks.reconcileJobsEffect.mockReturnValue(
     ran: true,
     stale: 0,
     accessRevoked: 0,
+    undelivered: 0,
     stuckPlaybooks: 0,
     collectQueueRebuilt: 0,
   })

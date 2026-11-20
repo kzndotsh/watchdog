@@ -12,3 +12,24 @@ export async function countJobDeliveries(
   );
   return rows[0]?.n ?? 0;
 }
+
+/** Put every pg-boss delivery of `jobId` in `state` (a pg-boss job state), as pg-boss would. */
+export async function setJobDeliveryState(
+  exec: DbExec,
+  jobId: string,
+  state: "created" | "retry" | "active" | "completed" | "cancelled" | "failed"
+): Promise<void> {
+  await exec.execute(
+    sql`update pgboss.job set state = ${state}::pgboss.job_state where data->>'jobId' = ${jobId}`
+  );
+}
+
+/** Delete every pg-boss delivery of `jobId`, as pg-boss's retention does. */
+export async function deleteJobDeliveries(
+  exec: DbExec,
+  jobId: string
+): Promise<void> {
+  await exec.execute(
+    sql`delete from pgboss.job where data->>'jobId' = ${jobId}`
+  );
+}
