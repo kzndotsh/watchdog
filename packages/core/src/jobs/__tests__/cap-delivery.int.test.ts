@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
-import { db, jobsRepo } from "@watchdog/db";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import { jobsRepo } from "@watchdog/db";
+import {
+  resetTestDb,
+  seedCase,
+  seedJob,
+  testDb as db,
+} from "@watchdog/test-db";
 
 import { failInvalidCapDeliveryEffect } from "../cap-delivery";
 

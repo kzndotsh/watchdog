@@ -22,7 +22,6 @@ import {
 import { listTasksForCaseEffect } from "@watchdog/core/tasks";
 import {
   claimsRepo,
-  db,
   edgesRepo,
   eventsRepo,
   questionsRepo,
@@ -60,6 +59,7 @@ import {
   seedJob,
   seedProposal,
   withSystemHistoryContext,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

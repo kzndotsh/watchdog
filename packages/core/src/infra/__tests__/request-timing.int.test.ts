@@ -9,7 +9,7 @@ import {
   tryDb,
   tryDbWith,
 } from "@watchdog/core/infra";
-import { casesRepo, db } from "@watchdog/db";
+import { casesRepo } from "@watchdog/db";
 import {
   createLogger,
   runWithRequestLogger,
@@ -24,6 +24,7 @@ import {
   seedCase,
   seedEvidence,
   testDb,
+  testDb as db,
 } from "@watchdog/test-db";
 
 /** Run `program` as one request: a logger in scope with timing started, as the web middleware does. */

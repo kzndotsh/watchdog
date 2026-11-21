@@ -6,6 +6,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationIfFound } from "../../infra/organization-scope";
 import { transact } from "../../infra/postgres-tx";
 import { jobsRepoFx } from "../../infra/repos-fx";
 import { appendJobActivityEffect } from "../job-activity";
@@ -58,5 +59,10 @@ export function settleJobEffect(
   event: JobEvent,
   fields: JobSettleFields = {}
 ): Effect.Effect<JobRow | null, DomainTag, Db> {
-  return transact((tx) => settleJobInTx(tx, target, event, fields));
+  // In the Job's Case's organization (row-level security, #718): the settle appends the Job's
+  // activity entry, which copies the Case's organization. A Case that is gone settles nothing.
+  return inCaseOrganizationIfFound(
+    target.caseId,
+    transact((tx) => settleJobInTx(tx, target, event, fields))
+  );
 }

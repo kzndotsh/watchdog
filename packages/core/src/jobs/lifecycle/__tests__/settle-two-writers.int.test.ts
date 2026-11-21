@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
-import { activity, db, jobsRepo } from "@watchdog/db";
+import { activity, jobsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   listAllActivity,
@@ -9,6 +9,7 @@ import {
   seedCase,
   seedJob,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { settleJobEffect } from "../settle.ts";

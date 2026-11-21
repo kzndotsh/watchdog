@@ -3,13 +3,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { isDomainTag } from "@watchdog/core/errors";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { activityLogRepo, db } from "@watchdog/db";
+import { activityLogRepo } from "@watchdog/db";
 import {
   listAllActivity,
   listAllGraphHistory,
   resetTestDb,
   seedCase,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

@@ -39,6 +39,7 @@ import { createPresignedGetEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
@@ -101,7 +102,7 @@ export type StartedCaseExport = {
 export function startCaseExportJobEffect(
   input: StartCaseExportInput
 ): Effect.Effect<StartedCaseExport, DomainTag, Db | JobQueue> {
-  return Effect.gen(function* startCaseExportJobGen() {
+  const program = Effect.gen(function* startCaseExportJobGen() {
     const caseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -173,6 +174,7 @@ export function startCaseExportJobEffect(
     );
     return { jobId: row.id, status: row.status, created };
   });
+  return inOrganization(input.organizationId, program);
 }
 
 function formatBytes(bytes: number): string {
@@ -258,7 +260,7 @@ export function caseExportLinkEffect(
   },
   settings: CaseExportSettings = caseExportSettings()
 ): Effect.Effect<CaseExportLink, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* caseExportLinkGen() {
+  const program = Effect.gen(function* caseExportLinkGen() {
     const activeCase = yield* getCaseByIdEffect(
       input.caseId,
       input.organizationId
@@ -312,7 +314,10 @@ export function caseExportLinkEffect(
     ).pipe(
       Effect.mapError(
         (cause) =>
-          new InternalError({ reason: "Couldn't sign the export link", cause })
+          new InternalError({
+            reason: "Couldn't sign the export link",
+            cause,
+          })
       )
     );
     return {
@@ -322,4 +327,5 @@ export function caseExportLinkEffect(
       expiresAt: DateTime.formatIso(DateTime.makeUnsafe(expiresAtMs)),
     };
   });
+  return inOrganization(input.organizationId, program);
 }

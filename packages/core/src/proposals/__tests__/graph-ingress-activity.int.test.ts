@@ -10,7 +10,6 @@ import {
   activity,
   activityLogRepo,
   claimsRepo,
-  db,
   entitiesRepo,
   proposalsRepo,
 } from "@watchdog/db";
@@ -26,6 +25,7 @@ import {
   seedCase,
   seedEntity,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

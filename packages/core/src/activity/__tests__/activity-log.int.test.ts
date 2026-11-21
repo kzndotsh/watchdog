@@ -22,12 +22,7 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import {
-  activityLogRepo,
-  createActivityTailer,
-  db,
-  tasksRepo,
-} from "@watchdog/db";
+import { activityLogRepo, createActivityTailer, tasksRepo } from "@watchdog/db";
 import {
   createActivityGate,
   parseActivityCursor,
@@ -39,7 +34,12 @@ import {
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
 } from "@watchdog/schemas/testing";
-import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  listAllActivity,
+  resetTestDb,
+  seedCase,
+  testDb as db,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../graph-activity";

@@ -37,6 +37,10 @@ import {
 } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
+import {
+  inCaseOrganizationIfFound,
+  inOrganization,
+} from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
 import { evidenceRepoFxDb, evidenceRepoFx } from "../infra/repos-fx";
 import {
@@ -112,7 +116,7 @@ export function entityIdForWrite(
 export function dumpPasteEffect(
   input: DumpPasteInput
 ): Effect.Effect<EvidenceRecord, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* dumpPasteGen() {
+  const program = Effect.gen(function* dumpPasteGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -146,12 +150,13 @@ export function dumpPasteEffect(
     );
     return yield* labeledEvidence(row);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function dumpUrlEffect(
   input: DumpUrlInput
 ): Effect.Effect<EvidenceRecord, DomainTag, Db> {
-  return Effect.gen(function* dumpUrlGen() {
+  const program = Effect.gen(function* dumpUrlGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -177,12 +182,13 @@ export function dumpUrlEffect(
     );
     return yield* labeledEvidence(row);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function softDeleteEvidenceEffect(
   input: SoftDeleteInput
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* softDeleteEvidenceGen() {
+  const program = Effect.gen(function* softDeleteEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -214,13 +220,14 @@ export function softDeleteEvidenceEffect(
       })
     );
   });
+  return inOrganization(input.organizationId, program);
 }
 
 /** Clear soft-delete — returns the row to the active Intake queue. */
 export function restoreEvidenceEffect(
   input: SoftDeleteInput
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* restoreEvidenceGen() {
+  const program = Effect.gen(function* restoreEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -248,6 +255,7 @@ export function restoreEvidenceEffect(
       })
     );
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function attachEvidenceEntityEffect(input: {
@@ -258,7 +266,7 @@ export function attachEvidenceEntityEffect(input: {
   actorId?: string;
   actorLabel?: string | null;
 }): Effect.Effect<EvidenceRecord, DomainTag, Db> {
-  return Effect.gen(function* attachEvidenceEntityGen() {
+  const program = Effect.gen(function* attachEvidenceEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -297,6 +305,7 @@ export function attachEvidenceEntityEffect(input: {
     );
     return yield* labeledEvidence(row);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function getEvidenceDownloadUrlEffect(
@@ -308,7 +317,7 @@ export function getEvidenceDownloadUrlEffect(
   DomainTag,
   Db | BlobStore
 > {
-  return Effect.gen(function* getEvidenceDownloadUrlGen() {
+  const program = Effect.gen(function* getEvidenceDownloadUrlGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
@@ -330,6 +339,7 @@ export function getEvidenceDownloadUrlEffect(
         : yield* createPresignedInlineImageEffect(uri, image);
     return { url, previewUrl };
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -340,7 +350,7 @@ export function getEvidenceDownloadUrlEffect(
 export function createAttestationEffect(
   input: CreateAttestationInput
 ): Effect.Effect<EvidenceRecord, DomainTag, Db> {
-  return Effect.gen(function* createAttestationGen() {
+  const program = Effect.gen(function* createAttestationGen() {
     const scopedCaseId = yield* assertCaseExistsUncheckedEffect(
       input.caseId,
       input.tx
@@ -374,4 +384,9 @@ export function createAttestationEffect(
         : yield* createCapturedEvidenceEffect(input.tx, scopedCaseId, values);
     return yield* labeledEvidence(row);
   });
+  // A caller's `tx` is already in the Case's scope; standalone, take the Case's own (row-level
+  // security, #718).
+  return input.tx === undefined
+    ? inCaseOrganizationIfFound(input.caseId, program)
+    : program;
 }

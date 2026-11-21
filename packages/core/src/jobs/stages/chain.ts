@@ -20,9 +20,14 @@ import { appendActivityEffect } from "../../activity/append";
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationIfFound } from "../../infra/organization-scope";
 import { requireWritten } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
-import { jobsRepoFx, playbookRunsRepoFx } from "../../infra/repos-fx";
+import {
+  jobsRepoFx,
+  playbookRunsRepoFx,
+  playbookRunsRepoFxDb,
+} from "../../infra/repos-fx";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { appendJobActivityEffect } from "../job-activity";
@@ -85,11 +90,9 @@ function enqueueStepJobsEffect(opts: {
   });
 }
 
-export function advancePlaybookRunEffect(input: {
-  playbookRunId: string;
-}): Effect.Effect<void, DomainTag, Db | JobQueue> {
-  const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
-  if (playbookRunId === undefined) return Effect.void;
+function advancePlaybookRunInScope(
+  playbookRunId: string
+): Effect.Effect<void, DomainTag, Db | JobQueue> {
   return Effect.gen(function* advancePlaybookRunGen() {
     yield* transact((tx) =>
       Effect.gen(function* advancePlaybookTx() {
@@ -161,4 +164,21 @@ export function advancePlaybookRunEffect(input: {
       })
     );
   });
+}
+
+export function advancePlaybookRunEffect(input: {
+  playbookRunId: string;
+}): Effect.Effect<void, DomainTag, Db | JobQueue> {
+  const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
+  if (playbookRunId === undefined) return Effect.void;
+  // In the run's Case's organization (row-level security, #718): the reconcile tick and tests
+  // reach this outside a Job's scope. A run that is gone advances nothing.
+  return Effect.flatMap(playbookRunsRepoFxDb.get(playbookRunId), (found) =>
+    found === null
+      ? Effect.void
+      : inCaseOrganizationIfFound(
+          found.caseId,
+          advancePlaybookRunInScope(playbookRunId)
+        )
+  );
 }

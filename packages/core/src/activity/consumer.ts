@@ -11,6 +11,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 
 import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import { Db } from "../infra/db-service";
+import { forEachOrganization } from "../infra/organization-scope";
 import { logSwallowed } from "../infra/process-log";
 import {
   activityCursorsRepoFxDb,
@@ -71,7 +72,10 @@ function resolveStartEffect(
     const ceiling = activityLogCeiling({ newest: null, floor: bounds.floor });
     const head =
       compareActivityCursor(logHead, ceiling) >= 0 ? logHead : ceiling;
-    const caseIds = yield* casesRepoFxDb.listAllIdsUnchecked();
+    // Row-level security (#718): every organization's Cases, each read in its own scope.
+    const caseIds = (yield* forEachOrganization(() =>
+      casesRepoFxDb.listAllIdsUnchecked()
+    )).flat();
     yield* opts.onResync(caseIds);
     yield* activityCursorsRepoFxDb.set(opts.consumer, head);
     return head;

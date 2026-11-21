@@ -51,6 +51,7 @@ import {
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { tryDb, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
@@ -99,7 +100,7 @@ export function getDeletionPolicyEffect(opts: {
   actorId?: string;
   caseId?: CaseId;
 }): Effect.Effect<DeletionPolicy, DomainTag, Db> {
-  return Effect.gen(function* getDeletionPolicyGen() {
+  const program = Effect.gen(function* getDeletionPolicyGen() {
     const scopedCaseId =
       opts.caseId === undefined
         ? undefined
@@ -119,6 +120,7 @@ export function getDeletionPolicyEffect(opts: {
       canIncludeBreachCredentials: canManage && breachCapsMode() === "full",
     };
   });
+  return inOrganization(opts.organizationId, program);
 }
 
 /** The date the scheduled purge takes a deleted Case: the one fixed at delete time. */
@@ -163,7 +165,7 @@ export function listDeletedCasesEffect(opts: {
   actorId?: string;
   input?: ListInput<typeof deletedCaseList>;
 }): Effect.Effect<ListPage<DeletedCaseRecord>, DomainTag, Db> {
-  return Effect.gen(function* listDeletedCasesGen() {
+  const program = Effect.gen(function* listDeletedCasesGen() {
     yield* requireOrganizationManagerEffect({
       organizationId: opts.organizationId,
       actorId: opts.actorId,
@@ -186,6 +188,7 @@ export function listDeletedCasesEffect(opts: {
         }),
     });
   });
+  return inOrganization(opts.organizationId, program);
 }
 
 /**
@@ -198,7 +201,7 @@ export function getDeletedCaseBySlugEffect(opts: {
   organizationId: OrganizationId;
   actorId?: string;
 }): Effect.Effect<DeletedCaseRecord, DomainTag, Db> {
-  return Effect.gen(function* getDeletedCaseBySlugGen() {
+  const program = Effect.gen(function* getDeletedCaseBySlugGen() {
     const notFound = new NotFoundError({
       entity: "Case",
       id: boundEchoedId(opts.slug),
@@ -221,6 +224,7 @@ export function getDeletedCaseBySlugEffect(opts: {
     const now = yield* nowDateEffect;
     return toDeletedRecord(row, names, now);
   });
+  return inOrganization(opts.organizationId, program);
 }
 
 /**
@@ -274,7 +278,7 @@ export function deleteCaseEffect(
   id: CaseId,
   opts: CaseActor & { organizationId: OrganizationId }
 ): Effect.Effect<void, DomainTag, Db | JobQueue> {
-  return Effect.gen(function* deleteCaseGen() {
+  const program = Effect.gen(function* deleteCaseGen() {
     // Role first, then the Case (one order for delete, restore and purge): a caller who may not
     // manage Cases learns nothing about any Case, whichever id they send.
     yield* requireOrganizationManagerEffect({
@@ -324,6 +328,7 @@ export function deleteCaseEffect(
       )
     );
   });
+  return inOrganization(opts.organizationId, program);
 }
 
 /** A restored Case; `previousSlug` is set when its old slug was taken meanwhile and it got a new one. */
@@ -359,7 +364,7 @@ export function restoreCaseEffect(
   id: CaseId,
   opts: CaseActor & { organizationId: OrganizationId }
 ): Effect.Effect<RestoredCaseRecord, DomainTag, Db> {
-  return Effect.gen(function* restoreCaseGen() {
+  const program = Effect.gen(function* restoreCaseGen() {
     yield* requireOrganizationManagerEffect({
       organizationId: opts.organizationId,
       actorId: optionalActorId(opts.actorId),
@@ -441,4 +446,5 @@ export function restoreCaseEffect(
     );
     return restored;
   });
+  return inOrganization(opts.organizationId, program);
 }

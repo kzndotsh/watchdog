@@ -2,7 +2,7 @@ import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { JobLane } from "@watchdog/caps/sdk";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { EGRESS_CLASSES, type CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
@@ -12,6 +12,7 @@ import {
   seedCase,
   seedJob,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

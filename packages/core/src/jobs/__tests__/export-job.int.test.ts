@@ -4,7 +4,7 @@ import { Effect, Layer } from "effect";
 import { unzipSync } from "fflate";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { casesRepo, db, jobsRepo } from "@watchdog/db";
+import { casesRepo, jobsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -16,6 +16,7 @@ import {
   seedEvidence,
   seedOrganizationMember,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

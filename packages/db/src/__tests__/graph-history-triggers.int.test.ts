@@ -7,13 +7,13 @@ import {
   prepareCasePurge,
   seedCase,
   seedEntity,
+  testDb as db,
   withSystemHistoryContext,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import {
   cases,
-  db,
   graphHistory,
   setGraphHistoryContext,
   type GraphHistoryContext,

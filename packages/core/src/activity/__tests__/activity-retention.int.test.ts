@@ -14,12 +14,11 @@ import {
   activityFloorRepo,
   activityLogRepo,
   client,
-  db,
 } from "@watchdog/db";
 import type { ActivityCursor } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 const DAY_MS = 86_400_000;
 const NOW = new Date("2026-10-06T12:00:00.000Z");

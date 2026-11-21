@@ -8,7 +8,7 @@ import {
   restoreCaseEffect,
 } from "@watchdog/core/case-deletion";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
-import { db, evidenceLinksRepo, evidenceRepo } from "@watchdog/db";
+import { evidenceLinksRepo, evidenceRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   COLLECT_FIXTURE,
@@ -23,6 +23,7 @@ import {
   seedCase,
   seedCollectQueueFixture,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

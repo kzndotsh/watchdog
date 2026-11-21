@@ -33,6 +33,7 @@ import {
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listCappedEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import {
   claimsRepoFxDb,
   edgesRepoFxDb,
@@ -237,7 +238,7 @@ export function listGraphHistoryEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof graphHistoryList>
 ): Effect.Effect<ListPage<GraphHistoryEntry>, DomainTag, Db> {
-  return Effect.gen(function* listGraphHistoryGen() {
+  const program = Effect.gen(function* listGraphHistoryGen() {
     const caseId = yield* assertCaseInOrgEffect(input.caseId, organizationId);
     const rowId = yield* requireTrimmedGraphId(
       input.rowId,
@@ -266,6 +267,7 @@ export function listGraphHistoryEffect(
     }
     return page;
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -277,7 +279,7 @@ export function graphRowAttributionEffect(
   organizationId: OrganizationId,
   input: GraphHistoryRowInput
 ): Effect.Effect<GraphHistoryAttribution | null, DomainTag, Db> {
-  return Effect.gen(function* graphRowAttributionGen() {
+  const program = Effect.gen(function* graphRowAttributionGen() {
     const caseId = yield* assertCaseInOrgEffect(input.caseId, organizationId);
     const rowId = yield* requireTrimmedGraphId(
       input.rowId,
@@ -308,4 +310,5 @@ export function graphRowAttributionEffect(
       updatedAt: authors.updatedAt,
     };
   });
+  return inOrganization(organizationId, program);
 }

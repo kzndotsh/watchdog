@@ -5,7 +5,7 @@ import { NotFoundError } from "@watchdog/core/errors";
 import { listRecentActivityEffect } from "@watchdog/core/feed";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
-import { activityLogRepo, db, evidenceRepo, proposalsRepo } from "@watchdog/db";
+import { activityLogRepo, evidenceRepo, proposalsRepo } from "@watchdog/db";
 import { activityList } from "@watchdog/schemas/feed";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import {
@@ -21,6 +21,7 @@ import {
   seedJob,
   seedPlaybookRun,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

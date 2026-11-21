@@ -12,6 +12,7 @@ import path from "node:path";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { ORGANIZATION_SETTING } from "../history-context";
 import { runMigrations } from "../migrate";
 
 /**
@@ -124,7 +125,15 @@ beforeAll(async () => {
   await owner.unsafe(`GRANT CREATE ON SCHEMA public TO ${APP_ROLE}`);
 
   await migrate();
-  app = connect(urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }));
+  // The privilege probes write Cases of `org-probe`: row-level security (#718) needs the
+  // organization, here as a session default of this probe connection (the application only ever
+  // sets it per transaction).
+  app = postgres(urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }), {
+    max: 1,
+    idle_timeout: 5,
+    onnotice: () => {},
+    connection: { [ORGANIZATION_SETTING]: "org-probe" },
+  });
   await owner.unsafe(`GRANT USAGE ON SCHEMA public, auth TO ${READER_ROLE}`);
   reader = connect(
     urlFor(DATABASE, { user: READER_ROLE, password: APP_PASSWORD })

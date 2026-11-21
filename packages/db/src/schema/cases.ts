@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   check,
   index,
+  pgPolicy,
   pgTable,
   text,
   uniqueIndex,
@@ -17,6 +18,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { currentOrganization } from "./_organization-policy";
 import { sqlLiteral } from "./_vocab";
 
 /** Case — work scope. Each Entity belongs to exactly one Case. */
@@ -135,5 +137,18 @@ export const cases = pgTable(
     index("cases_deleted_description_trgm_idx")
       .using("gin", t.description.op("gin_trgm_ops"))
       .where(sql`${t.deletedAt} IS NOT NULL`),
+    // Organization isolation (row-level security, #718): a role other than the table owner sees,
+    // writes and moves only the Cases of the organization its transaction set
+    // (`watchdog.org_id`); with none set it sees nothing. The owner (migrations, `just wipe`,
+    // repair) is not subject to it: no FORCE. `TO public` rather than the application role, so a
+    // single-role install (the application owns the schema) migrates unchanged; there the owner
+    // bypass applies, as before.
+    pgPolicy("cases_organization_isolation", {
+      as: "permissive",
+      for: "all",
+      to: "public",
+      using: sql`${t.organizationId} = ${currentOrganization}`,
+      withCheck: sql`${t.organizationId} = ${currentOrganization}`,
+    }),
   ]
 );

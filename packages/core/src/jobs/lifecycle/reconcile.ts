@@ -13,6 +13,7 @@ import { errorMessage } from "../../errors/error-utils";
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationIfFound } from "../../infra/organization-scope";
 import { tryDb, tryDbWith } from "../../infra/postgres-effect";
 import { outsideTransaction, transact } from "../../infra/postgres-tx";
 import { logProcessWarning, logSwallowed } from "../../infra/process-log";
@@ -161,7 +162,8 @@ function repairRunningJobsEffect(): Effect.Effect<
     const now = yield* Clock.currentTimeMillis;
     const verdicts = yield* Effect.forEach(
       running,
-      (row) => repairRunningJobEffect(row, now),
+      (row) =>
+        inCaseOrganizationIfFound(row.caseId, repairRunningJobEffect(row, now)),
       { concurrency: REPAIR_CONCURRENCY }
     );
     return {
@@ -190,21 +192,24 @@ function failUndeliveredJobsEffect(): Effect.Effect<
     const failed = yield* Effect.forEach(
       rows,
       (row) =>
-        Effect.gen(function* failUndeliveredGen() {
-          const finishedAt = yield* nowDateEffect;
-          const settled = yield* settleJobEffect(
-            { jobId: row.id, caseId: row.caseId },
-            { kind: "fail", cause: "orphaned" },
-            { error: UNDELIVERED_ERROR, logs: [], finishedAt }
-          );
-          if (settled === null) return false;
-          yield* advancePlaybookTailEffect({
-            jobId: row.id,
-            caseId: row.caseId,
-            playbookRunId: row.playbookRunId,
-          });
-          return true;
-        }),
+        inCaseOrganizationIfFound(
+          row.caseId,
+          Effect.gen(function* failUndeliveredGen() {
+            const finishedAt = yield* nowDateEffect;
+            const settled = yield* settleJobEffect(
+              { jobId: row.id, caseId: row.caseId },
+              { kind: "fail", cause: "orphaned" },
+              { error: UNDELIVERED_ERROR, logs: [], finishedAt }
+            );
+            if (settled === null) return false;
+            yield* advancePlaybookTailEffect({
+              jobId: row.id,
+              caseId: row.caseId,
+              playbookRunId: row.playbookRunId,
+            });
+            return true;
+          })
+        ),
       { concurrency: REPAIR_CONCURRENCY }
     );
     return failed.filter(Boolean).length;
@@ -222,27 +227,30 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
     const results = yield* Effect.forEach(
       running,
       (run) =>
-        Effect.gen(function* reconcileOnePlaybookGen() {
-          const members = yield* jobsRepoFxDb.listStatusesForPlaybookRun(
-            run.id
-          );
-          if (members.some((m) => isOpenJobStatus(m.status))) return false;
-          return yield* advancePlaybookRunEffect({
-            playbookRunId: run.id,
-          }).pipe(
-            Effect.as(true),
-            Effect.catchCause((cause) =>
-              Effect.sync(() => {
-                logSwallowed(
-                  "reconcile.playbook_advance",
-                  Cause.squash(cause),
-                  { playbookRunId: run.id }
-                );
-                return false;
-              })
-            )
-          );
-        }),
+        inCaseOrganizationIfFound(
+          run.caseId,
+          Effect.gen(function* reconcileOnePlaybookGen() {
+            const members = yield* jobsRepoFxDb.listStatusesForPlaybookRun(
+              run.id
+            );
+            if (members.some((m) => isOpenJobStatus(m.status))) return false;
+            return yield* advancePlaybookRunEffect({
+              playbookRunId: run.id,
+            }).pipe(
+              Effect.as(true),
+              Effect.catchCause((cause) =>
+                Effect.sync(() => {
+                  logSwallowed(
+                    "reconcile.playbook_advance",
+                    Cause.squash(cause),
+                    { playbookRunId: run.id }
+                  );
+                  return false;
+                })
+              )
+            );
+          })
+        ),
       { concurrency: REPAIR_CONCURRENCY }
     );
     return results.filter(Boolean).length;

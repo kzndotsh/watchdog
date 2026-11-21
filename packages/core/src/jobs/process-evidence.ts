@@ -32,6 +32,10 @@ import {
 } from "../errors/tagged-errors";
 import { appendEvidenceActivityEffect } from "../evidence/evidence-activity";
 import type { Db } from "../infra/db-service";
+import {
+  inCaseOrganizationIfFound,
+  inOrganization,
+} from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, evidenceRepoFx, jobsRepoFx } from "../infra/repos-fx";
@@ -169,34 +173,37 @@ export function processEvidenceEffect(input: {
       ? EVIDENCE_EXTRACT_AI_CAPABILITY_ID
       : EVIDENCE_HARVEST_CAPABILITY_ID;
 
-  return startCapForEvidenceEffect({
-    caseId: input.caseId,
-    organizationId: input.organizationId,
-    evidenceId: input.evidenceId,
-    actorId: input.actorId,
-    actorLabel: input.actorLabel,
-    actorKeyId: input.actorKeyId,
-    capabilityId,
-    matchActive: (job, seed) =>
-      evidenceIdsFromJobInputs([job.input]).includes(seed.id),
-    buildInput: (seed) => {
-      const entityId =
-        seed.entityId === null || seed.entityId === undefined
-          ? undefined
-          : (parseTrimmedUuid(seed.entityId) ?? undefined);
-      return {
-        evidenceId: seed.id,
-        ...(entityId === undefined ? {} : { entityId }),
-      };
-    },
-  });
+  return inOrganization(
+    input.organizationId,
+    startCapForEvidenceEffect({
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      evidenceId: input.evidenceId,
+      actorId: input.actorId,
+      actorLabel: input.actorLabel,
+      actorKeyId: input.actorKeyId,
+      capabilityId,
+      matchActive: (job, seed) =>
+        evidenceIdsFromJobInputs([job.input]).includes(seed.id),
+      buildInput: (seed) => {
+        const entityId =
+          seed.entityId === null || seed.entityId === undefined
+            ? undefined
+            : (parseTrimmedUuid(seed.entityId) ?? undefined);
+        return {
+          evidenceId: seed.id,
+          ...(entityId === undefined ? {} : { entityId }),
+        };
+      },
+    })
+  );
 }
 
 export function markEvidenceProcessedEffect(input: {
   caseId: CaseId;
   evidenceId: string;
 }): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* markEvidenceProcessedGen() {
+  const program = Effect.gen(function* markEvidenceProcessedGen() {
     const caseId = parseTrimmedCaseId(input.caseId) ?? undefined;
     const evidenceId = parseTrimmedUuid(input.evidenceId) ?? undefined;
     if (caseId === undefined || evidenceId === undefined) {
@@ -219,6 +226,7 @@ export function markEvidenceProcessedEffect(input: {
       })
     );
   });
+  return inCaseOrganizationIfFound(input.caseId, program);
 }
 
 export function enrichUrlEvidenceEffect(input: {
@@ -229,47 +237,50 @@ export function enrichUrlEvidenceEffect(input: {
   actorLabel?: string | null;
   actorKeyId?: string | null;
 }): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
-  return startCapForEvidenceEffect({
-    caseId: input.caseId,
-    organizationId: input.organizationId,
-    evidenceId: input.evidenceId,
-    actorId: input.actorId,
-    actorLabel: input.actorLabel,
-    actorKeyId: input.actorKeyId,
-    capabilityId: URL_ENRICH_CAPABILITY_ID,
-    assertSeed: (seed) => {
-      const url = (seed.sourceUrl ?? seed.text)?.trim();
-      if (url === undefined || url === "" || !/^https?:\/\//i.test(url)) {
-        return new InvalidError({
-          reason: "Evidence has no http(s) URL to enrich",
-        });
-      }
-      return Effect.void;
-    },
-    matchActive: (job, seed) => {
-      const inputIds = evidenceIdsFromJobInputs([job.input]);
-      if (inputIds.length > 0) {
-        return inputIds.includes(seed.id);
-      }
-      const url = (seed.sourceUrl ?? seed.text)?.trim() ?? "";
-      if (url === "") return false;
-      const jobUrl =
-        typeof job.input === "object" && job.input !== null
-          ? trimmedOrUndefined((job.input as { url?: string }).url)
-          : undefined;
-      return jobUrl === url;
-    },
-    buildInput: (seed) => {
-      const url = (seed.sourceUrl ?? seed.text)?.trim() ?? "";
-      const entityId =
-        seed.entityId === null || seed.entityId === undefined
-          ? undefined
-          : (parseTrimmedUuid(seed.entityId) ?? undefined);
-      return {
-        url,
-        sourceEvidenceId: seed.id,
-        ...(entityId === undefined ? {} : { entityId }),
-      };
-    },
-  });
+  return inOrganization(
+    input.organizationId,
+    startCapForEvidenceEffect({
+      caseId: input.caseId,
+      organizationId: input.organizationId,
+      evidenceId: input.evidenceId,
+      actorId: input.actorId,
+      actorLabel: input.actorLabel,
+      actorKeyId: input.actorKeyId,
+      capabilityId: URL_ENRICH_CAPABILITY_ID,
+      assertSeed: (seed) => {
+        const url = (seed.sourceUrl ?? seed.text)?.trim();
+        if (url === undefined || url === "" || !/^https?:\/\//i.test(url)) {
+          return new InvalidError({
+            reason: "Evidence has no http(s) URL to enrich",
+          });
+        }
+        return Effect.void;
+      },
+      matchActive: (job, seed) => {
+        const inputIds = evidenceIdsFromJobInputs([job.input]);
+        if (inputIds.length > 0) {
+          return inputIds.includes(seed.id);
+        }
+        const url = (seed.sourceUrl ?? seed.text)?.trim() ?? "";
+        if (url === "") return false;
+        const jobUrl =
+          typeof job.input === "object" && job.input !== null
+            ? trimmedOrUndefined((job.input as { url?: string }).url)
+            : undefined;
+        return jobUrl === url;
+      },
+      buildInput: (seed) => {
+        const url = (seed.sourceUrl ?? seed.text)?.trim() ?? "";
+        const entityId =
+          seed.entityId === null || seed.entityId === undefined
+            ? undefined
+            : (parseTrimmedUuid(seed.entityId) ?? undefined);
+        return {
+          url,
+          sourceEvidenceId: seed.id,
+          ...(entityId === undefined ? {} : { entityId }),
+        };
+      },
+    })
+  );
 }

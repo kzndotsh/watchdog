@@ -1,7 +1,7 @@
 import { Effect, Fiber, Layer, Result } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobsRepo, providerCallsRepo } from "@watchdog/db";
+import { jobsRepo, providerCallsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   backdateJob,
@@ -9,6 +9,7 @@ import {
   resetTestDb,
   seedCase,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { makeJobEgress } from "@watchdog/tools/http";

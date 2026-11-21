@@ -9,7 +9,7 @@ import {
   startJobEffect,
 } from "@watchdog/core/jobs";
 import { putCredentialEffect, vaultLayer } from "@watchdog/core/vault";
-import { casesRepo, db, jobsRepo } from "@watchdog/db";
+import { casesRepo, jobsRepo } from "@watchdog/db";
 import type { CaseId, JsonObject } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -19,6 +19,7 @@ import {
   seedCase,
   seedJob,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

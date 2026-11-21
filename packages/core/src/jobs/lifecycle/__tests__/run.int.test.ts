@@ -5,7 +5,6 @@ import { capVersion } from "@watchdog/caps";
 import {
   capCacheRepo,
   casesRepo,
-  db,
   jobsRepo,
   playbookRunsRepo,
 } from "@watchdog/db";
@@ -23,6 +22,7 @@ import {
   seedOrganizationMember,
   seedPlaybookRun,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

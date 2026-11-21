@@ -31,6 +31,7 @@ import {
 } from "../cap-availability";
 import { parseValidatedCapInputEffect } from "../cap-input";
 import { jobAccessLostReasonEffect } from "../job-access";
+import { inJobOrganization } from "../job-organization";
 import { settleJobEffect } from "../lifecycle/settle";
 import { isSystemJobId } from "../system-jobs";
 import { failJobEffect } from "./helpers";
@@ -309,13 +310,7 @@ function preparePreflightReadyEffect(
   });
 }
 
-/**
- * Load Job, cancel it when its creator lost access, validate Cap input, enforce egress + credentials, mark running.
- * Returns `stop` when the Job should not proceed (terminal / failed preflight).
- * Missing Job and unknown Capability resolve as `stop` (no throw) so pg-boss
- * does not retry those cases. DB errors stay in `E` as `DomainTag`.
- */
-export function preflightEffect(
+function preflightInScopeEffect(
   jobId: string
 ): Effect.Effect<PreflightResult, DomainTag, Db | Vault> {
   return Effect.gen(function* preflightGen() {
@@ -346,4 +341,16 @@ export function preflightEffect(
 
     return yield* preparePreflightReadyEffect(normalizedJobId, job);
   });
+}
+
+/**
+ * Load Job, cancel it when its creator lost access, validate Cap input, enforce egress + credentials, mark running.
+ * Returns `stop` when the Job should not proceed (terminal / failed preflight).
+ * Missing Job and unknown Capability resolve as `stop` (no throw) so pg-boss
+ * does not retry those cases. DB errors stay in `E` as `DomainTag`.
+ */
+export function preflightEffect(
+  jobId: string
+): Effect.Effect<PreflightResult, DomainTag, Db | Vault> {
+  return inJobOrganization(jobId, preflightInScopeEffect(jobId));
 }

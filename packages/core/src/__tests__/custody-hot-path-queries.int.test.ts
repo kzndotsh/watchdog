@@ -13,7 +13,7 @@ import {
   listProposalsForCaseEffect,
 } from "@watchdog/core/proposals";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -26,6 +26,7 @@ import {
   seedEvidence,
   seedJob,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

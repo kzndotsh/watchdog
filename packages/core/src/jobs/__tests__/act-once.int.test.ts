@@ -1,7 +1,7 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
@@ -14,6 +14,7 @@ import {
   seedJob,
   seedOrganizationMember,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

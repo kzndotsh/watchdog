@@ -7,11 +7,12 @@ import {
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, identifiersRepo, questionsRepo } from "@watchdog/db";
+import { identifiersRepo, questionsRepo } from "@watchdog/db";
 import {
   listAllActivity,
   resetTestDb,
   withSystemHistoryContext,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

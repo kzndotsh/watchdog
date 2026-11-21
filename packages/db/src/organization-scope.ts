@@ -1,0 +1,196 @@
+import { asc, sql } from "drizzle-orm";
+import { PgTransaction } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/postgres-js";
+import type postgres from "postgres";
+
+import type { OrganizationId } from "@watchdog/schemas/shared";
+
+import type { Db } from "./client";
+import type { DbExec, DbTx } from "./exec";
+import { ORGANIZATION_SETTING } from "./history-context";
+import { trimCaseId } from "./repos/_scoped-ids";
+import { organization } from "./schema/auth";
+import * as schema from "./schema/index";
+
+type Sql = postgres.Sql;
+type TransactionBody = (tx: postgres.TransactionSql) => unknown;
+
+/** True for a transaction (or savepoint) handle, false for a pool handle. */
+export function isTransaction(exec: DbExec): exec is DbTx {
+  return exec instanceof PgTransaction;
+}
+
+/**
+ * Set the organization for the rest of the transaction `tx` (`watchdog.org_id`, transaction-local,
+ * read by the row-level security policies through `graph_history_setting`). On a pool handle it
+ * would end with its own one-statement transaction, so it takes a transaction only.
+ */
+export async function setOrganizationContext(
+  tx: DbTx,
+  organizationId: OrganizationId
+): Promise<void> {
+  await tx.execute(
+    sql`select set_config(${ORGANIZATION_SETTING}, ${organizationId}, true)`
+  );
+}
+
+/**
+ * The organization of a Case, read past row-level security (`case_organization_id`, SECURITY
+ * DEFINER): for trusted paths that hold a Case id from a Job or child row and must scope to its
+ * organization before reading the Case (the worker's Job run, reconcile, the Case export). `null`
+ * for a missing Case or an id that is not a UUID. Deleted Cases answer too. Never for an id a
+ * caller sent: API paths scope to the caller's organization instead.
+ */
+export async function caseOrganizationIdUnchecked(
+  exec: DbExec,
+  caseId: string
+): Promise<OrganizationId | null> {
+  const id = trimCaseId(caseId);
+  if (id === undefined) return null;
+  const rows = await exec.execute<{ organization_id: OrganizationId | null }>(
+    sql`select public.case_organization_id(${id}::uuid) as organization_id`
+  );
+  return rows[0]?.organization_id ?? null;
+}
+
+/**
+ * Every organization id (Better Auth's `auth.organization`, which row-level security does not
+ * cover), oldest first: for maintenance that visits each organization's Cases in its own scope
+ * (the scheduled purge, the export consumer's re-scan).
+ */
+export async function listOrganizationIds(
+  exec: DbExec
+): Promise<OrganizationId[]> {
+  const rows = await exec
+    .select({ id: organization.id })
+    .from(organization)
+    .orderBy(asc(organization.createdAt), asc(organization.id));
+  return rows.map((row) => row.id);
+}
+
+/** The underlying client of a scoped handle's client, so a scope never wraps another one. */
+const baseOf = new WeakMap<Sql, Sql>();
+
+/** Scoped handles per base client and organization (a handle is a few small objects). */
+const handles = new WeakMap<Sql, Map<OrganizationId, Db>>();
+
+/** Organizations kept per client before the oldest handle is dropped (it is rebuilt on demand). */
+const MAX_HANDLES_PER_CLIENT = 256;
+
+function setOrganization(
+  client: postgres.TransactionSql | postgres.ReservedSql,
+  organizationId: OrganizationId
+) {
+  return client`select set_config(${ORGANIZATION_SETTING}, ${organizationId}, true)`;
+}
+
+/**
+ * A postgres.js client whose every statement sees `organizationId`: a transaction sets it as its
+ * first statement, and a statement outside one runs in a short transaction of its own that sets
+ * it first. The setting is always transaction-local (`set_config(..., true)`), so it never
+ * outlives the transaction on a pooled connection. Only the two calls Drizzle's postgres-js
+ * session makes are wrapped: `unsafe` (every query) and `begin` (every transaction); savepoints
+ * run on the transaction's own client.
+ */
+function scopedClient(base: Sql, organizationId: OrganizationId): Sql {
+  const unsafe = (
+    query: string,
+    parameters?: postgres.ParameterOrJSON<never>[],
+    options?: postgres.UnsafeQueryOptions
+  ) => {
+    // One round trip: BEGIN, the setting, the statement and COMMIT pipelined on a reserved
+    // connection (a COMMIT after a failed statement ends the transaction as a ROLLBACK). Releasing
+    // a connection that is not idle closes it (postgres.js), so a transaction a failure left open
+    // can never reach another caller with this organization set.
+    const run = async (values: boolean) => {
+      const reserved = await base.reserve();
+      try {
+        const statement = reserved.unsafe(query, parameters, options);
+        const replies = await Promise.all([
+          reserved.unsafe("begin"),
+          setOrganization(reserved, organizationId),
+          values ? statement.values() : statement,
+          reserved.unsafe("commit"),
+        ]);
+        return replies[2];
+      } finally {
+        reserved.release();
+      }
+    };
+    // Drizzle awaits the query or calls `.values()` on it; both run it in the scoped transaction.
+    return {
+      values: async () => run(true),
+      // oxlint-disable-next-line unicorn/no-thenable -- Drizzle awaits what `unsafe` returns: this stands in for postgres.js's lazy query
+      then: async <A, B>(
+        onFulfilled?: (value: unknown) => A | PromiseLike<A>,
+        onRejected?: (reason: unknown) => B | PromiseLike<B>
+      ) =>
+        // oxlint-disable-next-line promise/prefer-catch -- the thenable protocol hands both callbacks to one `then`
+        run(false).then(onFulfilled, onRejected),
+    };
+  };
+  // postgres.js: `begin(fn)` or `begin(options, fn)`.
+  const begin = async (
+    first: string | TransactionBody,
+    second?: TransactionBody
+  ) => {
+    const body = typeof first === "string" ? second : first;
+    if (body === undefined) throw new TypeError("begin needs a callback");
+    const scopedBody = async (tx: postgres.TransactionSql) => {
+      // Sent at once and not awaited before the body: the transaction's connection runs its
+      // statements in order, so the setting precedes the body's first statement without a round
+      // trip of its own. A failed setting aborts the transaction, so the body fails too; it is
+      // still awaited, so its own error is never lost.
+      const setting = setOrganization(tx, organizationId);
+      setting.catch(() => {});
+      const result = await body(tx);
+      await setting;
+      return result;
+    };
+    return typeof first === "string"
+      ? base.begin(first, scopedBody)
+      : base.begin(scopedBody);
+  };
+  const scoped = new Proxy(base, {
+    get(target, property, receiver) {
+      if (property === "unsafe") return unsafe;
+      if (property === "begin") return begin;
+      return Reflect.get(target, property, receiver) as unknown;
+    },
+  });
+  baseOf.set(scoped, base);
+  return scoped;
+}
+
+/** True for a handle `organizationScopedDb` made (scoped to some organization). */
+export function isOrganizationScoped(exec: DbExec): boolean {
+  return !isTransaction(exec) && baseOf.has(exec.$client);
+}
+
+/**
+ * The pool handle `db`, scoped to one organization: every statement and transaction run on it sets
+ * `watchdog.org_id` first, so the row-level security policies on `cases` and `claims` show that
+ * organization's rows only. A handle without a scope sees none of them (fail closed). Scoping a
+ * scoped handle again replaces the organization (it wraps the same base client). Handles are
+ * cached per client and organization.
+ */
+export function organizationScopedDb(
+  db: Db,
+  organizationId: OrganizationId
+): Db {
+  const client = baseOf.get(db.$client) ?? db.$client;
+  let perClient = handles.get(client);
+  if (perClient === undefined) {
+    perClient = new Map();
+    handles.set(client, perClient);
+  }
+  const cached = perClient.get(organizationId);
+  if (cached !== undefined) return cached;
+  const scoped = drizzle(scopedClient(client, organizationId), { schema });
+  if (perClient.size >= MAX_HANDLES_PER_CLIENT) {
+    const oldest = perClient.keys().next();
+    if (oldest.done !== true) perClient.delete(oldest.value);
+  }
+  perClient.set(organizationId, scoped);
+  return scoped;
+}

@@ -25,6 +25,7 @@ import { proposalActivityLabel } from "../display/proposal-display";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { activityLogRepoFxDb } from "../infra/repos-fx";
 import { mapJobFeedRowsEffect } from "./job-feed";
 
@@ -212,7 +213,7 @@ export function listRecentActivityEffect(opts: {
   organizationId: OrganizationId;
   input?: ListInput<typeof activityList>;
 }): Effect.Effect<ListPage<ActivityItem>, DomainTag, Db> {
-  return Effect.gen(function* listRecentActivityGen() {
+  const program = Effect.gen(function* listRecentActivityGen() {
     const input = opts.input ?? {
       limit: opsOf(activityList).pageLimit.default,
     };
@@ -229,4 +230,5 @@ export function listRecentActivityEffect(opts: {
       toItems: itemsOfRowsEffect,
     });
   });
+  return inOrganization(opts.organizationId, program);
 }

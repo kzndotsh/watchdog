@@ -24,6 +24,7 @@ import { assertCaseInOrgEffect } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { toCaseEdgeRecord, type CaseEdgeRecord } from "./edges";
 import {
@@ -73,7 +74,7 @@ export function listClaimsEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof claimList>
 ): Effect.Effect<ListPage<ClaimRecord>, DomainTag, Db> {
-  return Effect.gen(function* listClaimsGen() {
+  const program = Effect.gen(function* listClaimsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: claimList,
@@ -83,6 +84,7 @@ export function listClaimsEffect(
       toItems: claimItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** One page of the Case's Event list (`eventList`). */
@@ -91,7 +93,7 @@ export function listEventsEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof eventList>
 ): Effect.Effect<ListPage<EventRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEventsGen() {
+  const program = Effect.gen(function* listEventsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: eventList,
@@ -101,6 +103,7 @@ export function listEventsEffect(
       toItems: (rows) => Effect.succeed(rows.map(toEventRecord)),
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** One page of the Case's Question list (`questionList`). */
@@ -109,7 +112,7 @@ export function listQuestionsEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof questionList>
 ): Effect.Effect<ListPage<QuestionRecord>, DomainTag, Db> {
-  return Effect.gen(function* listQuestionsGen() {
+  const program = Effect.gen(function* listQuestionsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: questionList,
@@ -119,6 +122,7 @@ export function listQuestionsEffect(
       toItems: (rows) => Effect.succeed(rows.map(toQuestionRecord)),
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** One page of the Case's Connection list (`edgeList`): both ends on every row. */
@@ -127,7 +131,7 @@ export function listEdgesEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof edgeList>
 ): Effect.Effect<ListPage<CaseEdgeRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEdgesGen() {
+  const program = Effect.gen(function* listEdgesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: edgeList,
@@ -137,6 +141,7 @@ export function listEdgesEffect(
       toItems: edgeItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** The Case's Claims with these ids, retracted or not, at most `ARRAY_MAX`; ids outside the Case are left out. */
@@ -145,7 +150,7 @@ export function getClaimsByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<ClaimRecord[], DomainTag, Db> {
-  return Effect.gen(function* getClaimsByIdsGen() {
+  const program = Effect.gen(function* getClaimsByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: claimListRepo,
@@ -155,6 +160,7 @@ export function getClaimsByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }
 
 /** The Case's Events with these ids, at most `ARRAY_MAX`; ids outside the Case are left out. */
@@ -163,7 +169,7 @@ export function getEventsByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<EventRecord[], DomainTag, Db> {
-  return Effect.gen(function* getEventsByIdsGen() {
+  const program = Effect.gen(function* getEventsByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: eventListRepo,
@@ -173,6 +179,7 @@ export function getEventsByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }
 
 /** The Case's Questions with these ids, at most `ARRAY_MAX`; ids outside the Case are left out. */
@@ -181,7 +188,7 @@ export function getQuestionsByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<QuestionRecord[], DomainTag, Db> {
-  return Effect.gen(function* getQuestionsByIdsGen() {
+  const program = Effect.gen(function* getQuestionsByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: questionListRepo,
@@ -191,6 +198,7 @@ export function getQuestionsByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -202,7 +210,7 @@ export function getEdgesByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<CaseEdgeRecord[], DomainTag, Db> {
-  return Effect.gen(function* getEdgesByIdsGen() {
+  const program = Effect.gen(function* getEdgesByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: edgeListRepo,
@@ -212,4 +220,5 @@ export function getEdgesByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }

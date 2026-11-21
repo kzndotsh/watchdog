@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { countIdentifiersByTypeEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, identifierListRepo } from "@watchdog/db";
+import { identifierListRepo } from "@watchdog/db";
 import { identifierList } from "@watchdog/schemas/graph";
 import { opsOf } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
@@ -11,6 +11,7 @@ import {
   seedCase,
   seedEntity,
   seedIdentifier,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

@@ -14,7 +14,7 @@ import {
   presignUploadEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { db, evidenceUploadsRepo } from "@watchdog/db";
+import { evidenceUploadsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -22,6 +22,7 @@ import {
   listCaseEvidence,
   resetTestDb,
   seedCase,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

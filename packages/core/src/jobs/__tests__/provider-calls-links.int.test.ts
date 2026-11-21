@@ -8,7 +8,6 @@ import {
 import {
   caseDeletionRecordsRepo,
   casesRepo,
-  db,
   jobsRepo,
   providerCallsRepo,
 } from "@watchdog/db";
@@ -19,6 +18,7 @@ import {
   resetTestDb,
   seedCase,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
