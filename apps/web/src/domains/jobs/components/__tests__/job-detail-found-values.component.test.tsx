@@ -4,23 +4,18 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { JobDetail } from "@/domains/jobs/components/job-detail";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildJobRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
 import type { FoundValueRecord, JobFoundValues } from "@watchdog/schemas/jobs";
 import { testId } from "@watchdog/test-kit";
 
-const listJobFoundValuesFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobFoundValuesFn,
-  listJobProviderCallsFn: vi.fn(),
-  getJobFn: vi.fn(),
-  getPlaybookRunFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listJobsFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
+const listJobFoundValuesFn = procedureDouble("jobs.listFound");
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,

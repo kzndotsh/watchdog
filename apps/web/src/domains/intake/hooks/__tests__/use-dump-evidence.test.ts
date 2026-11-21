@@ -3,6 +3,10 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/ui/toast", () => ({
@@ -16,11 +20,6 @@ vi.mock("@/shared/ui/toast", () => ({
 
 vi.mock("@/domains/intake/lib/upload-file", () => ({
   uploadFileEvidence: vi.fn(),
-}));
-
-vi.mock("@/domains/intake/intake.functions", () => ({
-  dumpPasteFn: vi.fn(),
-  dumpUrlFn: vi.fn(),
 }));
 
 vi.mock("@/app/lib/query-invalidation", () => ({

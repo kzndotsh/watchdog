@@ -200,7 +200,7 @@ const webImportRestrictions = (
     {
       name: "@watchdog/db",
       message:
-        "ServerFns call oRPC (@watchdog/api) → core → repos. Auth's db access lives in @watchdog/auth.",
+        "The browser calls oRPC (@watchdog/api) → core → repos. Auth's db access lives in @watchdog/auth.",
     },
     ...(allowInfinite
       ? []
@@ -754,19 +754,6 @@ export default defineConfig({
       rules: { "watchdog/no-cross-domain-relative-imports": "error" },
     },
     {
-      files: ["apps/web/src/**/*.{ts,tsx}"],
-      rules: { "watchdog/no-types-from-functions": "error" },
-    },
-    {
-      // A domain's own server-function and Query modules sit next to the RPC surface they wrap.
-      files: [
-        "apps/web/src/domains/**/*.functions.ts",
-        "apps/web/src/domains/**/queries.ts",
-        "apps/web/src/domains/**/*-queries.ts",
-      ],
-      rules: { "watchdog/no-types-from-functions": "off" },
-    },
-    {
       // Tests may build hooks as helpers, and a shared/ui test may compose a domain factory.
       files: [
         "apps/web/src/**/__tests__/**/*.{ts,tsx}",
@@ -1247,11 +1234,9 @@ export default defineConfig({
       },
     },
     {
-      // Server fns + SSE + case switch: promise chains over raw async churn.
+      // Hooks + SSE + case switch: promise chains over raw async churn.
       files: [
-        "apps/web/src/auth/session.server.ts",
         "apps/web/src/domains/**/hooks/*.{ts,tsx}",
-        "apps/web/src/domains/**/*.functions.ts",
         "apps/web/src/domains/intake/lib/upload-file.ts",
         "apps/web/src/domains/cases/lib/active-case-switch.ts",
         "apps/web/src/lib/activity-stream.server.ts",

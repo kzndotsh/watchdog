@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { searchCaseFn } from "@/domains/search/search.functions";
+import { orpc } from "@/lib/orpc-client";
+import { orpcKeyInputField } from "@/shared/lib/orpc-key-input";
 import {
   parseSearchCaseInput,
   scopeSearchCaseInput,
@@ -11,10 +12,11 @@ import {
   type SearchCaseResult,
 } from "@watchdog/schemas/cases";
 
+/** Search keys are the oRPC procedure keys: `all` is every `search.*` query. */
 export const searchKeys = {
-  all: ["search"] as const,
+  all: orpc.search.key(),
   case: (caseId: string, q: string) =>
-    [...searchKeys.all, "case", caseId, q] as const,
+    orpc.search.case.queryKey({ input: { caseId, q } }),
 };
 
 export function searchCaseQuery(caseId: string, q: string) {
@@ -24,13 +26,12 @@ export function searchCaseQuery(caseId: string, q: string) {
   return queryOptions({
     queryKey: searchKeys.case(scoped.caseId, scoped.q),
     queryFn: async (): Promise<SearchCaseResult> =>
-      searchCaseFn({
-        data: parseSearchCaseInput(scoped.caseId, scoped.q),
-      }),
+      orpc.search.case.call(parseSearchCaseInput(scoped.caseId, scoped.q)),
     enabled,
     staleTime: 15_000,
     placeholderData: placeholderDataForScope(
-      (previousQuery) => previousQuery?.queryKey[2] === scoped.caseId
+      (previousQuery) =>
+        orpcKeyInputField(previousQuery?.queryKey, "caseId") === scoped.caseId
     ),
   });
 }

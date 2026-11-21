@@ -3,8 +3,14 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
+import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import { jobDetailQuery } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   testCapProvider,
   buildJobListRecord,
@@ -12,31 +18,18 @@ import {
 } from "@/testing/records";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import type { PlaybookRunView } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
-
 // Only the network boundary is faked. The hook runs against a real QueryClient and the
 // real `jobs/queries` module, so a changed query key or a cache write under the wrong key
 // fails here (docs/contributing/testing/standards.md Mock policy).
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  getJobFn: vi.fn(),
-  getPlaybookRunFn: vi.fn(),
-  startJobFn: vi.fn(),
-  startPlaybookFn: vi.fn(),
-  cancelJobFn: vi.fn(),
-  cancelPlaybookFn: vi.fn(),
-  retryJobFn: vi.fn(),
-}));
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
-import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
-import {
-  cancelJobFn,
-  getJobFn,
-  getPlaybookRunFn,
-  retryJobFn,
-  startJobFn,
-  startPlaybookFn,
-} from "@/domains/jobs/jobs.functions";
+const getJobFn = procedureDouble("jobs.get");
+const getPlaybookRunFn = procedureDouble("jobs.getPlaybookRun");
+const startJobFn = procedureDouble("jobs.start");
+const cancelJobFn = procedureDouble("jobs.cancel");
+const retryJobFn = procedureDouble("jobs.retry");
+const startPlaybookFn = procedureDouble("jobs.startPlaybook");
 
 const CASE_ID = testCaseId(10);
 const JOB_ID = testId(11);
@@ -128,11 +121,9 @@ describe("useJobsWorkspace", () => {
     // Only Date: waitFor and the query client keep real timers.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-01-01T01:05:00.000Z"));
-    vi.mocked(getJobFn).mockImplementation(async ({ data }) =>
-      detailJob({ id: data.jobId })
-    );
-    vi.mocked(startJobFn).mockResolvedValue(detailJob());
-    vi.mocked(startPlaybookFn).mockResolvedValue({
+    getJobFn.mockImplementation(async (data) => detailJob({ id: data.jobId }));
+    startJobFn.mockResolvedValue(detailJob());
+    startPlaybookFn.mockResolvedValue({
       playbookId: "host-footprint-lite",
       playbookRunId: testId(50),
       jobs: [detailJob()],
@@ -151,13 +142,11 @@ describe("useJobsWorkspace", () => {
     });
     expect(result.current.selectedId).toBe(JOB_ID);
     expect(result.current.detailPending).toBe(false);
-    expect(getJobFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, jobId: JOB_ID },
-    });
+    expect(getJobFn).toHaveBeenCalledWith({ caseId: CASE_ID, jobId: JOB_ID });
   });
 
   it("reports detailPending while the job detail query is loading", () => {
-    vi.mocked(getJobFn).mockReturnValue(new Promise(() => {}));
+    getJobFn.mockReturnValue(new Promise(() => {}));
     const { result } = renderWorkspace({ jobId: JOB_ID });
 
     expect(result.current.detailPending).toBe(true);
@@ -166,7 +155,7 @@ describe("useJobsWorkspace", () => {
   });
 
   it("surfaces detailLoadError when the job detail query fails", async () => {
-    vi.mocked(getJobFn).mockRejectedValue(new Error("network down"));
+    getJobFn.mockRejectedValue(new Error("network down"));
     const { result } = renderWorkspace({ jobId: JOB_ID });
 
     await waitFor(() => {
@@ -177,13 +166,13 @@ describe("useJobsWorkspace", () => {
   });
 
   it("hides detailLoadError while refetching after a failure", async () => {
-    vi.mocked(getJobFn).mockRejectedValue(new Error("network down"));
+    getJobFn.mockRejectedValue(new Error("network down"));
     const { result } = renderWorkspace({ jobId: JOB_ID });
     await waitFor(() => {
       expect(result.current.detailLoadError).toBe("network down");
     });
 
-    vi.mocked(getJobFn).mockReturnValue(new Promise(() => {}));
+    getJobFn.mockReturnValue(new Promise(() => {}));
     act(() => {
       result.current.handleRetryDetail();
     });
@@ -223,13 +212,13 @@ describe("useJobsWorkspace", () => {
       });
     });
 
-    expect(startJobFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(startJobFn).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId: CASE_ID,
         capabilityId: CAP.id,
         input: { host: "mailhost.test" },
-      }),
-    });
+      })
+    );
     expect(onJobIdChange).toHaveBeenCalledWith(JOB_ID);
     // Read through the queries the screens use, not through a key typed here.
     expect(
@@ -240,7 +229,7 @@ describe("useJobsWorkspace", () => {
   it("selects playbookRunId after starting a playbook", async () => {
     const playbookRunId = testId(50);
     const stepJobId = testId(51);
-    vi.mocked(startPlaybookFn).mockResolvedValue({
+    startPlaybookFn.mockResolvedValue({
       playbookId: "host-footprint-lite",
       playbookRunId,
       jobs: [detailJob({ id: stepJobId, playbookRunId })],
@@ -267,7 +256,7 @@ describe("useJobsWorkspace", () => {
 
   it("retries the selected job, selects the new attempt and seeds its detail", async () => {
     const retriedId = testId(12);
-    vi.mocked(retryJobFn).mockResolvedValue(
+    retryJobFn.mockResolvedValue(
       detailJob({ id: retriedId, retryOfJobId: JOB_ID })
     );
     const failed = listJob({ status: "failed" });
@@ -283,16 +272,14 @@ describe("useJobsWorkspace", () => {
     await waitFor(() => {
       expect(onJobIdChange).toHaveBeenCalledWith(retriedId);
     });
-    expect(retryJobFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, jobId: JOB_ID },
-    });
+    expect(retryJobFn).toHaveBeenCalledWith({ caseId: CASE_ID, jobId: JOB_ID });
     expect(
       client.getQueryData(jobDetailQuery(CASE_ID, retriedId).queryKey)
     ).toEqual(expect.objectContaining({ retryOfJobId: JOB_ID }));
   });
 
   it("reads each step's outcome for a Job of a Playbook run, and for no other", async () => {
-    vi.mocked(getPlaybookRunFn).mockResolvedValue(playbookRun());
+    getPlaybookRunFn.mockResolvedValue(playbookRun());
     const inRun = listJob({
       status: "failed",
       playbookRunId: RUN_ID,
@@ -304,7 +291,8 @@ describe("useJobsWorkspace", () => {
       expect(result.current.playbookRun?.outcome).toBe("partial");
     });
     expect(getPlaybookRunFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, playbookRunId: RUN_ID },
+      caseId: CASE_ID,
+      playbookRunId: RUN_ID,
     });
     expect(result.current.playbookRun?.steps[1]).toMatchObject({
       state: "skipped",
@@ -319,8 +307,8 @@ describe("useJobsWorkspace", () => {
   });
 
   it("refreshes the run when a retry resumes it", async () => {
-    vi.mocked(getPlaybookRunFn).mockResolvedValue(playbookRun());
-    vi.mocked(retryJobFn).mockResolvedValue(
+    getPlaybookRunFn.mockResolvedValue(playbookRun());
+    retryJobFn.mockResolvedValue(
       detailJob({
         id: testId(12),
         retryOfJobId: JOB_ID,
@@ -340,7 +328,7 @@ describe("useJobsWorkspace", () => {
     expect(getPlaybookRunFn).toHaveBeenCalledTimes(1);
 
     // The server reopens the finished run: no outcome, step 0 running again, step 1 pending.
-    vi.mocked(getPlaybookRunFn).mockResolvedValue(
+    getPlaybookRunFn.mockResolvedValue(
       playbookRun({
         status: "running",
         outcome: null,
@@ -375,7 +363,7 @@ describe("useJobsWorkspace", () => {
   });
 
   it("reports a retry that the server refused and selects nothing", async () => {
-    vi.mocked(retryJobFn).mockRejectedValue(
+    retryJobFn.mockRejectedValue(
       new Error("Only finished Jobs can be retried")
     );
     const { result, onJobIdChange } = renderWorkspace({ jobId: JOB_ID });
@@ -412,9 +400,7 @@ describe("useJobsWorkspace", () => {
   });
 
   it("cancels the selected job", async () => {
-    vi.mocked(cancelJobFn).mockResolvedValue(
-      detailJob({ status: "cancelled" })
-    );
+    cancelJobFn.mockResolvedValue(detailJob({ status: "cancelled" }));
     const { result } = renderWorkspace({ jobId: JOB_ID });
 
     await act(async () => {
@@ -423,7 +409,8 @@ describe("useJobsWorkspace", () => {
 
     await waitFor(() => {
       expect(cancelJobFn).toHaveBeenCalledWith({
-        data: { caseId: CASE_ID, jobId: JOB_ID },
+        caseId: CASE_ID,
+        jobId: JOB_ID,
       });
     });
   });

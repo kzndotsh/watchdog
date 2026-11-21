@@ -8,6 +8,7 @@ import {
   listJobFoundValuesEffect,
   listJobProviderCallsEffect,
   listJobsForCaseEffect,
+  readJobArtifactTextEffect,
   retryJobEffect,
   runPlaybookEffect,
   startJobEffect,
@@ -15,6 +16,7 @@ import {
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
+  getJobArtifactTextInputSchema,
   getJobInputSchema,
   getPlaybookRunInputSchema,
   jobFoundValuesSchema,
@@ -31,6 +33,7 @@ import {
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
+import { artifactTextSchema } from "../schemas";
 
 export const listForCase = authed
   .meta({ scope: "cases:read" })
@@ -107,6 +110,29 @@ export const listFound = authed
         input.caseId,
         context.actor.organizationId,
         input.jobId
+      )
+    )
+  );
+
+/** One of the Job's output artifacts, by sha256, as preview text (null when it is not text). */
+export const artifactText = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/jobs/{jobId}/artifacts/{sha256}/text",
+    summary:
+      "Get one of a job's output artifacts as text for a preview (null when it is missing or not text; cut at 50 000 characters)",
+    tags: ["jobs"],
+  })
+  .input(getJobArtifactTextInputSchema)
+  .output(artifactTextSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      readJobArtifactTextEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.jobId,
+        input.sha256
       )
     )
   );

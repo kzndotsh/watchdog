@@ -13,7 +13,7 @@ Use `@tanstack/react-form` only.
 
 ## Conventions
 
-- Wire client validators to the same domain Zod schemas the ServerFns use when shapes align (Zod v4 Standard Schema; no `@tanstack/zod-form-adapter`).
+- Wire client validators to the same Zod schemas the procedures take when shapes align (Zod v4 Standard Schema; no `@tanstack/zod-form-adapter`).
 - Render field validation through `@/shared/lib/field-errors`: `<Field data-invalid={fieldInvalid(field.state.meta)}>`, `aria-invalid` on the control, then `<FieldError errors={fieldErrorList(field.state.meta)} />`. Compact composers without a `Field` wrapper still set `aria-invalid` and render `FieldError` beneath the control.
 - Server or mutation failures use `catch` and plain `useState` to `FieldError` or a toast, not TanStack Form's error map or `isSubmitSuccessful`.
 - One self-contained `useForm` per composer; don't split one form across children via context. Create and edit are two `useForm` instances (share config with `formOptions`).

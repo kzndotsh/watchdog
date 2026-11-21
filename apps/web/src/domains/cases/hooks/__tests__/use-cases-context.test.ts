@@ -1,24 +1,34 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { LAST_CASE_STORAGE_KEY } from "@/domains/cases/lib/active-case";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-// Only the network boundary is faked: the hook reads through the real `casesContextQuery`
+// Only the network boundary is faked: the hook reads through the real `visibleCasesQuery`
 // under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-import { getCasesContextFn } from "@/domains/cases/cases.functions";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseRecord } from "@/testing/records";
+
+const listCases = procedureDouble("cases.list");
+
+/** One page of `cases.list` holding `items`. */
+function casePage(items: CaseRecord[]) {
+  return {
+    items,
+    nextCursor: null,
+    total: { count: items.length, isCapped: false },
+  };
+}
 
 function renderContext(
   options?: { silentError?: boolean },
@@ -39,12 +49,16 @@ function renderContext(
 }
 
 describe("useCasesContext", () => {
+  afterEach(() => {
+    window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
+  });
+
   beforeEach(() => {
-    vi.mocked(getCasesContextFn).mockReset();
+    listCases.mockReset();
   });
 
   it("returns empty lists while pending", () => {
-    vi.mocked(getCasesContextFn).mockReturnValue(new Promise(() => {}));
+    listCases.mockReturnValue(new Promise(() => {}));
 
     const { result } = renderContext();
 
@@ -55,7 +69,7 @@ describe("useCasesContext", () => {
   });
 
   it("returns the cases and the active case the query loaded", async () => {
-    vi.mocked(getCasesContextFn).mockResolvedValue({ cases: [], active: null });
+    listCases.mockResolvedValue(casePage([]));
 
     const { result } = renderContext();
 
@@ -66,31 +80,44 @@ describe("useCasesContext", () => {
     expect(result.current.loadError).toBeNull();
   });
 
-  it("is the cookie's Case when the URL names none", async () => {
-    const cookieCase = buildCaseRecord({ slug: "cookie", name: "Cookie" });
-    vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [cookieCase],
-      active: cookieCase,
+  it("is the last Case entered when the URL names none", async () => {
+    const first = buildCaseRecord({ slug: "first", name: "First" });
+    const lastEntered = buildCaseRecord({
+      id: testCaseId(12),
+      slug: "last",
+      name: "Last entered",
     });
+    window.localStorage.setItem(LAST_CASE_STORAGE_KEY, lastEntered.id);
+    listCases.mockResolvedValue(casePage([first, lastEntered]));
 
     const { result } = renderContext();
 
     await waitFor(() => {
-      expect(result.current.active).toEqual(cookieCase);
+      expect(result.current.active).toEqual(lastEntered);
     });
   });
 
-  it("is the URL's Case, not the cookie's, so two tabs can hold two Cases", async () => {
-    const cookieCase = buildCaseRecord({ slug: "cookie", name: "Cookie" });
+  it("is the first visible Case when the last one entered is gone", async () => {
+    const first = buildCaseRecord({ slug: "first", name: "First" });
+    window.localStorage.setItem(LAST_CASE_STORAGE_KEY, testCaseId(99));
+    listCases.mockResolvedValue(casePage([first]));
+
+    const { result } = renderContext();
+
+    await waitFor(() => {
+      expect(result.current.active).toEqual(first);
+    });
+  });
+
+  it("is the URL's Case, not the last one entered, so two tabs can hold two Cases", async () => {
+    const lastEntered = buildCaseRecord({ slug: "last", name: "Last" });
+    window.localStorage.setItem(LAST_CASE_STORAGE_KEY, lastEntered.id);
     const urlCase = buildCaseRecord({
       id: testCaseId(11),
       slug: "url",
       name: "From the URL",
     });
-    vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [cookieCase, urlCase],
-      active: cookieCase,
-    });
+    listCases.mockResolvedValue(casePage([lastEntered, urlCase]));
 
     const { result } = renderContext(undefined, urlCase);
 
@@ -102,10 +129,7 @@ describe("useCasesContext", () => {
 
   it("reads the URL's Case live from the list, so an edit shows", async () => {
     const stale = buildCaseRecord({ name: "Before" });
-    vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [{ ...stale, name: "After" }],
-      active: null,
-    });
+    listCases.mockResolvedValue(casePage([{ ...stale, name: "After" }]));
 
     const { result } = renderContext(undefined, stale);
 
@@ -115,7 +139,7 @@ describe("useCasesContext", () => {
   });
 
   it("falls back to the route's own row while the list has not loaded", () => {
-    vi.mocked(getCasesContextFn).mockReturnValue(new Promise(() => {}));
+    listCases.mockReturnValue(new Promise(() => {}));
     const urlCase = buildCaseRecord({ slug: "url" });
 
     const { result } = renderContext(undefined, urlCase);
@@ -124,13 +148,13 @@ describe("useCasesContext", () => {
   });
 
   it("surfaces load errors with retry", async () => {
-    vi.mocked(getCasesContextFn).mockRejectedValue(new Error("cases down"));
+    listCases.mockRejectedValue(new Error("cases down"));
     const { result } = renderContext();
     await waitFor(() => {
       expect(result.current.loadError).toBe("cases down");
     });
 
-    vi.mocked(getCasesContextFn).mockResolvedValue({ cases: [], active: null });
+    listCases.mockResolvedValue(casePage([]));
     act(() => {
       result.current.retry();
     });
@@ -142,13 +166,13 @@ describe("useCasesContext", () => {
   });
 
   it("hides load errors while refetching after a failure", async () => {
-    vi.mocked(getCasesContextFn).mockRejectedValue(new Error("cases down"));
+    listCases.mockRejectedValue(new Error("cases down"));
     const { result } = renderContext();
     await waitFor(() => {
       expect(result.current.loadError).toBe("cases down");
     });
 
-    vi.mocked(getCasesContextFn).mockReturnValue(new Promise(() => {}));
+    listCases.mockReturnValue(new Promise(() => {}));
     act(() => {
       result.current.retry();
     });
@@ -159,14 +183,14 @@ describe("useCasesContext", () => {
   });
 
   it("marks the query silentError when requested", async () => {
-    vi.mocked(getCasesContextFn).mockResolvedValue({ cases: [], active: null });
+    listCases.mockResolvedValue(casePage([]));
 
     const { client } = renderContext({ silentError: true });
 
     await waitFor(() => {
       expect(
         client.getQueryCache().find({
-          queryKey: casesContextQuery().queryKey,
+          queryKey: visibleCasesQuery().queryKey,
         })?.meta
       ).toEqual({ silentError: true });
     });

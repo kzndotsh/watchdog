@@ -21,13 +21,8 @@ type Session = {
 };
 
 const getSession = vi.hoisted(() => vi.fn());
-const getOrganizationState = vi.hoisted(() => vi.fn());
-const casesContext = vi.hoisted(() => ({
-  current: { active: null, cases: [] } as {
-    active: { id: string } | null;
-    cases: { id: string }[];
-  },
-}));
+/** How many Cases the organization has (the first-Case gate reads `cases.list`). */
+const visibleCases = vi.hoisted(() => ({ count: 0 }));
 
 vi.mock("@tanstack/react-start", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-start")>();
@@ -42,12 +37,9 @@ vi.mock("@tanstack/react-start", async (importOriginal) => {
   };
 });
 vi.mock("@/auth/client", () => ({ authClient: { getSession } }));
-vi.mock("@/domains/organization/organization.functions", () => ({
-  getOrganizationStateFn: getOrganizationState,
-}));
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: async () => casesContext.current,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/app/hooks/use-activity-stream", () => ({
   useActivityInvalidation: () => undefined,
 }));
@@ -61,6 +53,11 @@ vi.mock("@better-auth-ui/react", () => ({ useAuthenticate: () => undefined }));
 
 import { invalidateAfterOrganizationChange } from "@/app/lib/query-invalidation";
 import { Route as ProtectedRoute } from "@/routes/_protected";
+import { procedureDouble, sessionInOrganization } from "@/testing/orpc-client";
+import { buildCaseRecord } from "@/testing/records";
+
+const whoami = procedureDouble("auth.whoami");
+const listCases = procedureDouble("cases.list");
 
 function sessionFor(
   userId: string,
@@ -137,15 +134,20 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(now);
   getSession.mockReset();
-  getOrganizationState.mockReset();
+  whoami.mockReset();
   // One Case: the first-Case gate stays out of the guard-cost tests.
-  casesContext.current = {
-    active: { id: "case-1" },
-    cases: [{ id: "case-1" }],
-  };
-  getOrganizationState.mockImplementation(async () => ({
-    organizationId: "org-1",
-  }));
+  visibleCases.count = 1;
+  listCases.mockImplementation(async () => {
+    const items = Array.from({ length: visibleCases.count }, () =>
+      buildCaseRecord()
+    );
+    return {
+      items,
+      nextCursor: null,
+      total: { count: items.length, isCapped: false },
+    };
+  });
+  whoami.mockImplementation(sessionInOrganization("org-1"));
 });
 
 afterEach(() => {
@@ -173,7 +175,7 @@ describe("_protected guard: client navigations", () => {
     await screen.findByText("page a");
 
     expect(getSession).toHaveBeenCalledTimes(1);
-    expect(getOrganizationState).not.toHaveBeenCalled();
+    expect(whoami).not.toHaveBeenCalled();
   });
 
   it("falls back to the organization-state call when the session names no organization, once", async () => {
@@ -187,7 +189,7 @@ describe("_protected guard: client navigations", () => {
     await screen.findByText("page c");
 
     expect(getSession).toHaveBeenCalledTimes(1);
-    expect(getOrganizationState).toHaveBeenCalledTimes(1);
+    expect(whoami).toHaveBeenCalledTimes(1);
   });
 
   it("serves hover preloads from the cache without any auth request", async () => {
@@ -199,7 +201,7 @@ describe("_protected guard: client navigations", () => {
     await router.preloadRoute({ to: "/deleted-cases" });
     await router.preloadRoute({ to: "/cases" });
     expect(getSession).not.toHaveBeenCalled();
-    expect(getOrganizationState).not.toHaveBeenCalled();
+    expect(whoami).not.toHaveBeenCalled();
 
     // Even once the cached session is older than its stale time: a preload never revalidates.
     elapse(STALE_SESSION + 1);
@@ -261,7 +263,7 @@ describe("_protected guard: client navigations", () => {
 
   it("sends a signed-in user with no organization to onboarding", async () => {
     getSession.mockResolvedValue(sessionFor("u1", null));
-    getOrganizationState.mockResolvedValue({ organizationId: null });
+    whoami.mockImplementation(sessionInOrganization(null));
     renderApp("/library");
     await screen.findByText("onboarding");
   });
@@ -275,14 +277,14 @@ describe("organization state cache", () => {
     await screen.findByText("page a");
     await user.click(screen.getByText("go b"));
     await screen.findByText("page b");
-    expect(getOrganizationState).toHaveBeenCalledTimes(1);
+    expect(whoami).toHaveBeenCalledTimes(1);
 
     // The user created or joined an organization.
-    getOrganizationState.mockResolvedValue({ organizationId: "org-2" });
+    whoami.mockImplementation(sessionInOrganization("org-2"));
     await invalidateAfterOrganizationChange(queryClient);
     await user.click(screen.getByText("go c"));
     await screen.findByText("page c");
-    expect(getOrganizationState).toHaveBeenCalledTimes(2);
+    expect(whoami).toHaveBeenCalledTimes(2);
   });
 
   it("an organization change also marks the session stale, so the next navigation reads it", async () => {
@@ -301,14 +303,14 @@ describe("organization state cache", () => {
 
   it("never serves one user's organization to another user on the same client", async () => {
     getSession.mockResolvedValueOnce(sessionFor("u1", null));
-    getOrganizationState.mockResolvedValueOnce({ organizationId: "org-1" });
+    whoami.mockImplementationOnce(sessionInOrganization("org-1"));
     const { router } = renderApp("/library");
     await screen.findByText("page a");
 
     // Signed out, then another account signs in on the same tab (new session, no org).
     elapse(STALE_SESSION + 1);
     getSession.mockResolvedValue(sessionFor("u2", null));
-    getOrganizationState.mockResolvedValue({ organizationId: null });
+    whoami.mockImplementation(sessionInOrganization(null));
     await router.navigate({ to: "/deleted-cases" });
     await screen.findByText("onboarding");
   });
@@ -317,7 +319,7 @@ describe("organization state cache", () => {
 describe("_protected guard: first-Case gate", () => {
   beforeEach(() => {
     getSession.mockResolvedValue(sessionFor("u1"));
-    casesContext.current = { active: null, cases: [] };
+    visibleCases.count = 0;
   });
 
   it("sends a user with no Case to the first-Case step", async () => {
@@ -348,7 +350,7 @@ describe("_protected guard: first-Case gate", () => {
   });
 
   it("never redirects a user who has a Case", async () => {
-    casesContext.current = { active: { id: "c" }, cases: [{ id: "c" }] };
+    visibleCases.count = 1;
     renderApp("/cases");
     await screen.findByText("page c");
   });

@@ -284,6 +284,26 @@ export function foreignChildAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       },
     ],
     [
+      "evidence.text(A evidence)",
+      async () => {
+        const { text } = await b.evidence.text({
+          caseId,
+          evidenceId: ids.evidenceA,
+        });
+        // Lookup is scoped to B's case, so A's row is invisible: no body may come back.
+        throw new ORPCError(text === null ? "NOT_FOUND" : "LEAKED_TEXT");
+      },
+    ],
+    [
+      "jobs.artifactText(A job)",
+      async () =>
+        b.jobs.artifactText({
+          caseId,
+          jobId: ids.jobA,
+          sha256: "a".repeat(64),
+        }),
+    ],
+    [
       "evidence.process(A evidence)",
       async () => b.evidence.process({ caseId, evidenceId: ids.evidenceA }),
     ],

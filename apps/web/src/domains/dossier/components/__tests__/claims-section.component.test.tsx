@@ -16,11 +16,6 @@ vi.mock("@/lib/orpc-client", async () =>
 );
 
 // Linked titles come from `evidence.getMany` (#559): never the Case's whole Evidence list.
-vi.mock("@/domains/intake/intake.functions", () => ({
-  getEvidenceManyFn: vi.fn(),
-  listEvidencePageFn: vi.fn(),
-  listEvidencePickerPageFn: vi.fn(),
-}));
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -28,7 +23,6 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
-import { getEvidenceManyFn } from "@/domains/intake/intake.functions";
 import { toast } from "@/shared/ui/toast";
 import {
   lastProcedureInput,
@@ -40,6 +34,8 @@ import { procedureDouble } from "@/testing/orpc-client";
 import { buildClaimRecord, buildEvidenceRecord } from "@/testing/records";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { testCaseId } from "@watchdog/schemas/testing";
+
+const getEvidenceManyFn = procedureDouble("evidence.getMany");
 
 const ACTIVE: ClaimRecord = {
   version: 1,
@@ -178,7 +174,7 @@ describe("ClaimsSection", () => {
     const evidenceId = testId(99);
     const onEvidenceClick = vi.fn();
     serve([{ ...ACTIVE, evidenceIds: [evidenceId] }]);
-    vi.mocked(getEvidenceManyFn).mockResolvedValue([
+    getEvidenceManyFn.mockResolvedValue([
       buildEvidenceRecord({ id: evidenceId, label: "leaked-db.csv" }),
     ]);
     render(
@@ -201,7 +197,8 @@ describe("ClaimsSection", () => {
       })
     ).toBeInTheDocument();
     expect(getEvidenceManyFn).toHaveBeenCalledWith({
-      data: { caseId: testId(10), ids: [evidenceId] },
+      caseId: testId(10),
+      ids: [evidenceId],
     });
   });
 

@@ -14,11 +14,8 @@ import type {
   TriageSearchPatch,
 } from "@/domains/triage/lib/triage-search";
 import { proposalListView } from "@/domains/triage/queries";
-import {
-  acceptProposalFn,
-  rejectProposalFn,
-} from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
@@ -80,8 +77,8 @@ export function useTriageWorkspace(
     mutationFn: async (values: AcceptFormValues) => {
       if (!selected) throw new Error("Nothing selected");
       const needs = patchNeedsConfidence(proposalPatch(selected));
-      return acceptProposalFn({
-        data: acceptProposalInputSchema.parse({
+      return orpc.proposals.accept.call(
+        acceptProposalInputSchema.parse({
           caseId,
           proposalId: selected.id,
           confidence: needs ? values.confidence : undefined,
@@ -89,8 +86,8 @@ export function useTriageWorkspace(
           attestationText: values.attestationText,
           opIds: acceptOpIds(proposalPatch(selected), values.skippedOpIds),
           untickedAs: values.untickedAs,
-        }),
-      });
+        })
+      );
     },
     onSuccess: async (accepted) => {
       toast.success(
@@ -109,13 +106,13 @@ export function useTriageWorkspace(
   const rejectMutation = useMutation({
     mutationFn: async (reason: string) => {
       if (!selected) throw new Error("Nothing selected");
-      return rejectProposalFn({
-        data: rejectProposalInputSchema.parse({
+      return orpc.proposals.reject.call(
+        rejectProposalInputSchema.parse({
           caseId,
           proposalId: selected.id,
           reason,
-        }),
-      });
+        })
+      );
     },
     onSuccess: async () => {
       toast.success("Proposal rejected");

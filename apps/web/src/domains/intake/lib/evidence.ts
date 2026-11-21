@@ -1,5 +1,4 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { isTextMime } from "@/shared/lib/text-mime";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
@@ -9,7 +8,7 @@ import {
   evidenceTitleMapForJobInputs,
   type JobInputRecord,
 } from "@watchdog/schemas/jobs";
-import { isOpenJobStatus } from "@watchdog/schemas/shared";
+import { isOpenJobStatus, isTextMime } from "@watchdog/schemas/shared";
 
 /** Whether dossier/intake previews should render stored `text` inline. */
 export function evidenceShowsInlineText(evidence: EvidenceRecord): boolean {

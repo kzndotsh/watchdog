@@ -6,15 +6,12 @@ const state = vi.hoisted(() => ({
   nodeEnv: "test",
   config: null as {
     requestMiddleware: Handler[];
-    functionMiddleware: Handler[];
   } | null,
   /** Wide-event context of every request/function event that was emitted. */
   events: [] as Record<string, unknown>[],
-  headerCalls: [] as [string, string][],
 }));
 
 vi.mock("@tanstack/react-start", () => ({
-  createCsrfMiddleware: vi.fn(() => "csrf-middleware"),
   createMiddleware: vi.fn(() => ({
     server: (handler: unknown) => handler,
   })),
@@ -24,16 +21,6 @@ vi.mock("@tanstack/react-start", () => ({
   }),
 }));
 
-vi.mock("@tanstack/react-start/server", () => ({
-  setResponseHeader: vi.fn((name: string, value: string) => {
-    state.headerCalls.push([name, value]);
-  }),
-}));
-
-vi.mock("@/auth/middleware", () => ({ requireAuth: "require-auth" }));
-vi.mock("@/auth/unauthorized-error", () => ({
-  isUnauthorizedError: vi.fn(() => false),
-}));
 vi.mock("./evlog-init.server", () => ({}));
 
 vi.mock("@watchdog/env/server", () => ({
@@ -85,9 +72,8 @@ vi.mock("@watchdog/log", async (importActual) => {
 import { timedDbCall } from "@watchdog/log";
 import "@/start";
 
-// requestMiddleware: [securityHeaders, evlog, csrf]
+// requestMiddleware: [securityHeaders, evlog]
 const [, requestMiddleware] = state.config?.requestMiddleware ?? [];
-const [functionMiddleware] = state.config?.functionMiddleware ?? [];
 
 /** A handler that runs `n` database calls through the seam core's `tryDb` uses. */
 function nextWithDbCalls(n: number, response = new Response("ok")) {
@@ -111,7 +97,6 @@ describe("request timing in the wide event", () => {
   beforeEach(() => {
     state.nodeEnv = "test";
     state.events.length = 0;
-    state.headerCalls.length = 0;
   });
 
   afterEach(() => {
@@ -124,31 +109,6 @@ describe("request timing in the wide event", () => {
     const event = state.events[0]!;
     expect(event.db).toEqual({ queries: 3, ms: expect.any(Number) });
     expect(event.durationMs).toEqual(expect.any(Number));
-  });
-
-  it("logs the same fields for a server function (not skipped any more)", async () => {
-    await functionMiddleware!({
-      next: nextWithDbCalls(4),
-      serverFnMeta: { id: "listCases" },
-    });
-    expect(state.events).toHaveLength(1);
-    const event = state.events[0]!;
-    expect(event.operation).toBe("listCases");
-    expect(event.db).toEqual({ queries: 4, ms: expect.any(Number) });
-    expect(event.durationMs).toEqual(expect.any(Number));
-  });
-
-  it("keeps a failed server function's timing on its event", async () => {
-    await expect(
-      functionMiddleware!({
-        next: async () => {
-          await timedDbCall(async () => undefined);
-          throw new Error("boom");
-        },
-        serverFnMeta: { id: "failing" },
-      })
-    ).rejects.toThrow("boom");
-    expect(state.events[0]!.db).toMatchObject({ queries: 1 });
   });
 
   it("logs no SQL, rows or bodies: only the timing keys are added", async () => {
@@ -166,7 +126,6 @@ describe("request timing in the wide event", () => {
 describe("Server-Timing header", () => {
   beforeEach(() => {
     state.events.length = 0;
-    state.headerCalls.length = 0;
   });
 
   it.each(["test", "development"])(
@@ -189,24 +148,5 @@ describe("Server-Timing header", () => {
     expect(response.headers.has("Server-Timing")).toBe(false);
     // The log fields stay on in production: only the header is gated.
     expect(state.events[0]!.db).toMatchObject({ queries: 2 });
-  });
-
-  it("is set for server functions in test and absent in production", async () => {
-    state.nodeEnv = "test";
-    await functionMiddleware!({
-      next: nextWithDbCalls(1),
-      serverFnMeta: { id: "fn" },
-    });
-    expect(state.headerCalls).toHaveLength(1);
-    expect(state.headerCalls[0]![0]).toBe("Server-Timing");
-    expect(state.headerCalls[0]![1]).toMatch(/^db;dur=[\d.]+, app;dur=[\d.]+$/);
-
-    state.headerCalls.length = 0;
-    state.nodeEnv = "production";
-    await functionMiddleware!({
-      next: nextWithDbCalls(1),
-      serverFnMeta: { id: "fn" },
-    });
-    expect(state.headerCalls).toHaveLength(0);
   });
 });

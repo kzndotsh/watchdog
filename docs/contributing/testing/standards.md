@@ -28,13 +28,12 @@ A mock replaces something the code under test talks to. It earns its place only 
 | Database | A real Postgres through `@watchdog/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
 | Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `apps/worker/src/__tests__/maintenance.test.ts` |
 | Framework seams | The router, `window`, `EventSource`, the toast and auth server modules, through the shared doubles below | `apps/web/src/testing/` |
-| Server functions (`*.functions.ts`) in a web component or hook test | `vi.mock` of the one `*.functions` module: it is the network boundary of the web app | `apps/web/src/domains/intake/components/__tests__/evidence-detail-provider-calls.component.test.tsx` |
-| The oRPC client (`@/lib/orpc-client`) in a web component or hook test, for a domain that calls the API through it | `vi.mock` with `orpcClientModuleDouble` (`apps/web/src/testing/orpc-client.ts`): the real client and Query utils over one `vi.fn` per procedure (`procedureDouble`) | `apps/web/src/domains/dossier/components/__tests__/claims-section.component.test.tsx` |
+| The oRPC client (`@/lib/orpc-client`) in a web component or hook test: it is the network boundary of the web app (there are no server functions) | `vi.mock` with `orpcClientModuleDouble` (`apps/web/src/testing/orpc-client.ts`): the real client and Query utils over one `vi.fn` per procedure (`procedureDouble`; `memoryListProcedure` for a list, `sessionInOrganization` for `auth.whoami`) | `apps/web/src/domains/dossier/components/__tests__/claims-section.component.test.tsx` |
 
 **Do not mock these:**
 
 - **An internal module the code under test owns** (a sibling `lib/`, a helper, a child component, `@/app/lib/query-invalidation`). Call it. If it is slow or awkward to call, the design is the problem: move the seam to a real boundary or lift the test one tier.
-- **A data-fetching hook** (`useQuery`, `useMutation`, `useSuspenseQuery`, a domain `use*` query hook). Render under a real `QueryClientProvider` (`createAppQueryClient()`) and fake only the `*.functions` call the query function makes. A faked hook cannot see a wrong key, a wrong invalidation or an optimistic-update bug.
+- **A data-fetching hook** (`useQuery`, `useMutation`, `useSuspenseQuery`, a domain `use*` query hook). Render under a real `QueryClientProvider` (`createAppQueryClient()`) and fake only the procedure the query function calls (`procedureDouble`). A faked hook cannot see a wrong key, a wrong invalidation or an optimistic-update bug.
 - **A query key.** Import the key factory from the domain's `queries.ts` (`jobsKeys`, `casesKeys`, ...) and use it in the assertion. A key copied into a test or a mock factory stays green when the real key changes: that is the defect to avoid.
 - **A custody or policy rule** (`@watchdog/policy`, `acceptGate`). Run the real rule; assert its outcome.
 
@@ -43,8 +42,8 @@ A mock replaces something the code under test talks to. It earns its place only 
 **Budget and checks:**
 
 - A test file that needs more than three module mocks should be split or lifted a tier.
-- Assert what a user or caller sees (rendered text, persisted rows, a returned value). Assert a call on a mock only when the mock is a boundary and the call is the contract (the server function receives the form's values).
-- Three lint rules hold the line, each with a shrink-only baseline in `scripts/oxlint-plugin/baselines/`: `watchdog/no-internal-module-mock` (a `vi.mock` / `vi.doMock` of a relative or `@/` module; `*.functions`, `@/lib/orpc-client`, `@/auth/*` and `@/shared/ui/toast` are boundaries and stay legal), `watchdog/no-test-casts` (`as never`, `as unknown as T`) and `watchdog/no-test-sleep` (`setTimeout`, `sleep`, `delay`). A new violation fails `pnpm check`; fixing one makes its baseline entry stale until `node scripts/oxlint-baseline.mjs <rule>` lowers it. Never raise a count. An invalid-input test builds its value with an `untrusted*` helper; an absence check uses a fake clock, `TestClock` or `rendezvous`.
+- Assert what a user or caller sees (rendered text, persisted rows, a returned value). Assert a call on a mock only when the mock is a boundary and the call is the contract (the procedure receives the form's values).
+- Three lint rules hold the line, each with a shrink-only baseline in `scripts/oxlint-plugin/baselines/`: `watchdog/no-internal-module-mock` (a `vi.mock` / `vi.doMock` of a relative or `@/` module; `@/lib/orpc-client`, `@/auth/*` and `@/shared/ui/toast` are boundaries and stay legal), `watchdog/no-test-casts` (`as never`, `as unknown as T`) and `watchdog/no-test-sleep` (`setTimeout`, `sleep`, `delay`). A new violation fails `pnpm check`; fixing one makes its baseline entry stale until `node scripts/oxlint-baseline.mjs <rule>` lowers it. Never raise a count. An invalid-input test builds its value with an `untrusted*` helper; an absence check uses a fake clock, `TestClock` or `rendezvous`.
 - Mocking a data-fetching hook or copying a query key into a mock has no lint rule yet (the hooks are package imports, so the internal-module rule cannot see them). It is reviewed by hand; the files that did it are converted as they are touched.
 
 Before and after, for a component that lists claims:
@@ -108,7 +107,7 @@ Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/U
 
 Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
-Do not add tests for generated client JSON, `packages/ui` (generated primitives), ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
+Do not add tests for generated client JSON, `packages/ui` (generated primitives), pass-through query wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
 
 ## Query-count budgets and plan assertions
 
@@ -183,7 +182,7 @@ Playwright specs live under `e2e/specs/` grouped by product area (`auth/`, `case
 
 Two readiness flags on `<html>`: `data-hydrated` (root providers mounted, set in `providers.tsx`) and `data-page-hydrated` (the route's `Page` frame committed, set by `Page` and cleared when it unmounts). Providers mount before the lazy route, so `data-hydrated` alone leaves route content as server markup with no React props, and a click on it is dropped (no request, no Job). `BasePage.goto` waits for both (`waitForPageHydrated`); auth routes have no `Page` and use `waitForHydrated`. `clickHydrated` stays as the per-element guard for content under nested lazy or Suspense boundaries (it polls for React's `__reactProps*` key). A hydration mismatch (`Hydration failed`) regenerates the tree and drops early clicks for users too, so treat it as a product bug, not a test wait. Await the outcome through the API (`waitForPendingProposal` names the case's Jobs on timeout) rather than a bare count poll.
 
-The route guard's request budget is a smoke spec (`navigation/gate-requests.spec.ts`): a tour of sidebar links (hover, then click) on a warm session records every `/api/auth/*` request and every `getOrganizationStateFn` server function call (found in `vite dev` by decoding the base64url id after `/_serverFn/`; a production build hashes it, so only the auth endpoints would count) and allows one session refresh per elapsed 60 s (`STALE_SESSION`), so a normal run allows none. Settings and Cases are left out of the tour because they read Better Auth data of their own.
+The route guard's request budget is a smoke spec (`navigation/gate-requests.spec.ts`): a tour of sidebar links (hover, then click) on a warm session records every `/api/auth/*` request and every organization-state call (`auth.whoami`, `/api/rpc/auth/whoami`) and allows one session refresh per elapsed 60 s (`STALE_SESSION`), so a normal run allows none. Settings and Cases are left out of the tour because they read Better Auth data of their own.
 
 The Case delete flow is an e2e (`cases/delete-case.spec.ts`: delete from the Cases list, the Restore toast, the Deleted Cases list (a declared list: its blank state is "No Deleted Cases Yet"), the deleted-Case URL screen) because it crosses the list, the toast, Settings and a Case URL; `CasesPage` carries its actions (`deleteCase`, `openDeletedCases`, `deletedRowFor`). Purge now and the scheduled purge are not browser specs: they erase object storage, so the integration tests (`packages/core/src/cases/__tests__/tombstone.int.test.ts`, with a fake `BlobStore`) and the component tests own them.
 

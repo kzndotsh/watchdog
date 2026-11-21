@@ -41,7 +41,6 @@ import { noTestCasts } from "./rules/no-test-casts.mjs";
 import { noTestImportsInProduction } from "./rules/no-test-imports-in-production.mjs";
 import { noTestSleep } from "./rules/no-test-sleep.mjs";
 import { noTsExtensionImport } from "./rules/no-ts-extension-import.mjs";
-import { noTypesFromFunctions } from "./rules/no-types-from-functions.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 import { oneComponentPerFile } from "./rules/one-component-per-file.mjs";
 import { procedureMustBeGuarded } from "./rules/procedure-must-be-guarded.mjs";
@@ -89,7 +88,6 @@ export default {
     "one-component-per-file": oneComponentPerFile,
     "no-test-imports-in-production": noTestImportsInProduction,
     "no-ts-extension-import": noTsExtensionImport,
-    "no-types-from-functions": noTypesFromFunctions,
     "no-cross-domain-relative-imports": noCrossDomainRelativeImports,
     "no-internal-module-mock": noInternalModuleMock,
     "no-test-casts": noTestCasts,

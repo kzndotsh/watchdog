@@ -118,7 +118,6 @@ function renderCaseSwitcher() {
 describe("CaseSwitcher", () => {
   it("prompts to create a case when none exist", () => {
     useCasesContextMock.mockReturnValue({
-      casesCtx: { active: null, cases: [] },
       cases: [],
       active: null,
       pending: false,
@@ -135,7 +134,6 @@ describe("CaseSwitcher", () => {
 
   it("shows the active case name when cases exist", () => {
     useCasesContextMock.mockReturnValue({
-      casesCtx: { active: ACTIVE, cases: [ACTIVE] },
       cases: [ACTIVE],
       active: ACTIVE,
       pending: false,
@@ -154,7 +152,6 @@ describe("CaseSwitcher", () => {
   it("shows a retry banner when the cases query fails", () => {
     const retry = vi.fn();
     useCasesContextMock.mockReturnValue({
-      casesCtx: undefined,
       cases: [],
       active: null,
       pending: false,

@@ -58,8 +58,6 @@ const evidenceReads = vi.hoisted(() => ({
   getEvidenceManyFn: vi.fn(),
 }));
 
-vi.mock("@/domains/intake/intake.functions", () => evidenceReads);
-
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
 import { procedureDouble } from "@/testing/orpc-client";
 import { renderIn } from "@/testing/render-in-case";

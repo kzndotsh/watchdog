@@ -11,13 +11,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
-const updateCaseFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  updateCaseFn,
-  getDeletionPolicyFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -37,7 +33,11 @@ vi.mock("@/domains/cases/hooks/case-cache", () => ({
 }));
 
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
+import { procedureDouble } from "@/testing/orpc-client";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+
+const getDeletionPolicyFn = procedureDouble("cases.deletionPolicy");
+const updateCaseFn = procedureDouble("cases.update");
 
 /** The component reads the router (unsaved-changes guard), so it renders under a real one. */
 let router = createTestRouter();
@@ -50,6 +50,7 @@ beforeEach(() => {
   updateCaseFn.mockReset();
   getDeletionPolicyFn.mockResolvedValue({
     restoreWindowDays: 30,
+    cancellableJobs: 0,
     canIncludeBreachCredentials: false,
     canManage: true,
   });
@@ -122,10 +123,8 @@ describe("CaseSettingsForm", () => {
 
     await waitFor(() => {
       expect(updateCaseFn).toHaveBeenCalledWith({
-        data: {
-          caseId: CASE.id,
-          allowedEgress: ["local", "target", "public_lookup"],
-        },
+        caseId: CASE.id,
+        allowedEgress: ["local", "target", "public_lookup"],
       });
     });
   });
@@ -143,7 +142,8 @@ describe("CaseSettingsForm", () => {
 
     await waitFor(() => {
       expect(updateCaseFn).toHaveBeenCalledWith({
-        data: { caseId: CASE.id, allowedEgress: ["local", "target"] },
+        caseId: CASE.id,
+        allowedEgress: ["local", "target"],
       });
     });
   });
@@ -177,6 +177,7 @@ describe("CaseSettingsForm", () => {
   it("disables the egress switches for a member and says why", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: false,
     });

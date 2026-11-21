@@ -7,7 +7,7 @@ import {
   caseBySlugQuery,
   casesKeys,
 } from "@/domains/cases/queries";
-import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
 const CASE: CaseRecord = {
@@ -18,7 +18,7 @@ const CASE: CaseRecord = {
   allowedEgress: ["local", "target"],
 };
 
-function mockClient(context?: CasesContext): QueryClient {
+function mockClient(context?: CaseRecord[]): QueryClient {
   return {
     removeQueries: vi.fn(),
     setQueryData: vi.fn((_key, updater) => {
@@ -53,26 +53,22 @@ describe("writeCaseRecordCache", () => {
     });
   });
 
-  it("patches the cases context list and active row", () => {
-    const context: CasesContext = {
-      cases: [CASE],
-      active: CASE,
-    };
+  it("patches the row in the visible Cases list", () => {
+    const context: CaseRecord[] = [CASE];
     const client = mockClient(context);
     const updated = { ...CASE, name: "Alpha renamed" };
     writeCaseRecordCache(client, updated);
     const contextCall = vi
       .mocked(client.setQueryData)
       .mock.calls.find(
-        ([key]) => JSON.stringify(key) === JSON.stringify(casesKeys.context())
+        ([key]) => JSON.stringify(key) === JSON.stringify(casesKeys.visible())
       );
     const updater = contextCall?.[1];
     expect(typeof updater).toBe("function");
     const next =
       typeof updater === "function"
-        ? (updater as (p: CasesContext) => CasesContext)(context)
+        ? (updater as (p: CaseRecord[]) => CaseRecord[])(context)
         : null;
-    expect(next?.cases[0]?.name).toBe("Alpha renamed");
-    expect(next?.active?.name).toBe("Alpha renamed");
+    expect(next?.[0]?.name).toBe("Alpha renamed");
   });
 });

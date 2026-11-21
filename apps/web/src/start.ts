@@ -1,39 +1,17 @@
 /**
- * TanStack Start request + ServerFn middleware (security headers + CSRF + auth + evlog).
+ * TanStack Start request middleware (security headers + evlog). The app has no server functions:
+ * the browser calls the API over `/api/rpc` (CSRF header required there, `lib/rpc-handler.server.ts`)
+ * and every other server path is a route that authenticates itself.
  * Dynamic-import drain init inside `.server()` only — never top-level `evlog/fs`
  * (Start keeps bare side-effect imports after stripping `.server()` bodies).
  */
 
-import {
-  createCsrfMiddleware,
-  createMiddleware,
-  createStart,
-} from "@tanstack/react-start";
+import { createMiddleware, createStart } from "@tanstack/react-start";
 
-import { requireAuth } from "@/auth/middleware";
-import { isUnauthorizedError } from "@/auth/unauthorized-error";
-import { EDGE_LOGGED_API, isServerFnPath } from "@/lib/request-log-paths";
-
-/** Required when `src/start.ts` exists — Start auto-installs this only without a custom startInstance. */
-const csrfMiddleware = createCsrfMiddleware({
-  filter: (ctx) => ctx.handlerType === "serverFn",
-});
+import { EDGE_LOGGED_API } from "@/lib/request-log-paths";
 
 /** nginx convention: client closed the connection before the response. */
 const CLIENT_CLOSED_REQUEST = 499;
-
-function serverFnOperationId(serverFnMeta: unknown): string {
-  if (serverFnMeta === null || typeof serverFnMeta !== "object") {
-    return "serverFn";
-  }
-  if ("id" in serverFnMeta && typeof serverFnMeta.id === "string") {
-    return serverFnMeta.id;
-  }
-  if ("name" in serverFnMeta && typeof serverFnMeta.name === "string") {
-    return serverFnMeta.name;
-  }
-  return "serverFn";
-}
 
 /**
  * Resolve the `Server-Timing` gate once per request: dev and test only, never
@@ -81,7 +59,6 @@ const evlogRequestMiddleware = createMiddleware().server(
     const { createMiddlewareLogger, extractSafeHeaders } =
       await import("evlog/toolkit");
     const {
-      createLogger,
       runWithRequestLogger,
       serverTimingHeader,
       startRequestTiming,
@@ -100,24 +77,7 @@ const evlogRequestMiddleware = createMiddleware().server(
     // Alias avoids node/callback-return on the identifier `next`.
     const proceed = next;
 
-    if (skipped) {
-      const result = await proceed();
-      // ServerFns are outside `/api/**`, so the request logger skips them —
-      // but CSRF still runs here. Emit a warn when CSRF rejects so probes
-      // aren't silent (functionMiddleware never runs on 403).
-      if (isServerFnPath(pathname) && result.response.status === 403) {
-        const log = createLogger();
-        log.setLevel("warn");
-        log.set({
-          path: pathname,
-          method: request.method,
-          status: 403,
-          auth: { denied: true, reason: "csrf" },
-        });
-        void log.emit();
-      }
-      return result;
-    }
+    if (skipped) return proceed();
 
     const emitTiming = await serverTimingEnabled();
     return runWithRequestLogger(logger, async () => {
@@ -154,63 +114,8 @@ const evlogRequestMiddleware = createMiddleware().server(
   }
 );
 
-const evlogFunctionMiddleware = createMiddleware({ type: "function" }).server(
-  async ({ next, serverFnMeta }) => {
-    await import("./evlog-init.server");
-    const {
-      createLogger,
-      runWithRequestLogger,
-      serverTimingHeader,
-      startRequestTiming,
-    } = await import("@watchdog/log");
-
-    const log = createLogger();
-    log.set({ operation: serverFnOperationId(serverFnMeta) });
-
-    const emitTiming = await serverTimingEnabled();
-    const proceed = next;
-    return runWithRequestLogger(log, async () => {
-      const snapshot = startRequestTiming(log);
-      try {
-        const result = await proceed();
-        const timing = snapshot();
-        log.set(timing);
-        if (emitTiming) {
-          const { setResponseHeader } =
-            await import("@tanstack/react-start/server");
-          setResponseHeader("Server-Timing", serverTimingHeader(timing));
-        }
-        void log.emit();
-        return result;
-      } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        // Expected auth denial → warn. Unexpected throws → error (log.error
-        // serializes Error; log.set({ error: Error }) JSON-stringifies to {}).
-        if (isUnauthorizedError(err)) {
-          log.setLevel("warn");
-          log.set({
-            auth: { denied: true, reason: "no_session" },
-            error: { name: err.name, message: err.message },
-          });
-        } else {
-          log.error(err);
-        }
-        log.set(snapshot());
-        void log.emit();
-        throw error;
-      }
-    });
-  }
-);
-
 export const startInstance = createStart(() => ({
-  // Headers outermost so every response carries them, CSRF 403s included; the
-  // logger sits just inside so CSRF 403s (and other request failures) still emit.
-  requestMiddleware: [
-    securityHeadersMiddleware,
-    evlogRequestMiddleware,
-    csrfMiddleware,
-  ],
-  // Logger outermost so Unauthorized from requireAuth still emits a wide event.
-  functionMiddleware: [evlogFunctionMiddleware, requireAuth],
+  // Headers outermost so every response carries them; the logger sits just inside so request
+  // failures still emit.
+  requestMiddleware: [securityHeadersMiddleware, evlogRequestMiddleware],
 }));

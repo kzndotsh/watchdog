@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -107,17 +108,9 @@ vi.mock("@/domains/triage/components/triage-detail", () => ({
   ),
 }));
 
-const listProposalQueuePageFn = vi.hoisted(() => vi.fn());
-const getProposalFn = vi.hoisted(() => vi.fn());
-const acceptProposalFn = vi.hoisted(() => vi.fn());
-const rejectProposalFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalQueuePageFn,
-  getProposalFn,
-  acceptProposalFn,
-  rejectProposalFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { Triage } from "@/domains/triage/components/triage";
 import {
@@ -126,7 +119,12 @@ import {
 } from "@/domains/triage/lib/triage-search";
 import { TOAST_PROPOSAL_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  matchesChoice,
+  matchesQ,
+  memoryListProcedure,
+} from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildProposalRecord } from "@/testing/records";
 import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
@@ -140,6 +138,11 @@ const ACTIVE: CaseRecord = {
 };
 
 const render = renderIn(ACTIVE);
+
+const listProposalQueuePageFn = procedureDouble("proposals.queuePage");
+const getProposalFn = procedureDouble("proposals.get");
+const acceptProposalFn = procedureDouble("proposals.accept");
+const rejectProposalFn = procedureDouble("proposals.reject");
 
 const STATUSES = ["pending", "accepted", "rejected"] as const;
 
@@ -172,7 +175,7 @@ function queueRowOf(row: ProposalRecord): ProposalQueueItem {
 }
 
 function proposalServer(rows: readonly ProposalRecord[], pageSize = 50) {
-  const page = memoryListPage(rows, {
+  const page = memoryListProcedure(rows, {
     matches: (row, data) =>
       matchesChoice(row.status, data.status) &&
       matchesQ(data, [row.summary, row.rejectReason]),
@@ -219,10 +222,11 @@ function renderTriage(
   listProposalQueuePageFn.mockReset();
   listProposalQueuePageFn.mockImplementation(proposalServer(rows, pageSize));
   getProposalFn.mockReset();
-  getProposalFn.mockImplementation(
-    async ({ data }: { data: { proposalId: string } }) =>
-      rows.find((row) => row.id === data.proposalId) ?? null
-  );
+  getProposalFn.mockImplementation(async (input) => {
+    const found = rows.find((row) => row.id === input.proposalId);
+    if (found === undefined) throw new ORPCError("NOT_FOUND");
+    return found;
+  });
   acceptProposalFn.mockReset();
   acceptProposalFn.mockResolvedValue(rows[0]);
   rejectProposalFn.mockReset();
@@ -240,11 +244,9 @@ function renderTriage(
 }
 
 function lastRequest(): Record<string, unknown> {
-  const call = listProposalQueuePageFn.mock.calls.at(-1) as
-    | [{ data: Record<string, unknown> }]
-    | undefined;
+  const call = listProposalQueuePageFn.mock.calls.at(-1);
   if (call === undefined) throw new Error("no page was asked for");
-  return call[0].data;
+  return { ...call[0] };
 }
 
 function queueRows(): HTMLElement[] {
@@ -272,7 +274,8 @@ describe("Triage", () => {
     // The rows carry no patch: the Detail reads the selected Proposal in full, once.
     expect(getProposalFn).toHaveBeenCalledTimes(1);
     expect(getProposalFn).toHaveBeenLastCalledWith({
-      data: { caseId: ACTIVE.id, proposalId: testId(5006) },
+      caseId: ACTIVE.id,
+      proposalId: testId(5006),
     });
     expect(
       queueRows().every((row) => row.textContent.includes("1 Claim · 1 ev"))
@@ -416,7 +419,8 @@ describe("Triage", () => {
     expect(await screen.findByText("Detail: Proposal 01")).toBeInTheDocument();
     expect(getProposalFn).toHaveBeenCalledTimes(1);
     expect(getProposalFn).toHaveBeenLastCalledWith({
-      data: { caseId: ACTIVE.id, proposalId: target.id },
+      caseId: ACTIVE.id,
+      proposalId: target.id,
     });
   });
 
@@ -460,12 +464,12 @@ describe("Triage", () => {
     await waitFor(() => {
       expect(acceptProposalFn).toHaveBeenCalledTimes(1);
     });
-    expect(acceptProposalFn).toHaveBeenLastCalledWith({
-      data: expect.objectContaining({
+    expect(acceptProposalFn).toHaveBeenLastCalledWith(
+      expect.objectContaining({
         caseId: ACTIVE.id,
         proposalId: testId(5008),
-      }),
-    });
+      })
+    );
     await waitFor(() => {
       expect(onPatch).toHaveBeenLastCalledWith({
         status: ["pending"],
@@ -502,11 +506,9 @@ describe("Triage", () => {
 
     await waitFor(() => {
       expect(rejectProposalFn).toHaveBeenLastCalledWith({
-        data: {
-          caseId: ACTIVE.id,
-          proposalId: testId(5000),
-          reason: "dup",
-        },
+        caseId: ACTIVE.id,
+        proposalId: testId(5000),
+        reason: "dup",
       });
     });
   });

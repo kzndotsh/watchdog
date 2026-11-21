@@ -69,7 +69,7 @@ describe("useEvidenceBlob", () => {
           isError: false,
         };
       }
-      if (key[0] === "evidence" && key[2] === "download") {
+      if (JSON.stringify(key[0]) === '["evidence","downloadUrl"]') {
         return {
           data: { url: testHttpUrl("download.test/blob") },
           isFetched: true,
@@ -108,7 +108,7 @@ describe("useEvidenceBlob", () => {
           isError: false,
         };
       }
-      if (key[0] === "evidence" && key[2] === "download") {
+      if (JSON.stringify(key[0]) === '["evidence","downloadUrl"]') {
         return {
           data: { url: null },
           isFetched: true,
@@ -150,7 +150,7 @@ describe("useEvidenceBlob", () => {
           refetch: vi.fn(),
         };
       }
-      if (key[0] === "evidence" && key[2] === "download") {
+      if (JSON.stringify(key[0]) === '["evidence","downloadUrl"]') {
         return {
           data: { url: null },
           isFetched: true,
@@ -192,7 +192,7 @@ describe("useEvidenceBlob", () => {
           refetch: vi.fn(),
         };
       }
-      if (key[0] === "evidence" && key[2] === "download") {
+      if (JSON.stringify(key[0]) === '["evidence","downloadUrl"]') {
         return {
           data: { url: null },
           isFetched: true,
@@ -232,7 +232,7 @@ describe("useEvidenceBlob", () => {
           refetch: vi.fn(),
         };
       }
-      if (key[0] === "evidence" && key[2] === "download") {
+      if (JSON.stringify(key[0]) === '["evidence","downloadUrl"]') {
         return {
           data: undefined,
           isFetched: true,

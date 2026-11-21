@@ -36,7 +36,7 @@ A Case an owner or admin deleted: hidden from every surface at once, restorable 
 _Avoid_: Archived Case, trashed Case
 
 **Active Case**:
-The Case a screen works in: the Case in a Work URL (`/cases/$caseSlug/...`), else the last Case entered, held in the `watchdog.active-case-id` cookie. Detail: [`web/data.md`](reference/web/data.md).
+The Case a screen works in: the Case in a Work URL (`/cases/$caseSlug/...`), else the last Case this browser entered (kept in `localStorage`, never a cookie), else the first visible Case. Detail: [`web/data.md`](reference/web/data.md).
 _Avoid_: Current case, selected case
 
 **API key**:

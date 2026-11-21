@@ -12,13 +12,9 @@ import type { CaseEgress } from "@/domains/cases/types";
 import type { EgressBlock } from "@/domains/jobs/lib/egress-block";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
-const updateCaseFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  updateCaseFn,
-  getDeletionPolicyFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -26,7 +22,11 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { EgressBlockNotice } from "@/domains/jobs/components/egress-block-notice";
+import { procedureDouble } from "@/testing/orpc-client";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+
+const getDeletionPolicyFn = procedureDouble("cases.deletionPolicy");
+const updateCaseFn = procedureDouble("cases.update");
 
 const router = createTestRouter();
 const render = (ui: ReactElement) =>
@@ -60,6 +60,7 @@ describe("EgressBlockNotice", () => {
   it("names the blocked classes and where the seed would go", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: true,
     });
@@ -76,6 +77,7 @@ describe("EgressBlockNotice", () => {
   it("offers an owner or admin the button that allows the classes, keeping what is allowed", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: true,
     });
@@ -95,10 +97,8 @@ describe("EgressBlockNotice", () => {
 
     await waitFor(() => {
       expect(updateCaseFn).toHaveBeenCalledWith({
-        data: {
-          caseId: CASE.id,
-          allowedEgress: ["local", "target", "public_lookup", "account_lookup"],
-        },
+        caseId: CASE.id,
+        allowedEgress: ["local", "target", "public_lookup", "account_lookup"],
       });
     });
   });
@@ -106,6 +106,7 @@ describe("EgressBlockNotice", () => {
   it("gives a member no button and says who can allow it", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: false,
     });

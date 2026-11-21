@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
@@ -26,6 +26,10 @@ vi.mock("@/domains/dashboard/lib/prefetch-dashboard", () => ({
   warmDashboardQueries: warmDashboardQueriesMock,
 }));
 
+import {
+  LAST_CASE_STORAGE_KEY,
+  rememberLastCase,
+} from "@/domains/cases/lib/active-case";
 import { Route } from "@/routes/_protected/index";
 
 const ACTIVE = {
@@ -36,19 +40,38 @@ const ACTIVE = {
   allowedEgress: ["local", "target"],
 };
 
+const FIRST = { ...ACTIVE, id: testId(11), slug: "first", name: "First" };
+
 describe("protected dashboard index route", () => {
-  it("warms dashboard queries from the loader", async () => {
-    const query = vi
-      .fn()
-      .mockResolvedValue({ active: ACTIVE, cases: [ACTIVE] });
+  afterEach(() => {
+    window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
+    warmDashboardQueriesMock.mockClear();
+  });
+
+  async function runLoader() {
+    const query = vi.fn().mockResolvedValue([FIRST, ACTIVE]);
     const queryClient = { query };
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
-
     await loader({ context: { queryClient } } as never);
+    return queryClient;
+  }
+
+  it("warms dashboard queries for the last Case entered", async () => {
+    rememberLastCase(ACTIVE.id);
+    const queryClient = await runLoader();
 
     expect(warmDashboardQueriesMock).toHaveBeenCalledWith(
       queryClient,
       ACTIVE.id
+    );
+  });
+
+  it("warms the first visible Case when none was entered yet", async () => {
+    const queryClient = await runLoader();
+
+    expect(warmDashboardQueriesMock).toHaveBeenCalledWith(
+      queryClient,
+      FIRST.id
     );
   });
 

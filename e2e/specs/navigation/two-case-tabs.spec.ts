@@ -31,7 +31,7 @@ test.describe("Case in the URL", () => {
         tabTwo.getByRole("link", { name: crumb(secondName) })
       ).toBeVisible({ timeout: 30_000 });
 
-      // The cookie now remembers the second Case, but tab one's URL still names the first.
+      // The last Case entered is now the second, but tab one's URL still names the first.
       await page.reload();
       await waitForPageHydrated(page);
       await expect(page).toHaveURL(

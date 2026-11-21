@@ -53,6 +53,12 @@ const ENTITY: EntityRecord = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
+/** A key's domain: its first segment, or the first part of an oRPC key's procedure path. */
+function keyRoot(queryKey: readonly unknown[]): string {
+  const [head] = queryKey;
+  return String(Array.isArray(head) ? head[0] : head);
+}
+
 function isEvidenceQuery(
   options: unknown
 ): options is { queryKey: readonly unknown[]; enabled?: boolean } {
@@ -61,14 +67,8 @@ function isEvidenceQuery(
     options !== null &&
     "queryKey" in options &&
     Array.isArray(options.queryKey) &&
-    options.queryKey[0] === "evidence"
+    keyRoot(options.queryKey) === "evidence"
   );
-}
-
-/** A key's domain: its first segment, or the first part of an oRPC key's procedure path. */
-function keyRoot(queryKey: readonly unknown[]): string {
-  const [head] = queryKey;
-  return String(Array.isArray(head) ? head[0] : head);
 }
 
 /** One settled first page of a list view, with its total. */
@@ -109,7 +109,7 @@ function renderShell() {
   );
   useQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) => {
-      switch (options.queryKey[0]) {
+      switch (keyRoot(options.queryKey)) {
         case "tasks": {
           // The Entity's board (`tasks.board`): its open cards only.
           return {
@@ -122,12 +122,16 @@ function renderShell() {
         }
         case "evidence": {
           // Only the preview's one item by id (`evidenceByIdQuery`), and only once asked for.
+          const [path, operation] = options.queryKey as readonly [
+            readonly string[],
+            { readonly input?: { readonly evidenceId?: string } },
+          ];
           const isAsked =
-            options.queryKey[2] === "by-id" &&
+            path[1] === "get" &&
             (options as { enabled?: boolean }).enabled !== false;
           return {
             data: isAsked
-              ? { id: options.queryKey[3], entityId: ENTITY.id }
+              ? { id: operation.input?.evidenceId, entityId: ENTITY.id }
               : undefined,
             isFetched: isAsked,
             isError: false,
@@ -204,7 +208,8 @@ describe("useDossierShell", () => {
     expect(
       evidenceCalls.every(
         (options) =>
-          options.queryKey[2] === "by-id" && options.enabled === false
+          JSON.stringify(options.queryKey[0]) === '["evidence","get"]' &&
+          options.enabled === false
       )
     ).toBe(true);
   });

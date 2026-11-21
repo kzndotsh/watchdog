@@ -22,17 +22,12 @@ import {
   taskListView,
   tasksKeys,
 } from "@/domains/tasks/queries";
-import {
-  createTaskFn,
-  deleteTaskFn,
-  reorderTasksFn,
-  updateTaskFn,
-} from "@/domains/tasks/tasks.functions";
 import type {
   TaskBoardRecord,
   TaskListItem,
   TaskRecord,
 } from "@/domains/tasks/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import type { ListHandle } from "@/shared/lib/list/list-types";
@@ -204,9 +199,7 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const createMut = useMutation({
     mutationFn: async (values: TaskFormValues) =>
-      createTaskFn({
-        data: buildCreateTaskData(caseId, values),
-      }),
+      orpc.tasks.create.call(buildCreateTaskData(caseId, values)),
     onSuccess: async () => {
       setIsCreateOpen(false);
       setFormError(null);
@@ -220,8 +213,8 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const quickCreateMut = useMutation({
     mutationFn: async (vars: { status: TaskStatus; title: string }) =>
-      createTaskFn({
-        data: buildCreateTaskData(
+      orpc.tasks.create.call(
+        buildCreateTaskData(
           caseId,
           {
             ...EMPTY_TASK_FORM,
@@ -229,8 +222,8 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
             status: vars.status,
           },
           { entityId: scopedEntityId ?? null }
-        ),
-      }),
+        )
+      ),
     onSuccess: async () => {
       setQuickCreateError(null);
       toast.success(TOAST_TASK_CREATED);
@@ -244,9 +237,9 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
   const updateMut = useMutation({
     mutationFn: async (values: TaskFormValues) => {
       if (!selected) throw new Error("No task");
-      return updateTaskFn({
-        data: buildUpdateTaskData(caseId, selected.id, values),
-      });
+      return orpc.tasks.update.call(
+        buildUpdateTaskData(caseId, selected.id, values)
+      );
     },
     onSuccess: async () => {
       clearSelection();
@@ -261,9 +254,7 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const deleteMut = useMutation({
     mutationFn: async (taskId: string) =>
-      deleteTaskFn({
-        data: deleteTaskInputSchema.parse({ caseId, taskId }),
-      }),
+      orpc.tasks.remove.call(deleteTaskInputSchema.parse({ caseId, taskId })),
     onSuccess: async (_data, taskId) => {
       if (selected?.id === taskId) {
         clearSelection();
@@ -279,9 +270,9 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const statusMut = useMutation({
     mutationFn: async (vars: { task: TaskRecord; status: TaskStatus }) =>
-      updateTaskFn({
-        data: buildTaskStatusUpdateData(caseId, vars.task.id, vars.status),
-      }),
+      orpc.tasks.update.call(
+        buildTaskStatusUpdateData(caseId, vars.task.id, vars.status)
+      ),
     onMutate: async ({ task, status }) => {
       await qc.cancelQueries({ queryKey: tasksKeys.all(caseId) });
       const previous = patchCachedStatus(qc, caseId, task.id, status);
@@ -305,13 +296,13 @@ export function useTaskWorkspace<K extends FilterKey<TaskListDef>>(
 
   const reorderMut = useMutation({
     mutationFn: async (vars: { status: TaskStatus; orderedIds: string[] }) =>
-      reorderTasksFn({
-        data: reorderTasksInputSchema.parse({
+      orpc.tasks.reorder.call(
+        reorderTasksInputSchema.parse({
           caseId,
           status: vars.status,
           orderedIds: vars.orderedIds,
-        }),
-      }),
+        })
+      ),
     onError: (e) => {
       toast.error(errMessage(e, couldnt("reorder", "tasks")));
     },

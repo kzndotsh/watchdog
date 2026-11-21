@@ -2,7 +2,11 @@ import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { z } from "zod";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import {
+  pickDefaultCase,
+  readLastCaseId,
+} from "@/domains/cases/lib/active-case";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import { DashboardHome } from "@/domains/dashboard/components/dashboard-home";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { RouteError } from "@/shared/layout/route-error";
@@ -39,9 +43,11 @@ export const Route = createFileRoute("/_protected/")({
     activityCase: optionalCaseIdSchema,
   }),
   loader: async ({ context: { queryClient } }) => {
-    const { active } = await ensureAppQueryData(
-      queryClient,
-      casesContextQuery()
+    // The Case the Dashboard shows: the last one entered (none on the server, which has no
+    // storage: the first visible Case is warmed there, the client corrects it on hydration).
+    const active = pickDefaultCase(
+      await ensureAppQueryData(queryClient, visibleCasesQuery()),
+      readLastCaseId()
     );
     warmDashboardQueries(queryClient, active?.id ?? null);
   },

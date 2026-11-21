@@ -30,11 +30,6 @@ vi.mock("@/lib/orpc-client", async () =>
 );
 
 // The Evidence cell titles links and picks through `evidence.getMany` / one list page (#559).
-vi.mock("@/domains/intake/intake.functions", () => ({
-  getEvidenceManyFn: vi.fn().mockResolvedValue([]),
-  listEvidencePageFn: vi.fn(),
-  listEvidencePickerPageFn: vi.fn(),
-}));
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");

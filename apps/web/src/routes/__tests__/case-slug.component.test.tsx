@@ -1,6 +1,7 @@
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
@@ -31,17 +32,9 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-const healActiveCaseFn = vi.hoisted(() =>
-  vi.fn(async (_input?: unknown) => ({ changed: false }))
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
-const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
-const getDeletedCaseBySlugFn = vi.hoisted(() => vi.fn());
-vi.mock("@/domains/cases/cases.functions", () => ({
-  healActiveCaseFn,
-  getDeletionPolicyFn,
-  getDeletedCaseBySlugFn,
-  restoreCaseFn: vi.fn(),
-}));
 
 vi.mock("@/domains/dashboard/components/case-overview", () => ({
   CaseOverview: ({ caseId }: { caseId: string }) => (
@@ -73,12 +66,18 @@ vi.mock("@/shared/layout/page-header", () => ({
   ),
 }));
 
-import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
-import { casesKeys } from "@/domains/cases/queries";
+import {
+  LAST_CASE_STORAGE_KEY,
+  readLastCaseId,
+} from "@/domains/cases/lib/active-case";
 import { Route } from "@/routes/_protected/cases/$caseSlug";
 import { Route as OverviewRoute } from "@/routes/_protected/cases/$caseSlug/index";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildDeletedCaseRecord } from "@/testing/records";
 import { callRouteHook } from "@/testing/route-hooks";
+
+const getDeletionPolicyFn = procedureDouble("cases.deletionPolicy");
+const getDeletedCaseBySlugFn = procedureDouble("cases.getDeletedBySlug");
 
 const CASE_ID = testId(10);
 const notFoundProps = {
@@ -93,17 +92,11 @@ const caseRow = {
   description: null,
   allowedEgress: ["local", "target"],
 };
-const OTHER_ID = testId(11);
-
 const beforeLoad = Route.options.beforeLoad;
 
 /** `lookup` answers the Case query (null: the organization cannot see that slug). */
-function fakeClient(lookup: unknown, activeId: string | null = OTHER_ID) {
-  const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
-    options.queryKey[1] === "context"
-      ? { cases: [], active: activeId ? { id: activeId } : null }
-      : lookup
-  );
+function fakeClient(lookup: unknown) {
+  const query = vi.fn(async () => lookup);
   return {
     query,
     invalidateQueries: vi.fn().mockResolvedValue(undefined),
@@ -131,10 +124,11 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "missing" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: true,
     });
-    getDeletedCaseBySlugFn.mockResolvedValue(null);
+    getDeletedCaseBySlugFn.mockRejectedValue(new ORPCError("NOT_FOUND"));
     renderNotFound();
 
     expect(
@@ -152,6 +146,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "alpha" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: true,
     });
@@ -176,6 +171,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "!!!" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: true,
     });
@@ -192,6 +188,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     useParamsMock.mockReturnValue({ caseSlug: "alpha" });
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: false,
     });
@@ -206,7 +203,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
   });
 
   it("answers not found for a slug the organization cannot see (another organization's Case)", async () => {
-    // `getCaseBySlugFn` searches only the caller's organization's Cases, so a foreign
+    // `cases.getBySlug` searches only the caller's organization's Cases, so a foreign
     // Case's slug looks up as null: the same answer as a slug that never existed.
     const queryClient = fakeClient(null);
 
@@ -231,7 +228,7 @@ describe("case slug route (the Case segment of Work URLs)", () => {
   });
 
   it("hands the Case it found to every child as route context", async () => {
-    const queryClient = fakeClient(caseRow, CASE_ID);
+    const queryClient = fakeClient(caseRow);
 
     await expect(
       callRouteHook(beforeLoad, {
@@ -255,109 +252,36 @@ describe("case slug route (the Case segment of Work URLs)", () => {
     ).rejects.toEqual(expect.objectContaining({ isNotFound: true }));
   });
 
-  describe("cookie healing", () => {
-    function run(extra: Record<string, unknown> = {}, activeId = OTHER_ID) {
-      const queryClient = fakeClient(caseRow, activeId);
-      return {
-        queryClient,
-        result: callRouteHook(beforeLoad, {
+  describe("the last Case entered", () => {
+    afterEach(() => {
+      window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
+    });
+
+    it("remembers the URL's Case when it is entered, with no server write", async () => {
+      const queryClient = fakeClient(caseRow);
+
+      await expect(
+        callRouteHook(beforeLoad, {
           context: { queryClient },
           params: { caseSlug: "alpha" },
           preload: false,
-          ...extra,
-        }),
-      };
-    }
+        })
+      ).resolves.toEqual({ workCase: caseRow });
 
-    it("asks the server to heal, carrying the Active Case it observed", async () => {
-      healActiveCaseFn.mockClear();
-      healActiveCaseFn.mockResolvedValueOnce({ changed: true });
-      const { result, queryClient } = run();
-
-      await expect(result).resolves.toEqual({ workCase: caseRow });
-
-      expect(healActiveCaseFn).toHaveBeenCalledWith({
-        data: { caseId: CASE_ID, expectedActiveCaseId: OTHER_ID },
-      });
-      expect(queryClient.invalidateQueries).toHaveBeenCalled();
-    });
-
-    it("sends null as the expected Active Case when none was observed", async () => {
-      healActiveCaseFn.mockClear();
-      healActiveCaseFn.mockResolvedValueOnce({ changed: true });
-      const queryClient = fakeClient(caseRow, null);
-
-      await callRouteHook(beforeLoad, {
-        context: { queryClient },
-        params: { caseSlug: "alpha" },
-        preload: false,
-      });
-
-      expect(healActiveCaseFn).toHaveBeenCalledWith({
-        data: { caseId: CASE_ID, expectedActiveCaseId: null },
-      });
-    });
-
-    it("skips the server call when the route's Case is already the observed Active Case", async () => {
-      healActiveCaseFn.mockClear();
-      const { result, queryClient } = run({}, CASE_ID);
-
-      await result;
-
-      expect(healActiveCaseFn).not.toHaveBeenCalled();
+      expect(readLastCaseId()).toBe(CASE_ID);
       expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     });
 
-    it("leaves the caches alone when the server did not change the cookie", async () => {
-      healActiveCaseFn.mockResolvedValueOnce({ changed: false });
-      const { result, queryClient } = run();
+    it("does not remember it on an intent preload", async () => {
+      await expect(
+        callRouteHook(beforeLoad, {
+          context: { queryClient: fakeClient(caseRow) },
+          params: { caseSlug: "alpha" },
+          preload: true,
+        })
+      ).resolves.toEqual({ workCase: caseRow });
 
-      await result;
-
-      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    });
-
-    it("does not finalize or invalidate when a newer switch bumped the epoch during the heal", async () => {
-      let release: (value: { changed: boolean }) => void = () => {};
-      healActiveCaseFn.mockImplementationOnce(
-        () =>
-          new Promise<{ changed: boolean }>((resolve) => {
-            release = resolve;
-          })
-      );
-      const { result, queryClient } = run();
-      await vi.waitFor(() => {
-        expect(healActiveCaseFn).toHaveBeenCalled();
-      });
-
-      // The user switched Case via useSelectActiveCase.
-      bumpActiveCaseHealEpoch();
-      release({ changed: true });
-      await result;
-
-      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-      expect(
-        queryClient.setQueryData.mock.calls.map(([key]) => key)
-      ).not.toContainEqual(casesKeys.context());
-    });
-
-    it("does not call the server when a switch already bumped the epoch before the heal", async () => {
-      healActiveCaseFn.mockClear();
-      const { result, queryClient } = run();
-      bumpActiveCaseHealEpoch();
-      await result;
-
-      expect(healActiveCaseFn).not.toHaveBeenCalled();
-      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    });
-
-    it("does not heal on an intent preload", async () => {
-      healActiveCaseFn.mockClear();
-      const { result } = run({ preload: true });
-
-      await expect(result).resolves.toEqual({ workCase: caseRow });
-
-      expect(healActiveCaseFn).not.toHaveBeenCalled();
+      expect(readLastCaseId()).toBeNull();
     });
   });
 });

@@ -63,6 +63,7 @@ export type {
 export {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
+  getJobArtifactTextInputSchema,
   getJobInputSchema,
   retryJobInputSchema,
   startJobInputSchema,

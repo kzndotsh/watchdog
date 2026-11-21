@@ -1,19 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { jobsKeys, RECENT_JOBS_LIMIT } from "@/domains/jobs/jobs-keys";
+import { orpc } from "@/lib/orpc-client";
 import {
-  getJobFn,
-  getPlaybookRunFn,
-  listCapabilitiesFn,
-  listJobFoundValuesFn,
-  listJobProviderCallsFn,
-  listPlaybooksFn,
-  listRecentJobsFn,
-} from "@/domains/jobs/jobs.functions";
-import {
-  parseGetJobInput,
-  parsePlaybookRunInput,
-  parseListJobsInput,
   scopeCaseId,
   scopeCaseIdEnabled,
   scopeJobDetail,
@@ -31,25 +20,23 @@ import {
 
 export { jobsKeys } from "@/domains/jobs/jobs-keys";
 
-const capabilitiesKeys = {
-  all: ["capabilities"] as const,
-};
-
-const playbooksKeys = {
-  all: ["playbooks"] as const,
-};
-
 /**
- * The Case's newest Jobs, one page: what the Case overview's Recent activity groups. Under
- * `jobsKeys.all`, so every Job mutation and live update of the Case refreshes it.
+ * The Case's newest Jobs, one page (`jobs.listForCase`, `RECENT_JOBS_LIMIT` rows): what the Case
+ * overview's Recent activity groups. Under `jobsKeys.all`, so every Job mutation and live update
+ * of the Case refreshes it.
  */
 export const jobsRecentQuery = (caseId: string) => {
   const scopedCaseId = scopeCaseId(caseId);
   const queryKey = jobsKeys.recent(scopedCaseId);
   return queryOptions({
     queryKey,
-    queryFn: async () =>
-      listRecentJobsFn({ data: parseListJobsInput(scopedCaseId) }),
+    queryFn: async () => {
+      const page = await orpc.jobs.listForCase.call({
+        caseId: scopedCaseId,
+        limit: RECENT_JOBS_LIMIT,
+      });
+      return page.items;
+    },
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,
@@ -63,7 +50,7 @@ export const jobDetailQuery = (caseId: string, jobId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      getJobFn({ data: parseGetJobInput(scoped.caseId, scoped.jobId) }),
+      orpc.jobs.get.call({ caseId: scoped.caseId, jobId: scoped.jobId }),
     enabled: scopeJobDetailEnabled(caseId, jobId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,
@@ -78,9 +65,7 @@ export const jobFoundValuesQuery = (caseId: string, jobId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      listJobFoundValuesFn({
-        data: parseGetJobInput(scoped.caseId, scoped.jobId),
-      }),
+      orpc.jobs.listFound.call({ caseId: scoped.caseId, jobId: scoped.jobId }),
     enabled: scopeJobDetailEnabled(caseId, jobId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,
@@ -94,8 +79,9 @@ export const jobProviderCallsQuery = (caseId: string, jobId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      listJobProviderCallsFn({
-        data: parseGetJobInput(scoped.caseId, scoped.jobId),
+      orpc.jobs.listProviderCalls.call({
+        caseId: scoped.caseId,
+        jobId: scoped.jobId,
       }),
     enabled: scopeJobDetailEnabled(caseId, jobId),
     staleTime: STALE_REALTIME,
@@ -110,8 +96,9 @@ export const playbookRunQuery = (caseId: string, playbookRunId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      getPlaybookRunFn({
-        data: parsePlaybookRunInput(scoped.caseId, scoped.playbookRunId),
+      orpc.jobs.getPlaybookRun.call({
+        caseId: scoped.caseId,
+        playbookRunId: scoped.playbookRunId,
       }),
     enabled: scopePlaybookRunEnabled(caseId, playbookRunId),
     staleTime: STALE_REALTIME,
@@ -120,22 +107,24 @@ export const playbookRunQuery = (caseId: string, playbookRunId: string) => {
   });
 };
 
+/** The Cap catalog (`capabilities.list`): the instance's registry, not a Case's. */
 export const capabilitiesListQuery = () => {
-  const queryKey = capabilitiesKeys.all;
+  const queryKey = orpc.capabilities.list.key({ type: "query" });
   return queryOptions({
     queryKey,
-    queryFn: async () => listCapabilitiesFn(),
+    queryFn: async () => orpc.capabilities.list.call(),
     staleTime: STALE_STABLE,
     gcTime: GC_STABLE,
     placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };
 
+/** The Playbook catalog (`capabilities.listPlaybooks`). */
 export const playbooksListQuery = () => {
-  const queryKey = playbooksKeys.all;
+  const queryKey = orpc.capabilities.listPlaybooks.key({ type: "query" });
   return queryOptions({
     queryKey,
-    queryFn: async () => listPlaybooksFn(),
+    queryFn: async () => orpc.capabilities.listPlaybooks.call(),
     staleTime: STALE_STABLE,
     gcTime: GC_STABLE,
     placeholderData: placeholderDataForQueryKey(queryKey),

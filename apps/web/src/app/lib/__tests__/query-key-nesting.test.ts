@@ -85,7 +85,7 @@ function factory<T extends object>(
 const factories: readonly Factory[] = [
   factory("activityKeys", activityKeys.all, activityKeys, () => []),
   factory("casesKeys", casesKeys.all, casesKeys, (k) => [
-    k.context(),
+    k.visible(),
     k.detail(CASE),
     k.bySlug("alpha"),
     k.deletedBySlug("alpha"),

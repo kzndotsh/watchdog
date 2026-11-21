@@ -4,7 +4,12 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { JobDetail } from "@/domains/jobs/components/job-detail";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   buildJobRecord,
   buildProviderCallList,
@@ -13,16 +18,7 @@ import {
 import { RouteCaseProvider } from "@/testing/route-case";
 import { testId } from "@watchdog/test-kit";
 
-const listJobProviderCallsFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobProviderCallsFn,
-  getJobFn: vi.fn(),
-  getPlaybookRunFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listJobsFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
+const listJobProviderCallsFn = procedureDouble("jobs.listProviderCalls");
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
@@ -64,7 +60,8 @@ describe("JobDetail provider calls", () => {
       await screen.findByText("https://provider.test/v1/host?key=[redacted]")
     ).toBeInTheDocument();
     expect(listJobProviderCallsFn).toHaveBeenCalledWith({
-      data: { caseId: job.caseId, jobId: job.id },
+      caseId: job.caseId,
+      jobId: job.id,
     });
   });
 

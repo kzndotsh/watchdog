@@ -3,7 +3,6 @@ import { isRedirect } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const sessionQuery = vi.hoisted(() => vi.fn());
-const getOrganizationState = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-start", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-start")>()),
@@ -17,9 +16,7 @@ vi.mock("@tanstack/react-start", async (importOriginal) => ({
 vi.mock("@better-auth-ui/core", () => ({
   sessionOptions: () => ({ queryKey: ["session"], queryFn: sessionQuery }),
 }));
-vi.mock("@/domains/organization/organization.functions", () => ({
-  getOrganizationStateFn: getOrganizationState,
-}));
+
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 // The `createIsomorphicFn` stand-in above would make the oRPC client a promise.
 vi.mock("@/lib/orpc-client", async () =>
@@ -27,6 +24,9 @@ vi.mock("@/lib/orpc-client", async () =>
 );
 
 import { redirectIfSignedIn, requireSession } from "@/app/require-session";
+import { procedureDouble, sessionInOrganization } from "@/testing/orpc-client";
+
+const whoami = procedureDouble("auth.whoami");
 
 const session = {
   user: { id: "u1" },
@@ -35,7 +35,7 @@ const session = {
 
 afterEach(() => {
   sessionQuery.mockReset();
-  getOrganizationState.mockReset();
+  whoami.mockReset();
 });
 
 async function thrownBy(run: () => Promise<unknown>): Promise<unknown> {
@@ -63,7 +63,7 @@ describe("requireSession", () => {
         search: { redirectTo: "/cases/alpha?tab=claims" },
       },
     });
-    expect(getOrganizationState).not.toHaveBeenCalled();
+    expect(whoami).not.toHaveBeenCalled();
   });
 
   it("returns the session and its organization, and a preload is served from the cached session", async () => {
@@ -84,7 +84,7 @@ describe("requireSession", () => {
       user: { id: "u1" },
       session: { activeOrganizationId: null },
     });
-    getOrganizationState.mockResolvedValue({ organizationId: null });
+    whoami.mockImplementation(sessionInOrganization(null));
 
     await expect(
       requireSession(new QueryClient(), { href: "/" })

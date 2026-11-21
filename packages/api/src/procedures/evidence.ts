@@ -13,6 +13,7 @@ import {
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
   getEvidenceByIdsEffect,
+  readEvidenceTextEffect,
 } from "@watchdog/core/evidence";
 import {
   enrichUrlEvidenceEffect,
@@ -41,7 +42,7 @@ import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { presignedUploadSchema } from "../schemas";
+import { artifactTextSchema, presignedUploadSchema } from "../schemas";
 
 /**
  * The Case's Evidence list (`evidenceList`, ADR-0007): the input is the declaration's (filters,
@@ -323,6 +324,28 @@ export const downloadUrl = authed
   .handler(async ({ input, context }) =>
     runApp(
       getEvidenceDownloadUrlEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.evidenceId
+      )
+    )
+  );
+
+/** The Evidence item's stored body as preview text (hidden items too), cut at 50 000 characters. */
+export const text = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/evidence/{evidenceId}/text",
+    summary:
+      "Get an evidence item's stored body as text for a preview (null without a stored body; cut at 50 000 characters)",
+    tags: ["evidence"],
+  })
+  .input(evidenceScopeInputSchema)
+  .output(artifactTextSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      readEvidenceTextEffect(
         input.caseId,
         context.actor.organizationId,
         input.evidenceId

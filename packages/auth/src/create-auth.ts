@@ -33,6 +33,7 @@ import {
 } from "./instance-admin";
 import { inviteSignupPlugin } from "./invite-signup-plugin";
 import { AUTH_RATE_LIMIT_RULES } from "./rate-limit-rules";
+import { scopedApiKeyPlugin } from "./scoped-api-key-plugin";
 import { sendInvitationEmail } from "./send-invitation-email";
 import {
   needsAuthoritativeSession,
@@ -93,8 +94,9 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
 }) {
   const { db } = options;
   const authUrl = env.BETTER_AUTH_URL;
+  const scopedApiKeys = scopedApiKeyPlugin(db);
 
-  return betterAuth({
+  const instance = betterAuth({
     appName: "Watchdog",
     baseURL: authUrl,
     trustedOrigins: configuredTrustedOrigins(),
@@ -228,7 +230,10 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(options: {
         bannedUserMessage: DISABLED_ACCOUNT_MESSAGE,
       }),
       inviteSignupPlugin(),
+      scopedApiKeys.plugin,
       ...(options.trailingPlugins ?? []),
     ],
   });
+  scopedApiKeys.bind(instance.api);
+  return instance;
 }

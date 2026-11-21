@@ -1,19 +1,18 @@
+import { ORPCError } from "@orpc/client";
 import { describe, expect, it } from "vitest";
 
-import {
-  isUnauthorizedError,
-  UnauthorizedError,
-} from "@/auth/unauthorized-error";
+import { isUnauthorizedFailure } from "@/auth/unauthorized-error";
 
-describe("UnauthorizedError", () => {
-  it("uses a stable name and default message", () => {
-    const error = new UnauthorizedError();
-    expect(error.name).toBe("UnauthorizedError");
-    expect(error.message).toBe("Unauthorized");
+describe("isUnauthorizedFailure", () => {
+  it("is oRPC's UNAUTHORIZED, or a Better Auth call answering exactly Unauthorized", () => {
+    expect(isUnauthorizedFailure(new ORPCError("UNAUTHORIZED"))).toBe(true);
+    expect(isUnauthorizedFailure(new Error("Unauthorized"))).toBe(true);
   });
 
-  it("detects unauthorized errors without string matching", () => {
-    expect(isUnauthorizedError(new UnauthorizedError("nope"))).toBe(true);
-    expect(isUnauthorizedError(new Error("Unauthorized"))).toBe(false);
+  it("is not a refusal for a signed-in caller, nor a message that only mentions the word", () => {
+    expect(isUnauthorizedFailure(new ORPCError("FORBIDDEN"))).toBe(false);
+    expect(
+      isUnauthorizedFailure(new Error("Forbidden: unauthorized caller"))
+    ).toBe(false);
   });
 });

@@ -1,26 +1,29 @@
+import { ORPCError } from "@orpc/client";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseCountsFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import {
   caseByIdQuery,
   caseCountsQuery,
   caseBySlugQuery,
-  casesContextQuery,
   casesKeys,
   deletedCaseBySlugQuery,
+  visibleCasesQuery,
 } from "@/domains/cases/queries";
+import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
-import { buildCaseRecord } from "@/testing/records";
+import { buildCaseRecord, buildDeletedCaseRecord } from "@/testing/records";
+import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
+
+const getCase = procedureDouble("cases.get");
+const getCaseBySlug = procedureDouble("cases.getBySlug");
+const getDeletedBySlug = procedureDouble("cases.getDeletedBySlug");
+const listCases = procedureDouble("cases.list");
 
 describe("cases queries", () => {
   it("keys the counts by Case and by day", () => {
@@ -55,11 +58,60 @@ describe("cases queries", () => {
     ).toBeUndefined();
   });
 
-  it("keeps the context's previous data for the context key only", () => {
-    const context = { cases: [], active: null };
-    const query = casesContextQuery();
+  it("reads the visible Cases as one page of cases.list", async () => {
+    const row = buildCaseRecord({ id: testCaseId(1) });
+    listCases.mockResolvedValue({
+      items: [row],
+      nextCursor: null,
+      total: { count: 1, isCapped: false },
+    });
 
-    expect(placeholderFor(query, context, casesKeys.context())).toBe(context);
-    expect(placeholderFor(query, context, casesKeys.counts())).toBeUndefined();
+    await expect(new QueryClient().query(visibleCasesQuery())).resolves.toEqual(
+      [row]
+    );
+    expect(listCases).toHaveBeenCalledWith({ limit: PAGE_LIMIT_MAX });
+  });
+
+  it("asks cases.get, cases.getBySlug and cases.getDeletedBySlug with the trimmed id or slug", async () => {
+    const row = buildCaseRecord({ id: testCaseId(1), slug: "alpha" });
+    getCase.mockResolvedValue(row);
+    getCaseBySlug.mockResolvedValue(row);
+    const deleted = buildDeletedCaseRecord({ slug: "alpha" });
+    getDeletedBySlug.mockResolvedValue(deleted);
+    const client = new QueryClient();
+
+    await expect(
+      client.query(caseByIdQuery(` ${testCaseId(1)} `))
+    ).resolves.toBe(row);
+    expect(getCase).toHaveBeenLastCalledWith({ caseId: testCaseId(1) });
+    await expect(client.query(caseBySlugQuery("alpha"))).resolves.toBe(row);
+    expect(getCaseBySlug).toHaveBeenLastCalledWith({ caseSlug: "alpha" });
+    await expect(client.query(deletedCaseBySlugQuery("alpha"))).resolves.toBe(
+      deleted
+    );
+    expect(getDeletedBySlug).toHaveBeenLastCalledWith({ caseSlug: "alpha" });
+  });
+
+  it("answers null when the Case is not found, and rethrows any other failure", async () => {
+    getCase.mockRejectedValue(new ORPCError("NOT_FOUND"));
+    getCaseBySlug.mockRejectedValue(new ORPCError("NOT_FOUND"));
+    getDeletedBySlug.mockRejectedValue(new ORPCError("NOT_FOUND"));
+    const client = new QueryClient();
+
+    await expect(
+      client.query(caseByIdQuery(testCaseId(1)))
+    ).resolves.toBeNull();
+    await expect(client.query(caseBySlugQuery("alpha"))).resolves.toBeNull();
+    await expect(
+      client.query(deletedCaseBySlugQuery("alpha"))
+    ).resolves.toBeNull();
+
+    getCase.mockRejectedValue(new ORPCError("FORBIDDEN"));
+    await expect(
+      new QueryClient().query({
+        ...caseByIdQuery(testCaseId(1)),
+        retry: false,
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });

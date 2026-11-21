@@ -2,7 +2,7 @@ import { useForm, useSelector } from "@tanstack/react-form";
 import { Eye, EyeOff, KeyRoundIcon } from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 
-import { putCredentialFn } from "@/domains/settings/settings.functions";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
@@ -68,12 +68,9 @@ export function ConfigureCredentialDialog({
       if (!secret) return;
       setSaveError(null);
       try {
-        await putCredentialFn({
-          data: putCredentialInputSchema.parse({
-            name: slot.name,
-            secret,
-          }),
-        });
+        await orpc.credentials.put.call(
+          putCredentialInputSchema.parse({ name: slot.name, secret })
+        );
         resetConfigureForm(form, setIsSecretVisible);
         setSaveError(null);
         onOpenChange(false);

@@ -14,7 +14,7 @@ Package: [`@watchdog/log`](../../../packages/log/AGENTS.md). Do not depend on it
 
 ## Request timing fields
 
-Every API route and every server function emits one request wide event, and it carries the time and database work of that request:
+Every API route (`/api/**`, `/api/rpc` included) emits one request wide event, and it carries the time and database work of that request:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ Types: `RequestTimingLogFields` and `DbLogFields` in `packages/log/src/fields.ts
 
 ## Edge request event
 
-The production web server (`apps/web/scripts/serve.mjs`) logs each request it serves once, scope `http.request`, through `createRequestLogMiddleware` (`apps/web/src/lib/request-log.server.ts`): `method`, `path` (pathname only), `status`, `durationMs`, and `requestId` from a plain `x-request-id`. The event is built from those parts of the request only, so cookies, authorization, the query string and bodies cannot reach it; keep it that way when extending it. `/api/**` (except `EDGE_LOGGED_API`) and server functions are skipped because the app's own middleware (`start.ts`) already emits their wide event. Static files and the health probes are `debug`, which `initWatchdogLogger` samples at 0%; 4xx is `warn`, 5xx `error`. Tested in `apps/web/src/lib/__tests__/request-log.server.test.ts`.
+The production web server (`apps/web/scripts/serve.mjs`) logs each request it serves once, scope `http.request`, through `createRequestLogMiddleware` (`apps/web/src/lib/request-log.server.ts`): `method`, `path` (pathname only), `status`, `durationMs`, and `requestId` from a plain `x-request-id`. The event is built from those parts of the request only, so cookies, authorization, the query string and bodies cannot reach it; keep it that way when extending it. `/api/**` (except `EDGE_LOGGED_API`) is skipped because the app's own middleware (`start.ts`) already emits its wide event. Static files and the health probes are `debug`, which `initWatchdogLogger` samples at 0%; 4xx is `warn`, 5xx `error`. Tested in `apps/web/src/lib/__tests__/request-log.server.test.ts`.
 
 ## Error reporting
 

@@ -19,22 +19,17 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-const fns = vi.hoisted(() => ({
-  restoreCaseFn: vi.fn(),
-  getCasesContextFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  restoreCaseFn: fns.restoreCaseFn,
-  getCasesContextFn: fns.getCasesContextFn,
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { DeletedCaseScreen } from "@/domains/cases/components/deleted-case-screen";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const fns = {
+  restoreCaseFn: procedureDouble("cases.restore"),
+  getCasesContextFn: procedureDouble("cases.list"),
+};
 
 function renderScreen(
   deleted = buildDeletedCaseRecord({ name: "Alpha Case" })
@@ -61,9 +56,11 @@ describe("DeletedCaseScreen", () => {
     fns.restoreCaseFn
       .mockReset()
       .mockResolvedValue(buildRestoredCaseRecord({ name: "Alpha Case" }));
-    fns.getCasesContextFn
-      .mockReset()
-      .mockResolvedValue({ cases: [], active: null });
+    fns.getCasesContextFn.mockReset().mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
   });
 
   it("says when and by whom the Case was deleted, and how long is left", () => {
@@ -82,9 +79,7 @@ describe("DeletedCaseScreen", () => {
     await userEvent.click(screen.getByRole("button", { name: "Restore case" }));
 
     await waitFor(() => {
-      expect(fns.restoreCaseFn).toHaveBeenCalledWith({
-        data: { caseId: deleted.id },
-      });
+      expect(fns.restoreCaseFn).toHaveBeenCalledWith({ caseId: deleted.id });
     });
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith(

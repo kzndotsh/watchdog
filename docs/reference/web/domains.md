@@ -8,45 +8,42 @@ Omit files that have no clear responsibility.
 
 ```
 domains/{noun}/
-  components/              # React UI: imports queries + *.functions + types + hooks
+  components/              # React UI: imports queries + types + hooks
   types.ts                 # DTOs + Zod input schemas (no vocab re-export)
-  queries.ts               # queryOptions + key factories (import Fns; no side effects)
-  {noun}.functions.ts      # RPC surface: createServerFn -> orpcFromContext(context)
-  {noun}.server.ts         # rare web-local secrets/cookies (no Drizzle)
-  hooks/                   # React hooks (workspace, forms, Query): no createServerFn, no *.server
+  queries.ts               # queryOptions + key factories over `orpc` (no side effects)
+  {noun}.server.ts         # rare web-local server-only code (no Drizzle)
+  hooks/                   # React hooks (workspace, forms, Query): `orpc` calls, no *.server
   lib/                     # pure helpers (filters, views, formOptions, status maps)
 ```
 
 | File | Owns | UI may import? |
 | --- | --- | --- |
-| `*.functions.ts` | `createServerFn` + `.validator(schema)` + thin `orpcFromContext` handlers | Yes |
-| `*.server.ts` | Rare web-local secrets or cookies (`server-only`), never SQL | No |
+| `*.server.ts` | Rare web-local server-only code (`server-only`), never SQL | No |
 | `types.ts` | DTOs + Zod input schemas (record types are aliased from `@watchdog/core`, not re-exported) | Yes |
-| `queries.ts` | `queryOptions` + keys only | Yes |
-| `hooks/*` | Client hooks that call Fns, Query, or local UI state | Yes |
+| `queries.ts` | `queryOptions` + keys only; keys are the procedure keys (`orpc.<domain>.key({ input: { caseId } })`) | Yes |
+| `hooks/*` | Client hooks that call procedures (`orpc.<path>.call`), Query, or local UI state | Yes |
 | `lib/*` | Pure filters, status maps, `formOptions`, browser helpers | Yes |
 | `*.client.ts` | True browser-only utils (rare) | Client only |
 
-Naming: `*.functions` are things you call across the network (RPC, not "client code"); `*.server` must never ship to the browser; `*.client` is wrong for server functions (they run on the server during SSR and loaders).
+The web app has no server functions: every domain calls the API through `@/lib/orpc-client` (`orpc`), which runs the router in process during SSR and loaders and calls `/api/rpc` in the browser. `*.server` must never ship to the browser.
 
 **`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `app/hooks/` (`use-activity-stream`, `use-cases-changed-invalidation`), domain-free ones in `shared/hooks/` (`use-debounced-value`, `use-unsaved-guard`), UI-kit hooks beside their atom. A hook over an external store splits in two: a framework-free store module in `shared/lib/` (private state, a small `subscribe`/`getSnapshot` plus mutators interface; `display-scale-store.ts`, `palette-commands-store.ts`) and the hook in `shared/hooks/` that calls `useSyncExternalStore` on it. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
 
-Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts`, its reads in `queries.ts` and its write hooks in `mutations.ts`, all over the oRPC client (`@/lib/orpc-client`); neither they nor `entities/` itself have a `*.functions.ts` (the Graph row history, `entities/history/`, still does). Each write hook is declared with `defineGraphChildMutation` (`entities/hooks/use-graph-child-mutation.ts`): the procedure call (`call: orpc.<child>.create.call`), its input, the success toast and the failure verb and noun, and nothing else; the factory owns the Entity invalidation (`invalidateAfterEntityChanged`), the toast, the stale-version Reload toast and the `couldnt` failure copy, and Case and Entity travel in the mutation variables (`EntityScope`). A write with extra behaviour keeps its own `useMutation`: the Dossier prose save (`useSaveEntityProse`, a cache seed) in the Dossier, identifier deletion (`useDeleteIdentifier`) and the Entities table and composer writes in `entities/hooks/`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
+Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts`, its reads in `queries.ts` and its write hooks in `mutations.ts`, all over the oRPC client (`@/lib/orpc-client`), like the Graph row history (`entities/history/`). Each write hook is declared with `defineGraphChildMutation` (`entities/hooks/use-graph-child-mutation.ts`): the procedure call (`call: orpc.<child>.create.call`), its input, the success toast and the failure verb and noun, and nothing else; the factory owns the Entity invalidation (`invalidateAfterEntityChanged`), the toast, the stale-version Reload toast and the `couldnt` failure copy, and Case and Entity travel in the mutation variables (`EntityScope`). A write with extra behaviour keeps its own `useMutation`: the Dossier prose save (`useSaveEntityProse`, a cache seed) in the Dossier, identifier deletion (`useDeleteIdentifier`) and the Entities table and composer writes in `entities/hooks/`. Dossier chrome stays under `dossier/components/`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
 ## Rules
 
 | Rule | Enforced by |
 | --- | --- |
 | Never import `@watchdog/db` from web (auth's db access lives in `@watchdog/auth`; `lib/activity-stream.server.ts` goes through `@watchdog/core`) | oxlint `no-restricted-imports` |
-| No `createServerFn` in `components/`, `hooks/`, `lib/`, or `queries.ts` | `guidance` |
-| `*.server.ts` is never imported from client components, `lib/`, or `hooks/`; hooks call `*.functions` only | `guidance` (Start's import protection may fail a client build) |
-| Handlers call `orpcFromContext(context)` for domain I/O | `guidance` |
+| No server functions: domain I/O is a procedure call through `@/lib/orpc-client`; what is not a procedure is a route under `routes/api/` that authenticates itself | `guidance` |
+| `*.server.ts` is never imported from client components, `lib/`, or `hooks/` | `guidance` (Start's import protection may fail a client build) |
 | Domains with RPC inputs keep Zod in `types.ts`; DTO and form-value types never live in `components/` | `guidance` |
 | Domains with server lists keep `queries.ts` and invalidate through `app/lib/query-invalidation.ts` | `guidance` |
 | Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
 | Client code imports the `@watchdog/policy` subpaths (`@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence`), never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
-| Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance`; `watchdog/no-types-from-functions` enforces only the ban: no type imports from, or re-exports of, a `*.functions` module, except in `*.functions.ts`, `queries.ts` and `*-queries.ts` under `domains/` |
+| Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance` |
 | An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
 | `shared/**` imports no domain, app or route (any import form, tests included) | `watchdog/shared-no-upward-imports` |
 | No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` |
@@ -64,7 +61,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `app/layout/` | `AppShell`, `AppSidebar`, the Case switcher parts, `use-page-trail` and `PageTrailProvider` (the breadcrumbs in `shared/layout` read the trail through `page-trail-context`) |
 | `app/ensure-organization.ts` | The organization bootstrap read by `_protected` and `/onboarding` |
 
-The Active Case switch (`switchActiveCase`) belongs to its one user, `domains/cases/lib/active-case-switch.ts`.
+The Active Case switch (`useSelectActiveCase`, `navigateAfterActiveCaseSwitch` in `domains/cases/lib/active-case-switch.ts`) and the last Case entered (`domains/cases/lib/active-case.ts`) belong to `cases`.
 
 ## Map
 
@@ -85,7 +82,7 @@ The Active Case switch (`switchActiveCase`) belongs to its one user, `domains/ca
 | `library` | The Library: every Cap and Playbook for the organization (not Case-scoped), a card grid (the Cases pattern, `CASE_CARD_SHELL_CLASS`) with a category rail (All, Playbooks, then each Cap category), the standard list toolbar over a bounded list (`libraryList`, `useBoundedList`: search, a Filters popover with its chips, Display options with Compact cards), the "start from what you have" input-kind filter (`Takes`, any of the chosen kinds, an index built from each Cap's `consumes` and each Playbook's `seedKinds`), ready-first order, and filters for readiness, third-party egress and provider commercial use. Readiness for the viewer is `libraryReadiness` over `catalogGate` (`jobs/lib/credential-gate.ts`), the same gate Collect's Cap and Playbook run forms use, fed by the catalog reads and the vault slot list: Ready, Missing API key (links to Settings, Credentials), Off by the operator (`breach_disabled`), or Unavailable when the vault cannot be read. Egress is a separate mark, since the allowed egress classes are per Case. No usage statistics. Two banners sit above the cards: quick picks for the most common input kinds, and "Add API keys to unlock N Caps and Playbooks" (a readiness count, shown only when some entries need a key). A card shows a readiness badge only when the entry is not Ready. Each card is one link to the entry's own full page, one layout for both kinds (`LibraryEntryLayout`): a header (input-kind tile, category eyebrow, title, kind chip and the egress mark) over a main column, which ends with **Run on…**, beside a sticky aside with a hairline from the top of the page and no box (the readiness note first when the entry is not Ready), and a "More in {category}" row of real cards: up to three other entries of the category (`relatedEntries`). A Cap's page (`/library/caps/$capId`, `LibraryCapDetail`; the `library_` route stays out of the `/library` layout) shows the facts (takes, returns, data, plan, keys, timeout), a "How it works" flow (what you give, the Cap run by its provider or this server, what you get; kinds link into the input-kind filter), Behaviour (timeout, cache, flags, privacy), the Playbooks that include it with their step counts, and in the aside the provider, plan, commercial use, terms (`ExternalHostLink`, hostname only), data source, credit and each key marked configured or missing (`buildCapRequirements`), all read from the Cap descriptor (`lib/cap-detail.ts`). **Run on…** picks a Case and opens its Collect with `?run=cap:<id>` or `?run=playbook:<id>`; Collect opens the Run form on that entry once and strips the param, and it is off, with the reason, until the entry is ready. A Playbook's page (`/library/playbooks/$playbookId`, `LibraryPlaybookDetail`) shows the facts (steps, stages, starts from, providers, keys needed, data), "How it runs" as left-to-right stage columns (`lib/playbook-stages.ts` over `lib/playbook-graph.ts`, a readiness dot per step) with a "What if a step fails?" control under it (None or a step) that marks the failing step and dims what it skips, and the readiness roll-up over its steps (each through its Cap's `libraryReadiness`); the seed kinds in the aside link to the input-kind view; the dependencies come from the Playbook catalog's `stepDependencies` (the transitive `playbookStepDependencies`). Both pages share `LibraryEntryLoader` (a `LibraryEntrySkeleton` while loading, a failed read with Retry, not found). Job Detail links its Cap with "About this Cap". The category and every filter live in the URL (`cat`, `q`, `kind`, `readiness`, `thirdParty`, `commercialUse`, the list's `searchWith`) | `/library`, `/library/caps/$capId`, `/library/playbooks/$playbookId` |
 | `dashboard` | Stats, Triage and Due sections, resizable Activity; the Case Overview (`CaseOverview`, `warmCaseOverviewQueries`), which reads Intake, Jobs, Triage, Entities and Search for its tiles | `/`, `/cases/$caseSlug` |
 
-Auth is not a domain: runtime, plugins, and the copied Better Auth UI live under `src/auth/` ([`ui/auth-ui.md`](ui/auth-ui.md)); `requireAuth` is wired globally in `src/start.ts`; server core is `@watchdog/auth`. Shared chrome lives under `src/shared/`.
+Auth is not a domain: runtime, plugins, and the copied Better Auth UI live under `src/auth/` ([`ui/auth-ui.md`](ui/auth-ui.md)); the data gate is the router's `authed` builders; server core is `@watchdog/auth`. Shared chrome lives under `src/shared/`.
 
 ## Page ownership
 
@@ -110,7 +107,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | --- | --- |
 | A route tab list lives once in the owning lib under a SCREAMING constant, and the type derives from it: Dossier tabs `DOSSIER_TABS` (`dossier/lib/dossier-tabs.ts`, also read by `prefetch-dossier.ts` and `Dossier`) and `SETTINGS_TABS` (`settings-shell.tsx`, which the Settings route imports); an unknown tab name is no tab (`tabSearchParam`) | `guidance` |
 | A `?tab=` param is parsed by `tabSearchParam` (`shared/lib/tab-search.ts`) inside the route's `validateSearch`: padded values are trimmed, anything that is not a known tab is absent and the screen shows its default tab. A loader that needs the tab parses `location.search` with the same schema; no component re-validates a tab string | tests: `tab-search.test.ts`, `dossier-tabs.test.ts` and the route component tests (`entity-slug`, `case-slug`, `settings-index`); a hand-written parser is `guidance` |
-| The Active-Case rule lives in core (`resolveActiveCaseEffect`, `packages/core/src/cases/cases.ts`): the stored id (cookie) stays Active while the organization can see that Case, else the first visible Case, else none. `cases-active.server.ts` runs it for the session's organization; `getCasesContextFn` and `deleteCaseFn` write the cookie from its answer. `healActiveCaseFn` (`cases.functions.ts`) is the compare-and-set cookie write behind `/cases/$slug`, org-checked through `cases.get`. The loader only calls it | `active-case.int.test.ts` (real Postgres), `cases-active.server.test.ts`, `cases.functions.test.ts`, `case-slug.component.test.tsx` |
+| The Active Case is the URL's Case. A screen whose URL names none defaults to the last Case this browser entered (`localStorage` `watchdog.last-case-id`: `rememberLastCase`, `readLastCaseId`, `pickDefaultCase` in `domains/cases/lib/active-case.ts`) while it is visible, else the first visible Case (`visibleCasesQuery`), else none. The `/cases/$caseSlug` route remembers its Case on enter, never on an intent preload; there is no cookie and no server state | `active-case.test.ts`, `use-cases-context.test.ts`, `case-slug.component.test.tsx` |
 | A REST path the web links to or fetches directly comes from `shared/lib/api-urls.ts` (`caseExportZipPath`, `entityMarkdownExportPath`) | `api-urls.test.ts` pins the paths; a hand-built `/api/v1/` string is `guidance` |
 | Routes read the URL through the router, not `window.location` | `guidance` (no clean lint rule: oxlint has no `no-restricted-syntax`, and `no-restricted-globals` misses `window.location`) |
 
@@ -157,7 +154,7 @@ Delete is a tombstone, so the UI treats it as reversible (#304; server contract:
 
 ## Anti-patterns
 
-- A new `createServerFn` inside a component file.
+- A server function (`createServerFn`) anywhere: call the procedure through `@/lib/orpc-client`.
 - Importing `*.server.ts` from a client component or `lib/`.
 - Fetching or mutating inside a `shared/ui` atom.
 - Duplicating Queue/Detail chrome instead of the shared atoms.

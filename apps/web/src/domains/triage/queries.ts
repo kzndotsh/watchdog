@@ -1,9 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import {
-  getProposalFn,
-  listProposalQueuePageFn,
-} from "@/domains/triage/triage.functions";
+import { orpc } from "@/lib/orpc-client";
+import { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 import { listView } from "@/shared/lib/list/list-view";
 import {
   parseCaseScopeInput,
@@ -17,12 +15,27 @@ import type { ProposalQueueItem } from "@watchdog/core/proposals";
 import { proposalList } from "@watchdog/schemas/jobs";
 import type { ListPage } from "@watchdog/schemas/shared";
 
+/** Rows the Dashboard and the Case overview show: their longest pending list (12 activity rows). */
+const PENDING_SUMMARY_LIMIT = 12;
+
+function pendingSummaryInput(caseId: string) {
+  return {
+    caseId,
+    status: ["pending" as const],
+    limit: PENDING_SUMMARY_LIMIT,
+  };
+}
+
+/**
+ * Proposals keys are the oRPC procedure keys: `all(caseId)` is `[["proposals"], { input: { caseId } }]`,
+ * every Proposals query of the Case whatever its procedure, filters or cursor.
+ */
 export const proposalsKeys = {
-  all: (caseId: string) => ["proposals", caseId] as const,
+  all: (caseId: string) => orpc.proposals.key({ input: { caseId } }),
   byId: (caseId: string, proposalId: string) =>
-    ["proposals", caseId, "by-id", proposalId] as const,
+    orpc.proposals.get.queryKey({ input: { caseId, proposalId } }),
   pendingSummary: (caseId: string) =>
-    ["proposals", caseId, "pending-summary"] as const,
+    orpc.proposals.queuePage.queryKey({ input: pendingSummaryInput(caseId) }),
 };
 
 export type ProposalListScope = { readonly caseId: string };
@@ -33,17 +46,16 @@ export type ProposalListScope = { readonly caseId: string };
  * `proposalsKeys.all(caseId)`, so SSE and Accept/Reject refresh every view.
  */
 export const proposalListView = listView(proposalList, {
-  domain: "proposals",
-  scopeKey: ({ caseId }: ProposalListScope) => [scopeCaseId(caseId)],
+  procedure: orpc.proposals.queuePage,
+  scopeInput: ({ caseId }: ProposalListScope) => ({
+    caseId: scopeCaseId(caseId),
+  }),
+  input: ({ scope, params, cursor }) => ({
+    ...params,
+    caseId: scopeCaseId(scope.caseId),
+    ...(cursor === undefined ? {} : { cursor }),
+  }),
   isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
-  fetchPage: async ({ scope, params, cursor }) =>
-    listProposalQueuePageFn({
-      data: {
-        ...params,
-        caseId: scopeCaseId(scope.caseId),
-        ...(cursor === undefined ? {} : { cursor }),
-      },
-    }),
   getId: (row: ProposalQueueItem) => row.id,
   staleTime: STALE_REALTIME,
   gcTime: GC_REALTIME,
@@ -62,9 +74,12 @@ export const proposalByIdQuery = (
   return queryOptions({
     queryKey: proposalsKeys.byId(scopedCaseId, scopedId),
     queryFn: async () =>
-      getProposalFn({
-        data: { ...parseCaseScopeInput(scopedCaseId), proposalId: scopedId },
-      }),
+      orpcNullIfNotFound(
+        orpc.proposals.get.call({
+          ...parseCaseScopeInput(scopedCaseId),
+          proposalId: scopedId,
+        })
+      ),
     enabled: scopedId !== "" && scopeCaseIdEnabled(caseId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,
@@ -91,9 +106,6 @@ function pendingSummaryOf(
   };
 }
 
-/** Rows the Dashboard and the Case overview show: their longest pending list (12 activity rows). */
-const PENDING_SUMMARY_LIMIT = 12;
-
 /**
  * The newest pending Proposals and their count (`total`), for the Dashboard and the Case
  * overview: one small first page of `status=pending`, never every page.
@@ -104,13 +116,7 @@ export const pendingProposalsQuery = (caseId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async (): Promise<ListPage<ProposalQueueItem>> =>
-      listProposalQueuePageFn({
-        data: {
-          caseId: scopedCaseId,
-          status: ["pending"],
-          limit: PENDING_SUMMARY_LIMIT,
-        },
-      }),
+      orpc.proposals.queuePage.call(pendingSummaryInput(scopedCaseId)),
     select: pendingSummaryOf,
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_REALTIME,

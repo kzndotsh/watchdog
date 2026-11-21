@@ -1,8 +1,13 @@
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import {
   evidenceTabView,
@@ -10,7 +15,11 @@ import {
   type DossierEvidenceSearch,
 } from "@/domains/dossier/lib/dossier-tabs";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  matchesChoice,
+  matchesQ,
+  memoryListProcedure,
+} from "@/testing/memory-list";
 import { buildEvidenceRecord } from "@/testing/records";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { testCaseId } from "@watchdog/schemas/testing";
@@ -43,19 +52,14 @@ vi.mock("@/domains/intake/components/dump-dialogs", () => ({
   DumpDialogs: () => null,
 }));
 
-const listEvidencePageFn = vi.hoisted(() => vi.fn());
-const getEvidenceFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/intake/intake.functions", () => ({
-  listEvidencePageFn,
-  getEvidenceFn,
-  getEvidenceDownloadUrlFn: vi.fn().mockResolvedValue({ url: null }),
-}));
-
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { TOAST_EVIDENCE_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
+import { procedureDouble } from "@/testing/orpc-client";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+const listEvidencePageFn = procedureDouble("evidence.list");
+const getEvidenceFn = procedureDouble("evidence.get");
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -76,7 +80,7 @@ function entityEvidence(count: number): EvidenceRecord[] {
 
 /** The server's side of the Evidence list over `rows` (the hidden view holds none). */
 function evidenceServer(rows: readonly EvidenceRecord[]) {
-  return memoryListPage(rows, {
+  return memoryListProcedure(rows, {
     matches: (row, data) =>
       data.hidden !== true &&
       (data.unprocessed !== true || row.processedAt === null) &&
@@ -121,12 +125,12 @@ function renderTab(
   listEvidencePageFn.mockReset();
   listEvidencePageFn.mockImplementation(evidenceServer(rows));
   getEvidenceFn.mockReset();
-  getEvidenceFn.mockImplementation(
-    async ({ data }: { data: { evidenceId: string } }) => {
-      // Not in the Case: the ServerFn answers null (`orpcNullIfNotFound`).
-      return rows.find((row) => row.id === data.evidenceId) ?? null;
-    }
-  );
+  getEvidenceFn.mockImplementation(async (data) => {
+    const row = rows.find((candidate) => candidate.id === data.evidenceId);
+    // Not in the Case: the API answers NOT_FOUND, which the read maps to null.
+    if (row === undefined) throw new ORPCError("NOT_FOUND");
+    return row;
+  });
   const onPatch = vi.fn();
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -140,13 +144,9 @@ function renderTab(
 }
 
 function lastRequest(): Record<string, unknown> {
-  const call: unknown = listEvidencePageFn.mock.lastCall?.[0];
-  if (typeof call !== "object" || call === null || !("data" in call)) {
-    throw new Error("no list request yet");
-  }
-  const { data } = call;
-  if (typeof data !== "object" || data === null) throw new Error("no data");
-  return { ...data };
+  const call = listEvidencePageFn.mock.lastCall?.[0];
+  if (call === undefined) throw new Error("no list request yet");
+  return { ...call };
 }
 
 beforeAll(preloadSharedLazyChunks);
@@ -309,7 +309,8 @@ describe("Dossier Evidence tab (the list standard)", () => {
     ).toBeInTheDocument();
     expect(getEvidenceFn).toHaveBeenCalledTimes(1);
     expect(getEvidenceFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, evidenceId: testId(2000) },
+      caseId: CASE_ID,
+      evidenceId: testId(2000),
     });
     expect(listEvidencePageFn).toHaveBeenCalledTimes(1);
   });

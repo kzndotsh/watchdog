@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isTextMime } from "@/shared/lib/text-mime";
+import { isTextMime } from "../text-mime";
 
 describe("isTextMime", () => {
   it("matches common text and structured text mimes", () => {

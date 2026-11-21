@@ -5,12 +5,13 @@ import {
   dropCaseFromCaches,
   forgetMissingCase,
 } from "@/domains/cases/hooks/case-cache";
+import { pickDefaultCase } from "@/domains/cases/lib/active-case";
 import {
   caseByIdQuery,
   caseBySlugQuery,
   casesKeys,
 } from "@/domains/cases/queries";
-import type { CasesContext } from "@/domains/cases/types";
+import type { CaseRecord } from "@/domains/cases/types";
 import { buildCaseRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 
@@ -21,9 +22,9 @@ const ALPHA = buildCaseRecord({
 });
 const BETA = buildCaseRecord({ id: testCaseId(2), slug: "beta", name: "Beta" });
 
-function seededClient(context: CasesContext): QueryClient {
+function seededClient(cases: CaseRecord[]): QueryClient {
   const client = new QueryClient();
-  client.setQueryData(casesKeys.context(), context);
+  client.setQueryData(casesKeys.visible(), cases);
   for (const row of [ALPHA, BETA]) {
     client.setQueryData(caseByIdQuery(row.id).queryKey, row);
     client.setQueryData(caseBySlugQuery(row.slug).queryKey, row);
@@ -33,13 +34,13 @@ function seededClient(context: CasesContext): QueryClient {
 
 describe("dropCaseFromCaches", () => {
   it("removes the Case from the shared list and forgets its detail rows, so a link cannot reopen it from cache", () => {
-    const client = seededClient({ cases: [ALPHA, BETA], active: BETA });
+    const client = seededClient([ALPHA, BETA]);
 
     dropCaseFromCaches(client, ALPHA);
 
-    expect(
-      client.getQueryData<CasesContext>(casesKeys.context())?.cases
-    ).toEqual([BETA]);
+    expect(client.getQueryData<CaseRecord[]>(casesKeys.visible())).toEqual([
+      BETA,
+    ]);
     expect(
       client.getQueryData(caseBySlugQuery(ALPHA.slug).queryKey)
     ).toBeUndefined();
@@ -51,31 +52,29 @@ describe("dropCaseFromCaches", () => {
     );
   });
 
-  it("heals the Active Case to the first remaining Case, the way the server cookie does", () => {
-    const client = seededClient({ cases: [ALPHA, BETA], active: ALPHA });
+  it("leaves a Case-less screen whose last Case was the deleted one on the first remaining Case", () => {
+    const client = seededClient([ALPHA, BETA]);
 
     dropCaseFromCaches(client, ALPHA);
 
-    expect(
-      client.getQueryData<CasesContext>(casesKeys.context())?.active
-    ).toEqual(BETA);
+    const cases = client.getQueryData<CaseRecord[]>(casesKeys.visible()) ?? [];
+    expect(pickDefaultCase(cases, ALPHA.id)).toEqual(BETA);
   });
 
   it("leaves no Active Case when it was the last Case", () => {
-    const client = seededClient({ cases: [ALPHA], active: ALPHA });
+    const client = seededClient([ALPHA]);
 
     dropCaseFromCaches(client, ALPHA);
 
-    expect(client.getQueryData<CasesContext>(casesKeys.context())).toEqual({
-      cases: [],
-      active: null,
-    });
+    const cases = client.getQueryData<CaseRecord[]>(casesKeys.visible()) ?? [];
+    expect(cases).toEqual([]);
+    expect(pickDefaultCase(cases, ALPHA.id)).toBeNull();
   });
 });
 
 describe("forgetMissingCase", () => {
   it("drops the cached answers a stale route guard may hold for a Case that is visible again", () => {
-    const client = seededClient({ cases: [BETA], active: BETA });
+    const client = seededClient([BETA]);
     client.setQueryData(casesKeys.deletedBySlug(ALPHA.slug), ALPHA);
     client.setQueryData(caseBySlugQuery(ALPHA.slug).queryKey, null);
 

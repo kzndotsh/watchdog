@@ -90,19 +90,13 @@ describe("request log middleware", () => {
     expect(page[0]?.level).toBe("info");
   });
 
-  it("skips paths the app already logs (API, server functions)", async () => {
+  it("skips paths the app already logs (API)", async () => {
     const api = await run(
       "http://app.test/api/v1/cases",
       {},
       () => new Response("x")
     );
-    const fn = await run(
-      "http://app.test/_serverFn/abc",
-      {},
-      () => new Response("x")
-    );
     expect(api).toHaveLength(0);
-    expect(fn).toHaveLength(0);
   });
 
   it("logs a failing handler as 500 and rethrows it", async () => {
@@ -139,15 +133,5 @@ describe("request log middleware", () => {
       async () => new Response("ok")
     );
     expect(response.status).toBe(200);
-  });
-
-  it("logs a path that only starts like the server function prefix", async () => {
-    const near = await run(
-      "http://app.test/_serverFn-not-a-route",
-      {},
-      () => new Response("missing", { status: 404 })
-    );
-    expect(near).toHaveLength(1);
-    expect(near[0]?.fields.status).toBe(404);
   });
 });

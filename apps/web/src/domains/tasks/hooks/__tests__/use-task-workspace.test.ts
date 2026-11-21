@@ -7,15 +7,9 @@ import { buildTaskListItem } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/domains/tasks/tasks.functions", () => ({
-  listTasksPageFn: vi.fn(),
-  getTaskBoardFn: vi.fn(),
-  getTaskFn: vi.fn(),
-  createTaskFn: vi.fn(),
-  updateTaskFn: vi.fn(),
-  deleteTaskFn: vi.fn(),
-  reorderTasksFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
@@ -30,15 +24,15 @@ vi.mock("@/shared/ui/toast", async () => {
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { defaultsFromTask } from "@/domains/tasks/lib/task-form";
 import { taskListView } from "@/domains/tasks/queries";
-import {
-  createTaskFn,
-  getTaskBoardFn,
-  listTasksPageFn,
-  reorderTasksFn,
-  updateTaskFn,
-} from "@/domains/tasks/tasks.functions";
 import { useList } from "@/shared/hooks/list/use-list";
 import { memoryTasks } from "@/testing/memory-tasks";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const getTaskBoardFn = procedureDouble("tasks.board");
+const listTasksPageFn = procedureDouble("tasks.list");
+const createTaskFn = procedureDouble("tasks.create");
+const updateTaskFn = procedureDouble("tasks.update");
+const reorderTasksFn = procedureDouble("tasks.reorder");
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(30);
@@ -104,8 +98,8 @@ async function renderBoard(entityId?: string) {
 
 beforeEach(() => {
   const server = memoryTasks([OPEN, OTHER_OPEN, DONE, DROPPED]);
-  vi.mocked(getTaskBoardFn).mockImplementation(server.board);
-  vi.mocked(listTasksPageFn).mockImplementation(server.listPage);
+  getTaskBoardFn.mockImplementation(server.board);
+  listTasksPageFn.mockImplementation(server.listPage);
 });
 
 describe("useTaskWorkspace", () => {
@@ -125,12 +119,14 @@ describe("useTaskWorkspace", () => {
       total: { count: 2, isCapped: false },
     });
     expect(result.current.isTruncated).toBe(false);
-    expect(getTaskBoardFn).toHaveBeenCalledWith({ data: { caseId: CASE_ID } });
+    expect(getTaskBoardFn).toHaveBeenCalledWith({ caseId: CASE_ID });
     expect(listTasksPageFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, status: ["done"] },
+      caseId: CASE_ID,
+      status: ["done"],
     });
     expect(listTasksPageFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, status: ["dropped"] },
+      caseId: CASE_ID,
+      status: ["dropped"],
     });
   });
 
@@ -144,11 +140,10 @@ describe("useTaskWorkspace", () => {
       ]);
     });
     expect(getTaskBoardFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, entityId: ENTITY_ID },
+      caseId: CASE_ID,
+      entityId: ENTITY_ID,
     });
-    expect(getTaskBoardFn).not.toHaveBeenCalledWith({
-      data: { caseId: CASE_ID },
-    });
+    expect(getTaskBoardFn).not.toHaveBeenCalledWith({ caseId: CASE_ID });
   });
 
   it("opens the create dialog and tracks the selected task", async () => {
@@ -172,26 +167,26 @@ describe("useTaskWorkspace", () => {
   });
 
   it("quick-creates on the view's Entity", async () => {
-    vi.mocked(createTaskFn).mockResolvedValue(OPEN);
+    createTaskFn.mockResolvedValue(OPEN);
     const { result } = await renderBoard(ENTITY_ID);
 
     await act(async () => {
       await result.current.handleQuickCreate("backlog", "New task");
     });
 
-    expect(createTaskFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(createTaskFn).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId: CASE_ID,
         title: "New task",
         status: "backlog",
         entityId: ENTITY_ID,
-      }),
-    });
+      })
+    );
   });
 
   it("commits a drop on an open column as the move, then the order of the cards shown", async () => {
-    vi.mocked(updateTaskFn).mockResolvedValue({ ...OPEN, status: "blocked" });
-    vi.mocked(reorderTasksFn).mockResolvedValue([OPEN]);
+    updateTaskFn.mockResolvedValue({ ...OPEN, status: "blocked" });
+    reorderTasksFn.mockResolvedValue([OPEN]);
     const { result } = await renderBoard(ENTITY_ID);
 
     await act(async () => {
@@ -199,16 +194,20 @@ describe("useTaskWorkspace", () => {
     });
 
     expect(updateTaskFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, taskId: OPEN.id, status: "blocked" },
+      caseId: CASE_ID,
+      taskId: OPEN.id,
+      status: "blocked",
     });
     // Only the cards the filtered board shows: the server keeps the others' slots.
     expect(reorderTasksFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, status: "blocked", orderedIds: [OPEN.id] },
+      caseId: CASE_ID,
+      status: "blocked",
+      orderedIds: [OPEN.id],
     });
   });
 
   it("commits a drop on Done as the move only: Done follows its sort", async () => {
-    vi.mocked(updateTaskFn).mockResolvedValue({ ...OPEN, status: "done" });
+    updateTaskFn.mockResolvedValue({ ...OPEN, status: "done" });
     const { result } = await renderBoard();
 
     await act(async () => {
@@ -216,13 +215,15 @@ describe("useTaskWorkspace", () => {
     });
 
     expect(updateTaskFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, taskId: OPEN.id, status: "done" },
+      caseId: CASE_ID,
+      taskId: OPEN.id,
+      status: "done",
     });
     expect(reorderTasksFn).not.toHaveBeenCalled();
   });
 
   it("surfaces the board's load error", async () => {
-    vi.mocked(getTaskBoardFn).mockRejectedValue(new Error("tasks unavailable"));
+    getTaskBoardFn.mockRejectedValue(new Error("tasks unavailable"));
     const { result } = renderHook(() => useCaseBoard(), { wrapper });
 
     await waitFor(() => {
@@ -232,7 +233,7 @@ describe("useTaskWorkspace", () => {
   });
 
   it("clears the description when an update sends only whitespace", async () => {
-    vi.mocked(updateTaskFn).mockResolvedValue({ ...OPEN, description: null });
+    updateTaskFn.mockResolvedValue({ ...OPEN, description: null });
     const { result } = await renderBoard();
 
     act(() => {
@@ -246,16 +247,14 @@ describe("useTaskWorkspace", () => {
     });
 
     expect(updateTaskFn).toHaveBeenCalledWith({
-      data: {
-        caseId: CASE_ID,
-        taskId: OPEN.id,
-        title: OPEN.title,
-        description: null,
-        status: OPEN.status,
-        priority: null,
-        dueDate: null,
-        entityId: ENTITY_ID,
-      },
+      caseId: CASE_ID,
+      taskId: OPEN.id,
+      title: OPEN.title,
+      description: null,
+      status: OPEN.status,
+      priority: null,
+      dueDate: null,
+      entityId: ENTITY_ID,
     });
   });
 });

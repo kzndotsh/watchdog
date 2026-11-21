@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testId, testHttpUrl } from "@watchdog/test-kit";
-
-const presignUploadFn = vi.hoisted(() => vi.fn());
-const confirmFileUploadFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/intake/intake.functions", () => ({
-  presignUploadFn,
-  confirmFileUploadFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
+import { procedureDouble } from "@/testing/orpc-client";
+import { buildEvidenceRecord } from "@/testing/records";
+import { testId, testHttpUrl } from "@watchdog/test-kit";
+
+const presignUploadFn = procedureDouble("evidence.presign");
+const confirmFileUploadFn = procedureDouble("evidence.confirmFile");
 
 describe("uploadFileEvidence", () => {
   it("rejects empty files", async () => {
@@ -34,13 +34,15 @@ describe("uploadFileEvidence", () => {
       sha256,
       mime: "text/plain",
       byteLength: file.size,
+      expiresIn: 900,
     });
-    confirmFileUploadFn.mockResolvedValue({
-      id: testId(40),
-      caseId: testId(10),
-      kind: "file",
-      label: "note.txt",
-    });
+    confirmFileUploadFn.mockResolvedValue(
+      buildEvidenceRecord({
+        id: testId(40),
+        kind: "file",
+        label: "note.txt",
+      })
+    );
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({ ok: true, status: 200 })
@@ -75,13 +77,15 @@ describe("uploadFileEvidence", () => {
       sha256,
       mime: "text/plain",
       byteLength: file.size,
+      expiresIn: 900,
     });
-    confirmFileUploadFn.mockResolvedValue({
-      id: testId(40),
-      caseId: testId(10),
-      kind: "file",
-      label: "note.txt",
-    });
+    confirmFileUploadFn.mockResolvedValue(
+      buildEvidenceRecord({
+        id: testId(40),
+        kind: "file",
+        label: "note.txt",
+      })
+    );
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({ ok: true, status: 200 })
@@ -93,9 +97,9 @@ describe("uploadFileEvidence", () => {
       entityId: `  ${entityId}  `,
     });
 
-    expect(confirmFileUploadFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({ entityId }),
-    });
+    expect(confirmFileUploadFn).toHaveBeenCalledWith(
+      expect.objectContaining({ entityId })
+    );
 
     vi.unstubAllGlobals();
   });

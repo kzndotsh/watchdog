@@ -13,8 +13,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 const getSession = vi.hoisted(() => vi.fn());
-const getOrganizationState = vi.hoisted(() => vi.fn());
-const getCasesContext = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-start", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-start")>();
@@ -29,15 +27,13 @@ vi.mock("@tanstack/react-start", async (importOriginal) => {
   };
 });
 vi.mock("@/auth/client", () => ({ authClient: { getSession } }));
-vi.mock("@/domains/organization/organization.functions", () => ({
-  getOrganizationStateFn: getOrganizationState,
-}));
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: getCasesContext,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { createAppQueryClient } from "@/app/lib/query-client";
 import { Route } from "@/routes/onboarding";
+import { procedureDouble, sessionInOrganization } from "@/testing/orpc-client";
 import { buildCaseRecord } from "@/testing/records";
 import { callRouteHook } from "@/testing/route-hooks";
 
@@ -45,6 +41,17 @@ const session = {
   user: { id: "u", name: "Analyst" },
   session: { id: "s", activeOrganizationId: "org-1" },
 };
+
+const whoami = procedureDouble("auth.whoami");
+const listCases = procedureDouble("cases.list");
+
+function casesPage(items: ReturnType<typeof buildCaseRecord>[]) {
+  return {
+    items,
+    nextCursor: null,
+    total: { count: items.length, isCapped: false },
+  };
+}
 
 async function run() {
   return callRouteHook(Route.options.beforeLoad, {
@@ -55,8 +62,8 @@ async function run() {
 
 function reset(organizationId: string | null) {
   getSession.mockReset().mockResolvedValue(session);
-  getOrganizationState.mockReset().mockResolvedValue({ organizationId });
-  getCasesContext.mockReset().mockResolvedValue({ cases: [], active: null });
+  whoami.mockReset().mockImplementation(sessionInOrganization(organizationId));
+  listCases.mockReset().mockResolvedValue(casesPage([]));
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => Response.json({ allowSignup: true }))
@@ -76,7 +83,7 @@ describe("/onboarding guard", () => {
   it("sends a user who has a Case to the app", async () => {
     reset("org-1");
     const row = buildCaseRecord();
-    getCasesContext.mockResolvedValue({ cases: [row], active: row });
+    listCases.mockResolvedValue(casesPage([row]));
     await expect(run()).rejects.toEqual(expect.objectContaining({ to: "/" }));
   });
 

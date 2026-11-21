@@ -1,7 +1,12 @@
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import type { CollectRunTarget } from "@/domains/collect/lib/collect-run-target";
 import type { CollectSearch } from "@/domains/collect/lib/collect-search";
@@ -16,26 +21,7 @@ import type { CollectQueueItem } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const cancelJobFn = vi.hoisted(() => vi.fn());
-const getJobFn = vi.hoisted(() => vi.fn());
-const listCollectPageFn = vi.hoisted(() => vi.fn());
-const getCollectItemFn = vi.hoisted(() => vi.fn());
 const toastInfo = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  startJobFn: vi.fn(),
-  startPlaybookFn: vi.fn(),
-  cancelJobFn,
-  cancelPlaybookFn: vi.fn(),
-  getJobFn,
-  listCapabilitiesFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
-
-vi.mock("@/domains/collect/collect.functions", () => ({
-  listCollectPageFn,
-  getCollectItemFn,
-}));
 
 vi.mock("@/shared/ui/toast", () => ({ toast: { info: toastInfo } }));
 
@@ -66,6 +52,12 @@ vi.mock("@/domains/intake/hooks/use-intake-actions", () => ({
 }));
 
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const listCollectPageFn = procedureDouble("collect.list");
+const getCollectItemFn = procedureDouble("collect.get");
+const getJobFn = procedureDouble("jobs.get");
+const cancelJobFn = procedureDouble("jobs.cancel");
 
 const CASE_ID = testCaseId(10);
 const LONE_ID = testId(11);
@@ -171,7 +163,7 @@ function renderCollect(
 describe("useCollectWorkspace selection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getJobFn.mockImplementation(async ({ data }: { data: { jobId: string } }) =>
+    getJobFn.mockImplementation(async (data: { jobId: string }) =>
       buildJobRecord({ id: data.jobId })
     );
     cancelJobFn.mockResolvedValue(buildJobRecord({ id: STEP1_ID }));
@@ -202,11 +194,13 @@ describe("useCollectWorkspace selection", () => {
     });
     await waitFor(() => {
       expect(cancelJobFn).toHaveBeenCalledWith({
-        data: { caseId: CASE_ID, jobId: STEP1_ID },
+        caseId: CASE_ID,
+        jobId: STEP1_ID,
       });
     });
     expect(cancelJobFn).not.toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, jobId: RUN_ID },
+      caseId: CASE_ID,
+      jobId: RUN_ID,
     });
   });
 
@@ -241,7 +235,8 @@ describe("useCollectWorkspace selection", () => {
       expect(result.current.selected?.id).toBe(FAR_ID);
     });
     expect(getCollectItemFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, id: FAR_ID },
+      caseId: CASE_ID,
+      id: FAR_ID,
     });
   });
 
@@ -251,13 +246,15 @@ describe("useCollectWorkspace selection", () => {
 
     await waitFor(() => {
       expect(getCollectItemFn).toHaveBeenCalledWith({
-        data: { caseId: CASE_ID, id: FAR_ID, hidden: true },
+        caseId: CASE_ID,
+        id: FAR_ID,
+        hidden: true,
       });
     });
   });
 
   it("clears ?id= with a notice when the Case holds nothing for it", async () => {
-    getCollectItemFn.mockResolvedValue(null);
+    getCollectItemFn.mockRejectedValue(new ORPCError("NOT_FOUND"));
     const { onSearchChange } = renderCollect({ id: FAR_ID });
 
     await waitFor(() => {
@@ -310,7 +307,7 @@ describe("useCollectWorkspace selection", () => {
 describe("useCollectWorkspace edit and re-run", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getJobFn.mockImplementation(async ({ data }: { data: { jobId: string } }) =>
+    getJobFn.mockImplementation(async (data: { jobId: string }) =>
       buildJobRecord({ id: data.jobId, input: { host: "retry-me.test" } })
     );
     serveRows([loneRow]);

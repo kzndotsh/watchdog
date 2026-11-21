@@ -1,18 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import {
-  getEvidenceDownloadUrlFn,
-  getEvidenceFn,
-  getEvidenceManyFn,
-  listEvidencePageFn,
-  listEvidencePickerPageFn,
-  listEvidenceProviderCallsFn,
-} from "@/domains/intake/intake.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { orpc } from "@/lib/orpc-client";
+import { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 import type { PickerPort, PickerQuery } from "@/shared/hooks/use-picker-source";
 import { listView } from "@/shared/lib/list/list-view";
 import {
-  parseEvidenceScopeInput,
   scopeCaseId,
   scopeCaseIdEnabled,
   scopeEvidenceDownload,
@@ -22,18 +15,46 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { evidenceList } from "@watchdog/schemas/evidence";
 
+/** Evidence rows the Case overview's Recent activity shows. */
+const RECENT_EVIDENCE_LIMIT = 12;
+
+/** The URL dumps a playbook run can seed from: the newest few, a small page, never the whole list. */
+const URL_DUMP_LIMIT = 50;
+
+/** One picker page: small, so a picker never reads more than this many rows per request. */
+const EVIDENCE_PICKER_LIMIT = 20;
+
+/**
+ * Evidence keys are the oRPC procedure keys (`[path, { input, type }]`): `all(caseId)` is the
+ * partial key `[["evidence"], { input: { caseId } }]`, every Evidence query of the Case whatever
+ * its procedure, filters or cursor. The other members are the exact keys of single reads.
+ */
 export const evidenceKeys = {
-  all: (caseId: string) => ["evidence", caseId] as const,
+  all: (caseId: string) => orpc.evidence.key({ input: { caseId } }),
   /** The URL dumps the Run form seeds a playbook from. */
-  urlDumps: (caseId: string) => ["evidence", caseId, "url-dumps"] as const,
+  urlDumps: (caseId: string) =>
+    orpc.evidence.list.key({
+      type: "query",
+      input: { caseId, kind: ["url_archive"], limit: URL_DUMP_LIMIT },
+    }),
   /** The newest few items: the Case overview's Recent activity. */
-  recent: (caseId: string) => ["evidence", caseId, "recent"] as const,
+  recent: (caseId: string) =>
+    orpc.evidence.pickerPage.key({
+      type: "query",
+      input: { caseId, limit: RECENT_EVIDENCE_LIMIT },
+    }),
   byId: (caseId: string, evidenceId: string) =>
-    ["evidence", caseId, "by-id", evidenceId] as const,
+    orpc.evidence.get.key({ type: "query", input: { caseId, evidenceId } }),
   download: (caseId: string, evidenceId: string) =>
-    ["evidence", caseId, "download", evidenceId] as const,
+    orpc.evidence.downloadUrl.key({
+      type: "query",
+      input: { caseId, evidenceId },
+    }),
   providerCalls: (caseId: string, evidenceId: string) =>
-    ["evidence", caseId, "provider-calls", evidenceId] as const,
+    orpc.evidence.listProviderCalls.key({
+      type: "query",
+      input: { caseId, evidenceId },
+    }),
 };
 
 export const evidenceProviderCallsQuery = (
@@ -45,8 +66,9 @@ export const evidenceProviderCallsQuery = (
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      listEvidenceProviderCallsFn({
-        data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
+      orpc.evidence.listProviderCalls.call({
+        caseId: scoped.caseId,
+        evidenceId: scoped.evidenceId,
       }),
     enabled,
     staleTime: STALE_DEFAULT,
@@ -64,8 +86,9 @@ export const evidenceDownloadUrlQuery = (
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      getEvidenceDownloadUrlFn({
-        data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
+      orpc.evidence.downloadUrl.call({
+        caseId: scoped.caseId,
+        evidenceId: scoped.evidenceId,
       }),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
@@ -73,9 +96,6 @@ export const evidenceDownloadUrlQuery = (
     placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };
-
-/** Evidence rows the Case overview's Recent activity shows. */
-const RECENT_EVIDENCE_LIMIT = 12;
 
 /**
  * The Case's newest Evidence, one small page of the picker projection (title parts and capture
@@ -87,8 +107,9 @@ export const recentEvidenceQuery = (caseId: string) => {
   return queryOptions({
     queryKey,
     queryFn: async () => {
-      const page = await listEvidencePickerPageFn({
-        data: { caseId: scopedCaseId, limit: RECENT_EVIDENCE_LIMIT },
+      const page = await orpc.evidence.pickerPage.call({
+        caseId: scopedCaseId,
+        limit: RECENT_EVIDENCE_LIMIT,
       });
       return page.items;
     },
@@ -103,22 +124,21 @@ export const recentEvidenceQuery = (caseId: string) => {
 export type EvidenceListScope = { readonly caseId: string };
 
 /**
- * The Case's Evidence list (`evidenceList`, ADR-0007), a page at a time: the Dossier Evidence
- * tab with `entityId` fixed. Keys sit under `evidenceKeys.all`, so every Evidence invalidation
- * refreshes each open view.
+ * The Case's Evidence list (`evidenceList`, ADR-0007), a page at a time through `evidence.list`:
+ * the Dossier Evidence tab with `entityId` fixed. Keys sit under `evidenceKeys.all`, so every
+ * Evidence invalidation refreshes each open view.
  */
 export const evidenceListView = listView(evidenceList, {
-  domain: "evidence",
-  scopeKey: ({ caseId }: EvidenceListScope) => [scopeCaseId(caseId)],
+  procedure: orpc.evidence.list,
+  scopeInput: ({ caseId }: EvidenceListScope) => ({
+    caseId: scopeCaseId(caseId),
+  }),
+  input: ({ scope, params, cursor }) => ({
+    ...params,
+    caseId: scopeCaseId(scope.caseId),
+    ...(cursor === undefined ? {} : { cursor }),
+  }),
   isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
-  fetchPage: async ({ scope, params, cursor }) =>
-    listEvidencePageFn({
-      data: {
-        ...params,
-        caseId: scopeCaseId(scope.caseId),
-        ...(cursor === undefined ? {} : { cursor }),
-      },
-    }),
   getId: (row: EvidenceRecord) => row.id,
   staleTime: STALE_DEFAULT,
   gcTime: GC_DEFAULT,
@@ -136,17 +156,17 @@ export const evidenceByIdQuery = (
   return queryOptions({
     queryKey: evidenceKeys.byId(scoped.caseId, scoped.evidenceId),
     queryFn: async () =>
-      getEvidenceFn({
-        data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
-      }),
+      orpcNullIfNotFound(
+        orpc.evidence.get.call({
+          caseId: scoped.caseId,
+          evidenceId: scoped.evidenceId,
+        })
+      ),
     enabled: evidenceId !== null && enabled,
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
   });
 };
-
-/** One picker page: small, so a picker never reads more than this many rows per request. */
-const EVIDENCE_PICKER_LIMIT = 20;
 
 function evidenceOptionOf(
   row: Pick<EvidenceRecord, "id" | "kind" | "label" | "sourceUrl" | "sha256">
@@ -170,39 +190,38 @@ export function evidencePickerPort(caseId: string): PickerPort<EvidenceOption> {
   const scopedCaseId = scopeCaseId(caseId);
   const enabled = scopeCaseIdEnabled(caseId);
   return {
-    search: (q): PickerQuery<EvidenceOption> => ({
-      queryKey: [...evidenceKeys.all(scopedCaseId), "picker", q ?? ""],
-      queryFn: async () => {
-        const page = await listEvidencePickerPageFn({
-          data: {
-            caseId: scopedCaseId,
-            limit: EVIDENCE_PICKER_LIMIT,
-            ...(q === null ? {} : { q }),
-          },
-        });
-        return page.items.map(evidenceOptionOf);
-      },
-      enabled,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    }),
-    byIds: (ids): PickerQuery<EvidenceOption> => ({
-      queryKey: [...evidenceKeys.all(scopedCaseId), "by-ids", ...ids],
-      queryFn: async () => {
-        const rows = await getEvidenceManyFn({
-          data: { caseId: scopedCaseId, ids: [...ids] },
-        });
-        return rows.map(evidenceOptionOf);
-      },
-      enabled: enabled && ids.length > 0,
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-    }),
+    search: (q): PickerQuery<EvidenceOption> => {
+      const input = {
+        caseId: scopedCaseId,
+        limit: EVIDENCE_PICKER_LIMIT,
+        ...(q === null ? {} : { q }),
+      };
+      return {
+        queryKey: orpc.evidence.pickerPage.key({ type: "query", input }),
+        queryFn: async () => {
+          const page = await orpc.evidence.pickerPage.call(input);
+          return page.items.map(evidenceOptionOf);
+        },
+        enabled,
+        staleTime: STALE_DEFAULT,
+        gcTime: GC_DEFAULT,
+      };
+    },
+    byIds: (ids): PickerQuery<EvidenceOption> => {
+      const input = { caseId: scopedCaseId, ids: [...ids] };
+      return {
+        queryKey: orpc.evidence.getMany.key({ type: "query", input }),
+        queryFn: async () => {
+          const rows = await orpc.evidence.getMany.call(input);
+          return rows.map(evidenceOptionOf);
+        },
+        enabled: enabled && ids.length > 0,
+        staleTime: STALE_DEFAULT,
+        gcTime: GC_DEFAULT,
+      };
+    },
   };
 }
-
-/** The URL dumps a playbook run can seed from: the newest few, a small page, never the whole list. */
-const URL_DUMP_LIMIT = 50;
 
 export type UrlDumpOption = {
   readonly id: string;
@@ -217,15 +236,14 @@ export type UrlDumpOption = {
  */
 export const urlDumpsQuery = (caseId: string, isEnabled: boolean) => {
   const scopedCaseId = scopeCaseId(caseId);
+  const queryKey = evidenceKeys.urlDumps(scopedCaseId);
   return queryOptions({
-    queryKey: evidenceKeys.urlDumps(scopedCaseId),
+    queryKey,
     queryFn: async (): Promise<UrlDumpOption[]> => {
-      const page = await listEvidencePageFn({
-        data: {
-          caseId: scopedCaseId,
-          kind: ["url_archive"],
-          limit: URL_DUMP_LIMIT,
-        },
+      const page = await orpc.evidence.list.call({
+        caseId: scopedCaseId,
+        kind: ["url_archive"],
+        limit: URL_DUMP_LIMIT,
       });
       return page.items.flatMap((row) => {
         const sourceUrl = row.sourceUrl?.trim();
@@ -237,8 +255,6 @@ export const urlDumpsQuery = (caseId: string, isEnabled: boolean) => {
     enabled: isEnabled && scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
-    placeholderData: placeholderDataForQueryKey(
-      evidenceKeys.urlDumps(scopedCaseId)
-    ),
+    placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };

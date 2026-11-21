@@ -1,9 +1,8 @@
-import { createORPCClient } from "@orpc/client";
+import { createORPCClient, ORPCError } from "@orpc/client";
 import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { vi, type Mock } from "vitest";
 
-import type { OrpcInput, OrpcOutput, OrpcPath } from "@/testing/server-fn";
 import type { AppRouter } from "@watchdog/api";
 
 /**
@@ -19,6 +18,38 @@ import type { AppRouter } from "@watchdog/api";
  *
  * A procedure no test answered resolves `undefined`.
  */
+
+type Client = RouterClient<AppRouter>;
+type AnyFn = (...args: never[]) => unknown;
+
+type ProcedurePath<T, P extends string = ""> = T extends AnyFn
+  ? P
+  : {
+      [K in keyof T & string]: ProcedurePath<
+        T[K],
+        P extends "" ? K : `${P}.${K}`
+      >;
+    }[keyof T & string];
+
+type ProcedureAt<T, P extends string> = P extends `${infer H}.${infer R}`
+  ? H extends keyof T
+    ? ProcedureAt<T[H], R>
+    : never
+  : P extends keyof T
+    ? T[P]
+    : never;
+
+/** The path of one procedure of the API, as written at the call site (`tasks.list`). */
+export type OrpcPath = ProcedurePath<Client>;
+
+export type OrpcInput<P extends OrpcPath> =
+  ProcedureAt<Client, P> extends (input: infer I, ...rest: never[]) => unknown
+    ? I
+    : never;
+export type OrpcOutput<P extends OrpcPath> =
+  ProcedureAt<Client, P> extends (...args: never[]) => infer R
+    ? Awaited<R>
+    : never;
 
 type ProcedureDouble<P extends OrpcPath> = Mock<
   (input: OrpcInput<P>) => Promise<OrpcOutput<P>>
@@ -51,4 +82,17 @@ export function orpcClientModuleDouble() {
     call: async (path, input) => doubleAt(path.join("."))(input),
   });
   return { orpc: createTanstackQueryUtils(orpcClient) };
+}
+
+/**
+ * `auth.whoami` as the API answers a session acting in `organizationId`; `null` (in no
+ * organization) is the bare `FORBIDDEN` the procedure's guard raises.
+ *
+ *   procedureDouble("auth.whoami").mockImplementation(sessionInOrganization("org-1"));
+ */
+export function sessionInOrganization(organizationId: string | null) {
+  return async (): Promise<OrpcOutput<"auth.whoami">> => {
+    if (organizationId === null) throw new ORPCError("FORBIDDEN");
+    return { credential: "session", keyId: null, scopes: [], organizationId };
+  };
 }

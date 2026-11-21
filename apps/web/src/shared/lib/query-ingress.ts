@@ -12,7 +12,6 @@ import {
 import {
   getJobInputSchema,
   getPlaybookRunInputSchema,
-  jobList,
 } from "@watchdog/schemas/jobs";
 import {
   entitySlugSchema,
@@ -143,22 +142,6 @@ export function parseCaseByIdInput(caseId: string) {
 
 export function parseCaseBySlugInput(caseSlug: string) {
   return getCaseBySlugInputSchema.parse({ caseSlug });
-}
-
-export function parseListJobsInput(caseId: string) {
-  return jobList.input.parse({ caseId });
-}
-
-export function parseGetJobInput(caseId: string, jobId: string) {
-  return getJobInputSchema.parse({ caseId, jobId });
-}
-
-export function parsePlaybookRunInput(caseId: string, playbookRunId: string) {
-  return getPlaybookRunInputSchema.parse({ caseId, playbookRunId });
-}
-
-export function parseEvidenceScopeInput(caseId: string, evidenceId: string) {
-  return evidenceScopeInputSchema.parse({ caseId, evidenceId });
 }
 
 export function parseCaseScopeInput(caseId: string) {

@@ -7,13 +7,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { invalidateAfterJobMutation } from "@/app/lib/query-invalidation";
-import {
-  cancelJobFn,
-  cancelPlaybookFn,
-  retryJobFn,
-  startJobFn,
-  startPlaybookFn,
-} from "@/domains/jobs/jobs.functions";
 import { attemptChain } from "@/domains/jobs/lib/attempts";
 import { buildCapRunInput } from "@/domains/jobs/lib/cap-run-input";
 import {
@@ -26,6 +19,7 @@ import {
   playbookRunQuery,
 } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
@@ -151,8 +145,8 @@ export function useJobsWorkspace(
         throw new Error("Capability is required");
       }
       const selectedCap = caps.find((c) => c.id === capabilityId);
-      return startJobFn({
-        data: startJobInputSchema.parse({
+      return orpc.jobs.start.call(
+        startJobInputSchema.parse({
           caseId,
           capabilityId,
           input: buildCapRunInput(
@@ -160,8 +154,8 @@ export function useJobsWorkspace(
             vars.runInput,
             vars.entityId
           ),
-        }),
-      });
+        })
+      );
     },
     onSuccess: async (job) => {
       cacheStartedJobs(queryClient, caseId, [job]);
@@ -176,9 +170,9 @@ export function useJobsWorkspace(
   const retryMutation = useMutation({
     mutationFn: async () => {
       if (selectedId === null) throw new Error("Nothing to retry");
-      return retryJobFn({
-        data: retryJobInputSchema.parse({ caseId, jobId: selectedId }),
-      });
+      return orpc.jobs.retry.call(
+        retryJobInputSchema.parse({ caseId, jobId: selectedId })
+      );
     },
     onSuccess: async (job) => {
       cacheStartedJobs(queryClient, caseId, [job]);
@@ -206,8 +200,8 @@ export function useJobsWorkspace(
       if (playbookId === undefined) {
         throw new Error("Playbook is required");
       }
-      return startPlaybookFn({
-        data: startPlaybookInputSchema.parse({
+      return orpc.jobs.startPlaybook.call(
+        startPlaybookInputSchema.parse({
           caseId,
           playbookId,
           seed: playbookSeedInputSchema.parse({
@@ -220,8 +214,8 @@ export function useJobsWorkspace(
             hash: vars.hash,
             handle: vars.handle,
           }),
-        }),
-      });
+        })
+      );
     },
     onSuccess: async (result) => {
       cacheStartedJobs(queryClient, caseId, result.jobs);
@@ -238,9 +232,9 @@ export function useJobsWorkspace(
   const cancelMutation = useMutation({
     mutationFn: async () => {
       if (selectedId === null) throw new Error("Nothing to cancel");
-      return cancelJobFn({
-        data: cancelJobInputSchema.parse({ caseId, jobId: selectedId }),
-      });
+      return orpc.jobs.cancel.call(
+        cancelJobInputSchema.parse({ caseId, jobId: selectedId })
+      );
     },
     onSuccess: async () => {
       await invalidateAfterJobMutation(queryClient, caseId);
@@ -254,12 +248,12 @@ export function useJobsWorkspace(
     mutationFn: async () => {
       const runId = normalizedPlaybookRunId(selectedListRow?.playbookRunId);
       if (runId === null) throw new Error("Not part of a playbook run");
-      return cancelPlaybookFn({
-        data: cancelPlaybookInputSchema.parse({
+      return orpc.jobs.cancelPlaybook.call(
+        cancelPlaybookInputSchema.parse({
           caseId,
           playbookRunId: runId,
-        }),
-      });
+        })
+      );
     },
     onSuccess: async () => {
       await invalidateAfterJobMutation(queryClient, caseId);

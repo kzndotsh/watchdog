@@ -11,15 +11,15 @@ import {
   emptyEntityPickerPort,
   pickerTestWrapper,
 } from "@/testing/memory-picker-port";
+import { procedureDouble } from "@/testing/orpc-client";
 import { testCapProvider } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const getDeletionPolicyFn = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-vi.mock("@/domains/cases/cases.functions", () => ({
-  updateCaseFn: vi.fn(),
-  getDeletionPolicyFn,
-}));
+const getDeletionPolicyFn = procedureDouble("cases.deletionPolicy");
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
@@ -303,6 +303,7 @@ describe("JobCapRunForm", () => {
   it("blocks a Cap whose egress the Case does not allow, naming where it would go", async () => {
     getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: true,
     });

@@ -32,7 +32,7 @@ function hasField(body: unknown, field: string): boolean {
  * The refusal message for a client call that would set a key's scopes or organization, or
  * `null` when the call is allowed. Better Auth's api-key plugin treats a call with
  * `ctx.request` or `ctx.headers` as a client call (it then refuses `permissions` itself);
- * the session-only server function creates keys with neither, which is the one way a key
+ * the session-only create endpoint (`scoped-api-key-plugin.ts`) creates keys with neither, which is the one way a key
  * gets its scopes and `metadata.organizationId`. So: a client may not create a key at all,
  * and may rename or disable one but not touch `metadata` or `permissions`.
  */

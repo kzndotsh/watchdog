@@ -1,8 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { useRef } from "react";
 
-import { createCaseFn } from "@/domains/cases/cases.functions";
+import { rememberLastCase } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage, nextAutoSlug } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
@@ -22,9 +23,9 @@ type CreateCaseFormProps = {
 
 /**
  * The one create-Case form: name (the slug follows it) and an optional description.
- * The New Case dialog and the first-Case onboarding step both render it. The server
- * function also makes the new Case the Active Case (cookie), so `onCreated` only has to
- * refresh and navigate.
+ * The New Case dialog and the first-Case onboarding step both render it. The new Case becomes
+ * the last Case entered (the default of Case-less screens), so `onCreated` only has to refresh
+ * and navigate.
  */
 export function CreateCaseForm({
   onCreated,
@@ -38,18 +39,21 @@ export function CreateCaseForm({
     onSubmit: async ({ value }) => {
       let created: CaseRecord | undefined;
       try {
-        created = await createCaseFn({
-          data: createCaseInputSchema.parse({
+        created = await orpc.cases.create.call(
+          createCaseInputSchema.parse({
             name: value.name,
             slug: value.slug || undefined,
             description: value.description || undefined,
-          }),
-        });
+          })
+        );
       } catch (error) {
         onError(errMessage(error, couldnt("create", "Case")));
       }
       // Outside the try: a failure after the Case exists is not "couldn't create".
-      if (created) await onCreated(created);
+      if (created) {
+        rememberLastCase(created.id);
+        await onCreated(created);
+      }
     },
   });
 

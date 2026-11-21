@@ -1,17 +1,11 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
-import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
+import { rememberLastCase } from "@/domains/cases/lib/active-case";
 import {
-  finalizeActiveCaseSwitch,
   type CaseSwitchNavigate,
   navigateAfterActiveCaseSwitch,
-  optimisticActiveCaseSwitch,
-  rollbackActiveCaseSwitch,
 } from "@/domains/cases/lib/active-case-switch";
-import {
-  setActiveCaseIdInputSchema,
-  type CaseRecord,
-} from "@/domains/cases/types";
+import type { CaseRecord } from "@/domains/cases/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
@@ -20,53 +14,44 @@ import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 export const ACTIVE_CASE_SWITCH_ERROR = `${couldnt("switch", "Case")}.`;
 
 /**
- * The one way to switch the Active Case: server write, optimistic cache update,
- * rollback + one error toast on failure, Case invalidation on success. The sidebar
- * switcher, command palette, Case list and Case overview all call it.
+ * The one way to switch the Active Case. No server write: on a Case URL the switch navigates to
+ * the same screen of the new Case (the URL names the Active Case); elsewhere it becomes the last
+ * Case entered, which Case-less screens follow. The sidebar switcher, command palette, Case list
+ * and Case overview all call it.
  */
 export function useSelectActiveCase(input: {
-  /** Cases the target id is resolved against (the optimistic update needs the row). */
+  /** Cases the target id is resolved against. */
   cases: CaseRecord[];
   pathname?: string;
   navigate?: CaseSwitchNavigate;
   /** When set, always navigates to the selected case Overview after switch. */
   shouldNavigateToOverview?: boolean;
 }) {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (caseId: string) => {
-      await setActiveCaseIdFn({
-        data: setActiveCaseIdInputSchema.parse({ caseId }),
-      });
-      return caseId;
-    },
-    onMutate: async (caseId) =>
-      optimisticActiveCaseSwitch(queryClient, input.cases, caseId),
-    onError: (err, _caseId, ctx) => {
-      rollbackActiveCaseSwitch(queryClient, ctx?.prev);
-      toast.error(errMessage(err, ACTIVE_CASE_SWITCH_ERROR));
-    },
-    onSuccess: async (caseId, _vars, ctx) => {
       const scopedCaseId = parseOptionalTrimmedUuid(caseId);
       const next =
-        ctx?.next ??
-        (scopedCaseId === undefined
+        scopedCaseId === undefined
           ? undefined
-          : input.cases.find((c) => c.id === scopedCaseId));
-      if (next && input.shouldNavigateToOverview && input.navigate) {
+          : input.cases.find((c) => c.id === scopedCaseId);
+      if (next === undefined) throw new Error("Case not found");
+      rememberLastCase(next.id);
+      if (input.shouldNavigateToOverview && input.navigate) {
         await input.navigate({
           to: "/cases/$caseSlug",
           params: { caseSlug: next.slug },
         });
-      } else if (next && input.navigate && input.pathname !== undefined) {
+      } else if (input.navigate && input.pathname !== undefined) {
         await navigateAfterActiveCaseSwitch({
           next,
           pathname: input.pathname,
           navigate: input.navigate,
         });
       }
-      await finalizeActiveCaseSwitch(queryClient, next);
+      return caseId;
+    },
+    onError: (err) => {
+      toast.error(errMessage(err, ACTIVE_CASE_SWITCH_ERROR));
     },
   });
 }

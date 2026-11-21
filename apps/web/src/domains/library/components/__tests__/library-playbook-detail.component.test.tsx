@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import {
   capabilitiesListQuery,
   playbooksListQuery,
@@ -111,10 +111,7 @@ describe("LibraryPlaybookDetail", () => {
     client.setQueryData(capabilitiesListQuery().queryKey, caps);
     client.setQueryData(playbooksListQuery().queryKey, playbooks);
     client.setQueryData(credentialsListQuery().queryKey, []);
-    client.setQueryData(casesContextQuery().queryKey, {
-      cases: [],
-      active: null,
-    });
+    client.setQueryData(visibleCasesQuery().queryKey, []);
     const entry = recipeEntries.find((e) => e.key === "playbook:recipe");
     if (entry === undefined) throw new Error("recipe entry missing");
     render(

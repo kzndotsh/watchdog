@@ -34,3 +34,8 @@ export const readinessSchema = z.object({
   database: dependencyStatusSchema,
   storage: dependencyStatusSchema,
 });
+
+/** A stored body as preview text (`jobs.artifactText`, `evidence.text`); null when it has none or is not text. */
+export const artifactTextSchema = z.object({
+  text: z.string().nullable(),
+});

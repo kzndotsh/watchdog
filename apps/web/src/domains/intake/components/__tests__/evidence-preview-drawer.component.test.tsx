@@ -87,7 +87,7 @@ describe("EvidencePreviewDrawer", () => {
       if (key[0] === "artifact" && key[1] === "evidence") {
         return fetchedQuery({ text: '{"status":"ok"}' });
       }
-      if (key[0] === "evidence" && key[2] === "download") {
+      if (JSON.stringify(key[0]) === '["evidence","downloadUrl"]') {
         return fetchedQuery({ url: testHttpUrl("download.test/blob.json") });
       }
       return fetchedQuery(undefined);

@@ -14,24 +14,18 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-const fns = vi.hoisted(() => ({
-  getDeletionPolicyFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-  getCasesContextFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getDeletionPolicyFn: fns.getDeletionPolicyFn,
-  listDeletedCasesPageFn: fns.listDeletedCasesPageFn,
-  getCasesContextFn: fns.getCasesContextFn,
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  restoreCaseFn: vi.fn(),
-  purgeCaseFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { DeletedCasesPage } from "@/domains/cases/components/deleted-cases-page";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const fns = {
+  getDeletionPolicyFn: procedureDouble("cases.deletionPolicy"),
+  listDeletedCasesPageFn: procedureDouble("cases.listDeleted"),
+  getCasesContextFn: procedureDouble("cases.list"),
+};
 
 function renderPage() {
   const router = createTestRouter();
@@ -57,14 +51,17 @@ describe("DeletedCasesPage", () => {
       nextCursor: null,
       total: { count: 0, isCapped: false },
     });
-    fns.getCasesContextFn
-      .mockReset()
-      .mockResolvedValue({ cases: [], active: null });
+    fns.getCasesContextFn.mockReset().mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
   });
 
   it("shows an owner or admin the Deleted Cases list", async () => {
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canManage: true,
       canIncludeBreachCredentials: false,
     });
@@ -78,6 +75,7 @@ describe("DeletedCasesPage", () => {
   it("tells a member that only owners and admins can see deleted Cases, and never asks for the list", async () => {
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canManage: false,
       canIncludeBreachCredentials: false,
     });
@@ -97,6 +95,7 @@ describe("DeletedCasesPage", () => {
         finish = () => {
           resolve({
             restoreWindowDays: 30,
+            cancellableJobs: 0,
             canManage: true,
             canIncludeBreachCredentials: false,
           });

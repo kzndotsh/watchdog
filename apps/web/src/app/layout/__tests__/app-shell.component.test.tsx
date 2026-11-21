@@ -31,12 +31,10 @@ vi.mock("@better-auth-ui/react/plugins/organization", () => ({
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 
 // Only the network boundary is faked: the shell's sidebar reads the Case through the real
-// cases-context query, seeded in the cache below.
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-}));
+// visible-Cases query, seeded in the cache below.
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { AppShell } from "@/app/layout/app-shell";
 import { casesKeys } from "@/domains/cases/queries";
@@ -55,7 +53,7 @@ function routerAt(pathname: string) {
 function renderShell() {
   const client = new QueryClient();
   const active = buildCaseRecord({ slug: "alpha" });
-  client.setQueryData(casesKeys.context(), { cases: [active], active });
+  client.setQueryData(casesKeys.visible(), [active]);
   return render(
     <RouterContextProvider router={routerAt("/cases/alpha")}>
       <QueryClientProvider client={client}>

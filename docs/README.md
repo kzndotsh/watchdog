@@ -56,7 +56,7 @@ Policy: every stated convention is enforced by a lint rule or gate, labeled guid
 | [`reference/web/README.md`](reference/web/README.md) | Web index + [traps index](reference/web/README.md#traps-index) |
 | [`reference/web/architecture.md`](reference/web/architecture.md) | Start/Vite/Router, chrome boundary |
 | [`reference/web/domains.md`](reference/web/domains.md) | Domain ownership |
-| [`reference/web/data.md`](reference/web/data.md) | Query / Case cookie / SSE |
+| [`reference/web/data.md`](reference/web/data.md) | Query / Active Case / SSE |
 | [`reference/web/lists.md`](reference/web/lists.md) | Add a list screen (list standard) |
 | [`reference/web/ui/README.md`](reference/web/ui/README.md) | Delivery gates, chrome lexicon |
 | [`reference/web/ui/rules.md`](reference/web/ui/rules.md) | Every UI rule: reason, kind, enforcer |
@@ -74,7 +74,7 @@ Policy: every stated convention is enforced by a lint rule or gate, labeled guid
 | Doc | Owns |
 | --- | --- |
 | [`how-to/local-dev.md`](how-to/local-dev.md) | Ports, services, wipe, test DBs, toolchain traps |
-| [`how-to/auth-setup.md`](how-to/auth-setup.md) | First account, orgs, BA session, CSRF, ServerFn auth |
+| [`how-to/auth-setup.md`](how-to/auth-setup.md) | First account, orgs, BA session, CSRF |
 | [`how-to/agent-cli.md`](how-to/agent-cli.md) | `wd` CLI + OpenAPI agents |
 | [`how-to/perf-baseline.md`](how-to/perf-baseline.md) | Query statistics, synthetic scratch seed, scripted baseline session |
 | [`how-to/self-host.md`](how-to/self-host.md) | Container images, production compose, safe secrets, first admin, invitation mail, migrate-on-start and its kill switch |
