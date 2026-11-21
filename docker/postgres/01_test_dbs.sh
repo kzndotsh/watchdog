@@ -12,5 +12,6 @@ SQL
 for db in watchdog_test watchdog_e2e; do
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db" <<SQL
 GRANT CONNECT ON DATABASE ${db} TO watchdog_app;
+GRANT CONNECT ON DATABASE ${db} TO watchdog_worker;
 SQL
 done

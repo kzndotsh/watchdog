@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { refusalResponse, runApp } from "@watchdog/api";
+import { refusalResponse, runAppAs } from "@watchdog/api";
 /**
  * GET /api/v1/cases/:caseId/exports/:jobId
  *
@@ -42,7 +42,10 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/exports/$jobId")({
         if (caseId === null || jobId === null) {
           return new Response("Not Found", { status: 404 });
         }
-        const link = await runApp(
+        const link = await runAppAs(
+          ctx.credential,
+          "cases:read"
+        )(
           caseExportLinkEffect({
             caseId,
             organizationId: ctx.actor.organizationId,

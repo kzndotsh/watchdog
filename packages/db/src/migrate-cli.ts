@@ -8,7 +8,7 @@ import path from "node:path";
 
 import { isProductionDbPlaceholder } from "@watchdog/env/secrets";
 
-import { APP_ROLE } from "./app-role";
+import { APP_ROLE, WORKER_ROLE } from "./app-role";
 import { migrationFailureMessage, runMigrations } from "./migrate";
 
 /** An environment variable's value, with unset and empty both meaning "not given". */
@@ -42,11 +42,19 @@ try {
   process.stdout.write(
     `migrate: applying migrations from ${migrationsFolder}\n`
   );
-  const { appRoleGranted } = await runMigrations({ url, migrationsFolder });
+  const { appRoleGranted, workerRoleGranted } = await runMigrations({
+    url,
+    migrationsFolder,
+  });
   process.stdout.write(
     appRoleGranted
       ? `migrate: granted the application role ${APP_ROLE}\n`
       : `migrate: no ${APP_ROLE} role, grants skipped\n`
+  );
+  process.stdout.write(
+    workerRoleGranted
+      ? `migrate: granted the worker role ${WORKER_ROLE}\n`
+      : `migrate: no ${WORKER_ROLE} role, grants skipped\n`
   );
   process.stdout.write("migrate: done\n");
 } catch (error) {

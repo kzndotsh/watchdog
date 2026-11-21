@@ -40,6 +40,19 @@ describe("mapPostgresCatch", () => {
     });
   });
 
+  it("maps a statement refused for the role (a Graph write as the worker role) to InternalError", () => {
+    const driver = Object.assign(
+      new Error("permission denied for table entities"),
+      { code: "42501" }
+    );
+    const wrapped = Object.assign(new Error("Failed query: insert"), {
+      cause: driver,
+    });
+    const mapped = mapPostgresCatch(wrapped);
+    expect(mapped).toBeInstanceOf(InternalError);
+    expect(mapped).toMatchObject({ cause: wrapped });
+  });
+
   it("passes tagged errors through", () => {
     const tagged = new InvalidError({ reason: "bad" });
     expect(mapPostgresCatch(tagged)).toBe(tagged);

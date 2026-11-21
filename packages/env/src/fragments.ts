@@ -46,11 +46,21 @@ export const databaseFields = {
   DATABASE_URL: databaseUrl("DATABASE_URL").meta(
     meta({
       description:
-        "Postgres connection URL of the application role (watchdog_app): data privileges only, no DDL, no ownership. The web app and worker connect with it. The password in it is a secret; a placeholder or the development default is refused when NODE_ENV is production.",
+        "Postgres connection URL of the application role (watchdog_app): data privileges only, no DDL, no ownership. The web app connects with it, and the worker when DATABASE_URL_WORKER is unset. The password in it is a secret; a placeholder or the development default is refused when NODE_ENV is production.",
       sensitive: true,
       usedBy: ["web", "worker", "migrate"],
     })
   ),
+  DATABASE_URL_WORKER: databaseUrl("DATABASE_URL_WORKER")
+    .optional()
+    .meta(
+      meta({
+        description:
+          "Postgres connection URL of the worker role (watchdog_worker): the application role's privileges without any write to the Graph, so a Cap Job can save Evidence, provider calls, Proposals and Jobs but no Entity or Claim. The worker connects with it instead of DATABASE_URL. Unset, the worker uses DATABASE_URL (a setup without the worker role).",
+        sensitive: true,
+        usedBy: ["worker"],
+      })
+    ),
   DATABASE_URL_MIGRATE: databaseUrl("DATABASE_URL_MIGRATE")
     .optional()
     .meta(

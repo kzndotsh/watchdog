@@ -6,6 +6,7 @@ import { timedDbCall } from "@watchdog/log";
 import {
   isCaseLifecycleViolation,
   isHistoryContextMissing,
+  isInsufficientPrivilege,
   isUniqueViolation,
 } from "../errors/error-utils";
 import {
@@ -52,6 +53,13 @@ export function mapPostgresCatch(
   if (isCaseLifecycleViolation(error)) {
     return new InternalError({
       reason: "Case change without a deletion record",
+      cause: error,
+    });
+  }
+  if (isInsufficientPrivilege(error)) {
+    return new InternalError({
+      reason:
+        "Statement refused for the database role (a Graph write as the worker role)",
       cause: error,
     });
   }

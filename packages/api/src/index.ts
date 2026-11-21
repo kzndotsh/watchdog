@@ -6,4 +6,4 @@ export { actorKeyIdFromContext, actorLabelFromContext } from "./actor-label";
 export { jobStartLimitResponse } from "./retry-after";
 export { refusalResponse } from "./refusal-response";
 export { responsePlugins } from "./response-plugins";
-export { appRuntime, AppLive, runApp, runAppWith } from "./runtime";
+export { appRuntime, AppLive, runApp, runAppAs, runAppWith } from "./runtime";

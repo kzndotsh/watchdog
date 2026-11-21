@@ -27,7 +27,7 @@ import {
   actorLabelFromContext,
   jobStartLimitResponse,
   refusalResponse,
-  runApp,
+  runAppAs,
 } from "@watchdog/api";
 import {
   caseExportSettings,
@@ -102,7 +102,8 @@ async function pumpExport(
   caseId: CaseId,
   body: ExportBody,
   log: ExportLog,
-  options: CaseExportOptions
+  options: CaseExportOptions,
+  runApp: ReturnType<typeof runAppAs>
 ): Promise<void> {
   try {
     const stats = await runApp(
@@ -145,6 +146,8 @@ export async function serveCaseExport(
   }
   const denied = requireScope(ctx.credential, "cases:read");
   if (denied) return denied;
+  // An API key's reads and its export Job run as the worker role (#720).
+  const runApp = runAppAs(ctx.credential, "cases:read");
 
   // Route params are plain strings: brand at the edge, 404 when not a case id.
   const caseId: CaseId | null = parseTrimmedCaseId(params.caseId);
@@ -246,7 +249,7 @@ export async function serveCaseExport(
   }
 
   const body = exportBody();
-  void pumpExport(caseId, body, ctx.log, options);
+  void pumpExport(caseId, body, ctx.log, options, runApp);
 
   return new Response(body.readable, {
     headers: {

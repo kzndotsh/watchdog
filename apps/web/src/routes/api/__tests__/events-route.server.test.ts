@@ -71,22 +71,28 @@ vi.mock("@/lib/api-cors.server", () => ({
 }));
 
 vi.mock("@watchdog/api", () => ({
-  runApp: (
-    effect: Effect.Effect<unknown, unknown, typeof ActivityTailerTag.Identifier>
-  ) =>
-    Effect.runPromise(
-      Effect.provideService(effect, ActivityTailerTag, {
-        subscribe: (listener, scope) =>
-          tailerState.subscribeFails
-            ? Effect.fail(new Error("tailer down"))
-            : Effect.sync(() => {
-                tailerState.subscriptions += 1;
-                tailerState.listener = listener;
-                tailerState.scope = scope;
-                return tailerState.unsubscribe;
-              }),
-      })
-    ),
+  runAppAs:
+    () =>
+    (
+      effect: Effect.Effect<
+        unknown,
+        unknown,
+        typeof ActivityTailerTag.Identifier
+      >
+    ) =>
+      Effect.runPromise(
+        Effect.provideService(effect, ActivityTailerTag, {
+          subscribe: (listener, scope) =>
+            tailerState.subscribeFails
+              ? Effect.fail(new Error("tailer down"))
+              : Effect.sync(() => {
+                  tailerState.subscriptions += 1;
+                  tailerState.listener = listener;
+                  tailerState.scope = scope;
+                  return tailerState.unsubscribe;
+                }),
+        })
+      ),
 }));
 
 vi.mock("@watchdog/core/activity", () => ({

@@ -14,8 +14,10 @@ import {
   testDb as db,
 } from "@watchdog/test-db";
 
+import { APP_ROLE, WORKER_ROLE } from "../app-role.ts";
 import type { DbExec } from "../exec.ts";
 import { setGraphHistoryContext } from "../history-context.ts";
+import { workerRoleDb } from "../organization-scope.ts";
 import { caseDeletionRecordsRepo } from "../repos/case-deletion-records.repo.ts";
 import { casesRepo } from "../repos/cases.repo.ts";
 import type { CaseRow } from "../repos/cases.repo.ts";
@@ -105,11 +107,17 @@ describe("cases_lifecycle_guard (#304)", () => {
     await resetTestDb();
   });
 
-  it("is a no-op for the current application role name (APP_ROLE) and pins its search_path", async () => {
-    const [row] = await ownerDb.execute<{ config: string[] | null }>(
-      sql`select proconfig as config from pg_proc where proname = 'cases_lifecycle_guard'`
+  it("names the application and worker roles (APP_ROLE, WORKER_ROLE) and pins its search_path", async () => {
+    const [row] = await ownerDb.execute<{
+      config: string[] | null;
+      src: string;
+    }>(
+      sql`select proconfig as config, prosrc as src from pg_proc where proname = 'cases_lifecycle_guard'`
     );
     expect(row?.config).toEqual(["search_path=pg_catalog, pg_temp"]);
+    expect(row?.src).toContain(
+      `current_user NOT IN ('${APP_ROLE}', '${WORKER_ROLE}')`
+    );
   });
 
   describe("delete", () => {
@@ -295,6 +303,39 @@ describe("cases_lifecycle_guard (#304)", () => {
         .from(cases)
         .where(eq(cases.id, who.id));
       expect(row?.name).toBe("Renamed");
+    });
+  });
+
+  describe("the worker role (#720), which runs the scheduled purge", () => {
+    const worker = workerRoleDb(db);
+
+    it("refuses to delete a live Case, as for the application role", async () => {
+      const who = await subject(db);
+      await expectPostgresRefusal(
+        worker.transaction(async (tx) => {
+          await setGraphHistoryContext(tx, { channel: "system" });
+          await record(tx, who, "purged");
+          await tx.delete(cases).where(eq(cases.id, who.id));
+        }),
+        refused
+      );
+      expect(await lifecycleOf(who.id)).toBeDefined();
+    });
+
+    it("refuses a tombstone with no record", async () => {
+      const who = await subject(db);
+      await expectPostgresRefusal(tombstone(worker, who), refused);
+      expect((await lifecycleOf(who.id))?.deletedAt).toBeNull();
+    });
+
+    it("purges a tombstone with its purged record and history context", async () => {
+      const who = await deletedCase();
+      await worker.transaction(async (tx) => {
+        await setGraphHistoryContext(tx, { channel: "system" });
+        await record(tx, who, "purged");
+        await casesRepo.purgeDeleted(tx, who.id);
+      });
+      expect(await lifecycleOf(who.id)).toBeUndefined();
     });
   });
 

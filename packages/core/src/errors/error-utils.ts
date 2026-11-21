@@ -80,3 +80,11 @@ export function isHistoryContextMissing(error: unknown): boolean {
 export function isCaseLifecycleViolation(error: unknown): boolean {
   return hasSqlState(error, CASE_LIFECYCLE_SQLSTATE);
 }
+
+/**
+ * The database refused a statement the role may not run (SQLSTATE 42501): a Graph write by the
+ * worker role (#720), the worker or an API-key request reaching a write path it must not take.
+ */
+export function isInsufficientPrivilege(error: unknown): boolean {
+  return hasSqlState(error, "42501");
+}
