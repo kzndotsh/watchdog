@@ -5,6 +5,7 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { activityLogRepoFxDb, activityFloorRepoFxDb } from "../infra/repos-fx";
 import { toActivityEntry } from "./append";
 import {
@@ -41,7 +42,7 @@ export type ReplayActivityOpts = {
 export function replayActivityEffect(
   opts: ReplayActivityOpts
 ): Effect.Effect<ActivityReplay, DomainTag, Db> {
-  return Effect.gen(function* replayActivityGen() {
+  const program = Effect.gen(function* replayActivityGen() {
     const bounds = yield* readActivityLogBoundsEffect();
     if (isUnservableActivityCursor(opts.after, bounds)) {
       return { kind: "resync" } as const;
@@ -64,4 +65,5 @@ export function replayActivityEffect(
     }
     return { kind: "entries", entries: rows.map(toActivityEntry) } as const;
   });
+  return inOrganization(opts.organizationId, program);
 }

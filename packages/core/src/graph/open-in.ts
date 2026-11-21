@@ -11,6 +11,7 @@ import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
 import { ForbiddenError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
 import { organizationSettingsRepoFx } from "../infra/repos-fx";
 import { getEntityByCaseSlugEffect } from "./entities";
@@ -36,7 +37,7 @@ export type RecordOpenInOpts = {
 export function recordOpenInEffect(
   opts: RecordOpenInOpts
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* recordOpenInGen() {
+  const program = Effect.gen(function* recordOpenInGen() {
     const entity = yield* getEntityByCaseSlugEffect(
       opts.caseId,
       opts.organizationId,
@@ -69,4 +70,5 @@ export function recordOpenInEffect(
       })
     );
   });
+  return inOrganization(opts.organizationId, program);
 }

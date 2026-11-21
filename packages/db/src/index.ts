@@ -34,10 +34,19 @@ export {
   type CollectQueueDriftReason,
 } from "./collect-queue-drift";
 export {
+  ORGANIZATION_SETTING,
   setGraphHistoryContext,
   type GraphHistoryContext,
   type NewChangeset,
 } from "./history-context";
+export {
+  caseOrganizationIdUnchecked,
+  isOrganizationScoped,
+  isTransaction,
+  listOrganizationIds,
+  organizationScopedDb,
+  setOrganizationContext,
+} from "./organization-scope";
 export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";
 export { onAuthSessionCreated } from "./auth/on-session-created";

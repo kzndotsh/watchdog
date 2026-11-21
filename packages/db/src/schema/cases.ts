@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   index,
+  pgPolicy,
   pgTable,
   text,
   uniqueIndex,
@@ -17,6 +19,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { currentOrganization } from "./_organization-policy";
 import { sqlLiteral } from "./_vocab";
 
 /** Case — work scope. Each Entity belongs to exactly one Case. */
@@ -42,6 +45,15 @@ export const cases = pgTable(
       .$type<EgressClass[]>()
       .notNull()
       .default([...DEFAULT_ALLOWED_EGRESS]),
+    /**
+     * The Case allows nothing beyond the install (`allowed_egress` is exactly `{local}`): the Case
+     * list's `localOnly` filter. A stored boolean, so the filter compares with `booleq`, which is
+     * leakproof: under row-level security (#718) Postgres only uses a leakproof comparison in an
+     * index condition, and array equality is not one, which took the filter off its index.
+     */
+    localOnly: boolean("local_only").generatedAlwaysAs(
+      sql`allowed_egress = ARRAY['local']::text[]`
+    ),
     /**
      * Tombstone (#304). A deleted Case keeps its row, Graph, Evidence and files until it is
      * restored or purged; every read goes through `visibleCase` (`repos/_visible-case.ts`) and
@@ -96,8 +108,8 @@ export const cases = pgTable(
       .on(t.organizationId, t.updatedAt, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
     // The Case list's `localOnly` filter in the default (name) sort.
-    index("cases_organization_egress_name_idx")
-      .on(t.organizationId, t.allowedEgress, t.name, t.id)
+    index("cases_organization_local_name_idx")
+      .on(t.organizationId, t.localOnly, t.name, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
     index("cases_name_trgm_idx")
       .using("gin", t.name.op("gin_trgm_ops"))
@@ -135,5 +147,18 @@ export const cases = pgTable(
     index("cases_deleted_description_trgm_idx")
       .using("gin", t.description.op("gin_trgm_ops"))
       .where(sql`${t.deletedAt} IS NOT NULL`),
+    // Organization isolation (row-level security, #718): a role other than the table owner sees,
+    // writes and moves only the Cases of the organization its transaction set
+    // (`watchdog.org_id`); with none set it sees nothing. The owner (migrations, `just wipe`,
+    // repair) is not subject to it: no FORCE. `TO public` rather than the application role, so a
+    // single-role install (the application owns the schema) migrates unchanged; there the owner
+    // bypass applies, as before.
+    pgPolicy("cases_organization_isolation", {
+      as: "permissive",
+      for: "all",
+      to: "public",
+      using: sql`${t.organizationId} = ${currentOrganization}`,
+      withCheck: sql`${t.organizationId} = ${currentOrganization}`,
+    }),
   ]
 );

@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { runDomain } from "@watchdog/core/infra";
 import { acceptProposalEffect } from "@watchdog/core/proposals";
 import {
-  db,
   entitiesRepo,
   findingSuppressionsRepo,
   identifiersRepo,
@@ -20,6 +19,7 @@ import {
   seedCase,
   seedEntity,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

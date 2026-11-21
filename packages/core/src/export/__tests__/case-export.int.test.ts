@@ -3,12 +3,12 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { unzipSync } from "fflate";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { db } from "@watchdog/db";
 import {
   resetTestDb,
   seedCase,
   seedEntity,
   seedEvidence,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { warmObjectStore } from "../../infra/__tests__/helpers/object-store-ready";

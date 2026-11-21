@@ -14,6 +14,7 @@ import { parseGraphUuidList } from "@watchdog/schemas/shared";
 import { setHistoryContextEffect } from "../../activity/graph-activity";
 import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationUnchecked } from "../../infra/organization-scope";
 import { transact } from "../../infra/postgres-tx";
 import {
   runGraphMutationInTx,
@@ -167,20 +168,25 @@ export function applyPatchEffect(
       return;
     }
 
-    yield* transact((tx) =>
-      Effect.gen(function* applyPatchTx() {
-        yield* setHistoryContextEffect(tx, {
-          ...opts.actor,
-          channel: opts.channel,
-          // What this transaction applied (an agent write's changeset needs its patch and tier).
-          changeset: {
-            caseId: opts.caseId,
-            confidence: opts.confidence ?? null,
-            patch: opts.patch,
-          },
-        });
-        yield* runApply(tx);
-      })
+    // Its own transaction: like a caller's `tx`, the Case is already scoped by the caller, so the
+    // transaction takes the Case's own organization (row-level security, #718).
+    yield* inCaseOrganizationUnchecked(
+      opts.caseId,
+      transact((tx) =>
+        Effect.gen(function* applyPatchTx() {
+          yield* setHistoryContextEffect(tx, {
+            ...opts.actor,
+            channel: opts.channel,
+            // What this transaction applied (an agent write's changeset needs its patch and tier).
+            changeset: {
+              caseId: opts.caseId,
+              confidence: opts.confidence ?? null,
+              patch: opts.patch,
+            },
+          });
+          yield* runApply(tx);
+        })
+      )
     );
   });
 }

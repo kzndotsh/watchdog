@@ -3,8 +3,7 @@ import { TestClock } from "effect/testing";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomain } from "@watchdog/core/infra";
-import { db } from "@watchdog/db";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 import { lookupCapCacheEffect, storeCapCacheEffect } from "../cap-cache.ts";
 

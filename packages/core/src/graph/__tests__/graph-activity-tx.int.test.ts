@@ -5,14 +5,13 @@ import {
   activityLogRepo,
   casesRepo,
   claimsRepo,
-  db,
   edgesRepo,
   entitiesRepo,
   eventsRepo,
   identifiersRepo,
   questionsRepo,
 } from "@watchdog/db";
-import { listAllActivity, resetTestDb } from "@watchdog/test-db";
+import { listAllActivity, resetTestDb, testDb as db } from "@watchdog/test-db";
 
 import {
   GRAPH_MUTATIONS,

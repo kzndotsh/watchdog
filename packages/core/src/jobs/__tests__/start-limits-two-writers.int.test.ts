@@ -9,7 +9,7 @@ import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue, startJobEffect } from "@watchdog/core/jobs";
 import { getJobStartLimitsEffect } from "@watchdog/core/organization";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, jobStartCountersRepo, jobStartLimitsRepo } from "@watchdog/db";
+import { jobStartCountersRepo, jobStartLimitsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -19,6 +19,7 @@ import {
   seedCase,
   seedOrganizationMember,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

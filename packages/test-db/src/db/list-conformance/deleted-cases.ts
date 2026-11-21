@@ -1,4 +1,4 @@
-import { cases, type DbExec } from "@watchdog/db";
+import type { DbExec } from "@watchdog/db";
 import { asCaseId, type OrganizationId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
@@ -6,6 +6,7 @@ import {
 } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
+import { insertCasesInScope } from "../organization-scope.ts";
 import { at } from "./types.ts";
 import type { ListConformance } from "./types.ts";
 
@@ -83,13 +84,11 @@ export const deletedCaseConformance: ListConformance = {
       description: "aaa bravo example.test 100% n_a cs-05",
       minute: 50,
     };
-    await exec
-      .insert(cases)
-      .values([
-        ...ROWS.map((row) => insertValues(row, TEST_ORGANIZATION_ID, true)),
-        insertValues({ n: 90, ...decoy }, TEST_OTHER_ORGANIZATION_ID, true),
-        insertValues({ n: 91, ...decoy }, TEST_ORGANIZATION_ID, false),
-      ]);
+    await insertCasesInScope(exec, [
+      ...ROWS.map((row) => insertValues(row, TEST_ORGANIZATION_ID, true)),
+      insertValues({ n: 90, ...decoy }, TEST_OTHER_ORGANIZATION_ID, true),
+      insertValues({ n: 91, ...decoy }, TEST_ORGANIZATION_ID, false),
+    ]);
     return {
       scope: { organizationId: TEST_ORGANIZATION_ID },
       otherScope: { organizationId: TEST_OTHER_ORGANIZATION_ID },

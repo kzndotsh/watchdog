@@ -10,10 +10,15 @@ import {
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, entitiesRepo } from "@watchdog/db";
+import { entitiesRepo } from "@watchdog/db";
 import { questionList } from "@watchdog/schemas/graph";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { listAllActivity, resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  listAllActivity,
+  resetTestDb,
+  seedCase,
+  testDb as db,
+} from "@watchdog/test-db";
 
 import { runGraphMutation } from "../run-graph-mutation";
 import { entitiesTable } from "../tables";

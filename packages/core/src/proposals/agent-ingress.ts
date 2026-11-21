@@ -34,6 +34,7 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { parseAgentPatch } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { changesetsRepoFxDb } from "../infra/repos-fx";
@@ -62,7 +63,7 @@ export function listGraphWritesForCaseEffect(
   organizationId: OrganizationId,
   input?: ListInput<typeof graphWriteList>
 ): Effect.Effect<ListPage<GraphWriteRecord>, DomainTag, Db> {
-  return Effect.gen(function* listGraphWritesGen() {
+  const program = Effect.gen(function* listGraphWritesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: graphWriteList,
@@ -90,6 +91,7 @@ export function listGraphWritesForCaseEffect(
         }),
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 const GRAPH_WRITE_IDEMPOTENCY_INDEX = "changesets_case_actor_idem_uidx";
@@ -110,7 +112,7 @@ export function createAgentProposalEffect(input: {
   summary?: string;
   evidenceIds?: string[];
 }): Effect.Effect<{ proposal: ProposalRecord }, DomainTag, Db> {
-  return Effect.gen(function* createAgentProposalGen() {
+  const program = Effect.gen(function* createAgentProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const plan = parseAgentPatch({
       patch: input.patch,
@@ -142,7 +144,9 @@ export function createAgentProposalEffect(input: {
           reason: `All ${proposed.suppressedCount} finding(s) already known or previously rejected — no Proposal`,
         });
       }
-      return yield* new InvalidError({ reason: "patch produced no findings" });
+      return yield* new InvalidError({
+        reason: "patch produced no findings",
+      });
     }
 
     const proposalId = yield* Effect.succeed(
@@ -158,6 +162,7 @@ export function createAgentProposalEffect(input: {
     }
     return { proposal };
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function writeGraphFromAgentEffect(input: {
@@ -173,7 +178,7 @@ export function writeGraphFromAgentEffect(input: {
   userOverride: true;
   idempotencyKey?: string;
 }): Effect.Effect<AgentGraphWriteResult, DomainTag, Db> {
-  return Effect.gen(function* writeGraphFromAgentGen() {
+  const program = Effect.gen(function* writeGraphFromAgentGen() {
     if (!input.userOverride) {
       return yield* new InvalidError({
         reason: "userOverride must be true for graph write",
@@ -305,4 +310,5 @@ export function writeGraphFromAgentEffect(input: {
 
     return result;
   });
+  return inOrganization(input.organizationId, program);
 }

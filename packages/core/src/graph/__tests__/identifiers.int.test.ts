@@ -9,7 +9,7 @@ import {
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, evidenceLinksRepo } from "@watchdog/db";
+import { evidenceLinksRepo } from "@watchdog/db";
 import { identifierList } from "@watchdog/schemas/graph";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -18,6 +18,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

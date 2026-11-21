@@ -7,7 +7,6 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { suppressKnownFindingsEffect } from "@watchdog/core/proposals";
-import { db } from "@watchdog/db";
 import { fingerprintPatchOp } from "@watchdog/schemas/graph";
 import {
   buildClaimCreateOp,
@@ -22,6 +21,7 @@ import {
   seedEntity,
   seedFindingSuppression,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

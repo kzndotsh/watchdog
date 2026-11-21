@@ -5,7 +5,6 @@ import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import {
   claimsRepo,
-  db,
   edgesRepo,
   entitiesRepo,
   evidenceLinksRepo,
@@ -26,6 +25,7 @@ import {
   seedEntity,
   seedEvidence,
   withSystemTestTx,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

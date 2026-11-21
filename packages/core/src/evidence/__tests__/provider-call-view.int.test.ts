@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { db, jobsRepo, providerCallsRepo } from "@watchdog/db";
+import { jobsRepo, providerCallsRepo } from "@watchdog/db";
 import { PROVIDER_CALL_LIST_MAX } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -16,6 +16,7 @@ import {
   seedEvidence,
   seedJob,
   seedProviderCall,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { recordingBlobStore } from "../../infra/blob-store";

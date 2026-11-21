@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import type { Pool } from "@watchdog/db";
+import { ORGANIZATION_SETTING, type Pool } from "@watchdog/db";
 import * as schema from "@watchdog/db/schema";
 
 import type { CapturedStatement } from "./query-count.ts";
@@ -92,11 +92,26 @@ export const PLAN_SESSION_SETTINGS = {
   work_mem: "16MB",
 } as const;
 
-export function openPlanDb(url: string): PlanDb {
+/**
+ * `organizationId`: the organization the plans are read in. The perf seed connects as the
+ * application role, which row-level security (#718) shows no Case or Claim without one, so the
+ * plan pool sets it for its whole session (a test pool only: the application sets it per
+ * transaction) and every plan is the one the policy shapes.
+ */
+export function openPlanDb(
+  url: string,
+  opts: { readonly organizationId?: string } = {}
+): PlanDb {
   const client = postgres(url, {
     max: 2,
     idle_timeout: 20,
-    connection: PLAN_SESSION_SETTINGS,
+    connection:
+      opts.organizationId === undefined
+        ? PLAN_SESSION_SETTINGS
+        : {
+            ...PLAN_SESSION_SETTINGS,
+            [ORGANIZATION_SETTING]: opts.organizationId,
+          },
   });
   const { options } = client;
   return {

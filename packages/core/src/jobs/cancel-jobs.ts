@@ -12,6 +12,7 @@ import {
 } from "../errors/tagged-errors";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
 import { jobsRepoFxDb, playbookRunsRepoFx } from "../infra/repos-fx";
@@ -29,7 +30,7 @@ export function cancelJobEffect(
   jobId: string,
   opts?: CancelJobOpts
 ): Effect.Effect<JobRecord, DomainTag, Db | JobQueue> {
-  return Effect.gen(function* cancelJobGen() {
+  const program = Effect.gen(function* cancelJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
     const row = yield* jobsRepoFxDb.getInCase(scopedCaseId, normalizedJobId);
@@ -69,6 +70,7 @@ export function cancelJobEffect(
     const users = yield* loadActorUsersEffect([refreshed.job.actorId]);
     return toJobRecord(refreshed.job, refreshed, users);
   });
+  return inOrganization(organizationId, program);
 }
 
 type CancelPlaybookRunOpts = {
@@ -86,7 +88,7 @@ export function cancelPlaybookRunEffect(
   playbookRunId: string,
   opts?: CancelPlaybookRunOpts
 ): Effect.Effect<CancelPlaybookRunResult, DomainTag, Db | JobQueue> {
-  return Effect.gen(function* cancelPlaybookRunGen() {
+  const program = Effect.gen(function* cancelPlaybookRunGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedPlaybookRunId = yield* requireTrimmedGraphId(
       playbookRunId,
@@ -141,4 +143,5 @@ export function cancelPlaybookRunEffect(
     }
     return { playbookRunId: normalizedPlaybookRunId, cancelledJobIds };
   });
+  return inOrganization(organizationId, program);
 }

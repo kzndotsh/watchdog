@@ -16,7 +16,7 @@ import {
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { markEvidenceProcessedEffect } from "@watchdog/core/jobs";
-import { activity, db } from "@watchdog/db";
+import { activity } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
@@ -24,6 +24,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

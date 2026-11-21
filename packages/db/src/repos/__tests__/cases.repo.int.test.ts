@@ -15,6 +15,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  withOrganizationScope,
   withSystemHistoryContext,
   withTestTx,
 } from "@watchdog/test-db";
@@ -88,15 +89,23 @@ describe("casesRepo", () => {
     });
   });
 
-  it("lists the Case ids of every organization for the worker re-scan", async () => {
+  it("lists the Case ids of the scope's organization for the worker re-scan, which visits each organization", async () => {
     await withTestTx(async (tx) => {
       const mine = await seedCase(tx, { slug: "mine" });
       const theirs = await seedCase(tx, {
         slug: "theirs",
         organizationId: TEST_OTHER_ORGANIZATION_ID,
       });
+      // Row-level security (#718): only the transaction's organization's Cases.
       const ids = await casesRepo.listAllIdsUnchecked(tx);
-      expect(ids).toEqual(expect.arrayContaining([mine.id, theirs.id]));
+      expect(ids).toContain(mine.id);
+      expect(ids).not.toContain(theirs.id);
+      const theirIds = await withOrganizationScope(
+        tx,
+        TEST_OTHER_ORGANIZATION_ID,
+        async (scoped) => casesRepo.listAllIdsUnchecked(scoped)
+      );
+      expect(theirIds).toEqual([theirs.id]);
       expect(await casesRepo.listIds(tx, TEST_ORGANIZATION_ID)).not.toContain(
         theirs.id
       );

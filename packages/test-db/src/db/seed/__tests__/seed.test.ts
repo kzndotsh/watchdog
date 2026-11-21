@@ -15,6 +15,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@watchdog/db", () => ({
+  // Row-level security scope (#718): the seeds scope themselves to the Case's organization.
+  ORGANIZATION_SETTING: "watchdog.org_id",
+  setOrganizationContext: vi.fn().mockResolvedValue(undefined),
+  caseOrganizationIdUnchecked: vi.fn().mockResolvedValue("test-organization"),
   activityLogRepo: { append: mocks.appendActivity },
   casesRepo: { create: mocks.createCase },
   entitiesRepo: { create: mocks.createEntity, getById: mocks.getEntity },

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
 import { searchCaseEffect } from "@watchdog/core/search";
-import { db, edgesRepo, evidenceRepo, jobsRepo, tasksRepo } from "@watchdog/db";
+import { edgesRepo, evidenceRepo, jobsRepo, tasksRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
@@ -19,6 +19,7 @@ import {
   seedPlaybookRun,
   seedProposal,
   withSystemHistoryContext,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

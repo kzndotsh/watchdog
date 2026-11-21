@@ -1,7 +1,7 @@
 import type postgres from "postgres";
 import { expect } from "vitest";
 
-import { client } from "@watchdog/db";
+import { client, ORGANIZATION_SETTING } from "@watchdog/db";
 
 import {
   expectNoSeqScan,
@@ -26,6 +26,16 @@ export type CapturedStatement = {
 // `tryDbWith` all end up on this client, so nothing in the code under test changes.
 const { options } = client;
 
+const SET_CONFIG = /^\s*select set_config\(\$1, \$2, true\)\s*$/i;
+
+/**
+ * The organization scope's `set_config` (row-level security, #718): transaction control like
+ * BEGIN, not a statement of the code path, so a budget counts the same with or without a scope.
+ */
+function isOrganizationScope(query: string, parameters: readonly unknown[]) {
+  return SET_CONFIG.test(query) && parameters[0] === ORGANIZATION_SETTING;
+}
+
 /**
  * Runs `fn` and returns its result with every SQL statement the test client executed meanwhile
  * (BEGIN / COMMIT / SAVEPOINT are left out). Statements from other work running concurrently
@@ -39,7 +49,10 @@ export async function captureStatements<T>(
   }
   const statements: CapturedStatement[] = [];
   options.debug = (_connection, query, parameters) => {
-    if (!isTransactionControl(query)) {
+    if (
+      !isTransactionControl(query) &&
+      !isOrganizationScope(query, parameters)
+    ) {
       statements.push({ sql: query, params: parameters });
     }
   };

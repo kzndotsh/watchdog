@@ -2,7 +2,7 @@ import { Effect, Layer, Predicate } from "effect";
 import { PgBoss } from "pg-boss";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobQueueTx, jobsRepo } from "@watchdog/db";
+import { jobQueueTx, jobsRepo } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 import { createLogger } from "@watchdog/log";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
@@ -13,6 +13,7 @@ import {
   seedCase,
   seedJob,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

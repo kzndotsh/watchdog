@@ -11,7 +11,7 @@ import { Db, outsideTransaction, transact, tryDb } from "@watchdog/core/infra";
 import { casesRepo, db } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 
 import { runDomain } from "../run-domain";
 
@@ -20,7 +20,8 @@ class Greeter extends Context.Service<Greeter, { readonly hi: string }>()(
 ) {}
 
 function caseExists(id: CaseId): Promise<boolean> {
-  return casesRepo.getByIdUnchecked(db, id).then((row) => row !== null);
+  // `testDb` is in the default organization's row-level security scope (#718).
+  return casesRepo.getByIdUnchecked(testDb, id).then((row) => row !== null);
 }
 
 /** The tagged failure `transact` surfaces, unchanged. */

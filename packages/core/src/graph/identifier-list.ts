@@ -24,6 +24,7 @@ import {
   listCountsByEffect,
   listPageEffect,
 } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { toCaseIdentifierRecord } from "./identifiers";
 import type { CaseIdentifierRecord } from "./identifiers";
@@ -50,7 +51,7 @@ export function listIdentifiersEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof identifierList>
 ): Effect.Effect<ListPage<CaseIdentifierRecord>, DomainTag, Db> {
-  return Effect.gen(function* listIdentifiersGen() {
+  const program = Effect.gen(function* listIdentifiersGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: identifierList,
@@ -60,6 +61,7 @@ export function listIdentifiersEffect(
       toItems: identifierItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -71,7 +73,7 @@ export function getIdentifiersByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<CaseIdentifierRecord[], DomainTag, Db> {
-  return Effect.gen(function* getIdentifiersByIdsGen() {
+  const program = Effect.gen(function* getIdentifiersByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: identifierListRepo,
@@ -81,6 +83,7 @@ export function getIdentifiersByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -93,7 +96,7 @@ export function countIdentifiersByTypeEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof identifierList>
 ): Effect.Effect<IdentifierTypeCounts, DomainTag, Db> {
-  return Effect.gen(function* countIdentifiersByTypeGen() {
+  const program = Effect.gen(function* countIdentifiersByTypeGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const { counts, isCapped } = yield* listCountsByEffect({
       repo: identifierListRepo,
@@ -110,4 +113,5 @@ export function countIdentifiersByTypeEffect(
       isCapped,
     };
   });
+  return inOrganization(organizationId, program);
 }

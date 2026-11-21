@@ -2,8 +2,11 @@ import { eq } from "drizzle-orm";
 
 import {
   caseDeletionRecordsRepo,
+  caseOrganizationIdUnchecked,
   cases,
   casesRepo,
+  isTransaction,
+  setOrganizationContext,
   type CaseRow,
   type DbExec,
   type NewCase,
@@ -11,6 +14,15 @@ import {
 import { slugifyName, type EgressClass } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
+import {
+  withCaseOrganizationScope,
+  withOrganizationScope,
+} from "../organization-scope.ts";
+
+/**
+ * A Case of `overrides.organizationId` (default `TEST_ORGANIZATION_ID`), written in that
+ * organization's row-level security scope; the caller's scope is left as it was.
+ */
 export async function seedCase(
   exec: DbExec,
   overrides?: Partial<NewCase> & { allowedEgress?: readonly EgressClass[] }
@@ -18,29 +30,33 @@ export async function seedCase(
   const overridesResolved = overrides ?? {};
   const name = overridesResolved.name ?? "Test Case";
   const base = slugifyName(name) || "test-case";
-  const created = await casesRepo.create(exec, {
-    name,
-    slug:
-      overridesResolved.slug ??
-      `${base}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-    description: overridesResolved.description ?? null,
-    organizationId: overridesResolved.organizationId ?? TEST_ORGANIZATION_ID,
+  const organizationId =
+    overridesResolved.organizationId ?? TEST_ORGANIZATION_ID;
+  return withOrganizationScope(exec, organizationId, async (tx) => {
+    const created = await casesRepo.create(tx, {
+      name,
+      slug:
+        overridesResolved.slug ??
+        `${base}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      description: overridesResolved.description ?? null,
+      organizationId,
+    });
+    if (!created) {
+      throw new Error("seedCase failed");
+    }
+    // State setup, not the owner-or-admin rule: written straight through the repo.
+    if (overridesResolved.allowedEgress === undefined) return created;
+    const updated = await casesRepo.update(
+      tx,
+      created.id,
+      created.organizationId,
+      { allowedEgress: [...overridesResolved.allowedEgress] }
+    );
+    if (!updated) {
+      throw new Error("seedCase failed to set egress");
+    }
+    return updated;
   });
-  if (!created) {
-    throw new Error("seedCase failed");
-  }
-  // State setup, not the owner-or-admin rule: written straight through the repo.
-  if (overridesResolved.allowedEgress === undefined) return created;
-  const updated = await casesRepo.update(
-    exec,
-    created.id,
-    created.organizationId,
-    { allowedEgress: [...overridesResolved.allowedEgress] }
-  );
-  if (!updated) {
-    throw new Error("seedCase failed to set egress");
-  }
-  return updated;
 }
 
 async function lifecycleSubject(exec: DbExec, caseId: CaseRow["id"]) {
@@ -84,7 +100,7 @@ export async function backdateCaseDeletion(
   caseId: CaseRow["id"],
   window: { deletedAt: Date; purgeAfter: Date }
 ): Promise<void> {
-  await exec.transaction(async (tx) => {
+  await withCaseOrganizationScope(exec, caseId, async (tx) => {
     await appendRecord(tx, caseId, "deleted");
     await tx.update(cases).set(window).where(eq(cases.id, caseId));
   });
@@ -93,12 +109,19 @@ export async function backdateCaseDeletion(
 /**
  * Make a Case ready for a raw `delete from cases` by the application role: the `deleted` record
  * and the tombstone, then the `purged` record, all in the caller's transaction (the database
- * refuses a Case delete without them, and `exec` must be that transaction, not a pool).
+ * refuses a Case delete without them, and `exec` must be that transaction, not a pool). Leaves
+ * that transaction in the Case's organization scope (row-level security), for the delete.
  */
 export async function prepareCasePurge(
   exec: DbExec,
   caseId: CaseRow["id"]
 ): Promise<void> {
+  if (!isTransaction(exec)) {
+    throw new Error("prepareCasePurge needs the caller's transaction");
+  }
+  const organizationId = await caseOrganizationIdUnchecked(exec, caseId);
+  if (organizationId === null) throw new Error("no such Case");
+  await setOrganizationContext(exec, organizationId);
   const row = await lifecycleSubject(exec, caseId);
   await appendRecord(exec, caseId, "deleted");
   const now = new Date();
@@ -115,7 +138,7 @@ export async function startCasePurge(
   exec: DbExec,
   caseId: CaseRow["id"]
 ): Promise<void> {
-  await exec.transaction(async (tx) => {
+  await withCaseOrganizationScope(exec, caseId, async (tx) => {
     await appendRecord(tx, caseId, "purge_started");
     await casesRepo.markDeletedPurgeStarted(tx, caseId, new Date());
   });

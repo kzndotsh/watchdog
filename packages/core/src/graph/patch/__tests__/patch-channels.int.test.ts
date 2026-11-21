@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import {
-  db,
   edgesRepo,
   entitiesRepo,
   evidenceLinksRepo,
@@ -18,6 +17,7 @@ import {
   buildEventCreateOp,
   buildIdentifierCreateOp,
   buildQuestionCreateOp,
+  TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
@@ -25,10 +25,12 @@ import {
   resetTestDb,
   seedEvidence,
   withSystemTestTx,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../../activity/graph-activity";
+import { inOrganization } from "../../../infra/organization-scope";
 import { transact } from "../../../infra/postgres-tx";
 import {
   seedGraphFixture,
@@ -137,28 +139,31 @@ describe.each(["triage_accept", "agent_write"] as const)(
       const before = await totals();
 
       await runDomain(
-        transact((tx) =>
-          Effect.gen(function* joinedGen() {
-            yield* setHistoryContextEffect(tx, {
-              ...caller,
-              channel,
-              changeset: {
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          transact((tx) =>
+            Effect.gen(function* joinedGen() {
+              yield* setHistoryContextEffect(tx, {
+                ...caller,
+                channel,
+                changeset: {
+                  caseId: fx.caseId,
+                  confidence: "unverified",
+                  patch: [],
+                },
+              });
+              yield* applyPatchEffect({
                 caseId: fx.caseId,
+                // Not the caller's channel and actor: a joined patch must not reset the context.
+                channel:
+                  channel === "agent_write" ? "triage_accept" : "agent_write",
                 confidence: "unverified",
-                patch: [],
-              },
-            });
-            yield* applyPatchEffect({
-              caseId: fx.caseId,
-              // Not the caller's channel and actor: a joined patch must not reset the context.
-              channel:
-                channel === "agent_write" ? "triage_accept" : "agent_write",
-              confidence: "unverified",
-              actor: REVIEWER,
-              patch: opsFor(fx).slice(0, 2),
-              tx,
-            });
-          })
+                actor: REVIEWER,
+                patch: opsFor(fx).slice(0, 2),
+                tx,
+              });
+            })
+          )
         )
       );
 

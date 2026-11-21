@@ -6,13 +6,14 @@ import {
   deleteTaskEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { casesRepo, db, tasksRepo } from "@watchdog/db";
+import { casesRepo, tasksRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
   resetTestDb,
   seedCase,
   withSystemHistoryContext,
+  testDb as db,
 } from "@watchdog/test-db";
 import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 

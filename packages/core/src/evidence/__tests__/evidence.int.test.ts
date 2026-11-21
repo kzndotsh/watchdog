@@ -12,7 +12,6 @@ import {
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
 import { runDomain } from "@watchdog/core/infra";
-import { db } from "@watchdog/db";
 import { evidenceList } from "@watchdog/schemas/evidence";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -20,6 +19,7 @@ import {
   seedAuthUser,
   seedCase,
   seedEntity,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

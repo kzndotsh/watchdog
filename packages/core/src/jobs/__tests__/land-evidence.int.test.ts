@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
+import { activityLogRepo, jobsRepo } from "@watchdog/db";
 import {
   listCaseEvidence,
   resetTestDb,
   seedCase,
   seedEvidence,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { runDomain } from "../../infra/run-domain";

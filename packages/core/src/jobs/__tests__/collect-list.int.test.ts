@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { db, evidenceRepo } from "@watchdog/db";
+import { evidenceRepo } from "@watchdog/db";
 import { collectList } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -15,6 +15,7 @@ import {
   resetTestDb,
   seedCase,
   seedCollectQueueFixture,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { getCollectItemEffect, listCollectEffect } from "../collect-list.ts";

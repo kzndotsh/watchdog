@@ -82,13 +82,15 @@ describe("query counting and plan assertions", () => {
 
   it("sees a Seq Scan when the filtered column has no index", async () => {
     const { statements } = await captureStatements(() =>
-      testDb.select().from(cases).where(eq(cases.name, "nobody"))
+      testDb.select().from(evidence).where(eq(evidence.mime, "nobody/none"))
     );
     const [statement] = statements;
     if (statement === undefined) throw new Error("no statement captured");
-    expect(seqScanRelations(await explainPlan(statement))).toEqual(["cases"]);
-    await expect(expectNoSeqScanOn(statements, "cases")).rejects.toThrow(
-      /cases/
+    expect(seqScanRelations(await explainPlan(statement))).toEqual([
+      "evidence",
+    ]);
+    await expect(expectNoSeqScanOn(statements, "evidence")).rejects.toThrow(
+      /evidence/
     );
   });
 

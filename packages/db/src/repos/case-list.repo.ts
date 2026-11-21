@@ -28,13 +28,11 @@ export const caseListRepo = defineListRepo(caseList, {
     return and(inOrganization, visibleCase) ?? inOrganization;
   },
   filters: {
-    // `local` is always one of a Case's classes (`cases_allowed_egress_local`), so exactly
-    // `['local']` is a Case that allows nothing more.
-    localOnly: (isOn) =>
-      isOn ? eq(cases.allowedEgress, ["local"]) : undefined,
+    // `local_only`: `allowed_egress` is exactly `{local}` (a stored boolean, leakproof to compare).
+    localOnly: (isOn) => (isOn ? eq(cases.localOnly, true) : undefined),
   },
-  // `cases_organization_egress_name_idx (organization_id, allowed_egress, name, id)`
-  selective: { localOnly: cases.allowedEgress },
+  // `cases_organization_local_name_idx (organization_id, local_only, name, id)`
+  selective: { localOnly: cases.localOnly },
   sorts: {
     name: cases.name,
     created: cases.createdAt,

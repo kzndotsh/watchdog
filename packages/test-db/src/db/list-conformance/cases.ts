@@ -1,4 +1,4 @@
-import { cases, type DbExec } from "@watchdog/db";
+import type { DbExec } from "@watchdog/db";
 import {
   asCaseId,
   type EgressClass,
@@ -10,6 +10,7 @@ import {
 } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
+import { insertCasesInScope } from "../organization-scope.ts";
 import { at } from "./types.ts";
 import type { ListConformance } from "./types.ts";
 
@@ -129,13 +130,11 @@ export const caseConformance: ListConformance = {
       updatedMinute: 1,
       localOnly: true,
     } as const;
-    await exec
-      .insert(cases)
-      .values([
-        ...ROWS.map((row) => insertValues(row, TEST_ORGANIZATION_ID, false)),
-        insertValues({ n: 90, ...decoy }, TEST_OTHER_ORGANIZATION_ID, false),
-        insertValues({ n: 91, ...decoy }, TEST_ORGANIZATION_ID, true),
-      ]);
+    await insertCasesInScope(exec, [
+      ...ROWS.map((row) => insertValues(row, TEST_ORGANIZATION_ID, false)),
+      insertValues({ n: 90, ...decoy }, TEST_OTHER_ORGANIZATION_ID, false),
+      insertValues({ n: 91, ...decoy }, TEST_ORGANIZATION_ID, true),
+    ]);
     return {
       scope: { organizationId: TEST_ORGANIZATION_ID },
       otherScope: { organizationId: TEST_OTHER_ORGANIZATION_ID },

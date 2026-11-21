@@ -1,7 +1,13 @@
 import { TransactionRollbackError } from "drizzle-orm";
 import postgres from "postgres";
 
-import { db, setGraphHistoryContext, type DbTx } from "@watchdog/db";
+import {
+  db,
+  setGraphHistoryContext,
+  setOrganizationContext,
+  type DbTx,
+} from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
 /**
  * The tests connect as the application role (`DATABASE_URL`), which cannot TRUNCATE. Wiping
@@ -81,13 +87,16 @@ export async function resetE2eDb(): Promise<void> {
 
 /**
  * Truncate, then run `fn` inside a transaction that always rolls back.
- * Use for repo / applyPatch(tx) tests that never need committed rows.
+ * Use for repo / applyPatch(tx) tests that never need committed rows. The transaction is in
+ * `TEST_ORGANIZATION_ID`'s row-level security scope, like `testDb`.
  */
 export async function withTestTx<T>(fn: (tx: DbTx) => Promise<T>): Promise<T> {
   await resetTestDb();
   let stored: { value: T } | undefined;
   try {
     await db.transaction(async (tx) => {
+      // Row-level security (#718): the default organization, as `testDb` has.
+      await setOrganizationContext(tx, TEST_ORGANIZATION_ID);
       stored = { value: await fn(tx) };
       tx.rollback();
     });

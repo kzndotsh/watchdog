@@ -2,12 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { retractClaimEffect, updateClaimEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { claimsRepo, db } from "@watchdog/db";
+import { claimsRepo } from "@watchdog/db";
 import {
   listAllActivity,
   resetTestDb,
   twoWriters,
   type TwoWritersOutcome,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

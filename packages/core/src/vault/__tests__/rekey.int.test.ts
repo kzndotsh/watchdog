@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { credentials, credentialsRepo, db, type DbTx } from "@watchdog/db";
+import { credentials, credentialsRepo, type DbTx } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
+import { testDb as db } from "@watchdog/test-db";
 
 import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";

@@ -2,8 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
 import { runDomain } from "@watchdog/core/infra";
-import { db, type JobArtifact } from "@watchdog/db";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
+import type { JobArtifact } from "@watchdog/db";
+import {
+  resetTestDb,
+  seedCase,
+  seedJob,
+  testDb as db,
+} from "@watchdog/test-db";
 
 import { lookupCapCacheEffect } from "../../cap-cache";
 import { createJobLog } from "../../job-log";

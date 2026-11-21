@@ -41,6 +41,7 @@ import {
 } from "../errors/tagged-errors";
 import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -178,7 +179,7 @@ function ensurePlaybookRunnable(
 export function runPlaybookEffect(
   input: RunPlaybookInput
 ): Effect.Effect<PlaybookRunResult, DomainTag, Db | JobQueue | Vault> {
-  return Effect.gen(function* runPlaybookGen() {
+  const program = Effect.gen(function* runPlaybookGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -277,4 +278,5 @@ export function runPlaybookEffect(
       ),
     };
   });
+  return inOrganization(input.organizationId, program);
 }

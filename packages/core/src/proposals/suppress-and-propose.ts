@@ -15,6 +15,7 @@ import {
 } from "../errors/tagged-errors";
 import { attachEvidenceIds } from "../graph/attach-evidence";
 import type { Db } from "../infra/db-service";
+import { inCaseOrganizationIfFound } from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFx, proposalsRepoFx } from "../infra/repos-fx";
 import { suppressKnownFindingsEffect } from "./finding-suppress";
@@ -60,76 +61,79 @@ export function suppressAndProposeStageEffect(
     });
   }
 
-  return transact((tx) =>
-    Effect.gen(function* suppressAndProposeGen() {
-      const locked = yield* casesRepoFx.lockById(tx, input.caseId);
-      if (!locked) {
-        return yield* new NotFoundError({ entity: "Case", id: input.caseId });
-      }
+  return inCaseOrganizationIfFound(
+    input.caseId,
+    transact((tx) =>
+      Effect.gen(function* suppressAndProposeGen() {
+        const locked = yield* casesRepoFx.lockById(tx, input.caseId);
+        if (!locked) {
+          return yield* new NotFoundError({ entity: "Case", id: input.caseId });
+        }
 
-      const { kept, suppressed } = yield* suppressKnownFindingsEffect(
-        input.caseId,
-        input.patch,
-        tx
-      );
-      if (input.onSuppressed !== undefined && suppressed > 0) {
-        yield* Effect.sync(() => {
-          input.onSuppressed?.(suppressed);
+        const { kept, suppressed } = yield* suppressKnownFindingsEffect(
+          input.caseId,
+          input.patch,
+          tx
+        );
+        if (input.onSuppressed !== undefined && suppressed > 0) {
+          yield* Effect.sync(() => {
+            input.onSuppressed?.(suppressed);
+          });
+        }
+
+        if (kept.length === 0) {
+          return {
+            proposalId: null,
+            resultSummary: input.resultSummary,
+            suppressedCount: suppressed,
+            kept,
+          };
+        }
+
+        const sharedEvidenceIds = parseGraphUuidList(input.attachEvidenceIds);
+        if (sharedEvidenceIds === null) {
+          return yield* new InvalidError({
+            reason: "attachEvidenceIds contains an invalid UUID",
+          });
+        }
+        const attached = attachEvidenceIds(kept, sharedEvidenceIds);
+        if (!attached.ok) {
+          return yield* new InvalidError({ reason: attached.error });
+        }
+        const withEvidence = attached.patch;
+        const prop = yield* proposalsRepoFx.create(tx, {
+          caseId: input.caseId,
+          jobId: input.jobId ?? null,
+          status: "pending",
+          patch: withEvidence,
+          summary: input.resultSummary,
+          suppressedCount: suppressed,
+          evidenceIds: sharedEvidenceIds,
+          agentSourced: input.agentSourced ?? false,
+          createdBy: createdByForProposal(input.createdBy),
         });
-      }
-
-      if (kept.length === 0) {
+        if (prop) {
+          yield* appendActivityEffect(tx, {
+            caseId: input.caseId,
+            kind: "proposal",
+            action: "created",
+            subjectId: prop.id,
+            // S3 contract: only an agent Proposal has an actor; a Cap Job's
+            // Proposal is attributed to its Job, not to the Job's user.
+            actorId:
+              input.agentSourced === true
+                ? createdByForProposal(input.createdBy)
+                : null,
+            toValue: "pending",
+          });
+        }
         return {
-          proposalId: null,
+          proposalId: prop?.id ?? null,
           resultSummary: input.resultSummary,
           suppressedCount: suppressed,
           kept,
         };
-      }
-
-      const sharedEvidenceIds = parseGraphUuidList(input.attachEvidenceIds);
-      if (sharedEvidenceIds === null) {
-        return yield* new InvalidError({
-          reason: "attachEvidenceIds contains an invalid UUID",
-        });
-      }
-      const attached = attachEvidenceIds(kept, sharedEvidenceIds);
-      if (!attached.ok) {
-        return yield* new InvalidError({ reason: attached.error });
-      }
-      const withEvidence = attached.patch;
-      const prop = yield* proposalsRepoFx.create(tx, {
-        caseId: input.caseId,
-        jobId: input.jobId ?? null,
-        status: "pending",
-        patch: withEvidence,
-        summary: input.resultSummary,
-        suppressedCount: suppressed,
-        evidenceIds: sharedEvidenceIds,
-        agentSourced: input.agentSourced ?? false,
-        createdBy: createdByForProposal(input.createdBy),
-      });
-      if (prop) {
-        yield* appendActivityEffect(tx, {
-          caseId: input.caseId,
-          kind: "proposal",
-          action: "created",
-          subjectId: prop.id,
-          // S3 contract: only an agent Proposal has an actor; a Cap Job's
-          // Proposal is attributed to its Job, not to the Job's user.
-          actorId:
-            input.agentSourced === true
-              ? createdByForProposal(input.createdBy)
-              : null,
-          toValue: "pending",
-        });
-      }
-      return {
-        proposalId: prop?.id ?? null,
-        resultSummary: input.resultSummary,
-        suppressedCount: suppressed,
-        kept,
-      };
-    })
+      })
+    )
   );
 }

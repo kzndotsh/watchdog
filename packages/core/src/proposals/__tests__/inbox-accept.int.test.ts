@@ -11,7 +11,6 @@ import {
 } from "@watchdog/core/proposals";
 import {
   claimsRepo,
-  db,
   evidenceLinksRepo,
   findingSuppressionsRepo,
   identifiersRepo,
@@ -33,6 +32,7 @@ import {
   seedEvidence,
   seedIdentifier,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

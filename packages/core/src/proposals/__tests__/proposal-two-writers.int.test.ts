@@ -5,7 +5,7 @@ import {
   acceptProposalEffect,
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
-import { activity, claimsRepo, db, proposalsRepo } from "@watchdog/db";
+import { activity, claimsRepo, proposalsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
@@ -18,6 +18,7 @@ import {
   seedEntity,
   seedProposal,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

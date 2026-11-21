@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, entitiesRepo } from "@watchdog/db";
-import { resetTestDb } from "@watchdog/test-db";
+import { entitiesRepo } from "@watchdog/db";
+import { resetTestDb, testDb as db } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture, type GraphFixture } from "./graph-mutations";

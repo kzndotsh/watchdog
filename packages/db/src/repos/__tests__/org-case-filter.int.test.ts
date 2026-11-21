@@ -5,9 +5,13 @@ import {
   TEST_OTHER_ORGANIZATION_ID,
   untrustedCaseId,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  testDb as db,
+  withOrganizationScope,
+} from "@watchdog/test-db";
 
-import { db } from "../../client.ts";
 import { activityLogRepo } from "../activity-log.repo.ts";
 
 const START = { xid: "0", id: 0 } as const;
@@ -17,12 +21,15 @@ async function drainedLabels(
   organizationId: typeof TEST_ORGANIZATION_ID,
   caseId?: string
 ) {
-  const rows = await activityLogRepo.drain(db, {
-    after: START,
-    limit: 50,
-    organizationId,
-    ...(caseId === undefined ? {} : { caseId: untrustedCaseId(caseId) }),
-  });
+  // Drained in the reader's organization scope, as the replay does (row-level security, #718).
+  const rows = await withOrganizationScope(db, organizationId, async (tx) =>
+    activityLogRepo.drain(tx, {
+      after: START,
+      limit: 50,
+      organizationId,
+      ...(caseId === undefined ? {} : { caseId: untrustedCaseId(caseId) }),
+    })
+  );
   return rows.map((row) => row.label);
 }
 

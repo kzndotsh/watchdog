@@ -5,7 +5,7 @@ import { capVersion } from "@watchdog/caps";
 import { deleteCaseEffect } from "@watchdog/core/case-deletion";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
@@ -17,6 +17,7 @@ import {
   seedJob,
   seedOrganizationMember,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

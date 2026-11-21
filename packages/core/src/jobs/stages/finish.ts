@@ -5,6 +5,7 @@ import type { JobPivots } from "@watchdog/schemas/shared";
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationIfFound } from "../../infra/organization-scope";
 import type { JobLog } from "../job-log";
 import { settleJobEffect } from "../lifecycle/settle";
 import { markEvidenceProcessedEffect } from "../process-evidence";
@@ -78,7 +79,7 @@ export function stampSourceEvidenceEffect(
 export function finishEffect(
   input: FinishInput
 ): Effect.Effect<"succeeded" | "cancelled", DomainTag, Db> {
-  return Effect.gen(function* finishGen() {
+  const program = Effect.gen(function* finishGen() {
     const { state, jobLog } = input;
     const finishedAt = yield* nowDateEffect;
 
@@ -115,4 +116,5 @@ export function finishEffect(
 
     return "succeeded" as const;
   });
+  return inCaseOrganizationIfFound(input.state.job.caseId, program);
 }

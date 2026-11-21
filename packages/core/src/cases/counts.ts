@@ -12,6 +12,7 @@ import {
 import type { DomainTag } from "../errors/tagged-errors";
 import { DAY_MS, nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { caseCountsRepoFxDb } from "../infra/repos-fx";
 import { assertCaseInOrgEffect } from "./access";
 
@@ -64,7 +65,7 @@ export function getCaseCountsEffect(
   organizationId: OrganizationId,
   opts: { readonly dayStart?: Date } = {}
 ): Effect.Effect<CaseCounts, DomainTag, Db> {
-  return Effect.gen(function* getCaseCountsGen() {
+  const program = Effect.gen(function* getCaseCountsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const row = yield* caseCountsRepoFxDb.countCapped(
       scopedCaseId,
@@ -81,4 +82,5 @@ export function getCaseCountsEffect(
       tasksDueSoon: totalOf(row.tasksDueSoon),
     };
   });
+  return inOrganization(organizationId, program);
 }

@@ -16,6 +16,7 @@ import { NotFoundError, type DomainTag } from "../errors/tagged-errors";
 import { readArtifactBytesEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { identifiersRepoFxDb, jobsRepoFxDb } from "../infra/repos-fx";
 import { loadCapReportEffect } from "./load-cap-report";
 
@@ -92,7 +93,7 @@ export function listJobFoundValuesEffect(
   organizationId: OrganizationId,
   jobId: string
 ): Effect.Effect<JobFoundValues, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* listJobFoundValuesGen() {
+  const program = Effect.gen(function* listJobFoundValuesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
     const row = yield* jobsRepoFxDb.getInCase(scopedCaseId, normalizedJobId);
@@ -116,4 +117,5 @@ export function listJobFoundValuesEffect(
     );
     return mergeFoundValues(found, holders);
   });
+  return inOrganization(organizationId, program);
 }

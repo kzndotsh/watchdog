@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
 import { getTaskBoardEffect, listDueTasksEffect } from "@watchdog/core/tasks";
-import { db, tasks } from "@watchdog/db";
+import { tasks } from "@watchdog/db";
 import { TASK_BOARD_MAX, TASK_DUE_LIST_LIMIT } from "@watchdog/schemas/feed";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   withSystemHistoryContext,
+  testDb as db,
 } from "@watchdog/test-db";
 
 const DAY_START = new Date("2026-03-10T00:00:00.000Z");

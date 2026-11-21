@@ -9,7 +9,7 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
-import { db, tasksRepo } from "@watchdog/db";
+import { tasksRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
@@ -22,6 +22,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

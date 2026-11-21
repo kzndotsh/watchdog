@@ -15,6 +15,7 @@ import { assertCaseInOrgEffect } from "../cases/access";
 import { NotFoundError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { toEvidenceRecord, type EvidenceRecord } from "./evidence";
 
 /** Rows to wire records, with the actors' current labels. */
@@ -36,7 +37,7 @@ export function listEvidenceEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof evidenceList>
 ): Effect.Effect<ListPage<EvidenceRecord>, DomainTag, Db> {
-  return Effect.gen(function* listEvidenceGen() {
+  const program = Effect.gen(function* listEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: evidenceList,
@@ -46,6 +47,7 @@ export function listEvidenceEffect(
       toItems: evidenceItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** What an Evidence picker shows of an item: its title parts and capture time, never the body. */
@@ -83,7 +85,7 @@ export function listEvidencePickerEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof evidenceList>
 ): Effect.Effect<ListPage<EvidencePickerItem>, DomainTag, Db> {
-  return Effect.gen(function* listEvidencePickerGen() {
+  const program = Effect.gen(function* listEvidencePickerGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: evidenceList,
@@ -93,6 +95,7 @@ export function listEvidencePickerEffect(
       toItems: pickerItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -104,7 +107,7 @@ export function getEvidenceEffect(
   organizationId: OrganizationId,
   evidenceId: string
 ): Effect.Effect<EvidenceRecord, DomainTag, Db> {
-  return Effect.gen(function* getEvidenceGen() {
+  const program = Effect.gen(function* getEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const [found] = yield* listByIdsEffect({
       repo: evidenceListRepo,
@@ -117,6 +120,7 @@ export function getEvidenceEffect(
     }
     return found;
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -129,7 +133,7 @@ export function getEvidenceByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<EvidencePickerItem[], DomainTag, Db> {
-  return Effect.gen(function* getEvidenceByIdsGen() {
+  const program = Effect.gen(function* getEvidenceByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: evidencePickerListRepo,
@@ -139,4 +143,5 @@ export function getEvidenceByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }

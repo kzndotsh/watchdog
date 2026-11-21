@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import {
   capCacheRepo,
-  db,
   jobsRepo,
   playbookRunsRepo,
   type JobArtifact,
@@ -18,6 +17,7 @@ import {
   seedEvidence,
   seedJob,
   seedPlaybookRun,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { Db } from "../../infra/db-service.ts";

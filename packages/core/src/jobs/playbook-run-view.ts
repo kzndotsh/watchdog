@@ -22,6 +22,7 @@ import {
   type DomainTag,
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { jobsRepoFxDb, playbookRunsRepoFxDb } from "../infra/repos-fx";
 
 /** The run's recipe, or the 500 for a run whose Playbook left the catalog (not caller input). */
@@ -48,7 +49,7 @@ export function getPlaybookRunForCaseEffect(
   organizationId: OrganizationId,
   playbookRunId: string
 ): Effect.Effect<PlaybookRunView, DomainTag, Db> {
-  return Effect.gen(function* getPlaybookRunGen() {
+  const program = Effect.gen(function* getPlaybookRunGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const runId = yield* requireTrimmedGraphId(playbookRunId, "Playbook run");
     const run = yield* playbookRunsRepoFxDb.getInCase(scopedCaseId, runId);
@@ -86,4 +87,5 @@ export function getPlaybookRunForCaseEffect(
       })),
     };
   });
+  return inOrganization(organizationId, program);
 }

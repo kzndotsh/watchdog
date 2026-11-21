@@ -127,9 +127,18 @@ function pruneCandidatesQuery(opts: PruneActivityOpts, limit: number) {
     bound === null
       ? sql`TRUE`
       : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
+  // The Cases come from the log itself, one index probe per Case (a loose scan of
+  // `activity_case_id_id_idx`), not from `cases`: row-level security (#718) shows the
+  // maintenance worker no Case, and the prune spans every organization.
   return sql`
-    WITH keep AS MATERIALIZED (
-      SELECT c.id AS case_id, ${keepFrom} AS keep_from FROM cases c
+    WITH RECURSIVE c(id) AS (
+      SELECT (SELECT f.case_id FROM activity f ORDER BY f.case_id LIMIT 1)
+      UNION ALL
+      SELECT (SELECT n.case_id FROM activity n WHERE n.case_id > c.id ORDER BY n.case_id LIMIT 1)
+      FROM c WHERE c.id IS NOT NULL
+    ),
+    keep AS MATERIALIZED (
+      SELECT c.id AS case_id, ${keepFrom} AS keep_from FROM c WHERE c.id IS NOT NULL
     )
     SELECT a.id FROM activity a
     JOIN keep ON keep.case_id = a.case_id
@@ -169,7 +178,10 @@ export const activityLogRepo = {
       .values({
         caseId,
         // A Case never changes organization: the entry carries its Case's, for the feed's indexes.
-        organizationId: sql`(select ${cases.organizationId} from ${cases} where ${cases.id} = ${caseId})`,
+        // Read past row-level security (`case_organization_id`, #718): the copy is derived, not
+        // shown to the caller, and the composite foreign key to `cases (id, organization_id)`
+        // keeps it true.
+        organizationId: sql`public.case_organization_id(${caseId}::uuid)`,
         kind: values.kind,
         action: values.action,
         subjectId,

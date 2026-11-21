@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { runDomain } from "@watchdog/core/infra";
 import { putCredentialEffect } from "@watchdog/core/vault";
-import { db } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { evaluateCapAvailabilityEffect } from "../cap-availability.ts";

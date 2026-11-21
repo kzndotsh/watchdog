@@ -160,7 +160,8 @@ describe.skipIf(PERF_URL === undefined).each(LIST_REPOS)(
 
     beforeAll(async () => {
       if (PERF_URL === undefined) return;
-      planDb = openPlanDb(PERF_URL);
+      // Read in the perf Case's organization (row-level security, #718).
+      planDb = openPlanDb(PERF_URL, { organizationId: PERF_ORG });
       if (def.context === undefined) {
         const caseId = (await planDb.caseIdBySlug(PERF_CASE)) ?? "";
         expect(caseId, `${PERF_CASE} in the perf seed`).not.toBe("");

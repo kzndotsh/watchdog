@@ -34,6 +34,7 @@ import {
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
@@ -145,7 +146,7 @@ export function listEntitiesForCaseEffect(
   organizationId: OrganizationId,
   input?: ListInput<typeof entityList>
 ): Effect.Effect<ListPage<EntityListItem>, DomainTag, Db> {
-  return Effect.gen(function* listEntitiesGen() {
+  const program = Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: entityList,
@@ -155,6 +156,7 @@ export function listEntitiesForCaseEffect(
       toItems: entityListItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** What an Entity picker shows of an Entity: its label parts and kind, never its notes or counts. */
@@ -183,7 +185,7 @@ export function listEntityPickerEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof entityList>
 ): Effect.Effect<ListPage<EntityPickerItem>, DomainTag, Db> {
-  return Effect.gen(function* listEntityPickerGen() {
+  const program = Effect.gen(function* listEntityPickerGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: entityList,
@@ -193,6 +195,7 @@ export function listEntityPickerEffect(
       toItems: pickerItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -206,7 +209,7 @@ export function matchEntityNamesEffect(
   organizationId: OrganizationId,
   names: readonly string[]
 ): Effect.Effect<EntityPickerItem[], DomainTag, Db> {
-  return Effect.gen(function* matchEntityNamesGen() {
+  const program = Effect.gen(function* matchEntityNamesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* entitiesRepoFxDb.listMatchingNamesInCase(
       scopedCaseId,
@@ -214,6 +217,7 @@ export function matchEntityNamesEffect(
     );
     return rows.map((row) => ({ ...row }));
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -225,7 +229,7 @@ export function getEntitiesByIdsEffect(
   organizationId: OrganizationId,
   ids: readonly string[]
 ): Effect.Effect<EntityRecord[], DomainTag, Db> {
-  return Effect.gen(function* getEntitiesByIdsGen() {
+  const program = Effect.gen(function* getEntitiesByIdsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const items = yield* listByIdsEffect({
       repo: entityListRepo,
@@ -235,6 +239,7 @@ export function getEntitiesByIdsEffect(
     });
     return [...items];
   });
+  return inOrganization(organizationId, program);
 }
 
 export function getEntityByCaseSlugEffect(
@@ -242,7 +247,7 @@ export function getEntityByCaseSlugEffect(
   organizationId: OrganizationId,
   slug: string
 ): Effect.Effect<EntityRecord, DomainTag, Db> {
-  return Effect.gen(function* getEntityByCaseSlugGen() {
+  const program = Effect.gen(function* getEntityByCaseSlugGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
@@ -263,6 +268,7 @@ export function getEntityByCaseSlugEffect(
     }
     return toEntityRecord(row);
   });
+  return inOrganization(organizationId, program);
 }
 
 export function createEntityEffect(

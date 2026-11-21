@@ -1,13 +1,14 @@
 import { Effect, Fiber, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { client, db, jobsRepo, providerCallsRepo } from "@watchdog/db";
+import { client, jobsRepo, providerCallsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   countLockWaiters,
   resetTestDb,
   seedCase,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 import { makeJobEgress } from "@watchdog/tools/http";
 

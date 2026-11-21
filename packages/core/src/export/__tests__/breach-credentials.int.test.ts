@@ -4,7 +4,7 @@ import { Layer } from "effect";
 import { strFromU8, unzipSync } from "fflate";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   pinEvidenceId,
@@ -12,6 +12,7 @@ import {
   seedCase,
   seedEvidence,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { recordingBlobStore } from "../../infra/blob-store";

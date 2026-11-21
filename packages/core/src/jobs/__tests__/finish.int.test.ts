@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue, cancelJobEffect } from "@watchdog/core/jobs";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listCaseEvidence,
@@ -12,6 +12,7 @@ import {
   seedCase,
   seedEvidence,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { createJobLog } from "../job-log.ts";

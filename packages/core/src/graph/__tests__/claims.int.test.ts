@@ -7,13 +7,14 @@ import {
   updateClaimEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db, evidenceRepo } from "@watchdog/db";
+import { evidenceRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedEntity,
   seedEvidence,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

@@ -4,6 +4,7 @@ import { updateCaseWithPreviousSlugEffect } from "../cases/cases";
 import type { CaseRecord } from "../cases/cases";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { logSwallowed } from "../infra/process-log";
 import {
   renameCaseExportDirEffect,
@@ -19,7 +20,7 @@ import {
 export function updateCaseEffect(
   input: Parameters<typeof updateCaseWithPreviousSlugEffect>[0]
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
-  return Effect.gen(function* updateCaseAndSyncExportGen() {
+  const program = Effect.gen(function* updateCaseAndSyncExportGen() {
     const { record, previousSlug } =
       yield* updateCaseWithPreviousSlugEffect(input);
     if (previousSlug !== undefined) {
@@ -43,4 +44,5 @@ export function updateCaseEffect(
     }
     return record;
   });
+  return inOrganization(input.organizationId, program);
 }

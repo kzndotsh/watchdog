@@ -22,6 +22,13 @@
       "when": 1795216534610,
       "tag": "0002_changeset_history",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795222180972,
+      "tag": "0003_organization_isolation",
+      "breakpoints": true
     }
   ]
 }

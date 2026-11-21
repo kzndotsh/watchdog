@@ -11,9 +11,9 @@ import {
   expectPostgresRefusal,
   resetTestDb,
   seedCase,
+  testDb as db,
 } from "@watchdog/test-db";
 
-import { db } from "../client.ts";
 import type { DbExec } from "../exec.ts";
 import { setGraphHistoryContext } from "../history-context.ts";
 import { caseDeletionRecordsRepo } from "../repos/case-deletion-records.repo.ts";

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { replayActivityEffect } from "@watchdog/core/activity";
 import { runDomain } from "@watchdog/core/infra";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
@@ -15,6 +15,7 @@ import {
   seedCase,
   seedJob,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { ValidationVendorError } from "@watchdog/tools/errors";
