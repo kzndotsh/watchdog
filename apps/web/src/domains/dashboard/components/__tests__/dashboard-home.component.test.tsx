@@ -44,39 +44,25 @@ vi.mock("@/domains/dashboard/components/recent-activity", () => ({
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 
-const fns = vi.hoisted(() => ({
-  getCaseCountsFn: vi.fn(),
-  listProposalQueuePageFn: vi.fn(),
-  getDueTasksFn: vi.fn(),
-  // The whole-list reads the tiles used to count: any call fails the test.
-  listJobsFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCaseCountsFn: fns.getCaseCountsFn,
-}));
-vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalQueuePageFn: fns.listProposalQueuePageFn,
-}));
-vi.mock("@/domains/tasks/tasks.functions", () => ({
-  getDueTasksFn: fns.getDueTasksFn,
-}));
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobsFn: fns.listJobsFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
   useCasesContext: () => useCasesContextMock(),
 }));
 
 import { DashboardHome } from "@/domains/dashboard/components/dashboard-home";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const proposalQueuePage = procedureDouble("proposals.queuePage");
+const dueTasks = procedureDouble("tasks.due");
+const caseCounts = procedureDouble("cases.counts");
+// The whole-list read the tiles used to count: any call fails the test.
+const listJobs = procedureDouble("jobs.listForCase");
 
 function renderDashboard(active: null | { id: string }) {
   useCasesContextMock.mockReturnValue({
-    casesCtx: {
-      cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
-      active,
-    },
     cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
     active,
     pending: false,
@@ -117,7 +103,7 @@ const exact = (count: number) => ({ count, isCapped: false });
 describe("DashboardHome tiles", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fns.getCaseCountsFn.mockResolvedValue({
+    caseCounts.mockResolvedValue({
       entities: { count: 1000, isCapped: true },
       identifiers: exact(0),
       connections: exact(0),
@@ -126,12 +112,12 @@ describe("DashboardHome tiles", () => {
       tasksOverdue: exact(2),
       tasksDueSoon: exact(6),
     });
-    fns.listProposalQueuePageFn.mockResolvedValue({
+    proposalQueuePage.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: exact(3),
     });
-    fns.getDueTasksFn.mockResolvedValue({
+    dueTasks.mockResolvedValue({
       items: [],
       total: { count: 0, isCapped: false },
     });
@@ -157,17 +143,16 @@ describe("DashboardHome tiles", () => {
     expect(
       screen.getByRole("link", { name: /Proposals pending/ })
     ).toHaveTextContent("3");
-    expect(fns.getCaseCountsFn).toHaveBeenCalledTimes(1);
-    expect(fns.listJobsFn).not.toHaveBeenCalled();
+    expect(caseCounts).toHaveBeenCalledTimes(1);
+    expect(listJobs).not.toHaveBeenCalled();
   });
 
   it("reads the due list once, on the same day as the counts", async () => {
     renderDashboard({ id: testCaseId(1) });
 
     await waitFor(() => {
-      expect(fns.getDueTasksFn).toHaveBeenCalledTimes(1);
+      expect(dueTasks).toHaveBeenCalledTimes(1);
     });
-    const counts = fns.getCaseCountsFn.mock.lastCall?.[0];
-    expect(fns.getDueTasksFn).toHaveBeenCalledWith(counts);
+    expect(dueTasks).toHaveBeenCalledWith(caseCounts.mock.lastCall?.[0]);
   });
 });

@@ -1,9 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import {
+  LAST_CASE_STORAGE_KEY,
+  readLastCaseId,
+} from "@/domains/cases/lib/active-case";
+import type { CaseRecord } from "@/domains/cases/types";
 import { Toaster } from "@/shared/ui/toast";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
@@ -36,18 +40,18 @@ const cases = vi.hoisted(() => ({
   } as CaseRecord,
 }));
 
-const setActiveCaseIdFn = vi.hoisted(() => vi.fn());
-vi.mock("@/domains/cases/cases.functions", () => ({
-  createCaseFn: vi.fn(),
-  deleteCaseFn: vi.fn(),
-  getCasesContextFn: vi.fn(async (): Promise<CasesContext> => ({
-    cases: [cases.alpha, cases.beta],
-    active: cases.alpha,
-  })),
-  setActiveCaseIdFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { CaseList } from "@/domains/cases/components/case-list";
+import { procedureDouble } from "@/testing/orpc-client";
+
+procedureDouble("cases.list").mockImplementation(async () => ({
+  items: [cases.alpha, cases.beta],
+  nextCursor: null,
+  total: { count: 2, isCapped: false },
+}));
 
 function renderCaseList() {
   const client = new QueryClient({
@@ -69,24 +73,12 @@ async function openBeta() {
 }
 
 describe("CaseList switching", () => {
-  it("shows the shared switch failure copy and stays on the list when Open fails", async () => {
-    setActiveCaseIdFn.mockRejectedValueOnce(
-      Object.assign(new Error("Internal server error"), { status: 500 })
-    );
-    renderCaseList();
-
-    await openBeta();
-
-    expect(
-      await screen.findByText("Couldn't switch Case. Try again.")
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/Failed to (switch|open) case/)).toBeNull();
-    expect(navigate).not.toHaveBeenCalled();
+  afterEach(() => {
+    window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
   });
 
-  it("switches then opens the Case Overview when Open succeeds", async () => {
+  it("remembers the Case as the last one entered and opens its Overview", async () => {
     navigate.mockClear();
-    setActiveCaseIdFn.mockResolvedValueOnce(cases.beta.id);
     renderCaseList();
 
     await openBeta();
@@ -97,6 +89,7 @@ describe("CaseList switching", () => {
         params: { caseSlug: "beta" },
       });
     });
+    expect(readLastCaseId()).toBe(cases.beta.id);
     expect(within(document.body).queryByText(/Couldn't/)).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 import type { ListPage } from "@watchdog/schemas/shared";
 
-/** What a list page ServerFn receives: the view's params, the scope ids and the cursor. */
+/** What a list procedure receives: the view's params, the scope ids and the cursor. */
 export type ListPageData = Readonly<Record<string, unknown>> & {
   readonly cursor?: string;
 };
@@ -14,16 +14,16 @@ type MemoryListOptions<T> = {
 };
 
 /**
- * A list page ServerFn double for screen tests (`vi.fn(memoryListPage(rows, ...))` behind the
- * mocked `*.functions` module): filters, `q` and sort on the "server", offset cursors, and the
- * total on page one only, as `listPageEffect` returns it. Every call is recorded, so a test reads
- * what a screen asked for.
+ * A list procedure double for screen tests over in-memory rows
+ * (`procedureDouble("claims.list").mockImplementation(memoryListProcedure(rows, ...))`, from
+ * `@/testing/orpc-client`): filters, `q` and sort on the "server", offset cursors, and the total
+ * on page one only, as `listPageEffect` returns it.
  */
-export function memoryListPage<T>(
+export function memoryListProcedure<T>(
   rows: readonly T[],
   { matches, compare, pageSize = 50 }: MemoryListOptions<T>
 ) {
-  return async ({ data }: { data: ListPageData }): Promise<ListPage<T>> => {
+  return async (data: ListPageData): Promise<ListPage<T>> => {
     const sort = typeof data.sort === "string" ? data.sort : undefined;
     const matched = rows.filter((row) => matches(row, data));
     const ordered =
@@ -40,19 +40,6 @@ export function memoryListPage<T>(
           : null,
     };
   };
-}
-
-/**
- * `memoryListPage` for a list read through its oRPC procedure (`procedureDouble("claims.list")`
- * from `@/testing/orpc-client`): the double receives the procedure's input itself.
- */
-export function memoryListProcedure<T>(
-  rows: readonly T[],
-  options: MemoryListOptions<T>
-) {
-  const page = memoryListPage(rows, options);
-  return async (input: ListPageData): Promise<ListPage<T>> =>
-    page({ data: input });
 }
 
 /** The input a list procedure double received last: what the screen asked the server for. */

@@ -1,22 +1,24 @@
+import { ORPCError } from "@orpc/client";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-
-const reads = vi.hoisted(() => ({
-  getEvidenceDownloadUrlFn: vi.fn(),
-  listEvidencePageFn: vi.fn(),
-  listEvidencePickerPageFn: vi.fn(),
-  getEvidenceManyFn: vi.fn(),
-}));
-
-vi.mock("@/domains/intake/intake.functions", () => reads);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import {
+  evidenceByIdQuery,
   evidenceDownloadUrlQuery,
   evidencePickerPort,
   urlDumpsQuery,
 } from "@/domains/intake/queries";
+import { procedureDouble } from "@/testing/orpc-client";
+import { buildEvidenceRecord } from "@/testing/records";
+import { testId } from "@watchdog/test-kit";
+
+const listEvidence = procedureDouble("evidence.list");
+const pickerPage = procedureDouble("evidence.pickerPage");
+const getEvidence = procedureDouble("evidence.get");
 
 describe("intake queries", () => {
   it("reads a download URL and the URL dumps only with the ids they need", () => {
@@ -36,13 +38,36 @@ describe("intake queries", () => {
     ).toEqual(evidenceDownloadUrlQuery(caseId, evidenceId).queryKey);
   });
 
+  it("answers null for an Evidence item the Case no longer holds, and rethrows anything else", async () => {
+    const caseId = testId(10);
+    const evidenceId = testId(20);
+    getEvidence.mockRejectedValueOnce(new ORPCError("NOT_FOUND"));
+    await expect(
+      new QueryClient().query(evidenceByIdQuery(caseId, evidenceId))
+    ).resolves.toBeNull();
+    expect(getEvidence).toHaveBeenLastCalledWith({ caseId, evidenceId });
+
+    getEvidence.mockRejectedValueOnce(new ORPCError("INTERNAL_SERVER_ERROR"));
+    await expect(
+      new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      }).query(evidenceByIdQuery(caseId, evidenceId))
+    ).rejects.toBeInstanceOf(ORPCError);
+
+    const row = buildEvidenceRecord({ id: evidenceId });
+    getEvidence.mockResolvedValueOnce(row);
+    await expect(
+      new QueryClient().query(evidenceByIdQuery(caseId, evidenceId))
+    ).resolves.toBe(row);
+  });
+
   it("reads the Evidence picker's page through the slim projection, never the record list", async () => {
     const caseId = testId(10);
-    reads.listEvidencePickerPageFn.mockResolvedValue({
+    pickerPage.mockResolvedValue({
       items: [
         {
           id: testId(20),
-          kind: "paste",
+          kind: "attestation",
           label: "Note",
           sourceUrl: null,
           sha256: null,
@@ -52,7 +77,7 @@ describe("intake queries", () => {
       nextCursor: null,
       total: null,
     });
-    const port = evidencePickerPort(caseId);
+    const port = evidencePickerPort(` ${caseId} `);
 
     const recent = port.search(null);
     expect(port.search("memo").queryKey).not.toEqual(recent.queryKey);
@@ -60,20 +85,20 @@ describe("intake queries", () => {
     expect(options).toEqual([
       {
         id: testId(20),
-        kind: "paste",
+        kind: "attestation",
         label: "Note",
         sourceUrl: null,
         sha256: null,
       },
     ]);
-    expect(reads.listEvidencePickerPageFn).toHaveBeenCalledWith({
-      data: { caseId, limit: 20 },
-    });
+    expect(pickerPage).toHaveBeenCalledWith({ caseId, limit: 20 });
 
     await new QueryClient().query(port.search("memo"));
-    expect(reads.listEvidencePickerPageFn).toHaveBeenLastCalledWith({
-      data: { caseId, limit: 20, q: "memo" },
+    expect(pickerPage).toHaveBeenLastCalledWith({
+      caseId,
+      limit: 20,
+      q: "memo",
     });
-    expect(reads.listEvidencePageFn).not.toHaveBeenCalled();
+    expect(listEvidence).not.toHaveBeenCalled();
   });
 });

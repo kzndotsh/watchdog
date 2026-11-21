@@ -48,7 +48,7 @@ function sha256Chip(shaValue: string | null): ReactNode | null {
 }
 
 /**
- * Fetches artifact bytes via Query + `getArtifactContentFn`.
+ * Fetches artifact text via Query + `artifactContentQuery` (`jobs.artifactText` / `evidence.text`).
  * Shared by Jobs + Intake Detail.
  */
 export function ArtifactContent(props: ArtifactContentProps) {

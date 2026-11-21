@@ -3,11 +3,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-const createApiKeyFn = vi.hoisted(() => vi.fn());
+const authFetch = vi.hoisted(() => vi.fn());
 
-vi.mock("@/auth/api-key.functions", () => ({ createApiKeyFn }));
-
-vi.mock("@/auth/client", () => ({ authClient: {} }));
+vi.mock("@/auth/client", () => ({ authClient: { $fetch: authFetch } }));
 
 vi.mock("@better-auth-ui/react", () => ({
   useAuth: () => ({
@@ -76,10 +74,9 @@ describe("CreateApiKeyDialog", () => {
   });
 
   it("sends exactly the chosen scopes and shows the key once", async () => {
-    createApiKeyFn.mockResolvedValue({
-      id: "k1",
-      name: "ci",
-      key: "wd_secret",
+    authFetch.mockResolvedValue({
+      data: { id: "k1", name: "ci", key: "wd_secret" },
+      error: null,
     });
     const user = userEvent.setup();
     renderDialog();
@@ -90,15 +87,19 @@ describe("CreateApiKeyDialog", () => {
     await user.click(screen.getByRole("button", { name: "Create API key" }));
 
     await waitFor(() => {
-      expect(createApiKeyFn).toHaveBeenCalledWith({
-        data: { name: "ci", scopes: ["cases:read", "evidence:write"] },
+      expect(authFetch).toHaveBeenCalledWith("/api-key/create-scoped", {
+        method: "POST",
+        body: { name: "ci", scopes: ["cases:read", "evidence:write"] },
       });
     });
     expect(await screen.findByDisplayValue("wd_secret")).toBeInTheDocument();
   });
 
   it("says the key could not be created when the server refuses", async () => {
-    createApiKeyFn.mockRejectedValue(new Error("Bad request"));
+    authFetch.mockResolvedValue({
+      data: null,
+      error: { status: 400, message: "Bad request" },
+    });
     const user = userEvent.setup();
     renderDialog();
 

@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSyncExternalStore } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import {
+  pickDefaultCase,
+  readLastCaseId,
+  readServerLastCaseId,
+  subscribeToLastCase,
+} from "@/domains/cases/lib/active-case";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { useRouteCase } from "@/shared/hooks/use-route-case";
 import { listPending } from "@/shared/lib/list-pending";
@@ -12,29 +19,39 @@ type UseCasesContextOptions = {
   silentError?: boolean;
 };
 
+/** The last Case this browser entered; `null` while hydrating a server render. */
+export function useLastCaseId(): string | null {
+  return useSyncExternalStore(
+    subscribeToLastCase,
+    readLastCaseId,
+    readServerLastCaseId
+  );
+}
+
 /**
- * Active Case + case list from the cases context query. Under a Case route the Active
- * Case is the URL's Case (so two tabs can hold two Cases); elsewhere it is the cookie's.
+ * The visible Cases and the Active Case. Under a Case route the Active Case is the URL's Case
+ * (so two tabs can hold two Cases); elsewhere it is the last Case this browser entered while it
+ * is still visible, else the first visible Case.
  */
 export function useCasesContext(options?: UseCasesContextOptions) {
   const query = useQuery({
-    ...casesContextQuery(),
+    ...visibleCasesQuery(),
     meta: options?.silentError ? { silentError: true } : undefined,
   });
-  const casesCtx = query.data;
+  const cases = query.data ?? EMPTY_CASES;
   const routeCase = useRouteCase();
+  const lastCaseId = useLastCaseId();
 
   // The URL's Case, read live from the list (an edit refetches it) with the route's own
-  // row as the fallback; else the cookie's.
+  // row as the fallback.
   const active =
     routeCase === null
-      ? (casesCtx?.active ?? null)
-      : (casesCtx?.cases.find((row) => row.id === routeCase.id) ?? routeCase);
+      ? pickDefaultCase(cases, lastCaseId)
+      : (cases.find((row) => row.id === routeCase.id) ?? routeCase);
 
   const pending = listPending(query);
   return {
-    casesCtx,
-    cases: casesCtx?.cases ?? EMPTY_CASES,
+    cases,
     active,
     pending,
     loadError: queryLoadError(query, pending, "Failed to load cases"),

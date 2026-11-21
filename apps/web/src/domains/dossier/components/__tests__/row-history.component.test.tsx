@@ -12,17 +12,16 @@ import { testId } from "@watchdog/test-kit";
 
 // Only the network boundary is faked: the popover reads through the real
 // `graphHistoryListView` under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
-vi.mock("@/domains/entities/history/history.functions", () => ({
-  listGraphHistoryFn: vi.fn(),
-  graphRowAttributionFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { RowHistory } from "@/domains/dossier/components/row-history";
-import {
-  graphRowAttributionFn,
-  listGraphHistoryFn,
-} from "@/domains/entities/history/history.functions";
 import { historyKeys } from "@/domains/entities/history/queries";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const listGraphHistoryFn = procedureDouble("history.list");
+const graphRowAttributionFn = procedureDouble("history.attribution");
 
 const CASE_ID = testId(10);
 const ROW_ID = testId(30);
@@ -73,12 +72,12 @@ function renderHistory() {
 }
 
 beforeEach(() => {
-  vi.mocked(graphRowAttributionFn).mockResolvedValue(ATTRIBUTION);
+  graphRowAttributionFn.mockResolvedValue(ATTRIBUTION);
 });
 
 describe("RowHistory", () => {
   it("fetches nothing until it is opened", () => {
-    vi.mocked(listGraphHistoryFn).mockResolvedValue(page({}));
+    listGraphHistoryFn.mockResolvedValue(page({}));
     const client = renderHistory();
     expect(listGraphHistoryFn).not.toHaveBeenCalled();
     expect(
@@ -87,7 +86,7 @@ describe("RowHistory", () => {
   });
 
   it("shows who created and last changed the row, and its changes newest first", async () => {
-    vi.mocked(listGraphHistoryFn).mockResolvedValue(
+    listGraphHistoryFn.mockResolvedValue(
       page({
         items: [
           entry({
@@ -132,17 +131,17 @@ describe("RowHistory", () => {
     expect(items[1]).toHaveTextContent("text, evidence ids");
     expect(items[2]).toHaveTextContent("Created");
     expect(items[2]).toHaveTextContent("via Triage");
-    expect(listGraphHistoryFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(listGraphHistoryFn).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId: CASE_ID,
         kind: "claim",
         rowId: ROW_ID,
-      }),
-    });
+      })
+    );
   });
 
   it("loads the next page with the cursor when asked for older entries", async () => {
-    vi.mocked(listGraphHistoryFn)
+    listGraphHistoryFn
       .mockResolvedValueOnce(
         page({ items: [entry({ id: 2 })], nextCursor: "2" })
       )
@@ -166,17 +165,17 @@ describe("RowHistory", () => {
     await user.click(await screen.findByRole("button", { name: "Show older" }));
 
     expect(await screen.findAllByRole("listitem")).toHaveLength(2);
-    expect(listGraphHistoryFn).toHaveBeenLastCalledWith({
-      data: expect.objectContaining({ cursor: "2" }),
-    });
+    expect(listGraphHistoryFn).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: "2" })
+    );
     expect(
       screen.queryByRole("button", { name: "Show older" })
     ).not.toBeInTheDocument();
   });
 
   it("says so when a row has no recorded changes, and names an unknown author", async () => {
-    vi.mocked(listGraphHistoryFn).mockResolvedValue(page({}));
-    vi.mocked(graphRowAttributionFn).mockResolvedValue({
+    listGraphHistoryFn.mockResolvedValue(page({}));
+    graphRowAttributionFn.mockResolvedValue({
       ...ATTRIBUTION,
       createdBy: null,
       updatedBy: null,
@@ -194,7 +193,7 @@ describe("RowHistory", () => {
   });
 
   it("shows the failure when the history cannot be loaded", async () => {
-    vi.mocked(listGraphHistoryFn).mockRejectedValue(new Error("boom"));
+    listGraphHistoryFn.mockRejectedValue(new Error("boom"));
     const user = userEvent.setup();
     renderHistory();
     await user.click(
@@ -205,8 +204,8 @@ describe("RowHistory", () => {
   });
 
   it("shows the failure when the authorship cannot be loaded", async () => {
-    vi.mocked(listGraphHistoryFn).mockResolvedValue(page({}));
-    vi.mocked(graphRowAttributionFn).mockRejectedValue(new Error("no authors"));
+    listGraphHistoryFn.mockResolvedValue(page({}));
+    graphRowAttributionFn.mockRejectedValue(new Error("no authors"));
     const user = userEvent.setup();
     renderHistory();
     await user.click(

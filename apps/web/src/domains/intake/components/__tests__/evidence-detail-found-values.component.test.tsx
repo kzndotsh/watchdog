@@ -4,25 +4,20 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildEvidenceRecord, buildJobListRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
 import type { JobFoundValues } from "@watchdog/schemas/jobs";
 import { testId } from "@watchdog/test-kit";
 
-const listJobFoundValuesFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobFoundValuesFn,
-  listJobProviderCallsFn: vi.fn(),
-  getJobFn: vi.fn(),
-  getPlaybookRunFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listJobsFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
+const listJobFoundValuesFn = procedureDouble("jobs.listFound");
 
 function Providers({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -95,7 +90,8 @@ describe("EvidenceDetail Found tab", () => {
     );
 
     expect(listJobFoundValuesFn).toHaveBeenCalledWith({
-      data: { caseId: evidence.caseId, jobId: producing.id },
+      caseId: evidence.caseId,
+      jobId: producing.id,
     });
     expect(onAdd).toHaveBeenCalledWith(producing.id, FOUND.values[0]);
   });

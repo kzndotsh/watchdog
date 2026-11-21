@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-const deleteCredentialFn = vi.hoisted(() => vi.fn());
 const onFailed = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/settings/settings.functions", () => ({
-  deleteCredentialFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -15,6 +14,9 @@ import { useDeleteCredential } from "@/domains/settings/hooks/use-delete-credent
 import { credentialsKeys, usersKeys } from "@/domains/settings/queries";
 import { runAuthMutation } from "@/shared/lib/__tests__/helpers/auth-mutation-harness";
 import { toast } from "@/shared/ui/toast";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const deleteCredentialFn = procedureDouble("credentials.delete");
 
 const SEED = [credentialsKeys.all, usersKeys.all];
 
@@ -29,9 +31,7 @@ describe("useDeleteCredential", () => {
       seed: SEED,
     });
 
-    expect(deleteCredentialFn).toHaveBeenCalledWith({
-      data: { name: "WHOIS_API_KEY" },
-    });
+    expect(deleteCredentialFn).toHaveBeenCalledWith({ name: "WHOIS_API_KEY" });
     expect(toast.success).toHaveBeenCalledWith("Credential removed");
     expect(run.events).toEqual(["toast.success", "callback", "invalidate"]);
     expect(run.invalidated(credentialsKeys.all)).toBe(true);

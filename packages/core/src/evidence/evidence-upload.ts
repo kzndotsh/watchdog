@@ -16,7 +16,7 @@ import {
   verifyUploadedObjectEffect,
   type PresignedPut,
 } from "../infra/blob";
-import type { BlobStore } from "../infra/blob-store";
+import { isKeyInCase, type BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { inOrganization } from "../infra/organization-scope";
@@ -127,7 +127,7 @@ export function confirmFileUploadEffect(
       return yield* new InvalidError({ reason: "uri is required" });
     }
     yield* maybeAssertEntityEffect(scopedCaseId, input.entityId);
-    if (!uri.startsWith(`${scopedCaseId}/`)) {
+    if (!isKeyInCase(uri, scopedCaseId)) {
       return yield* new InvalidError({
         reason: "uri does not belong to this Case",
       });

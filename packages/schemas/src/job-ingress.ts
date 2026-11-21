@@ -4,11 +4,16 @@ import { trimmedCaseIdSchema } from "./ids";
 import { jobInputObjectSchema } from "./job-input-display";
 import { NAME_MAX } from "./limits";
 import { playbookSeedInputSchema } from "./playbook-seed";
-import { requiredText, trimmedUuidSchema } from "./primitives";
+import { requiredText, sha256HexSchema, trimmedUuidSchema } from "./primitives";
 
 export const getJobInputSchema = z.object({
   caseId: trimmedCaseIdSchema,
   jobId: trimmedUuidSchema,
+});
+
+/** One of a Job's output artifacts, named by its content hash (`jobs.artifactText`). */
+export const getJobArtifactTextInputSchema = getJobInputSchema.extend({
+  sha256: sha256HexSchema,
 });
 
 export const startJobInputSchema = z.object({

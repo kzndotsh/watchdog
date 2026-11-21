@@ -26,16 +26,9 @@ vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
   useCasesContext: () => useCasesContextMock(),
 }));
 
-const fns = vi.hoisted(() => ({
-  getCaseCountsFn: vi.fn(),
-}));
-
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCaseCountsFn: fns.getCaseCountsFn,
-}));
 
 // React Flow needs a laid-out DOM; the canvas has its own tests. This one shows what it was given.
 vi.mock("@/domains/entities/components/case-graph/case-graph-canvas", () => ({
@@ -59,6 +52,7 @@ import { procedureDouble } from "@/testing/orpc-client";
 import { renderIn } from "@/testing/render-in-case";
 
 const graphSnapshot = procedureDouble("graph.snapshot");
+const caseCounts = procedureDouble("cases.counts");
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -122,7 +116,6 @@ describe("GraphPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useCasesContextMock.mockReturnValue({
-      casesCtx: { cases: [CASE], active: CASE },
       cases: [CASE],
       active: CASE,
       pending: false,
@@ -144,12 +137,12 @@ describe("GraphPage", () => {
     expect(graphSnapshot).toHaveBeenCalledWith({ caseId: CASE.id });
     expect(screen.queryByText(/^Showing/)).not.toBeInTheDocument();
     // The counts are only for the notice: no request when nothing was cut.
-    expect(fns.getCaseCountsFn).not.toHaveBeenCalled();
+    expect(caseCounts).not.toHaveBeenCalled();
   });
 
   it("says how many of the Case's Entities it shows when the server cut them", async () => {
     graphSnapshot.mockResolvedValue(snapshotOf(150, 40, true));
-    fns.getCaseCountsFn.mockResolvedValue(
+    caseCounts.mockResolvedValue(
       countsOf({ count: 1000, isCapped: true }, { count: 900, isCapped: false })
     );
 
@@ -163,12 +156,12 @@ describe("GraphPage", () => {
     expect(
       screen.getByText("Graph canvas: 150 entities, 40 connections")
     ).toBeInTheDocument();
-    expect(fns.getCaseCountsFn).toHaveBeenCalledTimes(1);
+    expect(caseCounts).toHaveBeenCalledTimes(1);
   });
 
   it("names the Connections when only they were cut", async () => {
     graphSnapshot.mockResolvedValue(snapshotOf(12, 600, true));
-    fns.getCaseCountsFn.mockResolvedValue(
+    caseCounts.mockResolvedValue(
       countsOf({ count: 12, isCapped: false }, { count: 750, isCapped: false })
     );
 

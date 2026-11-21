@@ -10,8 +10,3 @@ export const EDGE_LOGGED_API: readonly string[] = [
   "/api/v1/",
   "/api/v1",
 ];
-
-/** Server functions live under `/_serverFn/<id>`; `/_serverFnord` is just a missing page. */
-export function isServerFnPath(pathname: string): boolean {
-  return pathname.startsWith("/_serverFn/");
-}

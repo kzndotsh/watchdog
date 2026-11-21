@@ -12,11 +12,6 @@ import { testId } from "@watchdog/test-kit";
 // Only the network boundary is faked: the settings `*.functions` module, the oRPC client and the Markdown
 // export request. The menu, the hook, the dialog and the settings query run for real
 // under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
-vi.mock("@/domains/organization/organization-settings.functions", () => ({
-  getOrganizationSettingsFn: vi.fn(),
-  updateOrganizationSettingsFn: vi.fn(),
-}));
-
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
@@ -27,11 +22,11 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-menu";
-import { getOrganizationSettingsFn } from "@/domains/organization/organization-settings.functions";
 import { toast } from "@/shared/ui/toast";
 import { procedureDouble } from "@/testing/orpc-client";
 
 const recordOpenIn = procedureDouble("entities.recordOpenIn");
+const getOrganizationSettings = procedureDouble("organization.getSettings");
 
 const CASE_ID = testId(10);
 const MARKDOWN = "# Ada Lovelace\n\nAnalyst.";
@@ -84,7 +79,7 @@ describe("DossierExportMenu", () => {
   let tab: ReturnType<typeof fakeTab>;
 
   beforeEach(() => {
-    vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
+    getOrganizationSettings.mockResolvedValue({
       openInExternalTools: true,
     });
     recordOpenIn.mockResolvedValue({ ok: true });
@@ -239,13 +234,13 @@ describe("DossierExportMenu", () => {
   });
 
   it("hides Open in when the organization turned it off", async () => {
-    vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
+    getOrganizationSettings.mockResolvedValue({
       openInExternalTools: false,
     });
     const user = userEvent.setup();
     renderMenu();
     await waitFor(() => {
-      expect(getOrganizationSettingsFn).toHaveBeenCalled();
+      expect(getOrganizationSettings).toHaveBeenCalled();
     });
     await openMenu(user);
 

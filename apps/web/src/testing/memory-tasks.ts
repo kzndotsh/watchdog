@@ -2,7 +2,7 @@ import type { TaskBoardRecord, TaskListItem } from "@/domains/tasks/types";
 import {
   matchesChoice,
   matchesQ,
-  memoryListPage,
+  memoryListProcedure,
   type ListPageData,
 } from "@/testing/memory-list";
 import { TASK_BOARD_MAX } from "@watchdog/schemas/feed";
@@ -31,25 +31,21 @@ function compareTasks(sort: string | undefined) {
 }
 
 /**
- * The Tasks reads on in-memory rows, for board screen tests (`vi.fn(...)` behind the mocked
- * `tasks.functions`): `listTasksPageFn` (the Task list, a page at a time) and `getTaskBoardFn`
- * (the open cards of the view, by position, capped at `cap`).
+ * The Tasks reads on in-memory rows, for board screen tests (implementations of
+ * `procedureDouble("tasks.list")` and `procedureDouble("tasks.board")`): `listPage` (the Task
+ * list, a page at a time) and `board` (the open cards of the view, by position, capped at `cap`).
  */
 export function memoryTasks(
   rows: readonly TaskListItem[],
   { pageSize = 50, cap = TASK_BOARD_MAX } = {}
 ) {
   return {
-    listPage: memoryListPage(rows, {
+    listPage: memoryListProcedure(rows, {
       matches: matchesTaskView,
       compare: compareTasks,
       pageSize,
     }),
-    board: async ({
-      data,
-    }: {
-      data: ListPageData;
-    }): Promise<TaskBoardRecord> => {
+    board: async (data: ListPageData): Promise<TaskBoardRecord> => {
       const open = rows
         .filter(
           (row) => isOpenTaskStatus(row.status) && matchesTaskView(row, data)

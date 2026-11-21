@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -40,33 +41,6 @@ vi.mock("@tanstack/react-router", () => ({
     select({ location: { pathname: "/" }, matches: [] }),
 }));
 
-const listCollectPageFn = vi.hoisted(() => vi.fn());
-const getCollectItemFn = vi.hoisted(() => vi.fn());
-const getJobFn = vi.hoisted(() => vi.fn());
-const listCapabilitiesFn = vi.hoisted(() => vi.fn());
-const listPlaybooksFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/collect/collect.functions", () => ({
-  listCollectPageFn,
-  getCollectItemFn,
-}));
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listCapabilitiesFn,
-  listPlaybooksFn,
-  getJobFn,
-  getPlaybookRunFn: async () => null,
-  startJobFn: vi.fn(),
-  startPlaybookFn: vi.fn(),
-  cancelJobFn: vi.fn(),
-  cancelPlaybookFn: vi.fn(),
-  retryJobFn: vi.fn(),
-}));
-
-vi.mock("@/domains/settings/settings.functions", () => ({
-  listCredentialsFn: async () => [],
-}));
-
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
@@ -78,11 +52,22 @@ import {
 } from "@/domains/collect/lib/collect-search";
 import { TOAST_COLLECT_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  matchesChoice,
+  matchesQ,
+  memoryListProcedure,
+} from "@/testing/memory-list";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildJobListRecord, buildJobRecord } from "@/testing/records";
 import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+const listCollectPageFn = procedureDouble("collect.list");
+const getCollectItemFn = procedureDouble("collect.get");
+const listCapabilitiesFn = procedureDouble("capabilities.list");
+const listPlaybooksFn = procedureDouble("capabilities.listPlaybooks");
+const getJobFn = procedureDouble("jobs.get");
+const listCredentials = procedureDouble("credentials.list");
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -131,7 +116,7 @@ function hostOf(row: CollectQueueItem): string {
 }
 
 function collectServer(all: readonly CollectQueueItem[], pageSize = 50) {
-  return memoryListPage(all, {
+  return memoryListProcedure(all, {
     matches: (row, data) =>
       matchesChoice(row.state, data.state) && matchesQ(data, [hostOf(row)]),
     compare: (sort) => (a, b) =>
@@ -173,19 +158,15 @@ function renderCollect(
   listCollectPageFn.mockReset();
   listCollectPageFn.mockImplementation(collectServer(all, pageSize));
   getCollectItemFn.mockReset();
-  getCollectItemFn.mockImplementation(
-    async ({ data }: { data: { id: string } }) => {
-      const item = all.find(
-        (row) =>
-          row.id === data.id || row.jobs.some((job) => job.id === data.id)
-      );
-      return item === undefined
-        ? null
-        : { item, focusJobId: item.id === data.id ? null : data.id };
-    }
-  );
+  getCollectItemFn.mockImplementation(async (data) => {
+    const item = all.find(
+      (row) => row.id === data.id || row.jobs.some((job) => job.id === data.id)
+    );
+    if (item === undefined) throw new ORPCError("NOT_FOUND");
+    return { item, focusJobId: item.id === data.id ? null : data.id };
+  });
   getJobFn.mockReset();
-  getJobFn.mockImplementation(async ({ data }: { data: { jobId: string } }) =>
+  getJobFn.mockImplementation(async (data) =>
     buildJobRecord({ id: data.jobId, caseId: ACTIVE.id })
   );
   const onPatch = vi.fn();
@@ -201,11 +182,9 @@ function renderCollect(
 }
 
 function lastRequest(): Record<string, unknown> {
-  const call = listCollectPageFn.mock.calls.at(-1) as
-    | [{ data: Record<string, unknown> }]
-    | undefined;
+  const call = listCollectPageFn.mock.calls.at(-1);
   if (call === undefined) throw new Error("no page was asked for");
-  return call[0].data;
+  return { ...call[0] };
 }
 
 function queueRows(): HTMLElement[] {
@@ -223,6 +202,7 @@ class ResizeObserverDouble {
 beforeAll(preloadSharedLazyChunks);
 
 beforeEach(() => {
+  listCredentials.mockResolvedValue([]);
   // The Entity pickers' reads: an empty Case.
   procedureDouble("entities.pickerPage").mockResolvedValue({
     items: [],
@@ -413,7 +393,8 @@ describe("Collect screen", () => {
       expect(getCollectItemFn).toHaveBeenCalledTimes(1);
     });
     expect(getCollectItemFn).toHaveBeenLastCalledWith({
-      data: { caseId: ACTIVE.id, id: target.id },
+      caseId: ACTIVE.id,
+      id: target.id,
     });
     expect(
       queueRows().some((row) => row.getAttribute("aria-selected") === "true")

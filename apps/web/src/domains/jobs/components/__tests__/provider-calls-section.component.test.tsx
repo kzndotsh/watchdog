@@ -4,9 +4,14 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { ProviderCallsSection } from "@/domains/jobs/components/provider-calls/provider-calls-section";
 import { jobProviderCallsQuery } from "@/domains/jobs/queries";
 import { capabilityLabel } from "@/shared/ui/vocab";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   buildProviderCallList,
   buildProviderCallRecord,
@@ -14,16 +19,7 @@ import {
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const listJobProviderCallsFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobProviderCallsFn,
-  getJobFn: vi.fn(),
-  getPlaybookRunFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listJobsFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
+const listJobProviderCallsFn = procedureDouble("jobs.listProviderCalls");
 
 const CASE_ID = testCaseId(10);
 const JOB_ID = testId(11);

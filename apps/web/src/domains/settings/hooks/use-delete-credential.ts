@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { invalidateAfterCredentialMutation } from "@/app/lib/query-invalidation";
-import { deleteCredentialFn } from "@/domains/settings/settings.functions";
+import { orpc } from "@/lib/orpc-client";
 import { toast } from "@/shared/ui/toast";
 import { deleteCredentialInputSchema } from "@watchdog/schemas/caps";
 
@@ -19,7 +19,7 @@ export function useDeleteCredential({
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) =>
-      deleteCredentialFn({ data: deleteCredentialInputSchema.parse({ name }) }),
+      orpc.credentials.delete.call(deleteCredentialInputSchema.parse({ name })),
     onSuccess: () => {
       toast.success("Credential removed");
       onDeleted?.();

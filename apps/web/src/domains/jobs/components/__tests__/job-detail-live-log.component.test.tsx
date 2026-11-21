@@ -7,6 +7,10 @@ import { act, cleanup, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -49,14 +53,6 @@ class EventSourceDouble {
   }
 }
 
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  getJobFn: vi.fn(),
-  getPlaybookRunFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listJobsFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
-
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => (
     <a href="/">{children}</a>
@@ -65,10 +61,12 @@ vi.mock("@tanstack/react-router", () => ({
 
 import { bindActivityInvalidation } from "@/app/lib/activity-invalidation";
 import { JobDetail } from "@/domains/jobs/components/job-detail";
-import { getJobFn } from "@/domains/jobs/jobs.functions";
 import { jobDetailQuery } from "@/domains/jobs/queries";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildJobRecord } from "@/testing/records";
 import { render } from "@/testing/render-in-case";
+
+const getJobFn = procedureDouble("jobs.get");
 
 const CASE_ID = testCaseId(10);
 const JOB_ID = testId(11);
@@ -115,7 +113,7 @@ describe("Job detail while the Job runs", () => {
   });
 
   it("shows new log lines when the stream says they were saved, without a reload", async () => {
-    vi.mocked(getJobFn)
+    getJobFn
       .mockResolvedValueOnce(
         buildJobRecord({
           id: JOB_ID,

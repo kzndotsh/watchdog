@@ -6,23 +6,18 @@ import { buildTaskListItem } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const fns = vi.hoisted(() => ({
-  listTasksPageFn: vi.fn(),
-  getTaskBoardFn: vi.fn(),
-}));
-
-vi.mock("@/domains/tasks/tasks.functions", () => ({
-  listTasksPageFn: fns.listTasksPageFn,
-  getTaskBoardFn: fns.getTaskBoardFn,
-  getTaskFn: vi.fn(),
-  createTaskFn: vi.fn(),
-  updateTaskFn: vi.fn(),
-  deleteTaskFn: vi.fn(),
-  reorderTasksFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
 import { memoryTasks } from "@/testing/memory-tasks";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const fns = {
+  listTasksPageFn: procedureDouble("tasks.list"),
+  getTaskBoardFn: procedureDouble("tasks.board"),
+};
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(11);
@@ -74,13 +69,17 @@ describe("DossierTasksSection", () => {
     // Each card carries its Entity's label from the server.
     expect(screen.getAllByText("Target Alpha").length).toBeGreaterThan(0);
     expect(fns.getTaskBoardFn.mock.calls).toEqual([
-      [{ data: { caseId: CASE_ID, entityId: ENTITY_ID } }],
+      [{ caseId: CASE_ID, entityId: ENTITY_ID }],
     ]);
     expect(fns.listTasksPageFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, status: ["done"], entityId: ENTITY_ID },
+      caseId: CASE_ID,
+      status: ["done"],
+      entityId: ENTITY_ID,
     });
     expect(fns.listTasksPageFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, status: ["dropped"], entityId: ENTITY_ID },
+      caseId: CASE_ID,
+      status: ["dropped"],
+      entityId: ENTITY_ID,
     });
     // The fixed Entity is no filter: an empty column is blank (drawn as nothing), not "Nothing matches".
     await waitFor(() => {

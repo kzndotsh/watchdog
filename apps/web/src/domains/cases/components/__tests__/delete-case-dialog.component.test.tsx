@@ -6,22 +6,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const fns = vi.hoisted(() => ({
-  deleteCaseFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  deleteCaseFn: fns.deleteCaseFn,
-  getDeletionPolicyFn: fns.getDeletionPolicyFn,
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const fns = {
+  deleteCaseFn: procedureDouble("cases.delete"),
+  getDeletionPolicyFn: procedureDouble("cases.deletionPolicy"),
+};
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -53,7 +48,7 @@ function renderDialog(onDeleted = vi.fn()) {
 
 describe("DeleteCaseDialog", () => {
   beforeEach(() => {
-    fns.deleteCaseFn.mockReset().mockResolvedValue(undefined);
+    fns.deleteCaseFn.mockReset().mockResolvedValue({ ok: true });
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
       canIncludeBreachCredentials: false,
@@ -103,9 +98,7 @@ describe("DeleteCaseDialog", () => {
     expect(
       await screen.findByText(/2 queued or running Jobs will be cancelled/)
     ).toBeInTheDocument();
-    expect(fns.getDeletionPolicyFn).toHaveBeenCalledWith({
-      data: { caseId: CASE.id },
-    });
+    expect(fns.getDeletionPolicyFn).toHaveBeenCalledWith({ caseId: CASE.id });
   });
 
   it("says 1 Job in the singular", async () => {
@@ -133,9 +126,7 @@ describe("DeleteCaseDialog", () => {
     await waitFor(() => {
       expect(onDeleted).toHaveBeenCalledWith(CASE);
     });
-    expect(fns.deleteCaseFn).toHaveBeenCalledWith({
-      data: { caseId: CASE.id },
-    });
+    expect(fns.deleteCaseFn).toHaveBeenCalledWith({ caseId: CASE.id });
   });
 
   it("keeps the dialog open with the failure when the delete is refused", async () => {

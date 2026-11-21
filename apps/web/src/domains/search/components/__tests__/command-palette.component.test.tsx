@@ -100,7 +100,6 @@ function renderPalette(
   casesOptions?: { loadError?: string | null; retry?: () => void }
 ) {
   useCasesContextMock.mockReturnValue({
-    casesCtx,
     cases: casesCtx.cases,
     active: casesCtx.active,
     pending: false,
@@ -154,7 +153,6 @@ describe("CommandPalette", () => {
       defaultOptions: { queries: { retry: false } },
     });
     useCasesContextMock.mockReturnValue({
-      casesCtx: { active: ACTIVE, cases: [ACTIVE] },
       cases: [ACTIVE],
       active: ACTIVE,
       pending: false,

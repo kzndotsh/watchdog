@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -50,20 +51,6 @@ vi.mock("@/domains/cases/hooks/use-live-work-case", () => ({
   useLiveWorkCase: () => ACTIVE,
 }));
 
-const fns = vi.hoisted(() => ({
-  listTasksPageFn: vi.fn(),
-  getTaskBoardFn: vi.fn(),
-  getTaskFn: vi.fn(),
-}));
-
-vi.mock("@/domains/tasks/tasks.functions", () => ({
-  ...fns,
-  createTaskFn: vi.fn(),
-  updateTaskFn: vi.fn(),
-  deleteTaskFn: vi.fn(),
-  reorderTasksFn: vi.fn(),
-}));
-
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
@@ -76,6 +63,12 @@ import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const render = renderIn(ACTIVE);
+
+const fns = {
+  listTasksPageFn: procedureDouble("tasks.list"),
+  getTaskBoardFn: procedureDouble("tasks.board"),
+  getTaskFn: procedureDouble("tasks.get"),
+};
 
 // The Entity filter's reads: by id for the chip, one small page once the popover opens. The
 // board never reads the Entity list (cards carry their Entity's label).
@@ -169,12 +162,8 @@ function renderPage(
 }
 
 function dataOf(call: unknown): Record<string, unknown> {
-  if (typeof call !== "object" || call === null || !("data" in call)) {
-    throw new Error("no request");
-  }
-  const { data } = call;
-  if (typeof data !== "object" || data === null) throw new Error("no data");
-  return { ...data };
+  if (typeof call !== "object" || call === null) throw new Error("no request");
+  return { ...call };
 }
 
 const lastBoardRequest = () => dataOf(fns.getTaskBoardFn.mock.lastCall?.[0]);
@@ -420,13 +409,14 @@ describe("TasksPage", () => {
       await screen.findByRole("dialog", { name: "Edit task" })
     ).toBeInTheDocument();
     expect(fns.getTaskFn).toHaveBeenCalledWith({
-      data: { caseId: ACTIVE.id, taskId: older.id },
+      caseId: ACTIVE.id,
+      taskId: older.id,
     });
     expect(onPatch).not.toHaveBeenCalledWith({ taskId: undefined });
   });
 
   it("clears a link to a card the Case no longer holds, with a notice", async () => {
-    fns.getTaskFn.mockResolvedValue(null);
+    fns.getTaskFn.mockRejectedValue(new ORPCError("NOT_FOUND"));
     const { onPatch } = renderPage(board(1, 0), { taskId: testId(999) });
 
     await waitFor(() => {

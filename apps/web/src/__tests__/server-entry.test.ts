@@ -61,7 +61,7 @@ describe("server entry", () => {
 
   it("answers an oversized body on any other route 413 without CORS", async () => {
     const responses = await Promise.all(
-      ["/api/auth/sign-in/email", "/_serverFn/abc"].map(async (path) =>
+      ["/api/auth/sign-in/email", "/api/rpc/cases/list"].map(async (path) =>
         entry.fetch(post(path, REQUEST_BODY_MAX_BYTES + 1))
       )
     );

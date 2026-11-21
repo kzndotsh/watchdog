@@ -55,14 +55,6 @@ const MOCK_FAIL: Record<string, string> = {
 };
 
 const MOCK_OK: Record<string, string> = {
-  "boundary-functions.test.ts": lines(
-    HEAD,
-    'vi.mock("@/domains/jobs/jobs.functions", () => ({}));'
-  ),
-  "boundary-functions-ts.test.ts": lines(
-    HEAD,
-    'vi.mock("./claims.functions.ts", () => ({}));'
-  ),
   "boundary-orpc-client.test.ts": lines(
     HEAD,
     'vi.mock("@/lib/orpc-client", () => ({}));'

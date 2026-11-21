@@ -24,7 +24,6 @@
 | Invitee cannot register | Public sign-up is closed on purpose | Use the invitation link `/auth/accept-invitation/{id}`, not `/auth/sign-up` |
 | Invitation email missing | SMTP unset | Copy the link from Settings → Organization → Members → Pending invitations (the URL is never logged; the log has the invitation id and a masked address) |
 | Signed out but UI still "in" | Stale session cache | Sign out via `/auth/sign-out`, not raw `authClient.signOut()` |
-| ServerFn **403** with `csrf` in logs | CSRF middleware rejected the request | Expected for a bad token; see [`auth-setup.md#gotchas`](auth-setup.md#gotchas) |
 
 ## Data and infra
 

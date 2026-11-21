@@ -3,13 +3,18 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import {
   capabilitiesListQuery,
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 import { LibraryCapPage } from "@/domains/library/components/library-cap-page";
 import { credentialsListQuery } from "@/domains/settings/queries";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   buildCapListItem,
   buildCaseRecord,
@@ -22,10 +27,10 @@ import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const navigate = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/jobs/jobs.functions", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/domains/jobs/jobs.functions")>()),
-  listPlaybooksFn: vi.fn(() => Promise.reject(new Error("boom"))),
-}));
+// A list the test does not seed fails, as an unreachable catalog would.
+procedureDouble("capabilities.listPlaybooks").mockRejectedValue(
+  new Error("boom")
+);
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigate,
@@ -111,10 +116,7 @@ function renderPage(
       breachDisabled: false,
     }))
   );
-  client.setQueryData(casesContextQuery().queryKey, {
-    cases: [alpha, beta],
-    active: null,
-  });
+  client.setQueryData(visibleCasesQuery().queryKey, [alpha, beta]);
   render(
     <QueryClientProvider client={client}>
       <SidebarProvider>

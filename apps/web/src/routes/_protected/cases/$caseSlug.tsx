@@ -1,8 +1,7 @@
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
-import { getActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
-import { healActiveCaseToRoute } from "@/domains/cases/lib/heal-active-case";
+import { rememberLastCase } from "@/domains/cases/lib/active-case";
 import { caseByIdQuery, caseBySlugQuery } from "@/domains/cases/queries";
 import { RouteError } from "@/shared/layout/route-error";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
@@ -27,11 +26,11 @@ function CaseNotFound() {
  * slug against the organization's visible Cases, so a slug for a Case the caller cannot
  * see is Case not found, the same as an unknown slug. The Case it finds is route context
  * (`workCase`) for every child loader and, through `ProtectedLayout`, for every
- * component (`useRouteCase`); the Active Case cookie follows it.
+ * component (`useRouteCase`): the URL is what names the Active Case. Entering it (not an intent
+ * preload) makes it the last Case entered, the default of Case-less screens.
  */
 export const Route = createFileRoute("/_protected/cases/$caseSlug")({
   beforeLoad: async ({ context: { queryClient }, params, preload }) => {
-    const epoch = getActiveCaseHealEpoch();
     const caseSlug = normalizeEntitySlug(params.caseSlug);
     if (caseSlug === undefined) {
       throw notFound();
@@ -45,7 +44,7 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
       throw notFound();
     }
 
-    await healActiveCaseToRoute(queryClient, workCase, preload, epoch);
+    if (!preload) rememberLastCase(workCase.id);
     queryClient.setQueryData(caseByIdQuery(workCase.id).queryKey, workCase);
     return { workCase };
   },

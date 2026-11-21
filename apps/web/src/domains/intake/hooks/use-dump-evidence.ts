@@ -2,9 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import { invalidateAfterEvidenceMutation } from "@/app/lib/query-invalidation";
-import { dumpPasteFn, dumpUrlFn } from "@/domains/intake/intake.functions";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import {
   TOAST_UPLOAD_FAILED,
@@ -99,13 +99,13 @@ export function useDumpEvidence({
       label?: string;
       sourceUrl?: string;
     }) =>
-      dumpPasteFn({
-        data: dumpPasteInputSchema.parse({
+      orpc.evidence.createPaste.call(
+        dumpPasteInputSchema.parse({
           caseId,
           ...data,
           entityId: targetEntityId,
-        }),
-      }),
+        })
+      ),
     onSuccess: async (created) => {
       setDumpError(null);
       toast.success("Paste saved");
@@ -119,13 +119,13 @@ export function useDumpEvidence({
 
   const urlMutation = useMutation({
     mutationFn: async (data: { sourceUrl: string; label?: string }) =>
-      dumpUrlFn({
-        data: dumpUrlInputSchema.parse({
+      orpc.evidence.createUrl.call(
+        dumpUrlInputSchema.parse({
           caseId,
           ...data,
           entityId: targetEntityId,
-        }),
-      }),
+        })
+      ),
     onSuccess: async (created) => {
       setDumpError(null);
       toast.success("URL saved");

@@ -12,7 +12,7 @@ import { AppShell } from "@/app/layout/app-shell";
 import { requireSession } from "@/app/require-session";
 import { authClient } from "@/auth/client";
 import { firstCaseGateApplies } from "@/auth/first-case-gate";
-import { casesContextQuery } from "@/domains/cases/queries";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
 import { RootError } from "@/shared/layout/root-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
@@ -53,10 +53,10 @@ export const Route = createFileRoute("/_protected")({
       location,
       { isPreload: preload }
     );
-    // Sidebar CaseSwitcher + case nav need cases context on every protected route. The same
+    // Sidebar CaseSwitcher + case nav need the visible Cases on every protected route. The same
     // read answers the first-Case gate, so it costs no second query.
-    const casesCtx = organizationId
-      ? await ensureAppQueryData(queryClient, casesContextQuery())
+    const cases = organizationId
+      ? await ensureAppQueryData(queryClient, visibleCasesQuery())
       : null;
 
     // Both land on /onboarding: no organization yet, or an organization with no live Case
@@ -66,7 +66,7 @@ export const Route = createFileRoute("/_protected")({
     // scope), so nobody is exempt for lack of permission.
     if (
       !organizationId ||
-      (firstCaseGateApplies(location.pathname) && !casesCtx?.cases.length)
+      (firstCaseGateApplies(location.pathname) && !cases?.length)
     ) {
       throw redirect({ to: "/onboarding" });
     }

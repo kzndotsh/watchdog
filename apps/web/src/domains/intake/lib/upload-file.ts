@@ -1,8 +1,5 @@
-import {
-  confirmFileUploadFn,
-  presignUploadFn,
-} from "@/domains/intake/intake.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt } from "@/lib/utils";
 import {
   confirmFileUploadInputSchema,
@@ -42,15 +39,17 @@ export function uploadFileEvidence(input: {
   const mime = input.file.type || "application/octet-stream";
   return sha256HexFile(input.file)
     .then((sha256) =>
-      presignUploadFn({
-        data: presignUploadInputSchema.parse({
-          caseId: input.caseId,
-          sha256,
-          mime,
-          byteLength: input.file.size,
-          name: input.file.name,
-        }),
-      }).then((put) => ({ put, sha256, mime }))
+      orpc.evidence.presign
+        .call(
+          presignUploadInputSchema.parse({
+            caseId: input.caseId,
+            sha256,
+            mime,
+            byteLength: input.file.size,
+            name: input.file.name,
+          })
+        )
+        .then((put) => ({ put, sha256, mime }))
     )
     .then(({ put, sha256, mime }) =>
       fetch(put.url, {
@@ -65,8 +64,8 @@ export function uploadFileEvidence(input: {
       })
     )
     .then(({ put, sha256, mime }) =>
-      confirmFileUploadFn({
-        data: confirmFileUploadInputSchema.parse({
+      orpc.evidence.confirmFile.call(
+        confirmFileUploadInputSchema.parse({
           caseId: input.caseId,
           uri: put.uri,
           sha256,
@@ -74,7 +73,7 @@ export function uploadFileEvidence(input: {
           byteLength: put.byteLength,
           label: input.label,
           entityId: input.entityId,
-        }),
-      })
+        })
+      )
     );
 }

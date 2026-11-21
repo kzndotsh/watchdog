@@ -1,18 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { Toaster } from "@/shared/ui/toast";
+import { LAST_CASE_STORAGE_KEY } from "@/domains/cases/lib/active-case";
 import { testId } from "@watchdog/test-kit";
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
-const setActiveCaseIdFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  setActiveCaseIdFn,
-}));
-
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
   useCasesContext: () => useCasesContextMock(),
 }));
@@ -113,13 +107,13 @@ const BETA = {
   allowedEgress: ["local", "target"],
 };
 
+afterEach(() => {
+  window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
+});
+
 describe("CaseSwitcher switching", () => {
-  it("shows the shared switch failure copy when the server rejects the switch", async () => {
-    setActiveCaseIdFn.mockRejectedValueOnce(
-      Object.assign(new Error("Internal server error"), { status: 500 })
-    );
+  it("on a Case-less screen makes the picked Case the last one entered, with no server write", async () => {
     useCasesContextMock.mockReturnValue({
-      casesCtx: { active: ALPHA, cases: [ALPHA, BETA] },
       cases: [ALPHA, BETA],
       active: ALPHA,
       pending: false,
@@ -132,15 +126,14 @@ describe("CaseSwitcher switching", () => {
     });
     render(
       <QueryClientProvider client={client}>
-        <Toaster />
         <CaseSwitcher />
       </QueryClientProvider>
     );
 
     await userEvent.click(screen.getByRole("button", { name: /Beta Case/ }));
 
-    expect(
-      await screen.findByText("Couldn't switch Case. Try again.")
-    ).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(window.localStorage.getItem(LAST_CASE_STORAGE_KEY)).toBe(BETA.id);
+    });
   });
 });

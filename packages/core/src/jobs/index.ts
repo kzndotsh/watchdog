@@ -99,3 +99,4 @@ export {
   failInvalidCapDeliveryEffect,
 } from "./cap-delivery";
 export { stop, type StopSelector } from "./lifecycle/stop";
+export { readJobArtifactTextEffect } from "./artifact-text";

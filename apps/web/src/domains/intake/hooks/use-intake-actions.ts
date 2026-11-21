@@ -6,13 +6,7 @@ import {
   invalidateAfterJobMutation,
 } from "@/app/lib/query-invalidation";
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
-import {
-  attachEvidenceEntityFn,
-  enrichUrlEvidenceFn,
-  processEvidenceFn,
-  restoreEvidenceFn,
-  softDeleteEvidenceFn,
-} from "@/domains/intake/intake.functions";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import {
   attachEvidenceEntityInputSchema,
@@ -73,13 +67,13 @@ export function useIntakeActions({
 
   const processMutation = useMutation({
     mutationFn: async (input: { evidenceId: string; isAi?: boolean }) =>
-      processEvidenceFn({
-        data: processEvidenceInputSchema.parse({
+      orpc.evidence.process.call(
+        processEvidenceInputSchema.parse({
           caseId,
           evidenceId: input.evidenceId,
           ai: input.isAi ?? false,
-        }),
-      }),
+        })
+      ),
     onSuccess: async (_result, input) => {
       onEvidenceIdChange(input.evidenceId);
       await invalidateAfterJobMutation(queryClient, caseId);
@@ -95,9 +89,9 @@ export function useIntakeActions({
 
   const enrichMutation = useMutation({
     mutationFn: async (id: string) =>
-      enrichUrlEvidenceFn({
-        data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
-      }),
+      orpc.evidence.enrich.call(
+        evidenceScopeInputSchema.parse({ caseId, evidenceId: id })
+      ),
     onSuccess: async (_result, id) => {
       onEvidenceIdChange(id);
       await invalidateAfterJobMutation(queryClient, caseId);
@@ -113,9 +107,9 @@ export function useIntakeActions({
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) =>
-      softDeleteEvidenceFn({
-        data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
-      }),
+      orpc.evidence.softDelete.call(
+        evidenceScopeInputSchema.parse({ caseId, evidenceId: id })
+      ),
     onSuccess: async (_ok, id) => {
       onEvidenceIdChange(resolveSelectionAfterHide?.(id) ?? null);
       await invalidateAfterEvidenceMutation(queryClient, caseId);
@@ -127,9 +121,9 @@ export function useIntakeActions({
 
   const restoreMutation = useMutation({
     mutationFn: async (id: string) =>
-      restoreEvidenceFn({
-        data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
-      }),
+      orpc.evidence.restore.call(
+        evidenceScopeInputSchema.parse({ caseId, evidenceId: id })
+      ),
     onSuccess: async (_ok, id) => {
       onRestoreShowActiveQueue();
       onEvidenceIdChange(id);
@@ -142,13 +136,13 @@ export function useIntakeActions({
 
   const attachMutation = useMutation({
     mutationFn: async (input: { evidenceId: string; entityId: string }) =>
-      attachEvidenceEntityFn({
-        data: attachEvidenceEntityInputSchema.parse({
+      orpc.evidence.attachEntity.call(
+        attachEvidenceEntityInputSchema.parse({
           caseId,
           evidenceId: input.evidenceId,
           entityId: input.entityId,
-        }),
-      }),
+        })
+      ),
     onSuccess: async () => {
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },

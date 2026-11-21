@@ -3,6 +3,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import type { CaseRecord } from "@/domains/cases/types";
 import { testCaseId } from "@watchdog/schemas/testing";
 
@@ -29,33 +33,14 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-const fns = vi.hoisted(() => ({
-  getCasesContextFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-  listJobsFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: fns.getCasesContextFn,
-  getDeletionPolicyFn: fns.getDeletionPolicyFn,
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-  createCaseFn: vi.fn(),
-  deleteCaseFn: vi.fn(),
-  restoreCaseFn: vi.fn(),
-  setActiveCaseIdFn: vi.fn(),
-}));
-
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listJobsFn: fns.listJobsFn,
-  getJobFn: vi.fn(),
-  listCapabilitiesFn: vi.fn(),
-  listPlaybooksFn: vi.fn(),
-}));
-
 import { CaseList } from "@/domains/cases/components/case-list";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const fns = {
+  listCases: procedureDouble("cases.list"),
+  getDeletionPolicyFn: procedureDouble("cases.deletionPolicy"),
+  listJobsFn: vi.fn(),
+};
 
 const CASE_A: CaseRecord = {
   id: testCaseId(1),
@@ -79,6 +64,15 @@ const CASE_B: CaseRecord = {
   ],
 };
 
+/** One page of `cases.list` holding `items`. */
+function casePage(items: CaseRecord[]) {
+  return {
+    items,
+    nextCursor: null,
+    total: { count: items.length, isCapped: false },
+  };
+}
+
 function renderCaseList() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -92,11 +86,10 @@ function renderCaseList() {
 
 describe("CaseList", () => {
   beforeEach(() => {
-    fns.getCasesContextFn
-      .mockReset()
-      .mockResolvedValue({ cases: [CASE_A, CASE_B], active: CASE_A });
+    fns.listCases.mockReset().mockResolvedValue(casePage([CASE_A, CASE_B]));
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canManage: true,
       canIncludeBreachCredentials: false,
     });
@@ -122,10 +115,7 @@ describe("CaseList", () => {
   });
 
   it("shows a no-results empty state when search matches nothing", async () => {
-    fns.getCasesContextFn.mockResolvedValue({
-      cases: [CASE_A],
-      active: CASE_A,
-    });
+    fns.listCases.mockResolvedValue(casePage([CASE_A]));
     renderCaseList();
     await screen.findByText("Alpha");
 
@@ -158,6 +148,7 @@ describe("CaseList", () => {
   it("hides Delete and the Deleted Cases link from a member", async () => {
     fns.getDeletionPolicyFn.mockResolvedValue({
       restoreWindowDays: 30,
+      cancellableJobs: 0,
       canIncludeBreachCredentials: false,
       canManage: false,
     });

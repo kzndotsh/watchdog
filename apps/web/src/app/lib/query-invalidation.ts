@@ -297,7 +297,7 @@ export function seedOrganizationState(
 }
 
 /**
- * A server function answered Unauthorized: the session is gone. Mark it stale and refetch
+ * An API call answered Unauthorized: the session is gone. Mark it stale and refetch
  * its active observers now, so `useAuthenticate` in the protected layout redirects to
  * sign-in instead of waiting out the session's stale time.
  */

@@ -38,3 +38,4 @@ export {
   type UploadSweepSummary,
 } from "./upload-sweep";
 export { evidenceKindLabel } from "./evidence-display";
+export { readEvidenceTextEffect } from "./evidence-text";

@@ -22,10 +22,6 @@ vi.mock("@/domains/cases/components/delete-case-dialog", () => ({
   DeleteCaseDialog: () => null,
 }));
 
-vi.mock("@/domains/cases/cases.functions", () => ({
-  setActiveCaseIdFn: vi.fn(),
-}));
-
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -83,18 +79,13 @@ const POLICY = {
 };
 
 function renderOverview(
-  activeId: string | null,
   policy: {
     restoreWindowDays: number;
     canManage: boolean;
     canIncludeBreachCredentials: boolean;
   } = POLICY
 ) {
-  useQueriesMock.mockReturnValue([
-    queryLoaded(CASE),
-    queryLoaded({ cases: [CASE], active: activeId ? CASE : null }),
-    queryLoaded(policy),
-  ]);
+  useQueriesMock.mockReturnValue([queryLoaded(CASE), queryLoaded(policy)]);
   useMutationMock.mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
@@ -109,31 +100,19 @@ function renderOverview(
 }
 
 describe("CaseOverview", () => {
-  it("shows the active chip when this case is active", () => {
-    renderOverview(CASE.id);
-    expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(screen.getByText("Overview tab body")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Set Active" })
-    ).not.toBeInTheDocument();
-    expect(useQueriesMock).toHaveBeenCalled();
-    expect(useMutationMock).toHaveBeenCalled();
-  });
-
-  it("offers Set Active when this case is not the active case", () => {
-    renderOverview(null);
-    expect(
-      screen.getByRole("button", { name: "Set Active" })
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+  it("shows the overview with Export and Delete, and no Set Active: the URL's Case is the Active Case", () => {
+    renderOverview();
     expect(screen.getByText("Overview tab body")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Set Active" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
   });
 
   it("disables Delete for a member (the tooltip says why)", () => {
-    renderOverview(CASE.id, {
+    renderOverview({
       restoreWindowDays: 30,
       canManage: false,
       canIncludeBreachCredentials: false,
@@ -147,7 +126,7 @@ describe("CaseOverview", () => {
       Promise.resolve(new Response("{}", { status: 202 }))
     );
     vi.stubGlobal("fetch", fetchMock);
-    renderOverview(CASE.id);
+    renderOverview();
     await userEvent.click(
       screen.getByRole("button", { name: "Export with responses" })
     );
@@ -159,7 +138,7 @@ describe("CaseOverview", () => {
     });
     cleanup();
 
-    renderOverview(CASE.id, {
+    renderOverview({
       restoreWindowDays: 30,
       canManage: false,
       canIncludeBreachCredentials: false,
@@ -175,7 +154,7 @@ describe("CaseOverview", () => {
       Promise.resolve(new Response("{}", { status: 202 }))
     );
     vi.stubGlobal("fetch", fetchMock);
-    renderOverview(CASE.id, {
+    renderOverview({
       restoreWindowDays: 30,
       canManage: true,
       canIncludeBreachCredentials: true,
@@ -193,7 +172,7 @@ describe("CaseOverview", () => {
 
     // An owner or admin on an instance that is not in full mode, and a member: no option.
     for (const canManage of [true, false]) {
-      renderOverview(CASE.id, {
+      renderOverview({
         restoreWindowDays: 30,
         canManage,
         canIncludeBreachCredentials: false,
@@ -206,7 +185,7 @@ describe("CaseOverview", () => {
   });
 
   it("enables Delete for an owner or admin", () => {
-    renderOverview(CASE.id);
+    renderOverview();
     expect(screen.getByRole("button", { name: "Delete" })).toBeEnabled();
   });
 });

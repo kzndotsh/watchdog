@@ -3,12 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 const startConfigRef = vi.hoisted(() => ({
   current: null as {
     requestMiddleware: unknown[];
-    functionMiddleware: unknown[];
+    functionMiddleware?: unknown[];
   } | null,
 }));
 
 vi.mock("@tanstack/react-start", () => ({
-  createCsrfMiddleware: vi.fn(() => "csrf-middleware"),
   createMiddleware: vi.fn(() => ({
     server: (handler: unknown) => handler,
   })),
@@ -16,14 +15,6 @@ vi.mock("@tanstack/react-start", () => ({
     startConfigRef.current = factory();
     return startConfigRef.current;
   }),
-}));
-
-vi.mock("@/auth/middleware", () => ({
-  requireAuth: "require-auth",
-}));
-
-vi.mock("@/auth/unauthorized-error", () => ({
-  isUnauthorizedError: vi.fn(),
 }));
 
 vi.mock("./evlog-init.server", () => ({}));
@@ -67,18 +58,11 @@ type RequestHandler = (args: {
 }) => Promise<{ response: Response }>;
 
 describe("startInstance", () => {
-  it("wires security headers, evlog, csrf, and auth middleware", () => {
-    expect(startConfigRef.current?.requestMiddleware).toHaveLength(3);
-    expect(startConfigRef.current?.functionMiddleware).toHaveLength(2);
-    expect(startConfigRef.current?.functionMiddleware?.[1]).toBe(
-      "require-auth"
-    );
+  it("wires security headers and evlog, and no server-function middleware", () => {
+    expect(startConfigRef.current?.requestMiddleware).toHaveLength(2);
     expect(startConfigRef.current?.requestMiddleware?.[0]).toBeDefined();
     expect(startConfigRef.current?.requestMiddleware?.[1]).toBeDefined();
-    expect(startConfigRef.current?.requestMiddleware?.[2]).toBe(
-      "csrf-middleware"
-    );
-    expect(startConfigRef.current?.functionMiddleware?.[0]).toBeDefined();
+    expect(startConfigRef.current?.functionMiddleware).toBeUndefined();
   });
 
   describe("security headers middleware", () => {

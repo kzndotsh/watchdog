@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
-import { restoreCaseFn } from "@/domains/cases/cases.functions";
 import { forgetMissingCase } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
@@ -19,9 +19,9 @@ export function useRestoreCase() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (target: Pick<CaseRecord, "id">) =>
-      restoreCaseFn({
-        data: deleteCaseInputSchema.parse({ caseId: target.id }),
-      }),
+      orpc.cases.restore.call(
+        deleteCaseInputSchema.parse({ caseId: target.id })
+      ),
     onSuccess: async (restored) => {
       forgetMissingCase(queryClient, restored);
       await invalidateAfterCaseSwitch(queryClient);

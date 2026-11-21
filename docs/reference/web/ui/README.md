@@ -4,7 +4,7 @@ The chrome lexicon (the words used to name screens and their parts) and the deli
 
 ## Delivery
 
-Build new foundations and atoms on `/ui` before adding chrome to live pages. `shared/ui` is presentational (no I/O); domains wire data through hooks and ServerFns. Extract a named generic at the second call site. Both are `guidance`.
+Build new foundations and atoms on `/ui` before adding chrome to live pages. `shared/ui` is presentational (no I/O); domains wire data through hooks and the `orpc` client. Extract a named generic at the second call site. Both are `guidance`.
 
 | Gate | Command |
 | --- | --- |

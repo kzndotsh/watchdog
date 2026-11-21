@@ -1,17 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, renderHook, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { casesKeys } from "@/domains/cases/queries";
-import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import {
+  LAST_CASE_STORAGE_KEY,
+  readLastCaseId,
+} from "@/domains/cases/lib/active-case";
+import type { CaseRecord } from "@/domains/cases/types";
 import { Toaster } from "@/shared/ui/toast";
 import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
-
-const setActiveCaseIdFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  setActiveCaseIdFn,
-}));
 
 import {
   ACTIVE_CASE_SWITCH_ERROR,
@@ -41,8 +38,6 @@ function setup(
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
-  const context: CasesContext = { cases, active: alpha };
-  queryClient.setQueryData(casesKeys.context(), context);
   const hook = renderHook(() => useSelectActiveCase({ cases, ...options }), {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>
@@ -55,28 +50,38 @@ function setup(
 }
 
 describe("useSelectActiveCase", () => {
-  it("switches the Active Case in the cache and invalidates the Case queries", async () => {
-    setActiveCaseIdFn.mockResolvedValueOnce(BETA_ID);
-    const { queryClient, result } = setup();
-    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+  afterEach(() => {
+    window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
+  });
+
+  it("remembers the Case as the last one entered, with no server write, on a Case-less screen", async () => {
+    const navigate = vi.fn();
+    const { result } = setup({ navigate, pathname: "/" });
 
     await act(async () => {
       await result.current.mutateAsync(BETA_ID);
     });
 
-    expect(setActiveCaseIdFn).toHaveBeenCalledWith({
-      data: { caseId: BETA_ID },
+    expect(readLastCaseId()).toBe(BETA_ID);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("moves a Case URL to the same screen of the new Case", async () => {
+    const navigate = vi.fn();
+    const { result } = setup({ navigate, pathname: "/cases/alpha" });
+
+    await act(async () => {
+      await result.current.mutateAsync(BETA_ID);
     });
-    expect(
-      queryClient.getQueryData<CasesContext>(casesKeys.context())?.active
-    ).toEqual(beta);
-    expect(invalidate).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: casesKeys.all })
-    );
+
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/cases/$caseSlug",
+      params: { caseSlug: "beta" },
+      replace: true,
+    });
   });
 
   it("navigates to the Case Overview when asked", async () => {
-    setActiveCaseIdFn.mockResolvedValueOnce(BETA_ID);
     const navigate = vi.fn();
     const { result } = setup({ navigate, shouldNavigateToOverview: true });
 
@@ -90,35 +95,17 @@ describe("useSelectActiveCase", () => {
     });
   });
 
-  it("rolls the Active Case back and says Couldn't switch Case on a server failure", async () => {
-    setActiveCaseIdFn.mockRejectedValueOnce(
-      Object.assign(new Error("Internal server error"), { status: 500 })
-    );
-    const { queryClient, result } = setup();
-
-    await act(async () => {
-      await result.current.mutateAsync(BETA_ID).catch(() => undefined);
-    });
-
-    await waitFor(() => {
-      expect(
-        queryClient.getQueryData<CasesContext>(casesKeys.context())?.active
-      ).toEqual(alpha);
-    });
-    expect(
-      await screen.findByText("Couldn't switch Case. Try again.")
-    ).toBeInTheDocument();
-  });
-
-  it("shows the server's own message for a non-500 failure", async () => {
-    setActiveCaseIdFn.mockRejectedValueOnce(new Error("Case not found"));
+  it("says why for a Case it does not know, and remembers nothing", async () => {
     const { result } = setup();
 
     await act(async () => {
-      await result.current.mutateAsync(BETA_ID).catch(() => undefined);
+      await result.current
+        .mutateAsync(asCaseId("550e8400-e29b-41d4-a716-446655440009"))
+        .catch(() => undefined);
     });
 
     expect(await screen.findByText("Case not found")).toBeInTheDocument();
+    expect(readLastCaseId()).toBeNull();
   });
 
   it("exports the one error copy", () => {

@@ -19,6 +19,7 @@ import {
 } from "../blob";
 import {
   BlobStore,
+  isKeyInCase,
   makeBlobStoreLayer,
   recordingBlobStore,
 } from "../blob-store";
@@ -460,5 +461,26 @@ describe("blob operations over an alternate Layer", () => {
       "DeleteObjectsCommand",
       "ListObjectsV2Command",
     ]);
+  });
+});
+
+describe("isKeyInCase", () => {
+  it("accepts a key under the Case's prefix", () => {
+    expect(isKeyInCase(`${CASE_ID}/${"a".repeat(64)}`, CASE_ID)).toBe(true);
+    expect(
+      isKeyInCase(`${CASE_ID}/${"a".repeat(64)}/report.yaml`, CASE_ID)
+    ).toBe(true);
+  });
+
+  it.each([
+    ["another Case's key", `${testCaseId(2)}/file.txt`],
+    ["the bare prefix", `${CASE_ID}/`],
+    ["a key that only starts with the id", `${CASE_ID}x/file.txt`],
+    ["a parent segment", `${CASE_ID}/../${testCaseId(2)}/file.txt`],
+    ["a current-directory segment", `${CASE_ID}/./file.txt`],
+    ["an empty segment", `${CASE_ID}//file.txt`],
+    ["a trailing parent segment", `${CASE_ID}/sha/..`],
+  ])("refuses %s", (_label, key) => {
+    expect(isKeyInCase(key, CASE_ID)).toBe(false);
   });
 });

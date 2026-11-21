@@ -3,20 +3,16 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
 });
-
-vi.mock("@/domains/intake/intake.functions", () => ({
-  processEvidenceFn: vi.fn(),
-  enrichUrlEvidenceFn: vi.fn(),
-  softDeleteEvidenceFn: vi.fn(),
-  restoreEvidenceFn: vi.fn(),
-  attachEvidenceEntityFn: vi.fn(),
-}));
 
 vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),

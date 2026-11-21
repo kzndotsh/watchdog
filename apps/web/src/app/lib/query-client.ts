@@ -26,7 +26,7 @@ function isSessionKey(queryKey: readonly unknown[]): boolean {
 }
 
 /**
- * A server function said Unauthorized: the session is gone (revoked elsewhere, expired).
+ * An API call said Unauthorized: the session is gone (revoked elsewhere, expired).
  * Revalidate it now instead of waiting for its stale time, so `useAuthenticate` in the
  * protected layout sees `null` and redirects to sign-in. Not the session query itself,
  * which would loop.

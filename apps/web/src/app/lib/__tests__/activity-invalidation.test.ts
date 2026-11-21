@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { partialMatchKey, type QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseId } from "@watchdog/schemas/shared";
@@ -116,9 +116,12 @@ describe("invalidateForActivity", () => {
       expect.arrayContaining([jobsKeys.all(CASE_A), activityKeys.all])
     );
     // The run view sits under the Case's jobs prefix, so this refetches it.
-    expect(jobsKeys.playbookRun(CASE_A, "run-1").slice(0, 2)).toEqual(
-      jobsKeys.all(CASE_A)
-    );
+    expect(
+      partialMatchKey(
+        jobsKeys.playbookRun(CASE_A, "run-1"),
+        jobsKeys.all(CASE_A)
+      )
+    ).toBe(true);
   });
 
   it("evidence entries refresh the Case's evidence and the feed", async () => {

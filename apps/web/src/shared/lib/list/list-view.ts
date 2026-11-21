@@ -27,7 +27,7 @@ import {
 export type ListPages<Item> = InfiniteData<ListPage<Item>, string | undefined>;
 
 /**
- * What a list's page fetch (its procedure input, or its ServerFn) receives for one page: the
+ * What a list's page fetch (its procedure input, or its own page function) receives for one page: the
  * scope, the list params of the canonical query (`def.toSearch(query)` without fixed filters,
  * so the wire carries every filter) and the cursor. The domain spreads `params` into its oRPC
  * input next to the scope ids.
@@ -39,14 +39,14 @@ export type ListPageRequest<D extends AnyListDef, Scope> = {
 };
 
 /**
- * A declared list bound to its domain's cache and ServerFn: the web half of a list's identity.
+ * A declared list bound to its domain's cache and procedure: the web half of a list's identity.
  * Built once in the domain's `queries.ts` (the only module that owns Query keys), consumed by
  * `useList` and the route loader's warm.
  *
- * Keys are the procedure's (`[path, { input, type: "infinite" }]`) for a list read through oRPC,
- * otherwise `[domain, ...scopeKey(scope), "list", def.name, def.keyOf(query)]`. The
- * `[domain, ...scope]` prefix is what the invalidation contracts already name
- * (`evidenceKeys.all(caseId)`), so SSE and mutations refresh every view of the list without
+ * Keys are the procedure's (`[path, { input, type: "infinite" }]`) for a list read through oRPC
+ * (every domain list), otherwise `[domain, ...scopeKey(scope), "list", def.name, def.keyOf(query)]`
+ * (the `/ui` demo lists and test harnesses). The scope prefix is what the invalidation contracts
+ * already name (`evidenceKeys.all(caseId)`), so SSE and mutations refresh every view of the list without
  * knowing its filters, and `softInvalidate` throttles the refetch per view (`meta.isListView`).
  */
 export type ListView<D extends AnyListDef, Scope, Item> = {
@@ -84,8 +84,8 @@ export type ListProcedure<Input, Item> = {
   }) => QueryKey;
 };
 
-/** A list read through a ServerFn, keyed under the domain's own key root. */
-type ServerFnListSource<D extends AnyListDef, Scope, Item> = {
+/** A list read through a page function of its own (the `/ui` demo, test harnesses), keyed under a key root. */
+type PageFnListSource<D extends AnyListDef, Scope, Item> = {
   /** The domain's key root (`"evidence"`): the first segment every key of the domain shares. */
   readonly domain: string;
   /** Scope ids after the root (`[caseId]`); empty when the scope is not ready yet. */
@@ -110,7 +110,7 @@ type ProcedureListSource<D extends AnyListDef, Scope, Item, Input> = {
 };
 
 type ListViewOptions<D extends AnyListDef, Scope, Item, Input> = (
-  | ServerFnListSource<D, Scope, Item>
+  | PageFnListSource<D, Scope, Item>
   | ProcedureListSource<D, Scope, Item, Input>
 ) & {
   /** False while the scope is incomplete (no Case yet): the query does not run. */
@@ -203,7 +203,7 @@ function listInfiniteOptions<Item>(opts: {
   });
 }
 
-/** A view's keys and page fetch, from its oRPC procedure or its ServerFn. */
+/** A view's keys and page fetch, from its oRPC procedure or its own page function. */
 function listSource<D extends AnyListDef, Scope, Item, Input>(
   def: D,
   opts: ListViewOptions<D, Scope, Item, Input>

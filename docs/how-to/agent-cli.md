@@ -1,7 +1,7 @@
 # Agent and CLI (`wd`)
 
 **What this is:** how to point agents and automation at the HTTP API (OpenAPI at `/api/v1`, JSON by default) and the `wd` CLI.  
-**What this is not:** Cap authoring ([`../reference/platform/caps-boundary.md`](../reference/platform/caps-boundary.md)), web ServerFn paths ([`../reference/web/architecture.md`](../reference/web/architecture.md)), or the verb list (`wd --help`).
+**What this is not:** Cap authoring ([`../reference/platform/caps-boundary.md`](../reference/platform/caps-boundary.md)), the web app's oRPC wiring ([`../reference/web/architecture.md`](../reference/web/architecture.md)), or the verb list (`wd --help`).
 
 Agents and the CLI share one OpenAPI contract via `@watchdog/client`. The default graph path is **propose**; an explicit graph write is the escape hatch ([`../reference/contracts/agent-ingress.md`](../reference/contracts/agent-ingress.md) owns those rules).
 
@@ -22,7 +22,7 @@ WD_API_KEY=<key-from-settings>
 
 ## Interactive API docs
 
-`/api/v1/` is the Scalar UI (session or API key); `/api/v1/spec.json` is the OpenAPI JSON. The web UI uses in-process ServerFns, not HTTP oRPC; only agents and the CLI use `/api/v1`.
+`/api/v1/` is the Scalar UI (session or API key); `/api/v1/spec.json` is the OpenAPI JSON. The web UI calls the same router over `/api/rpc` (its own browser only, CSRF header required) and in process during SSR; only agents and the CLI use `/api/v1`.
 
 ## Notes by verb
 

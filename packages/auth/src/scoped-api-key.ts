@@ -3,9 +3,25 @@ import { APIError } from "better-auth/api";
 import { scopesToPermissions } from "@watchdog/schemas/shared";
 import type { OrganizationId, Scope } from "@watchdog/schemas/shared";
 
-import type { createAuth } from "./create-auth";
+/**
+ * What `createScopedApiKey` needs of the Better Auth instance: its trusted (header-less)
+ * `createApiKey`. Written out rather than derived from `createAuth`, which builds the endpoint
+ * that calls this (`scoped-api-key-plugin.ts`) and would make the type circular.
+ */
+export type ScopedKeyAuth = {
+  createApiKey: (call: {
+    body: {
+      userId: string;
+      name?: string;
+      expiresIn?: number;
+      permissions: Record<string, string[]>;
+      metadata: { organizationId: OrganizationId };
+    };
+  }) => Promise<{ id: string; name: string | null; key: string }>;
+};
 
-type ScopedKeyAuth = Pick<ReturnType<typeof createAuth>["api"], "createApiKey">;
+/** The session-only create endpoint (`scoped-api-key-plugin.ts`), under `/api/auth`. */
+export const SCOPED_API_KEY_CREATE_PATH = "/api-key/create-scoped";
 
 export type ScopedApiKeyInput = {
   /** The signed-in user, from the session: the key acts as this user. */

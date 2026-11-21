@@ -5,16 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Only the network boundary is faked; the query, the mutation and the cache write run
 // for real under a real QueryClient.
-vi.mock("@/domains/organization/organization-settings.functions", () => ({
-  getOrganizationSettingsFn: vi.fn(),
-  updateOrganizationSettingsFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { OrganizationAiSettings } from "@/domains/organization/components/organization-ai-settings";
-import {
-  getOrganizationSettingsFn,
-  updateOrganizationSettingsFn,
-} from "@/domains/organization/organization-settings.functions";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const getOrganizationSettingsFn = procedureDouble("organization.getSettings");
+const updateOrganizationSettingsFn = procedureDouble(
+  "organization.updateSettings"
+);
 
 function renderSettings(canEdit: boolean) {
   const client = new QueryClient({
@@ -29,10 +30,10 @@ function renderSettings(canEdit: boolean) {
 
 describe("OrganizationAiSettings", () => {
   beforeEach(() => {
-    vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
+    getOrganizationSettingsFn.mockResolvedValue({
       openInExternalTools: true,
     });
-    vi.mocked(updateOrganizationSettingsFn).mockResolvedValue({
+    updateOrganizationSettingsFn.mockResolvedValue({
       openInExternalTools: false,
     });
   });
@@ -54,7 +55,7 @@ describe("OrganizationAiSettings", () => {
 
     await waitFor(() => {
       expect(updateOrganizationSettingsFn).toHaveBeenCalledWith({
-        data: { openInExternalTools: false },
+        openInExternalTools: false,
       });
     });
     await waitFor(() => {

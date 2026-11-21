@@ -6,21 +6,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Toaster } from "@/shared/ui/toast";
 import { buildCaseRecord, buildRestoredCaseRecord } from "@/testing/records";
 
-const fns = vi.hoisted(() => ({
-  restoreCaseFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-vi.mock("@/domains/cases/cases.functions", () => ({
-  restoreCaseFn: fns.restoreCaseFn,
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-}));
+import { procedureDouble } from "@/testing/orpc-client";
 
 import { useCaseDeletedToast } from "../use-case-deleted-toast";
+
+const fns = {
+  restoreCaseFn: procedureDouble("cases.restore"),
+};
 
 const alpha = buildCaseRecord({ name: "Alpha Case" });
 
@@ -79,9 +75,7 @@ describe("useCaseDeletedToast", () => {
     );
 
     await waitFor(() => {
-      expect(fns.restoreCaseFn).toHaveBeenCalledWith({
-        data: { caseId: alpha.id },
-      });
+      expect(fns.restoreCaseFn).toHaveBeenCalledWith({ caseId: alpha.id });
     });
     expect(
       await screen.findByText("\u201CAlpha Case\u201D restored")

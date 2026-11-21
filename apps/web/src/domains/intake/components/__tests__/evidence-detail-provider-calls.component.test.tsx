@@ -4,9 +4,14 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   buildEvidenceRecord,
   buildProviderCallList,
@@ -15,13 +20,9 @@ import {
 import { RouteCaseProvider } from "@/testing/route-case";
 import { testId } from "@watchdog/test-kit";
 
-const listEvidenceProviderCallsFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/intake/intake.functions", () => ({
-  listEvidenceProviderCallsFn,
-  listEvidenceFn: vi.fn(),
-  getEvidenceDownloadUrlFn: vi.fn(),
-}));
+const listEvidenceProviderCallsFn = procedureDouble(
+  "evidence.listProviderCalls"
+);
 
 function Providers({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -81,7 +82,8 @@ describe("EvidenceDetail provider calls", () => {
       await screen.findByText("https://provider.test/v1/host?key=[redacted]")
     ).toBeInTheDocument();
     expect(listEvidenceProviderCallsFn).toHaveBeenCalledWith({
-      data: { caseId: evidence.caseId, evidenceId: evidence.id },
+      caseId: evidence.caseId,
+      evidenceId: evidence.id,
     });
   });
 

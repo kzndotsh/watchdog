@@ -6,7 +6,11 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DeletedCaseRecord } from "@/domains/cases/types";
 import { toast } from "@/shared/ui/toast";
-import { matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  lastProcedureInput,
+  matchesQ,
+  memoryListProcedure,
+} from "@/testing/memory-list";
 import {
   buildDeletedCaseRecord,
   buildRestoredCaseRecord,
@@ -16,23 +20,9 @@ import { deletedCaseList } from "@watchdog/schemas/cases";
 import type { ListSearch } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 
-const fns = vi.hoisted(() => ({
-  listDeletedCasesPageFn: vi.fn(),
-  restoreCaseFn: vi.fn(),
-  purgeCaseFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  listDeletedCasesPageFn: fns.listDeletedCasesPageFn,
-  restoreCaseFn: fns.restoreCaseFn,
-  purgeCaseFn: fns.purgeCaseFn,
-  getDeletionPolicyFn: fns.getDeletionPolicyFn,
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -40,12 +30,20 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { DeletedCasesView } from "@/domains/cases/components/deleted-cases-view";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   createTestRouter,
   destroyTestRouter,
   testRouterWrapper,
 } from "@/testing/test-router";
 import { SidebarProvider } from "@watchdog/ui/components/sidebar";
+
+const fns = {
+  listDeletedCasesPageFn: procedureDouble("cases.listDeleted"),
+  restoreCaseFn: procedureDouble("cases.restore"),
+  purgeCaseFn: procedureDouble("cases.purge"),
+  getDeletionPolicyFn: procedureDouble("cases.deletionPolicy"),
+};
 
 const ALPHA = buildDeletedCaseRecord({
   id: testCaseId(1),
@@ -67,8 +65,8 @@ type Patch = Readonly<Record<string, unknown>>;
 
 /** The server's side of the list over `rows()`, read at each call so a restore can drop a row. */
 function listServer(rows: () => readonly DeletedCaseRecord[]) {
-  return async (arg: { data: Readonly<Record<string, unknown>> }) =>
-    memoryListPage(rows(), {
+  return async (input: Readonly<Record<string, unknown>>) =>
+    memoryListProcedure(rows(), {
       matches: (row, data) =>
         (data.purging !== true || row.purging) &&
         matchesQ(data, [row.name, row.slug, row.description]),
@@ -81,7 +79,7 @@ function listServer(rows: () => readonly DeletedCaseRecord[]) {
         return b.deletedAt.localeCompare(a.deletedAt);
       },
       pageSize: 3,
-    })(arg);
+    })(input);
 }
 
 /** The route's part: the view in "the URL" (state here), as `usePatchSearch` patches it. */
@@ -129,13 +127,7 @@ function renderView(initial: Search = {}) {
 }
 
 function lastRequest(): Record<string, unknown> {
-  const call: unknown = fns.listDeletedCasesPageFn.mock.lastCall?.[0];
-  if (typeof call !== "object" || call === null || !("data" in call)) {
-    throw new Error("no list request yet");
-  }
-  const { data } = call;
-  if (typeof data !== "object" || data === null) throw new Error("no data");
-  return { ...data };
+  return lastProcedureInput(fns.listDeletedCasesPageFn);
 }
 
 /** The names of the listed Cases, top to bottom. */
@@ -173,7 +165,7 @@ describe("DeletedCasesView", () => {
       .mockResolvedValue(
         buildRestoredCaseRecord({ id: ALPHA.id, name: "Alpha Case" })
       );
-    fns.purgeCaseFn.mockReset().mockResolvedValue(undefined);
+    fns.purgeCaseFn.mockReset().mockResolvedValue({ ok: true });
     fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
       restoreWindowDays: 30,
       canIncludeBreachCredentials: false,
@@ -253,9 +245,7 @@ describe("DeletedCasesView", () => {
     await userEvent.click(within(row).getByRole("button", { name: "Restore" }));
 
     await waitFor(() => {
-      expect(fns.restoreCaseFn).toHaveBeenCalledWith({
-        data: { caseId: ALPHA.id },
-      });
+      expect(fns.restoreCaseFn).toHaveBeenCalledWith({ caseId: ALPHA.id });
     });
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
@@ -350,9 +340,7 @@ describe("DeletedCasesView", () => {
     await userEvent.click(confirm);
 
     await waitFor(() => {
-      expect(fns.purgeCaseFn).toHaveBeenCalledWith({
-        data: { caseId: ALPHA.id },
-      });
+      expect(fns.purgeCaseFn).toHaveBeenCalledWith({ caseId: ALPHA.id });
     });
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Case purged");

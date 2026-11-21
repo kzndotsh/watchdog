@@ -2,9 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
-import { purgeCaseFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { DeletedCaseRecord } from "@/domains/cases/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
@@ -24,9 +24,7 @@ export function usePurgeCase({
 
   const purgeMutation = useMutation({
     mutationFn: async (target: Pick<DeletedCaseRecord, "id">) =>
-      purgeCaseFn({
-        data: deleteCaseInputSchema.parse({ caseId: target.id }),
-      }),
+      orpc.cases.purge.call(deleteCaseInputSchema.parse({ caseId: target.id })),
     onSuccess: async () => {
       setError(null);
       onOpenChange(false);

@@ -4,9 +4,9 @@ import { placeholderFor } from "@/testing/query-placeholder";
 import type { SearchCaseResult } from "@watchdog/schemas/cases";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/domains/search/search.functions", () => ({
-  searchCaseFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { searchCaseQuery, searchKeys } from "@/domains/search/queries";
 

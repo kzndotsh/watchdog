@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
-import { deleteCaseFn } from "@/domains/cases/cases.functions";
 import { dropCaseFromCaches } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
@@ -27,9 +27,9 @@ export function useDeleteCase({
     // The Case being deleted travels as the mutation variable: a hook prop would follow
     // a re-render, and a pending deletion must settle the Case it was started for.
     mutationFn: async (caseRow: CaseRecord) =>
-      deleteCaseFn({
-        data: deleteCaseInputSchema.parse({ caseId: caseRow.id }),
-      }),
+      orpc.cases.delete.call(
+        deleteCaseInputSchema.parse({ caseId: caseRow.id })
+      ),
     onSuccess: async (_data, caseRow) => {
       setError(null);
       onOpenChange(false);

@@ -1,8 +1,8 @@
+import { ORPCError } from "@orpc/client";
 import { queryOptions } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
-import { getOrganizationSettingsFn } from "@/domains/organization/organization-settings.functions";
-import { getOrganizationStateFn } from "@/domains/organization/organization.functions";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt } from "@/lib/utils";
 import { STALE_STABLE } from "@/shared/lib/query-stale";
 
@@ -30,6 +30,26 @@ export const organizationKeys = {
 };
 
 /**
+ * The organization the caller acts in, as the API resolves it for this request (the session's
+ * active organization, else their oldest membership): `auth.whoami`. A session in no
+ * organization is refused with a bare `FORBIDDEN` before the procedure runs, which is the
+ * `null` answer (onboarding). Any other failure is the query's error.
+ */
+async function fetchOrganizationState(): Promise<{
+  organizationId: string | null;
+}> {
+  try {
+    const { organizationId } = await orpc.auth.whoami.call();
+    return { organizationId };
+  } catch (error) {
+    if (error instanceof ORPCError && error.code === "FORBIDDEN") {
+      return { organizationId: null };
+    }
+    throw error;
+  }
+}
+
+/**
  * Cached until an organization change invalidates it (`invalidateAfterOrganizationChange`:
  * create, switch, join, leave, delete, remove member). The answer only changes through those
  * mutations, so the route guard does not re-ask on every navigation.
@@ -37,7 +57,7 @@ export const organizationKeys = {
 export const organizationStateQuery = (userId: string) =>
   queryOptions({
     queryKey: organizationKeys.state(userId),
-    queryFn: async () => getOrganizationStateFn(),
+    queryFn: async () => fetchOrganizationState(),
     staleTime: Infinity,
     gcTime: Infinity,
   });
@@ -46,7 +66,7 @@ export const organizationStateQuery = (userId: string) =>
 export const organizationSettingsQuery = () =>
   queryOptions({
     queryKey: organizationKeys.settings(),
-    queryFn: async () => getOrganizationSettingsFn(),
+    queryFn: async () => orpc.organization.getSettings.call(),
     staleTime: STALE_STABLE,
   });
 

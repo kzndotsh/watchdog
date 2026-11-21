@@ -43,10 +43,9 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
-vi.mock("@/domains/settings/settings.functions", () => ({
-  putCredentialFn: vi.fn(),
-  deleteCredentialFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCredentialMutation: vi.fn(),
@@ -59,14 +58,14 @@ vi.mock("@/shared/ui/toast", async () => {
 
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
-  deleteCredentialFn,
-  putCredentialFn,
-} from "@/domains/settings/settings.functions";
-import {
   SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS,
   SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS,
 } from "@/shared/ui/skeletons/constants";
+import { procedureDouble } from "@/testing/orpc-client";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
+
+const putCredentialFn = procedureDouble("credentials.put");
+const deleteCredentialFn = procedureDouble("credentials.delete");
 
 /** The component reads the router (unsaved-changes guard), so it renders under a real one. */
 const wrapper = testRouterWrapper(createTestRouter());
@@ -209,7 +208,7 @@ describe("SettingsCredentialsForm", () => {
   });
 
   it("saves a secret from the configure dialog", async () => {
-    vi.mocked(putCredentialFn).mockResolvedValue(CONNECTED);
+    putCredentialFn.mockResolvedValue(CONNECTED);
 
     renderForm([DISCONNECTED]);
     fireEvent.click(screen.getByRole("button", { name: "Connect" }));
@@ -225,13 +224,14 @@ describe("SettingsCredentialsForm", () => {
 
     await waitFor(() => {
       expect(putCredentialFn).toHaveBeenCalledWith({
-        data: { name: "HIBP_API_KEY", secret: "secret-value" },
+        name: "HIBP_API_KEY",
+        secret: "secret-value",
       });
     });
   });
 
   it("shows save errors inside the configure dialog", async () => {
-    vi.mocked(putCredentialFn).mockRejectedValue(new Error("vault locked"));
+    putCredentialFn.mockRejectedValue(new Error("vault locked"));
 
     renderForm([DISCONNECTED]);
     fireEvent.click(screen.getByRole("button", { name: "Connect" }));
@@ -248,7 +248,7 @@ describe("SettingsCredentialsForm", () => {
   });
 
   it("removes a configured credential after type-to-confirm", async () => {
-    vi.mocked(deleteCredentialFn).mockResolvedValue({ ok: true });
+    deleteCredentialFn.mockResolvedValue({ ok: true });
 
     renderForm([CONNECTED]);
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
@@ -265,7 +265,7 @@ describe("SettingsCredentialsForm", () => {
     await waitFor(() => {
       expect(deleteMutateMock).toHaveBeenCalledWith("SHODAN_API_KEY");
       expect(deleteCredentialFn).toHaveBeenCalledWith({
-        data: { name: "SHODAN_API_KEY" },
+        name: "SHODAN_API_KEY",
       });
     });
   });

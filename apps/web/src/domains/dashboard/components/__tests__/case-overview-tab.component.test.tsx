@@ -26,32 +26,6 @@ vi.mock("@/domains/cases/components/case-settings-form", () => ({
   CaseSettingsForm: () => <div>Case settings form</div>,
 }));
 
-const fns = vi.hoisted(() => ({
-  getCaseCountsFn: vi.fn(),
-  listEvidencePickerPageFn: vi.fn(),
-  getEvidenceManyFn: vi.fn(),
-  listRecentJobsFn: vi.fn(),
-  listProposalQueuePageFn: vi.fn(),
-  // The whole-list reads this screen no longer makes: any call fails the test.
-  listEvidenceFn: vi.fn(),
-  listJobsFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCaseCountsFn: fns.getCaseCountsFn,
-}));
-vi.mock("@/domains/intake/intake.functions", () => ({
-  listEvidencePickerPageFn: fns.listEvidencePickerPageFn,
-  getEvidenceManyFn: fns.getEvidenceManyFn,
-  listEvidenceFn: fns.listEvidenceFn,
-}));
-vi.mock("@/domains/jobs/jobs.functions", () => ({
-  listRecentJobsFn: fns.listRecentJobsFn,
-  listJobsFn: fns.listJobsFn,
-}));
-vi.mock("@/domains/triage/triage.functions", () => ({
-  listProposalQueuePageFn: fns.listProposalQueuePageFn,
-}));
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
@@ -59,7 +33,13 @@ vi.mock("@/lib/orpc-client", async () =>
 import { CaseOverviewTab } from "@/domains/dashboard/components/case-overview-tab";
 import { procedureDouble } from "@/testing/orpc-client";
 
+const evidencePickerPage = procedureDouble("evidence.pickerPage");
+const getEvidenceMany = procedureDouble("evidence.getMany");
+const listJobs = procedureDouble("jobs.listForCase");
+
 const getEntities = procedureDouble("entities.getMany");
+const proposalQueuePage = procedureDouble("proposals.queuePage");
+const caseCounts = procedureDouble("cases.counts");
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -95,16 +75,20 @@ function renderTab() {
 describe("CaseOverviewTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fns.getCaseCountsFn.mockResolvedValue(COUNTS);
-    fns.listEvidencePickerPageFn.mockResolvedValue({
+    caseCounts.mockResolvedValue(COUNTS);
+    evidencePickerPage.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: exact(0),
     });
-    fns.getEvidenceManyFn.mockResolvedValue([]);
+    getEvidenceMany.mockResolvedValue([]);
     getEntities.mockResolvedValue([]);
-    fns.listRecentJobsFn.mockResolvedValue([]);
-    fns.listProposalQueuePageFn.mockResolvedValue({
+    listJobs.mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: exact(0),
+    });
+    proposalQueuePage.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: exact(5),
@@ -141,12 +125,10 @@ describe("CaseOverviewTab", () => {
       "href",
       "/cases/alpha/entities"
     );
-    expect(fns.getCaseCountsFn).toHaveBeenCalledTimes(1);
-    expect(fns.getCaseCountsFn).toHaveBeenCalledWith({
-      data: {
-        caseId: CASE.id,
-        dayStart: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
-      },
+    expect(caseCounts).toHaveBeenCalledTimes(1);
+    expect(caseCounts).toHaveBeenCalledWith({
+      caseId: CASE.id,
+      dayStart: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
     });
   });
 
@@ -154,14 +136,15 @@ describe("CaseOverviewTab", () => {
     renderTab();
     await screen.findByText("Nothing yet");
 
-    expect(fns.listEvidencePickerPageFn).toHaveBeenCalledWith({
-      data: { caseId: CASE.id, limit: 12 },
+    expect(evidencePickerPage).toHaveBeenCalledWith({
+      caseId: CASE.id,
+      limit: 12,
     });
-    expect(fns.listProposalQueuePageFn).toHaveBeenCalledTimes(1);
-    expect(fns.listRecentJobsFn).toHaveBeenCalledTimes(1);
+    expect(proposalQueuePage).toHaveBeenCalledTimes(1);
+    expect(listJobs).toHaveBeenCalledTimes(1);
+    expect(listJobs).toHaveBeenCalledWith({ caseId: CASE.id, limit: 50 });
     for (const whole of [
-      fns.listEvidenceFn,
-      fns.listJobsFn,
+      procedureDouble("evidence.list"),
       procedureDouble("edges.list"),
       procedureDouble("identifiers.list"),
     ]) {
@@ -171,14 +154,18 @@ describe("CaseOverviewTab", () => {
 
   it("names the Entity a Job's input points at by reading it by id", async () => {
     const entityId = testId(30);
-    fns.listRecentJobsFn.mockResolvedValue([
-      buildJobListRecord({
-        id: testId(31),
-        capabilityId: "network.dns.lookup",
-        input: { entityId },
-        resultSummary: null,
-      }),
-    ]);
+    listJobs.mockResolvedValue({
+      items: [
+        buildJobListRecord({
+          id: testId(31),
+          capabilityId: "network.dns.lookup",
+          input: { entityId },
+          resultSummary: null,
+        }),
+      ],
+      nextCursor: null,
+      total: exact(1),
+    });
     getEntities.mockResolvedValue([
       buildEntityRecord({
         id: entityId,
@@ -204,7 +191,7 @@ describe("CaseOverviewTab", () => {
   });
 
   it("shows a retryable error when the counts fail to load", async () => {
-    fns.getCaseCountsFn.mockRejectedValue(new Error("overview stats failed"));
+    caseCounts.mockRejectedValue(new Error("overview stats failed"));
     renderTab();
 
     expect(

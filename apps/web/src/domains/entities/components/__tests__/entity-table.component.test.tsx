@@ -437,7 +437,10 @@ describe("EntityTable (the list standard)", () => {
     expect(await screen.findByText("ops0@example.com")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Load more" }));
 
-    expect(await screen.findByText("network down")).toBeInTheDocument();
+    // A list page is retried once after Query's default 1s delay before the error shows.
+    expect(
+      await screen.findByText("network down", undefined, { timeout: 4000 })
+    ).toBeInTheDocument();
     expect(screen.getByText("ops0@example.com")).toBeInTheDocument();
   });
 });

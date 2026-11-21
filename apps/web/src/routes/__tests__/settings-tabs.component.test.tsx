@@ -29,19 +29,12 @@ vi.mock("@/auth/ensure-session", () => ({
     return accounts.current;
   },
 }));
-vi.mock("@/domains/organization/organization.functions", () => ({
-  getOrganizationStateFn: async () => ({ organizationId: "o1" }),
-}));
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: async () => ({ active: null, cases: [] }),
-}));
 vi.mock("@/app/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-const listCredentialsFn = vi.hoisted(() => vi.fn());
-vi.mock("@/domains/settings/settings.functions", () => ({
-  listCredentialsFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@better-auth-ui/react", () => ({
   useAuthenticate: () => undefined,
   useSession: () => ({ data: accounts.current, isPending: false }),
@@ -69,6 +62,15 @@ vi.mock("@/domains/settings/components/settings-users", () => ({
 
 import { Route as ProtectedRoute } from "@/routes/_protected";
 import { Route as SettingsRoute } from "@/routes/_protected/settings/index";
+import { procedureDouble, sessionInOrganization } from "@/testing/orpc-client";
+
+const listCredentialsFn = procedureDouble("credentials.list");
+procedureDouble("auth.whoami").mockImplementation(sessionInOrganization("o1"));
+procedureDouble("cases.list").mockResolvedValue({
+  items: [],
+  nextCursor: null,
+  total: { count: 0, isCapped: false },
+});
 
 const TABS: readonly [string, string, string][] = [
   ["Security", "security", "Settingssecurity"],

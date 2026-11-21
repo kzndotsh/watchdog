@@ -6,15 +6,20 @@ import { describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { asCaseId } from "@watchdog/schemas/shared";
 
-const deleteCaseFn = vi.hoisted(() => vi.fn());
 const invalidateAfterCaseSwitch = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/cases/cases.functions", () => ({ deleteCaseFn }));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCaseSwitch,
 }));
 
+import { procedureDouble } from "@/testing/orpc-client";
+
 import { useDeleteCase } from "../use-delete-case";
+
+const deleteCaseFn = procedureDouble("cases.delete");
 
 const CASE_A = asCaseId("550e8400-e29b-41d4-a716-446655440000");
 
@@ -30,8 +35,10 @@ describe("useDeleteCase", () => {
   it("deletes and reports the Case the deletion started for after a re-render", async () => {
     let finish: () => void = () => undefined;
     deleteCaseFn.mockReturnValue(
-      new Promise<void>((resolve) => {
-        finish = resolve;
+      new Promise<{ ok: true }>((resolve) => {
+        finish = () => {
+          resolve({ ok: true });
+        };
       })
     );
     invalidateAfterCaseSwitch.mockResolvedValue(undefined);
@@ -68,7 +75,7 @@ describe("useDeleteCase", () => {
     await waitFor(() => {
       expect(onDeleted).toHaveBeenCalledWith("second", caseA);
     });
-    expect(deleteCaseFn).toHaveBeenCalledWith({ data: { caseId: CASE_A } });
+    expect(deleteCaseFn).toHaveBeenCalledWith({ caseId: CASE_A });
     expect(invalidateAfterCaseSwitch).toHaveBeenCalledWith(queryClient);
   });
 });

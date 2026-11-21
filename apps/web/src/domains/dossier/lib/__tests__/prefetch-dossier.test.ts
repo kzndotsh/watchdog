@@ -36,21 +36,21 @@ describe("warmDossierQueries", () => {
     // Two single reads: the ego graph's capped star and the Tasks board.
     expect(prefetch.mock.calls.map(([query]) => query.queryKey[0])).toEqual([
       ["graph", "ego"],
-      "tasks",
+      ["tasks", "board"],
     ]);
     // Each list tab's count and first view: one first page each, never every page (#585).
     expect(firstPages.mock.calls.map(([query]) => query.queryKey[0])).toEqual([
       ["claims", "list"],
       ["identifiers", "list"],
       ["edges", "list"],
-      "evidence",
+      ["evidence", "list"],
       ["events", "list"],
       ["questions", "list"],
     ]);
     // The Tasks tab: the board for this Entity only, never the Case's Task list (#569).
     const taskReads = prefetch.mock.calls
       .map(([query]) => query.queryKey)
-      .filter((key) => key[0] === "tasks");
+      .filter((key) => keyRoot(key) === "tasks");
     expect(taskReads).toEqual([
       tasksKeys.board("case-1", { entityId: "entity-1" }),
     ]);

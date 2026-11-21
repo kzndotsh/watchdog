@@ -170,7 +170,7 @@ The web container logs every request once, as one JSON event per line in the sam
 }
 ```
 
-Cookies, authorization and other headers, query strings and request or response bodies are never logged. API requests (`/api/**`) and server functions keep the richer event the app already wrote for them (route, user, database time), so they appear once, not twice. Static files under `/assets/` and the health and readiness probes are logged at `debug` level, which the logger drops: a busy site does not fill its log with asset hits and healthcheck polls. Failures stay visible: a `4xx` is a `warn` and a `5xx` an `error`, whatever the path.
+Cookies, authorization and other headers, query strings and request or response bodies are never logged. API requests (`/api/**`) keep the richer event the app already wrote for them (route, user, database time), so they appear once, not twice. Static files under `/assets/` and the health and readiness probes are logged at `debug` level, which the logger drops: a busy site does not fill its log with asset hits and healthcheck polls. Failures stay visible: a `4xx` is a `warn` and a `5xx` an `error`, whatever the path.
 
 The client build ships brotli and gzip copies of its scripts, styles and other text files (`.br`, `.gz`). The web server sends the one the browser accepts, with `Content-Encoding` and `Vary: Accept-Encoding`, and the plain file to a client that accepts neither. Files under `/assets/` carry `Cache-Control: public, max-age=31536000, immutable`; nothing else is cached by the server. If a reverse proxy in front compresses responses itself, let it pass an already encoded response through unchanged.
 
@@ -185,7 +185,7 @@ WD_ERROR_REPORTING_DSN=https://<key>@errors.example.com/<project>
 WD_RELEASE=1.4.0
 ```
 
-What is reported: every error-level log event (an unhandled request error, a server function failure, a failed Cap Job) and every uncaught exception or unhandled promise rejection in the server or worker, each with the route or procedure, the request id, the Job id and the release. The browser reports unhandled errors and rejections and render crashes to the web app itself (`/api/client-errors`), never to the tracker directly, so the DSN stays on the server and the browser needs no extra network access.
+What is reported: every error-level log event (an unhandled request error, a failed API call, a failed Cap Job) and every uncaught exception or unhandled promise rejection in the server or worker, each with the route or procedure, the request id, the Job id and the release. The browser reports unhandled errors and rejections and render crashes to the web app itself (`/api/client-errors`), never to the tracker directly, so the DSN stays on the server and the browser needs no extra network access.
 
 What never leaves: the report is scrubbed on top of the log redaction. Passwords, tokens, cookies, API keys, vault keys, request and response bodies, Evidence content and email addresses are dropped by name; every value in the validated environment marked sensitive (see the [configuration reference](../reference/platform/configuration.md)) is removed wherever it appears; bearer tokens, URL credentials and query strings, JWTs and long opaque strings are removed from messages and stack traces. Reporting is rate limited (30 reports a minute per process), runs after the response, and a tracker that is down or slow never fails or delays a request. A DSN that does not parse leaves reporting off.
 
@@ -212,7 +212,7 @@ What each record carries, so backends can filter and correlate:
 | `service.version` (resource) | `WD_RELEASE` |
 | `deployment.environment` (resource) | `NODE_ENV` |
 | severity (`severityText`, `severityNumber`) | the log level: debug, info, warn, error |
-| `requestId` | the request id of an API route or server function |
+| `requestId` | the request id of an API route |
 | `job.jobId`, `cap.capabilityId` | the Job and Cap of a worker event |
 | `traceId`, `spanId` | the W3C trace context, when an event has well-formed ones |
 | `http.request.method`, `url.path`, `http.response.status_code`, `exception.*` | OpenTelemetry semantic-convention copies of the request and error fields |
@@ -306,7 +306,7 @@ How the policy works:
 
 ## Request size limit
 
-The web app reads at most 2 MiB (`REQUEST_BODY_MAX_BYTES`, `@watchdog/schemas`) of any request body: a body over the limit gets `413` before routing, so it never reaches the API, Better Auth or a server function. The answer is JSON, `{ "defined": false, "code": "PAYLOAD_TOO_LARGE", "status": 413, "message": ..., "data": { "code": "payload_too_large", "maxBytes": 2097152 } }`, and carries the security headers (and CORS headers on `/api/v1`). A declared `Content-Length` over the limit is refused without reading the body; a body with no declared length is read up to the limit and refused beyond it. The container server (`scripts/serve.mjs`, srvx `maxRequestBodySize`) enforces the same number as a second line of defence. Evidence files are not affected: the browser and the CLI send them straight to the object store with a presigned `PUT`, bounded by `MAX_UPLOAD_BYTES` (100 MiB). If a reverse proxy in front has its own, smaller body limit (nginx `client_max_body_size` defaults to 1 MiB), raise it to at least 2 MiB so large pastes reach the app.
+The web app reads at most 2 MiB (`REQUEST_BODY_MAX_BYTES`, `@watchdog/schemas`) of any request body: a body over the limit gets `413` before routing, so it never reaches the API or Better Auth. The answer is JSON, `{ "defined": false, "code": "PAYLOAD_TOO_LARGE", "status": 413, "message": ..., "data": { "code": "payload_too_large", "maxBytes": 2097152 } }`, and carries the security headers (and CORS headers on `/api/v1`). A declared `Content-Length` over the limit is refused without reading the body; a body with no declared length is read up to the limit and refused beyond it. The container server (`scripts/serve.mjs`, srvx `maxRequestBodySize`) enforces the same number as a second line of defence. Evidence files are not affected: the browser and the CLI send them straight to the object store with a presigned `PUT`, bounded by `MAX_UPLOAD_BYTES` (100 MiB). If a reverse proxy in front has its own, smaller body limit (nginx `client_max_body_size` defaults to 1 MiB), raise it to at least 2 MiB so large pastes reach the app.
 
 ## How CI checks this
 

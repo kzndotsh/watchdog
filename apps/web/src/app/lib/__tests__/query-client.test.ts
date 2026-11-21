@@ -1,8 +1,8 @@
 import { authQueryKeys } from "@better-auth-ui/core";
+import { ORPCError } from "@orpc/client";
 import { QueryObserver } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { UnauthorizedError } from "@/auth/unauthorized-error";
 import { STALE_SESSION } from "@/shared/lib/query-stale";
 
 const toastErrorMock = vi.hoisted(() => vi.fn());
@@ -64,7 +64,7 @@ describe("createAppQueryClient", () => {
   });
 });
 
-describe("a server function answering Unauthorized", () => {
+describe("an API call answering Unauthorized", () => {
   // The first test to get here pays the cold load of the contract module (see below), which
   // under a busy machine outlasts the 5 s default: give each test the waitFor's budget.
   const COLD_LOAD_MS = 30_000;
@@ -123,7 +123,7 @@ describe("a server function answering Unauthorized", () => {
       client
         .getMutationCache()
         .config.onError?.(
-          new UnauthorizedError(),
+          new ORPCError("UNAUTHORIZED"),
           undefined as never,
           undefined as never,
           undefined as never,

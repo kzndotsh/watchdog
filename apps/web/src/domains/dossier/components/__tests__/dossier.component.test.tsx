@@ -3,15 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import {
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  type Mock,
-} from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   DossierSearch,
@@ -21,9 +13,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 import {
   matchesChoice,
   matchesQ,
-  memoryListPage,
   memoryListProcedure,
-  type ListPageData,
 } from "@/testing/memory-list";
 import { procedureDouble } from "@/testing/orpc-client";
 import {
@@ -66,45 +56,14 @@ vi.mock("@/shared/ui/rich-text", () => ({
   ),
 }));
 
-// The oRPC client and the server functions are the network boundary: every module the Dossier reads or writes
-// through is faked at its edge (one spy per export), and the tests set what each answers.
-const serverFn = vi.hoisted(() => {
-  const spies = new Map<
-    string,
-    Mock<(request: { data: ListPageData }) => Promise<unknown>>
-  >();
-  return (name: string) => {
-    const spy = spies.get(name) ?? vi.fn();
-    spies.set(name, spy);
-    return spy;
-  };
-});
-const stubFns = vi.hoisted(
-  () => (names: string) =>
-    Object.fromEntries(names.split(" ").map((name) => [name, serverFn(name)]))
-);
-
+// The oRPC client is the network boundary: the tests set what each procedure answers.
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
-vi.mock("@/domains/entities/history/history.functions", () =>
-  stubFns("listGraphHistoryFn graphRowAttributionFn")
-);
-vi.mock("@/domains/intake/intake.functions", () =>
-  stubFns(
-    "getEvidenceDownloadUrlFn listEvidencePageFn listEvidencePickerPageFn getEvidenceFn getEvidenceManyFn processEvidenceFn enrichUrlEvidenceFn dumpPasteFn dumpUrlFn softDeleteEvidenceFn restoreEvidenceFn attachEvidenceEntityFn presignUploadFn confirmFileUploadFn listEvidenceProviderCallsFn"
-  )
-);
-vi.mock("@/domains/tasks/tasks.functions", () =>
-  stubFns(
-    "listTasksPageFn getTaskBoardFn getDueTasksFn getTaskFn createTaskFn updateTaskFn deleteTaskFn reorderTasksFn"
-  )
-);
-vi.mock("@/domains/organization/organization-settings.functions", () =>
-  stubFns("getOrganizationSettingsFn updateOrganizationSettingsFn")
-);
 
 import { Dossier } from "@/domains/dossier/components/dossier";
+
+const listEvidence = procedureDouble("evidence.list");
 
 const CASE = {
   id: testCaseId(10),
@@ -140,9 +99,7 @@ const IDENTIFIERS = [
 const getEntity = procedureDouble("entities.get");
 const listIdentifiers = procedureDouble("identifiers.list");
 const countIdentifierTypes = procedureDouble("identifiers.typeCounts");
-const getTaskBoardFn = serverFn("getTaskBoardFn");
-
-const emptyPage = memoryListPage<unknown>([], { matches: () => false });
+const getTaskBoard = procedureDouble("tasks.board");
 
 beforeAll(preloadSharedLazyChunks);
 
@@ -158,7 +115,9 @@ beforeEach(() => {
       .mockReset()
       .mockImplementation(memoryListProcedure([], { matches: () => false }));
   }
-  serverFn("listEvidencePageFn").mockReset().mockImplementation(emptyPage);
+  listEvidence
+    .mockReset()
+    .mockImplementation(memoryListProcedure([], { matches: () => false }));
   listIdentifiers.mockReset().mockImplementation(
     memoryListProcedure(IDENTIFIERS, {
       matches: (row, data) =>
@@ -174,9 +133,7 @@ beforeEach(() => {
     ],
     isCapped: false,
   });
-  getTaskBoardFn
-    .mockReset()
-    .mockResolvedValue({ items: [], isTruncated: false });
+  getTaskBoard.mockReset().mockResolvedValue({ items: [], isTruncated: false });
 });
 
 /** The route's part: the tab in "the URL" (state here). */

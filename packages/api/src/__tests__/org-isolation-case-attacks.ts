@@ -351,6 +351,10 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
       async () => b.evidence.downloadUrl({ caseId, evidenceId: ids.evidenceA }),
     ],
     [
+      "evidence.text",
+      async () => b.evidence.text({ caseId, evidenceId: ids.evidenceA }),
+    ],
+    [
       "evidence.process",
       async () => b.evidence.process({ caseId, evidenceId: ids.evidenceA }),
     ],
@@ -369,6 +373,15 @@ export function foreignCaseAttacks(b: ApiClient, ids: IsolationIds): Attack[] {
     [
       "jobs.listFound",
       async () => b.jobs.listFound({ caseId, jobId: ids.jobA }),
+    ],
+    [
+      "jobs.artifactText",
+      async () =>
+        b.jobs.artifactText({
+          caseId,
+          jobId: ids.jobA,
+          sha256: "a".repeat(64),
+        }),
     ],
     [
       "jobs.start",

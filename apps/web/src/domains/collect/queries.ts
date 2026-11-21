@@ -1,10 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { collectKeys } from "@/domains/collect/collect-keys";
-import {
-  getCollectItemFn,
-  listCollectPageFn,
-} from "@/domains/collect/collect.functions";
+import { orpc } from "@/lib/orpc-client";
+import { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 import { listView } from "@/shared/lib/list/list-view";
 import {
   scopeCaseId,
@@ -18,23 +16,22 @@ import { collectList } from "@watchdog/schemas/jobs";
 export type CollectListScope = { readonly caseId: string };
 
 /**
- * Collect's queue (`collectList`, #574, ADR-0007), a page at a time. Each item is the row with
- * its member Jobs, its Evidence and the titles its Job inputs name, read in one statement. Keys
- * sit under `collectKeys.all`, which the Job and Evidence invalidations name, so SSE and
- * mutations refresh every open view (throttled per view).
+ * Collect's queue (`collectList`, #574, ADR-0007), a page at a time through `collect.list`. Each
+ * item is the row with its member Jobs, its Evidence and the titles its Job inputs name, read in
+ * one statement. Keys sit under `collectKeys.all`, which the Job and Evidence invalidations name,
+ * so SSE and mutations refresh every open view (throttled per view).
  */
 export const collectListView = listView(collectList, {
-  domain: "collect",
-  scopeKey: ({ caseId }: CollectListScope) => [scopeCaseId(caseId)],
+  procedure: orpc.collect.list,
+  scopeInput: ({ caseId }: CollectListScope) => ({
+    caseId: scopeCaseId(caseId),
+  }),
+  input: ({ scope, params, cursor }) => ({
+    ...params,
+    caseId: scopeCaseId(scope.caseId),
+    ...(cursor === undefined ? {} : { cursor }),
+  }),
   isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
-  fetchPage: async ({ scope, params, cursor }) =>
-    listCollectPageFn({
-      data: {
-        ...params,
-        caseId: scopeCaseId(scope.caseId),
-        ...(cursor === undefined ? {} : { cursor }),
-      },
-    }),
   getId: (row: CollectQueueItem) => row.id,
   staleTime: STALE_REALTIME,
   gcTime: GC_REALTIME,
@@ -55,13 +52,13 @@ export const collectItemQuery = (
   return queryOptions({
     queryKey: collectKeys.item(scopedCaseId, scopedId, isHidden),
     queryFn: async () =>
-      getCollectItemFn({
-        data: {
+      orpcNullIfNotFound(
+        orpc.collect.get.call({
           caseId: scopedCaseId,
           id: scopedId,
           ...(isHidden ? { hidden: true as const } : {}),
-        },
-      }),
+        })
+      ),
     enabled: scopedId !== "" && scopeCaseIdEnabled(caseId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,

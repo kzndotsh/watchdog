@@ -1,14 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { localDayStartIso } from "@/domains/cases/lib/case-counts";
-import {
-  getDueTasksFn,
-  getTaskBoardFn,
-  getTaskFn,
-  listTasksPageFn,
-} from "@/domains/tasks/tasks.functions";
 import type { TaskListItem } from "@/domains/tasks/types";
+import { orpc } from "@/lib/orpc-client";
+import { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 import { listView } from "@/shared/lib/list/list-view";
+import { orpcKeyInputField } from "@/shared/lib/orpc-key-input";
 import {
   scopeCaseId,
   scopeCaseIdEnabled,
@@ -25,40 +22,41 @@ import {
   STALE_REALTIME,
 } from "@/shared/lib/query-stale";
 import { taskList, type TaskBoardInput } from "@watchdog/schemas/feed";
-import { OPEN_TASK_STATUSES, type ListQuery } from "@watchdog/schemas/shared";
+import type { ListQuery } from "@watchdog/schemas/shared";
 
 type TaskListScope = { readonly caseId: string };
 
 /** The board's view: the Task list's filters and search (never its `status` or sort). */
 export type TaskBoardView = Omit<TaskBoardInput, "caseId">;
 
+/** The board's input for a view: priorities in one order, so equal views share one entry. */
+function taskBoardInput(caseId: string, view: TaskBoardView) {
+  return {
+    ...view,
+    ...(view.priority === undefined
+      ? {}
+      : { priority: [...view.priority].sort() }),
+    caseId: scopeCaseId(caseId),
+  };
+}
+
 /**
- * Every Tasks key sits under `tasksKeys.all(caseId)`, which mutations and the activity binding
- * invalidate: the board (`board`), the Task list's views (`taskListView`, `[..., "list", ...]`)
- * and one Task by id (`byId`).
+ * Tasks keys are the oRPC procedure keys: `all(caseId)` is `[["tasks"], { input: { caseId } }]`,
+ * which mutations and the activity binding invalidate: the board (`tasks.board`), the Task list's
+ * views (`tasks.list`), one Task by id (`tasks.get`) and the due list (`tasks.due`).
  */
 export const tasksKeys = {
-  all: (caseId: string) => ["tasks", caseId] as const,
-  boards: (caseId: string) => ["tasks", caseId, "board"] as const,
+  all: (caseId: string) => orpc.tasks.key({ input: { caseId } }),
+  boards: (caseId: string) => orpc.tasks.board.key({ input: { caseId } }),
   board: (caseId: string, view: TaskBoardView) =>
-    [
-      "tasks",
-      caseId,
-      "board",
-      // The list's canonical key of the same view, so equal views share one entry.
-      taskList.keyOf(
-        taskList.queryOf({
-          ...view,
-          status: OPEN_TASK_STATUSES,
-          sort: "position.asc",
-        })
-      ),
-    ] as const,
+    orpc.tasks.board.queryKey({ input: taskBoardInput(caseId, view) }),
   byId: (caseId: string, taskId: string) =>
-    ["tasks", caseId, "by-id", taskId] as const,
+    orpc.tasks.get.queryKey({ input: { caseId, taskId } }),
   due: (caseId: string, dayStart: string) =>
-    ["tasks", caseId, "due", dayStart] as const,
+    orpc.tasks.due.queryKey({ input: { caseId, dayStart } }),
 };
+
+const TASK_BOARD_PATH = JSON.stringify(["tasks", "board"]);
 
 /** The board's view of a Task list query: its `entityId`, `priority` and `q` (fixed ones included). */
 export function taskBoardViewOf(
@@ -82,30 +80,30 @@ export const taskBoardQuery = (caseId: string, view: TaskBoardView) => {
   return queryOptions({
     queryKey: tasksKeys.board(scopedCaseId, view),
     queryFn: async () =>
-      getTaskBoardFn({ data: { ...view, caseId: scopedCaseId } }),
+      orpc.tasks.board.call(taskBoardInput(scopedCaseId, view)),
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
     placeholderData: placeholderDataForScope((previous) => {
       const key = previous?.queryKey;
-      return key?.[1] === scopedCaseId && key[2] === "board";
+      return (
+        JSON.stringify(key?.[0]) === TASK_BOARD_PATH &&
+        orpcKeyInputField(key, "caseId") === scopedCaseId
+      );
     }),
   });
 };
 
 /** The Task list (ADR-0007): the board's Done and Dropped columns, each with `status` fixed. */
 export const taskListView = listView(taskList, {
-  domain: "tasks",
-  scopeKey: ({ caseId }: TaskListScope) => [scopeCaseId(caseId)],
+  procedure: orpc.tasks.list,
+  scopeInput: ({ caseId }: TaskListScope) => ({ caseId: scopeCaseId(caseId) }),
+  input: ({ scope, params, cursor }) => ({
+    ...params,
+    caseId: scopeCaseId(scope.caseId),
+    ...(cursor === undefined ? {} : { cursor }),
+  }),
   isScopeReady: ({ caseId }) => scopeCaseIdEnabled(caseId),
-  fetchPage: async ({ scope, params, cursor }) =>
-    listTasksPageFn({
-      data: {
-        ...params,
-        caseId: scopeCaseId(scope.caseId),
-        ...(cursor === undefined ? {} : { cursor }),
-      },
-    }),
   getId: (row: TaskListItem) => row.id,
   staleTime: STALE_DEFAULT,
   gcTime: GC_DEFAULT,
@@ -121,9 +119,12 @@ export const taskByIdQuery = (caseId: string, taskId: string | null) => {
   return queryOptions({
     queryKey: tasksKeys.byId(scopedCaseId, scopedTaskId ?? ""),
     queryFn: async () =>
-      getTaskFn({
-        data: { caseId: scopedCaseId, taskId: scopedTaskId ?? "" },
-      }),
+      orpcNullIfNotFound(
+        orpc.tasks.get.call({
+          caseId: scopedCaseId,
+          taskId: scopedTaskId ?? "",
+        })
+      ),
     enabled: scopedTaskId !== undefined && scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
@@ -144,7 +145,7 @@ export const dueTasksQuery = (
   return queryOptions({
     queryKey,
     queryFn: async () =>
-      getDueTasksFn({ data: { caseId: scopedCaseId, dayStart } }),
+      orpc.tasks.due.call({ caseId: scopedCaseId, dayStart }),
     enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_REALTIME,
     gcTime: GC_REALTIME,

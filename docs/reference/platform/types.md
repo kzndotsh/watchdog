@@ -112,7 +112,7 @@ A declared list names its time sorts the same way everywhere: `created` (label "
 
 1. **Schema is SoT**: define `fooSchema`, then `type Foo = z.infer<typeof fooSchema>` (or `z.output`). Never twin a hand-written `interface` that can drift.
 2. **`z.input` when input ≠ output** (`.default()`, `.transform()`, `.coerce`): forms and wire use input; handlers after `.validator` see output.
-3. **Validate once** at the trust edge: `createServerFn().validator(schema)`, oRPC `.input`, Cap `input`, `parsePatch`. No re-parse inside helpers.
+3. **Validate once** at the trust edge: oRPC `.input`, Cap `input`, `parsePatch`. No re-parse inside helpers.
 4. **Closed sets**: `z.enum(CONST)` over `as const` arrays from `@watchdog/schemas`. Never copy string literals into a second `z.enum([...])`.
 5. **Compose atoms**: domain/api objects import shared fields; use `.pick` / `.omit` / `.partial` / spread. Avoid deprecated `.merge()`.
 6. **No `z.any()`**; coerce only at form/query edges.
@@ -137,8 +137,7 @@ Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides
 | File | Contents |
 | --- | --- |
 | `domains/{noun}/types.ts` | DTOs + input Zod schemas (may import atoms; do **not** re-export vocab) |
-| `domains/{noun}/*.functions.ts` | `createServerFn` + `.validator(schema)`: no hand `parse*`, no vocab re-exports |
-| `domains/{noun}/*.server.ts` | DB / secrets; business rules |
+| `domains/{noun}/*.server.ts` | Rare web-local server-only code; never SQL |
 
 Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `@watchdog/schemas/<domain>` subpath (for example `@watchdog/schemas/shared`).
 
@@ -149,9 +148,9 @@ Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `
 - Importing product enums from `@watchdog/db`
 - Treating `PatchOp` / `EvidenceSnapshot` as owned by `db` or `ai` (schemas is SoT; importers use a `@watchdog/schemas/<domain>` subpath)
 - Hand-rolled `z.enum(["queued", …])` that drifts from `JOB_STATUSES`
-- `parse*` / `assertConfidence` in `*.functions.ts` instead of Zod
+- `parse*` / `assertConfidence` in a domain hook instead of the procedure's Zod input
 - Freestyle confidence/predicate strings in dossier pickers
-- Re-exporting product vocab from domain `types.ts` / `*.functions.ts`
+- Re-exporting product vocab from domain `types.ts`
 - Dumping every procedure DTO into `@watchdog/schemas` (atoms only)
 - A second Zod copy inside `@watchdog/schemas` `dependencies`
 - Duplicating Collect Cap report shapes as TS interfaces when tools already exports the producer Zod

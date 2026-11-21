@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 import { invalidateAfterCaseSwitch } from "@/app/lib/query-invalidation";
-import { updateCaseFn } from "@/domains/cases/cases.functions";
 import { writeCaseRecordCache } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -21,7 +21,7 @@ export function useUpdateCase(caseId: string, currentSlug: string | undefined) {
       name?: string;
       description?: string | null;
       allowedEgress?: readonly EgressClass[];
-    }) => updateCaseFn({ data: buildUpdateCaseData(caseId, vars) }),
+    }) => orpc.cases.update.call(buildUpdateCaseData(caseId, vars)),
     onSuccess: async (updated) => {
       writeCaseRecordCache(
         queryClient,

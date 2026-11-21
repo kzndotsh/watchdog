@@ -1,29 +1,22 @@
 import { useQueries } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckIcon, DownloadIcon } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseDeletedToast } from "@/domains/cases/hooks/use-case-deleted-toast";
-import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import { exportCaseZip } from "@/domains/cases/lib/export-case-zip";
-import {
-  caseByIdQuery,
-  casesContextQuery,
-  deletionPolicyQuery,
-} from "@/domains/cases/queries";
+import { caseByIdQuery, deletionPolicyQuery } from "@/domains/cases/queries";
 import { CaseOverviewPending } from "@/domains/dashboard/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/dashboard/components/case-overview-tab";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { Chip } from "@/shared/ui/chip";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
-import { toast } from "@/shared/ui/toast";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 
 export function CaseOverview({ caseId }: { caseId: string }) {
@@ -31,33 +24,26 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const showDeletedToast = useCaseDeletedToast();
 
-  const [caseQuery, casesCtxQuery, policyQuery] = useQueries({
-    queries: [
-      caseByIdQuery(caseId),
-      casesContextQuery(),
-      deletionPolicyQuery(),
-    ] as const,
+  const [caseQuery, policyQuery] = useQueries({
+    queries: [caseByIdQuery(caseId), deletionPolicyQuery()] as const,
   });
   const caseRow = caseQuery.data;
   // Delete is for owners and admins; the server enforces it too.
   const policy = policyQuery.data;
   const canDelete = policy?.canManage === true;
-  const casesCtx = casesCtxQuery.data;
-  const headerPending = listPending(caseQuery) || listPending(casesCtxQuery);
+  const headerPending = listPending(caseQuery);
   const headerLoadError = combinedQueryLoadError(
-    [caseQuery, casesCtxQuery],
+    [caseQuery],
     headerPending,
     "Failed to load case"
   );
   const handleRetryHeader = () => {
     if (caseQuery.isError) void caseQuery.refetch();
-    if (casesCtxQuery.isError) void casesCtxQuery.refetch();
   };
 
   const renameMutation = useUpdateCase(caseId, caseRow?.slug);
   /** Bumped when a rename fails so the editor drops its unsaved draft. */
   const [nameEditorKey, setNameEditorKey] = useState(0);
-  const selectMutation = useSelectActiveCase({ cases: casesCtx?.cases ?? [] });
 
   if (headerLoadError) {
     return (
@@ -80,8 +66,6 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   if (!caseRow) {
     return null;
   }
-
-  const isActive = casesCtx?.active?.id === caseId;
 
   return (
     <Page>
@@ -113,28 +97,6 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         }
         actions={
           <div className="flex items-center gap-2">
-            {isActive ? (
-              <Chip size="sm">
-                <CheckIcon className="size-2.5" />
-                Active
-              </Chip>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={selectMutation.isPending}
-                onClick={() => {
-                  selectMutation.mutate(caseId, {
-                    onSuccess: () => {
-                      toast.success("Active Case set");
-                    },
-                  });
-                }}
-              >
-                Set Active
-              </Button>
-            )}
             <Button
               type="button"
               variant="outline"

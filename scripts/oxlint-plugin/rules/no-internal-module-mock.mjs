@@ -9,13 +9,13 @@ import { propertyName } from "../lib/effect-calls.mjs";
 const MOCK_METHODS = new Set(["mock", "doMock"]);
 
 /**
- * Internal modules that are still a test boundary: the web server-function modules and the
- * oRPC client `@/lib/orpc-client` (the network edge of the app; its double is
+ * Internal modules that are still a test boundary: the oRPC client `@/lib/orpc-client` (the
+ * network edge of the app; its double is
  * `apps/web/src/testing/orpc-client.ts`), the Better Auth client and server wrappers, and the
  * toast module (its shared double lives in `apps/web/src/testing/`).
  */
 const BOUNDARY_SPECIFIER =
-  /(?:\.functions(?:\.ts)?$)|^@\/lib\/orpc-client$|^@\/auth\/(?:client|server)$|^@\/shared\/ui\/toast$/;
+  /^@\/lib\/orpc-client$|^@\/auth\/(?:client|server)$|^@\/shared\/ui\/toast$/;
 
 /**
  * The module specifier of a `vi.mock` / `vi.doMock` call when it is statically known.
@@ -70,7 +70,7 @@ const isInternal = (specifier) =>
 /**
  * Bans `vi.mock` / `vi.doMock` of an internal module (a relative or `@/` specifier) in
  * tests: a mock of code the repo owns lets a refactor break the wiring while the test
- * stays green. Boundaries stay legal: `*.functions` modules, `@/lib/orpc-client`, `@/auth/client`,
+ * stays green. Boundaries stay legal: `@/lib/orpc-client`, `@/auth/client`,
  * `@/auth/server` and `@/shared/ui/toast`. Packages (`@watchdog/*`, vendor libraries,
  * `node:`) are not internal here. Existing mocks are baselined per file (shrink-only).
  * Policy: docs/contributing/testing/standards.md Mock policy.
@@ -98,7 +98,7 @@ export const noInternalModuleMock = withBaseline("no-internal-module-mock", {
         }
         context.report({
           node,
-          message: `vi.mock of the internal module "${specifier}": run the real module and fake the boundary it calls (a \`*.functions\` module or \`@/lib/orpc-client\`, the network through MSW, the clock), or lift the test a tier (conventions: mock boundaries, not internal modules; docs/contributing/testing/standards.md Mock policy)`,
+          message: `vi.mock of the internal module "${specifier}": run the real module and fake the boundary it calls (\`@/lib/orpc-client\`, the network through MSW, the clock), or lift the test a tier (conventions: mock boundaries, not internal modules; docs/contributing/testing/standards.md Mock policy)`,
         });
       },
     };

@@ -24,7 +24,7 @@ function CaseSwitcherSkeleton() {
   );
 }
 
-/** Sidebar workspace control: the Case in the URL (else the cookie's) + switcher + case nav. */
+/** Sidebar workspace control: the Case in the URL (else the last one entered) + switcher + case nav. */
 export function CaseSwitcher() {
   const { state, isMobile } = useSidebar();
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ export function CaseSwitcher() {
       onOpenChange={setIsCreateOpen}
       onCreated={() => {
         void invalidateAfterCaseSwitch(queryClient);
-        // The new case is now active; a page for the previous case's slug (Overview or a
+        // The new case is now the last one entered; a page for the previous case's slug (Overview or a
         // Work screen) would be stale.
         if (pathname.startsWith("/cases/")) void navigate({ to: "/cases" });
       }}

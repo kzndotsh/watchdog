@@ -8,7 +8,7 @@ import {
 import { requireSession } from "@/app/require-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
 import { FirstCaseStep } from "@/domains/cases/components/first-case-step";
-import { casesContextQuery } from "@/domains/cases/queries";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
 import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
@@ -91,7 +91,7 @@ export const Route = createFileRoute("/onboarding")({
       // Second step: an organization with no live Case asks for its first one; anyone with
       // a Case belongs in the app. Read through the query's own freshness, not the guard's
       // static copy, so a Case created elsewhere is seen.
-      const { cases } = await queryClient.query(casesContextQuery());
+      const cases = await queryClient.query(visibleCasesQuery());
       if (cases.length > 0) throw redirect({ to: "/" });
       return { canCreate: true, step: "case" as const };
     }

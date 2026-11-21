@@ -1,15 +1,16 @@
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const getOrganizationState = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/organization/organization.functions", () => ({
-  getOrganizationStateFn: getOrganizationState,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 
 import { ensureOrganizationState } from "@/app/ensure-organization";
 import { organizationKeys } from "@/domains/organization/queries";
+import { procedureDouble, sessionInOrganization } from "@/testing/orpc-client";
+
+const whoami = procedureDouble("auth.whoami");
 
 const session = {
   user: { id: "u1" },
@@ -17,7 +18,7 @@ const session = {
 };
 
 afterEach(() => {
-  getOrganizationState.mockReset();
+  whoami.mockReset();
 });
 
 describe("ensureOrganizationState", () => {
@@ -28,7 +29,7 @@ describe("ensureOrganizationState", () => {
     await expect(ensureOrganizationState(client, session)).resolves.toEqual({
       organizationId: "org-session",
     });
-    expect(getOrganizationState).not.toHaveBeenCalled();
+    expect(whoami).not.toHaveBeenCalled();
     expect(client.getQueryData(organizationKeys.state("u1"))).toEqual({
       organizationId: "org-session",
     });
@@ -36,7 +37,7 @@ describe("ensureOrganizationState", () => {
 
   it("client: asks the server when the session names no organization", async () => {
     vi.stubGlobal("window", {});
-    getOrganizationState.mockResolvedValue({ organizationId: "org-db" });
+    whoami.mockImplementation(sessionInOrganization("org-db"));
 
     await expect(
       ensureOrganizationState(new QueryClient(), {
@@ -44,12 +45,12 @@ describe("ensureOrganizationState", () => {
         session: { activeOrganizationId: null },
       })
     ).resolves.toEqual({ organizationId: "org-db" });
-    expect(getOrganizationState).toHaveBeenCalledOnce();
+    expect(whoami).toHaveBeenCalledOnce();
   });
 
   it("client: an invalidated answer is asked again, never re-seeded from the session", async () => {
     vi.stubGlobal("window", {});
-    getOrganizationState.mockResolvedValue({ organizationId: "org-db" });
+    whoami.mockImplementation(sessionInOrganization("org-db"));
     const client = new QueryClient();
     await ensureOrganizationState(client, session);
     await client.invalidateQueries({
@@ -60,13 +61,13 @@ describe("ensureOrganizationState", () => {
     await expect(ensureOrganizationState(client, session)).resolves.toEqual({
       organizationId: "org-db",
     });
-    expect(getOrganizationState).toHaveBeenCalledOnce();
+    expect(whoami).toHaveBeenCalledOnce();
   });
 
   it("client: a failed answer is asked again rather than hidden by the session's name", async () => {
     vi.stubGlobal("window", {});
-    getOrganizationState.mockRejectedValueOnce(new Error("boom"));
-    getOrganizationState.mockResolvedValue({ organizationId: null });
+    whoami.mockRejectedValueOnce(new Error("boom"));
+    whoami.mockImplementation(sessionInOrganization(null));
     const client = new QueryClient();
     // A first lookup that went to the server and failed (no seed: nothing named an organization).
     await expect(
@@ -79,17 +80,17 @@ describe("ensureOrganizationState", () => {
     await expect(ensureOrganizationState(client, session)).resolves.toEqual({
       organizationId: null,
     });
-    expect(getOrganizationState).toHaveBeenCalledTimes(2);
+    expect(whoami).toHaveBeenCalledTimes(2);
   });
 
   it("server: always asks the database, whatever the session names", async () => {
     vi.stubGlobal("window", undefined);
-    getOrganizationState.mockResolvedValue({ organizationId: null });
+    whoami.mockImplementation(sessionInOrganization(null));
 
     await expect(
       ensureOrganizationState(new QueryClient(), session)
     ).resolves.toEqual({ organizationId: null });
-    expect(getOrganizationState).toHaveBeenCalledOnce();
+    expect(whoami).toHaveBeenCalledOnce();
   });
 
   it("keeps one user's answer away from another user", async () => {
@@ -97,7 +98,7 @@ describe("ensureOrganizationState", () => {
     const client = new QueryClient();
     await ensureOrganizationState(client, session);
 
-    getOrganizationState.mockResolvedValue({ organizationId: null });
+    whoami.mockImplementation(sessionInOrganization(null));
     await expect(
       ensureOrganizationState(client, {
         user: { id: "u2" },

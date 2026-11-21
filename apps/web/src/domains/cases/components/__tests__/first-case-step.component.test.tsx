@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const navigate = vi.hoisted(() => vi.fn());
 
@@ -23,26 +23,25 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
-const fns = vi.hoisted(() => ({
-  createCaseFn: vi.fn(),
-  getDeletionPolicyFn: vi.fn(),
-  getCasesContextFn: vi.fn(),
-}));
-
-vi.mock("@/domains/cases/cases.functions", () => ({
-  createCaseFn: fns.createCaseFn,
-  getDeletionPolicyFn: fns.getDeletionPolicyFn,
-  getCasesContextFn: fns.getCasesContextFn,
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-  getDeletedCaseBySlugFn: vi.fn(),
-  listDeletedCasesPageFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { FirstCaseStep } from "@/domains/cases/components/first-case-step";
+import {
+  LAST_CASE_STORAGE_KEY,
+  readLastCaseId,
+} from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
-import type { CasesContext } from "@/domains/cases/types";
+import type { CaseRecord } from "@/domains/cases/types";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseRecord } from "@/testing/records";
+
+const fns = {
+  createCaseFn: procedureDouble("cases.create"),
+  getDeletionPolicyFn: procedureDouble("cases.deletionPolicy"),
+  getCasesContextFn: procedureDouble("cases.list"),
+};
 
 function renderStep() {
   const client = new QueryClient({
@@ -57,16 +56,27 @@ function renderStep() {
 }
 
 describe("FirstCaseStep", () => {
+  afterEach(() => {
+    window.localStorage.removeItem(LAST_CASE_STORAGE_KEY);
+  });
+
   beforeEach(() => {
     navigate.mockReset();
     fns.createCaseFn.mockReset();
-    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({ canManage: false });
-    fns.getCasesContextFn
-      .mockReset()
-      .mockResolvedValue({ cases: [], active: null });
+    fns.getDeletionPolicyFn.mockReset().mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: false,
+      cancellableJobs: 0,
+      canIncludeBreachCredentials: false,
+    });
+    fns.getCasesContextFn.mockReset().mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      total: { count: 0, isCapped: false },
+    });
   });
 
-  it("creates the Case, makes it the Active Case in the cache and opens its overview", async () => {
+  it("creates the Case, teaches the visible Cases about it, remembers it as the last Case and opens its overview", async () => {
     const created = buildCaseRecord({ name: "First", slug: "first" });
     fns.createCaseFn.mockResolvedValue(created);
     const user = userEvent.setup();
@@ -82,12 +92,13 @@ describe("FirstCaseStep", () => {
         params: { caseSlug: "first" },
       });
     });
-    expect(fns.createCaseFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({ name: "First", slug: "first" }),
-    });
-    expect(
-      client.getQueryData<CasesContext>(casesKeys.context())
-    ).toMatchObject({ cases: [created], active: created });
+    expect(fns.createCaseFn).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "First", slug: "first" })
+    );
+    expect(client.getQueryData<CaseRecord[]>(casesKeys.visible())).toEqual([
+      created,
+    ]);
+    expect(readLastCaseId()).toBe(created.id);
   });
 
   it("stays on the step when the create fails", async () => {
@@ -110,7 +121,12 @@ describe("FirstCaseStep", () => {
   });
 
   it("offers the restore path to owners and admins", async () => {
-    fns.getDeletionPolicyFn.mockResolvedValue({ canManage: true });
+    fns.getDeletionPolicyFn.mockResolvedValue({
+      restoreWindowDays: 30,
+      canManage: true,
+      cancellableJobs: 0,
+      canIncludeBreachCredentials: false,
+    });
     renderStep();
     expect(
       await screen.findByText("Restore a deleted Case")

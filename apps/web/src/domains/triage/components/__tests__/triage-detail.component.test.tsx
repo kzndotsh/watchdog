@@ -3,6 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
+
 import { buildEvidenceRecord, buildProposalRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
@@ -29,18 +33,13 @@ vi.mock("@/domains/triage/components/triage-patch-body", () => ({
 }));
 
 // The Detail's Evidence: titles by id and the searched picker, never the Case's whole list (#580).
-vi.mock("@/domains/intake/intake.functions", () => ({
-  getEvidenceManyFn: vi.fn(),
-  listEvidencePageFn: vi.fn(),
-  listEvidencePickerPageFn: vi.fn(),
-}));
 
-import {
-  getEvidenceManyFn,
-  listEvidencePageFn,
-  listEvidencePickerPageFn,
-} from "@/domains/intake/intake.functions";
 import { TriageDetail } from "@/domains/triage/components/triage-detail";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const listEvidencePageFn = procedureDouble("evidence.list");
+const listEvidencePickerPageFn = procedureDouble("evidence.pickerPage");
+const getEvidenceManyFn = procedureDouble("evidence.getMany");
 
 const CASE_ID = testCaseId(10);
 const CITED = [testId(41), testId(42)];
@@ -78,9 +77,9 @@ function lastBodyProps(): BodyProps {
 describe("TriageDetail", () => {
   beforeEach(() => {
     triagePatchBodyProps.mockClear();
-    vi.mocked(getEvidenceManyFn).mockReset();
-    vi.mocked(listEvidencePageFn).mockReset();
-    vi.mocked(listEvidencePickerPageFn).mockReset();
+    getEvidenceManyFn.mockReset();
+    listEvidencePageFn.mockReset();
+    listEvidencePickerPageFn.mockReset();
   });
 
   it("shows empty detail copy when nothing is selected", () => {
@@ -102,7 +101,7 @@ describe("TriageDetail", () => {
   });
 
   it("titles the cited Evidence by id and never reads the Case's Evidence list", async () => {
-    vi.mocked(getEvidenceManyFn).mockResolvedValue([
+    getEvidenceManyFn.mockResolvedValue([
       buildEvidenceRecord({ id: CITED[0], label: "Memo" }),
       buildEvidenceRecord({ id: CITED[1], label: "Hidden memo" }),
     ]);
@@ -121,14 +120,15 @@ describe("TriageDetail", () => {
     });
     expect(getEvidenceManyFn).toHaveBeenCalledTimes(1);
     expect(getEvidenceManyFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, ids: [...CITED].sort() },
+      caseId: CASE_ID,
+      ids: [...CITED].sort(),
     });
     expect(listEvidencePageFn).not.toHaveBeenCalled();
     expect(listEvidencePickerPageFn).not.toHaveBeenCalled();
   });
 
   it("counts cited ids the Case does not hold once the read has answered", async () => {
-    vi.mocked(getEvidenceManyFn).mockResolvedValue([
+    getEvidenceManyFn.mockResolvedValue([
       buildEvidenceRecord({ id: CITED[0], label: "Memo" }),
     ]);
     renderDetail();
@@ -149,7 +149,7 @@ describe("TriageDetail", () => {
   });
 
   it("holds an evidence error until the read settles, then reports it", async () => {
-    vi.mocked(getEvidenceManyFn).mockRejectedValue(new Error("boom"));
+    getEvidenceManyFn.mockRejectedValue(new Error("boom"));
     renderDetail();
 
     expect(lastBodyProps().evidenceLoadError).toBeNull();

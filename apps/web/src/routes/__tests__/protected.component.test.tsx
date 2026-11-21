@@ -14,8 +14,8 @@ vi.mock("@/auth/ensure-session", () => ({
 }));
 
 vi.mock("@/domains/cases/queries", () => ({
-  casesContextQuery: vi.fn(() => ({
-    queryKey: ["cases", "context"],
+  visibleCasesQuery: vi.fn(() => ({
+    queryKey: ["cases", "visible"],
   })),
 }));
 
@@ -72,7 +72,7 @@ import { ensureOrganizationState } from "@/app/ensure-organization";
 import { useActivityInvalidation } from "@/app/hooks/use-activity-stream";
 import { useCasesChangedInvalidation } from "@/app/hooks/use-cases-changed-invalidation";
 import { ensureAppSession } from "@/auth/ensure-session";
-import { casesContextQuery } from "@/domains/cases/queries";
+import { visibleCasesQuery } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { buildCaseRecord } from "@/testing/records";
@@ -81,10 +81,7 @@ const aCase = buildCaseRecord();
 
 describe("_protected route", () => {
   beforeEach(() => {
-    vi.mocked(ensureAppQueryData).mockResolvedValue({
-      cases: [aCase],
-      active: aCase,
-    });
+    vi.mocked(ensureAppQueryData).mockResolvedValue([aCase]);
   });
 
   it("redirects unauthenticated visitors to sign-in with returnTo", async () => {
@@ -129,7 +126,7 @@ describe("_protected route", () => {
 
     expect(ensureAppQueryData).toHaveBeenCalledWith(
       queryClient,
-      casesContextQuery()
+      visibleCasesQuery()
     );
   });
 

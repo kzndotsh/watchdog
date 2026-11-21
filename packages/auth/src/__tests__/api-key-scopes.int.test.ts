@@ -8,7 +8,10 @@ import {
   API_KEY_UPDATE_REFUSED,
 } from "../api-key-guard";
 import { createAuth } from "../create-auth";
-import { createScopedApiKey } from "../scoped-api-key";
+import {
+  createScopedApiKey,
+  SCOPED_API_KEY_CREATE_PATH,
+} from "../scoped-api-key";
 
 /**
  * Key creation end to end on the test database: the server call sets scopes and organization,
@@ -152,6 +155,65 @@ describe("createScopedApiKey without an organization", () => {
         scopes: ["cases:read"],
       })
     ).rejects.toMatchObject({ status: "FORBIDDEN" });
+    expect(await keyRows(owner.id)).toEqual([]);
+  });
+});
+
+describe("the session's scoped create endpoint", () => {
+  it("creates a key for the signed-in user in their organization with the asked scopes, once", async () => {
+    const owner = await seedMember();
+    const cookie = await signInCookie(owner.email);
+
+    const response = await browserPost(SCOPED_API_KEY_CREATE_PATH, cookie, {
+      name: "agent",
+      scopes: ["evidence:write"],
+    });
+
+    expect(response.status).toBe(200);
+    const created: unknown = await response.json();
+    expect(created).toMatchObject({ name: "agent", key: expect.any(String) });
+    const [row] = await keyRows(owner.id);
+    expect(JSON.parse(String(row?.permissions))).toEqual({
+      cases: ["read"],
+      evidence: ["write"],
+    });
+    expect(JSON.parse(String(row?.metadata))).toEqual({
+      organizationId: owner.organizationId,
+    });
+  });
+
+  it("ignores an organization or owner in the body", async () => {
+    const owner = await seedMember();
+    const cookie = await signInCookie(owner.email);
+
+    const response = await browserPost(SCOPED_API_KEY_CREATE_PATH, cookie, {
+      scopes: ["cases:read"],
+      userId: crypto.randomUUID(),
+      organizationId: crypto.randomUUID(),
+    });
+
+    expect(response.status).toBe(200);
+    const [row] = await keyRows(owner.id);
+    expect(JSON.parse(String(row?.metadata))).toEqual({
+      organizationId: owner.organizationId,
+    });
+  });
+
+  it("refuses a caller without a session", async () => {
+    const response = await browserPost(SCOPED_API_KEY_CREATE_PATH, "", {
+      scopes: ["cases:read"],
+    });
+    expect(response.status).toBe(401);
+  });
+
+  it("refuses scopes it does not know", async () => {
+    const owner = await seedMember();
+    const cookie = await signInCookie(owner.email);
+
+    const response = await browserPost(SCOPED_API_KEY_CREATE_PATH, cookie, {
+      scopes: ["admin:everything"],
+    });
+    expect(response.status).toBe(400);
     expect(await keyRows(owner.id)).toEqual([]);
   });
 });

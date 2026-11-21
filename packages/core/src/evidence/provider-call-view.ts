@@ -21,7 +21,7 @@ import {
   type DomainTag,
 } from "../errors/tagged-errors";
 import { readArtifactBytesEffect, sha256Hex } from "../infra/blob";
-import type { BlobStore } from "../infra/blob-store";
+import { isKeyInCase, type BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { inOrganization } from "../infra/organization-scope";
 import {
@@ -264,7 +264,7 @@ export function readStoredResponseEffect(
       outcome.bodyState !== "stored" ||
       outcome.blobKey === null ||
       // A stored body lives under its Case's prefix; a key outside it is never read.
-      !outcome.blobKey.startsWith(`${caseId}/`) ||
+      !isKeyInCase(outcome.blobKey, caseId) ||
       outcome.bodySha256 === null ||
       outcome.bodyBytes === null
     ) {

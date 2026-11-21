@@ -3,17 +3,27 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/domains/cases/cases.functions", () => ({
-  getCasesContextFn: vi.fn(),
-  getCaseByIdFn: vi.fn(),
-  getCaseBySlugFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-import { getCasesContextFn } from "@/domains/cases/cases.functions";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
+import type { CaseRecord } from "@/domains/cases/types";
 import { RouteCaseContext, useWorkCase } from "@/shared/hooks/use-route-case";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
+
+const listCases = procedureDouble("cases.list");
+
+/** One page of `cases.list` holding `items`. */
+function casePage(items: CaseRecord[]) {
+  return {
+    items,
+    nextCursor: null,
+    total: { count: items.length, isCapped: false },
+  };
+}
 
 function wrapperFor(routeCase: ReturnType<typeof buildCaseRecord> | null) {
   const client = new QueryClient({
@@ -28,12 +38,9 @@ function wrapperFor(routeCase: ReturnType<typeof buildCaseRecord> | null) {
 }
 
 describe("a Work screen outside a Case route", () => {
-  it("fails loudly instead of falling back to the cookie's Case", () => {
-    const cookieCase = buildCaseRecord({ slug: "cookie" });
-    vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [cookieCase],
-      active: cookieCase,
-    });
+  it("fails loudly instead of falling back to the last Case entered", () => {
+    const otherCase = buildCaseRecord({ slug: "other" });
+    listCases.mockResolvedValue(casePage([otherCase]));
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(() =>
@@ -48,16 +55,13 @@ describe("a Work screen outside a Case route", () => {
 });
 
 describe("useLiveWorkCase", () => {
-  it("is the URL's Case, not the cookie's", async () => {
+  it("is the URL's Case, not the last one entered", async () => {
     const urlCase = buildCaseRecord({ slug: "url", name: "From the URL" });
-    const cookieCase = buildCaseRecord({
+    const otherCase = buildCaseRecord({
       id: testCaseId(11),
-      slug: "cookie",
+      slug: "other",
     });
-    vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [urlCase, cookieCase],
-      active: cookieCase,
-    });
+    listCases.mockResolvedValue(casePage([urlCase, otherCase]));
 
     const { result } = renderHook(() => useLiveWorkCase(), {
       wrapper: wrapperFor(urlCase),
@@ -65,7 +69,7 @@ describe("useLiveWorkCase", () => {
 
     expect(result.current.slug).toBe("url");
     await waitFor(() => {
-      expect(getCasesContextFn).toHaveBeenCalled();
+      expect(listCases).toHaveBeenCalled();
     });
     expect(result.current.slug).toBe("url");
   });
@@ -74,10 +78,9 @@ describe("useLiveWorkCase", () => {
     const stale = buildCaseRecord({
       allowedEgress: ["local", "target", "model"],
     });
-    vi.mocked(getCasesContextFn).mockResolvedValue({
-      cases: [{ ...stale, allowedEgress: ["local", "target"] }],
-      active: null,
-    });
+    listCases.mockResolvedValue(
+      casePage([{ ...stale, allowedEgress: ["local", "target"] }])
+    );
 
     const { result } = renderHook(() => useLiveWorkCase(), {
       wrapper: wrapperFor(stale),
