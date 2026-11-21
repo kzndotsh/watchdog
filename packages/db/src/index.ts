@@ -47,6 +47,8 @@ export {
   listOrganizationIds,
   organizationScopedDb,
   setOrganizationContext,
+  setWorkerRole,
+  workerRoleDb,
 } from "./organization-scope";
 export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";

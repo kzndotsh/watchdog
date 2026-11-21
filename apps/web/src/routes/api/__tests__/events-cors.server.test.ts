@@ -16,7 +16,7 @@ vi.mock("@watchdog/auth/server", () => ({
   createApiContext: vi.fn().mockResolvedValue({ actor: null }),
 }));
 
-vi.mock("@watchdog/api", () => ({ runApp: vi.fn() }));
+vi.mock("@watchdog/api", () => ({ runAppAs: () => vi.fn() }));
 vi.mock("@watchdog/core/activity", () => ({
   ActivityTailer: {},
   replayActivityEffect: vi.fn(),

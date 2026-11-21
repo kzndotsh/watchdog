@@ -45,7 +45,7 @@ class ForbiddenOptInError extends Error {
 }
 
 vi.mock("@watchdog/api", () => ({
-  runApp: (effect: Effect.Effect<unknown, unknown>) =>
+  runAppAs: () => (effect: Effect.Effect<unknown, unknown>) =>
     Effect.runPromise(effect),
   actorLabelFromContext: () => undefined,
   actorKeyIdFromContext: () => undefined,

@@ -8,7 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { runApp } from "@watchdog/api";
+import { runAppAs } from "@watchdog/api";
 import { getCaseByIdEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
 import { renderEntityMarkdownEffect } from "@watchdog/core/export";
@@ -85,9 +85,10 @@ export const Route = createFileRoute(
         if (caseId === null) {
           return new Response("Not Found", { status: 404 });
         }
-        const exported = await runApp(
-          entityExportMdEffect(caseId, slug, ctx.actor.organizationId)
-        );
+        const exported = await runAppAs(
+          ctx.credential,
+          "cases:read"
+        )(entityExportMdEffect(caseId, slug, ctx.actor.organizationId));
         if (exported.kind === "missing") {
           return new Response("Not Found", { status: 404 });
         }

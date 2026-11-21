@@ -6,6 +6,7 @@ export {
   forEachOrganization,
   inCaseOrganizationUnchecked,
   inOrganization,
+  inWorkerRole,
   listOrganizationIdsEffect,
 } from "./organization-scope";
 export { runDomain, runDomainWith } from "./run-domain";

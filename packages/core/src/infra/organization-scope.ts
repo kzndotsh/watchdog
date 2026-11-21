@@ -7,6 +7,8 @@ import {
   listOrganizationIds,
   organizationScopedDb,
   setOrganizationContext,
+  setWorkerRole,
+  workerRoleDb,
 } from "@watchdog/db";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
@@ -42,6 +44,27 @@ export function inOrganization<A, E, R>(
       Db,
       organizationScopedDb(exec, organizationId)
     );
+  });
+}
+
+/**
+ * Run `effect` as the worker role (`WORKER_ROLE`, #720): every statement and transaction it runs
+ * on the `Db` service switches to the role first, so it may write Evidence, provider calls,
+ * Proposals and Jobs and no Graph table (a Graph write fails with `42501`, an `InternalError`).
+ * For an API-key request in the web process (`runApp`); the worker needs nothing, it logs in as
+ * the role. Composes with `inOrganization` either way round. A `Db` that is itself a transaction
+ * (a test's `Db.layerOf(tx)`) switches for the rest of that transaction.
+ */
+export function inWorkerRole<A, E, R>(
+  effect: Effect.Effect<A, E, R>
+): Effect.Effect<A, E | DomainTag, R | Db> {
+  return Effect.gen(function* inWorkerRoleGen() {
+    const exec = yield* Db;
+    if (isTransaction(exec)) {
+      yield* tryDb(() => setWorkerRole(exec));
+      return yield* effect;
+    }
+    return yield* Effect.provideService(effect, Db, workerRoleDb(exec));
   });
 }
 

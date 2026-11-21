@@ -5,6 +5,7 @@ import type postgres from "postgres";
 
 import type { OrganizationId } from "@watchdog/schemas/shared";
 
+import { WORKER_ROLE } from "./app-role";
 import type { Db } from "./client";
 import type { DbExec, DbTx } from "./exec";
 import { ORGANIZATION_SETTING } from "./history-context";
@@ -86,31 +87,51 @@ export async function listOrganizationIds(
   return rows.map((row) => row.id);
 }
 
-/** The underlying client of a scoped handle's client, so a scope never wraps another one. */
-const baseOf = new WeakMap<Sql, Sql>();
+/**
+ * What a scoped handle sets at the start of every transaction: the organization (row-level
+ * security) and the role (`WORKER_ROLE` for an API-key request, #720). Either may be absent.
+ */
+type Scope = {
+  readonly organizationId?: OrganizationId;
+  readonly role?: string;
+};
 
-/** Scoped handles per base client and organization (a handle is a few small objects). */
-const handles = new WeakMap<Sql, Map<OrganizationId, Db>>();
+/** The underlying client and scope of a scoped handle's client, so a scope never wraps another. */
+const scopeOf = new WeakMap<
+  Sql,
+  { readonly base: Sql; readonly scope: Scope }
+>();
 
-/** Organizations kept per client before the oldest handle is dropped (it is rebuilt on demand). */
+/** Scoped handles per base client and scope (a handle is a few small objects). */
+const handles = new WeakMap<Sql, Map<string, Db>>();
+
+/** Scopes kept per client before the oldest handle is dropped (it is rebuilt on demand). */
 const MAX_HANDLES_PER_CLIENT = 256;
 
-function setOrganization(
+/** One statement, so the settings cost no round trip of their own. */
+function setScope(
   client: postgres.TransactionSql | postgres.ReservedSql,
-  organizationId: OrganizationId
+  scope: Scope
 ) {
-  return client`select set_config(${ORGANIZATION_SETTING}, ${organizationId}, true)`;
+  const { organizationId, role } = scope;
+  if (role === undefined) {
+    return client`select set_config(${ORGANIZATION_SETTING}, ${organizationId ?? ""}, true)`;
+  }
+  if (organizationId === undefined) {
+    return client`select set_config('role', ${role}, true)`;
+  }
+  return client`select set_config(${ORGANIZATION_SETTING}, ${organizationId}, true), set_config('role', ${role}, true)`;
 }
 
 /**
- * A postgres.js client whose every statement sees `organizationId`: a transaction sets it as its
- * first statement, and a statement outside one runs in a short transaction of its own that sets
- * it first. The setting is always transaction-local (`set_config(..., true)`), so it never
- * outlives the transaction on a pooled connection. Only the two calls Drizzle's postgres-js
- * session makes are wrapped: `unsafe` (every query) and `begin` (every transaction); savepoints
- * run on the transaction's own client.
+ * A postgres.js client whose every statement runs in `scope` (its organization, its role): a
+ * transaction sets it as its first statement, and a statement outside one runs in a short
+ * transaction of its own that sets it first. The settings are always transaction-local
+ * (`set_config(..., true)`), so they never outlive the transaction on a pooled connection. Only
+ * the two calls Drizzle's postgres-js session makes are wrapped: `unsafe` (every query) and
+ * `begin` (every transaction); savepoints run on the transaction's own client.
  */
-function scopedClient(base: Sql, organizationId: OrganizationId): Sql {
+function scopedClient(base: Sql, scope: Scope): Sql {
   const unsafe = (
     query: string,
     parameters?: postgres.ParameterOrJSON<never>[],
@@ -119,14 +140,14 @@ function scopedClient(base: Sql, organizationId: OrganizationId): Sql {
     // One round trip: BEGIN, the setting, the statement and COMMIT pipelined on a reserved
     // connection (a COMMIT after a failed statement ends the transaction as a ROLLBACK). Releasing
     // a connection that is not idle closes it (postgres.js), so a transaction a failure left open
-    // can never reach another caller with this organization set.
+    // can never reach another caller with this scope set.
     const run = async (values: boolean) => {
       const reserved = await base.reserve();
       try {
         const statement = reserved.unsafe(query, parameters, options);
         const replies = await Promise.all([
           reserved.unsafe("begin"),
-          setOrganization(reserved, organizationId),
+          setScope(reserved, scope),
           values ? statement.values() : statement,
           reserved.unsafe("commit"),
         ]);
@@ -159,7 +180,7 @@ function scopedClient(base: Sql, organizationId: OrganizationId): Sql {
       // statements in order, so the setting precedes the body's first statement without a round
       // trip of its own. A failed setting aborts the transaction, so the body fails too; it is
       // still awaited, so its own error is never lost.
-      const setting = setOrganization(tx, organizationId);
+      const setting = setScope(tx, scope);
       setting.catch(() => {});
       const result = await body(tx);
       await setting;
@@ -176,39 +197,70 @@ function scopedClient(base: Sql, organizationId: OrganizationId): Sql {
       return Reflect.get(target, property, receiver) as unknown;
     },
   });
-  baseOf.set(scoped, base);
+  scopeOf.set(scoped, { base, scope });
   return scoped;
+}
+
+function scopeOfHandle(exec: DbExec): Scope | undefined {
+  return isTransaction(exec) ? undefined : scopeOf.get(exec.$client)?.scope;
 }
 
 /** True for a handle `organizationScopedDb` made (scoped to some organization). */
 export function isOrganizationScoped(exec: DbExec): boolean {
-  return !isTransaction(exec) && baseOf.has(exec.$client);
+  return scopeOfHandle(exec)?.organizationId !== undefined;
+}
+
+/** The handle over `db`'s base client with `patch` applied to `db`'s own scope, cached. */
+function scopedDb(db: Db, patch: Scope): Db {
+  const own = scopeOf.get(db.$client);
+  const client = own?.base ?? db.$client;
+  const scope: Scope = { ...own?.scope, ...patch };
+  const key = `${scope.role ?? ""}/${scope.organizationId ?? ""}`;
+  let perClient = handles.get(client);
+  if (perClient === undefined) {
+    perClient = new Map();
+    handles.set(client, perClient);
+  }
+  const cached = perClient.get(key);
+  if (cached !== undefined) return cached;
+  const scoped = drizzle(scopedClient(client, scope), { schema });
+  if (perClient.size >= MAX_HANDLES_PER_CLIENT) {
+    const oldest = perClient.keys().next();
+    if (oldest.done !== true) perClient.delete(oldest.value);
+  }
+  perClient.set(key, scoped);
+  return scoped;
 }
 
 /**
  * The pool handle `db`, scoped to one organization: every statement and transaction run on it sets
  * `watchdog.org_id` first, so the row-level security policies on every Case-scoped table show that
  * organization's rows only. A handle without a scope sees none of them (fail closed). Scoping a
- * scoped handle again replaces the organization (it wraps the same base client). Handles are
- * cached per client and organization.
+ * scoped handle again replaces the organization (it wraps the same base client) and keeps its
+ * role. Handles are cached per client and scope.
  */
 export function organizationScopedDb(
   db: Db,
   organizationId: OrganizationId
 ): Db {
-  const client = baseOf.get(db.$client) ?? db.$client;
-  let perClient = handles.get(client);
-  if (perClient === undefined) {
-    perClient = new Map();
-    handles.set(client, perClient);
-  }
-  const cached = perClient.get(organizationId);
-  if (cached !== undefined) return cached;
-  const scoped = drizzle(scopedClient(client, organizationId), { schema });
-  if (perClient.size >= MAX_HANDLES_PER_CLIENT) {
-    const oldest = perClient.keys().next();
-    if (oldest.done !== true) perClient.delete(oldest.value);
-  }
-  perClient.set(organizationId, scoped);
-  return scoped;
+  return scopedDb(db, { organizationId });
+}
+
+/**
+ * The pool handle `db`, running as the worker role (`WORKER_ROLE`, #720): every statement and
+ * transaction run on it switches to the role first (`set_config('role', ...)`, transaction-local,
+ * so the pooled connection is its login role again after it) and then writes no Graph table. For
+ * an API-key request in the web process; the worker itself logs in as the role. Keeps `db`'s
+ * organization, and a later `organizationScopedDb` keeps the role.
+ */
+export function workerRoleDb(db: Db): Db {
+  return scopedDb(db, { role: WORKER_ROLE });
+}
+
+/**
+ * Switch the rest of the transaction `tx` to the worker role: `workerRoleDb` for a transaction
+ * handle (a test's `Db.layerOf(tx)`). Transaction-local, like the organization.
+ */
+export async function setWorkerRole(tx: DbTx): Promise<void> {
+  await tx.execute(sql`select set_config('role', ${WORKER_ROLE}, true)`);
 }

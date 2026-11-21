@@ -26,6 +26,8 @@ const suffix = randomBytes(4).toString("hex");
 const DATABASE = `wd_role_${suffix}`;
 const APP_ROLE = `wd_role_app_${suffix}`;
 const APP_PASSWORD = "role-test-password";
+/** The worker role (#720): the application role's privileges without any write to the Graph. */
+const WORKER_ROLE = `wd_role_worker_${suffix}`;
 /** A login with schema USAGE and nothing else, like `watchdog_readonly` in docker/postgres/init.sql. */
 const READER_ROLE = `wd_role_reader_${suffix}`;
 const MIGRATIONS = path.resolve(import.meta.dirname, "../../drizzle");
@@ -51,6 +53,7 @@ const connect = (url: string) =>
 let admin: ReturnType<typeof postgres>;
 let owner: ReturnType<typeof postgres>;
 let app: ReturnType<typeof postgres>;
+let worker: ReturnType<typeof postgres>;
 let reader: ReturnType<typeof postgres>;
 let laterMigrations: string;
 
@@ -64,6 +67,7 @@ const migrate = (folder = MIGRATIONS) =>
     url: urlFor(DATABASE),
     migrationsFolder: folder,
     appRole: APP_ROLE,
+    workerRole: WORKER_ROLE,
   });
 
 /** The real migrations plus one more, as a later release would add: two new tables. */
@@ -118,6 +122,10 @@ beforeAll(async () => {
     `CREATE ROLE ${READER_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`
   );
   await admin.unsafe(`GRANT CONNECT ON DATABASE ${DATABASE} TO ${READER_ROLE}`);
+  await admin.unsafe(
+    `CREATE ROLE ${WORKER_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS`
+  );
+  await admin.unsafe(`GRANT CONNECT ON DATABASE ${DATABASE} TO ${WORKER_ROLE}`);
   owner = connect(urlFor(DATABASE));
   await owner.unsafe("CREATE EXTENSION IF NOT EXISTS pgcrypto");
   await owner.unsafe("CREATE SCHEMA IF NOT EXISTS auth");
@@ -134,6 +142,15 @@ beforeAll(async () => {
     onnotice: () => {},
     connection: { [ORGANIZATION_SETTING]: "org-probe" },
   });
+  worker = postgres(
+    urlFor(DATABASE, { user: WORKER_ROLE, password: APP_PASSWORD }),
+    {
+      max: 1,
+      idle_timeout: 5,
+      onnotice: () => {},
+      connection: { [ORGANIZATION_SETTING]: "org-probe" },
+    }
+  );
   await owner.unsafe(`GRANT USAGE ON SCHEMA public, auth TO ${READER_ROLE}`);
   reader = connect(
     urlFor(DATABASE, { user: READER_ROLE, password: APP_PASSWORD })
@@ -143,11 +160,13 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app?.end({ timeout: 5 });
+  await worker?.end({ timeout: 5 });
   await reader?.end({ timeout: 5 });
   await owner?.end({ timeout: 5 });
   await admin?.unsafe(`DROP DATABASE IF EXISTS ${DATABASE} WITH (FORCE)`);
   await admin?.unsafe(`DROP ROLE IF EXISTS ${APP_ROLE}`);
   await admin?.unsafe(`DROP ROLE IF EXISTS ${READER_ROLE}`);
+  await admin?.unsafe(`DROP ROLE IF EXISTS ${WORKER_ROLE}`);
   await admin?.end({ timeout: 5 });
   if (laterMigrations)
     rmSync(laterMigrations, { recursive: true, force: true });
@@ -344,6 +363,76 @@ describe("application role after migrations run as the owner", () => {
   });
 });
 
+describe("the worker role after migrations run as the owner (#720)", () => {
+  /** 42501 = insufficient_privilege. */
+  const workerDenied = async (statement: string) => {
+    await expect(worker.unsafe(statement)).rejects.toMatchObject({
+      code: "42501",
+    });
+  };
+
+  it("writes Evidence, Jobs, Proposals and provider calls, and reads the Graph", async () => {
+    const [c] = await app`
+      insert into public.cases (name, slug, organization_id) values ('Worker', ${`worker-${suffix}`}, 'org-probe') returning id`;
+    const caseId = c!.id as string;
+    const [ev] = await worker`
+      insert into public.evidence (case_id, kind, actor_id) values (${caseId}, 'other', 'actor') returning id`;
+    const [job] = await worker`
+      insert into public.jobs (case_id, capability_id, input, actor_id)
+      values (${caseId}, 'probe.cap', '{}'::jsonb, 'actor') returning id`;
+    await worker`update public.jobs set status = 'running' where id = ${job!.id}`;
+    await worker`insert into public.proposals (case_id, patch) values (${caseId}, '{}'::jsonb)`;
+    await worker`
+      insert into public.provider_calls (id, case_id, job_id, run_id, seq, transport, method, url_redacted, body_kind, request_body_state, started_at)
+      values (gen_random_uuid(), ${caseId}, ${job!.id}, gen_random_uuid(), 0, 'http', 'GET', 'https://probe.test/', 'response', 'none', now())`;
+    await worker`select count(*) from public.entities`;
+    await worker`select count(*) from auth.organization`;
+    await worker`delete from pgboss.job where false`;
+    expect(ev?.id).toBeDefined();
+    await app`delete from public.cases where id = ${caseId}`;
+  });
+
+  it("writes no Graph table, no Triage suppression and no Better Auth table", async () => {
+    for (const table of [
+      "entities",
+      "edges",
+      "identifiers",
+      "claims",
+      "events",
+      "questions",
+      "tasks",
+      "claim_evidence",
+      "identifier_evidence",
+      "edge_evidence",
+      "finding_suppressions",
+    ]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one denial at a time, each named on failure
+      await workerDenied(`insert into public.${table} default values`);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one denial at a time, each named on failure
+      await workerDenied(`delete from public.${table} where false`);
+    }
+    await workerDenied("update auth.organization set name = name where false");
+    await workerDenied("alter table public.cases add column probe int");
+    await workerDenied("update public.changesets set summary = 'x'");
+  });
+
+  it("is one the application role may switch to, without inheriting it", async () => {
+    const [membership] = await admin`
+      select pg_has_role(${APP_ROLE}, ${WORKER_ROLE}, 'SET') as set,
+             pg_has_role(${APP_ROLE}, ${WORKER_ROLE}, 'USAGE') as usage`;
+    expect(membership).toEqual({ set: true, usage: false });
+    const [who] = await app.begin(
+      async (tx) =>
+        tx`select set_config('role', ${WORKER_ROLE}, true), current_user as who`
+    );
+    expect(who?.who).toBe(WORKER_ROLE);
+    // The worker may not switch back to the application role.
+    await expect(
+      worker.begin((tx) => tx`select set_config('role', ${APP_ROLE}, true)`)
+    ).rejects.toMatchObject({ code: "42501" });
+  });
+});
+
 describe("a table added by a later migration", () => {
   it("is usable by the application role without a manual grant", async () => {
     await migrate(laterMigrations);
@@ -354,6 +443,9 @@ describe("a table added by a later migration", () => {
     await app`delete from public.role_probe`;
     await denied("alter table public.role_probe add column probe int");
     await denied("truncate public.role_probe");
+    // The worker role gets it too: it is not a Graph table.
+    await worker`insert into public.role_probe (note) values ('worker')`;
+    await worker`delete from public.role_probe`;
   });
 
   it("is usable on its own through default privileges, with no regrant", async () => {
@@ -508,7 +600,9 @@ describe("a database without the application role", () => {
       url: urlFor(DATABASE),
       migrationsFolder: laterMigrations,
       appRole: `${APP_ROLE}_absent`,
+      workerRole: `${WORKER_ROLE}_absent`,
     });
     expect(result.appRoleGranted).toBe(false);
+    expect(result.workerRoleGranted).toBe(false);
   });
 });

@@ -36,6 +36,13 @@
       "when": 1795228520916,
       "tag": "0004_organization_isolation_case_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795233694574,
+      "tag": "0005_worker_role",
+      "breakpoints": true
     }
   ]
 }

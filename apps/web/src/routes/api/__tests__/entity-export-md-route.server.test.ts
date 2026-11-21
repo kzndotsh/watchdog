@@ -29,7 +29,7 @@ vi.mock("@/auth/api-context.server", () => ({
 }));
 
 vi.mock("@watchdog/api", () => ({
-  runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
+  runAppAs: () => (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
 
 // The route scopes its reads to the caller's organization (row-level security, #718); the

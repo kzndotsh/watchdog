@@ -24,6 +24,20 @@ END $$;
 
 GRANT CONNECT ON DATABASE watchdog TO watchdog_app;
 
+-- Worker role (#720): the worker logs in as `watchdog_worker`, which has the application role's
+-- privileges except any write to the Graph (applied by the migrator, like the app role's, which
+-- also lets `watchdog_app` switch to it for an API-key request). Fixed local-dev password;
+-- production sets its own (docker/postgres/app-role.sql).
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'watchdog_worker') THEN
+        CREATE ROLE watchdog_worker WITH LOGIN PASSWORD 'watchdog'
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+    END IF;
+END $$;
+
+GRANT CONNECT ON DATABASE watchdog TO watchdog_worker;
+
 -- Local-only read-only role for the dev MCP Postgres server (.mcp.json).
 -- scripts/ensure-readonly-role.sh (run by `just up` after migrations) is the
 -- idempotent source of truth: it also covers existing containers, re-grants

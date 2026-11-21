@@ -3,7 +3,7 @@ import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { providerResponseHeaders } from "@/lib/provider-response-headers.server";
-import { runApp } from "@watchdog/api";
+import { runAppAs } from "@watchdog/api";
 /**
  * GET /api/v1/cases/:caseId/provider-calls/:callId/response
  *
@@ -46,7 +46,10 @@ export const Route = createFileRoute(
         if (caseId === null || callId === null) {
           return new Response("Not Found", { status: 404 });
         }
-        const response = await runApp(
+        const response = await runAppAs(
+          ctx.credential,
+          "cases:read"
+        )(
           getProviderCallResponseEffect(
             caseId,
             ctx.actor.organizationId,

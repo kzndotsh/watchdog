@@ -21,8 +21,9 @@ name: watchdog-prod
 # Two database roles. POSTGRES_USER owns the schema and runs the migrations and the admin
 # commands (DATABASE_URL_MIGRATE, given to web only, which drops it before the server starts).
 # The app runs as `watchdog_app` (DATABASE_URL): data privileges only, no DDL, no ownership. The
-# Postgres container creates it from docker/postgres/app-role.sql when the volume is first made;
-# an existing install converts by hand: docs/how-to/upgrade.md.
+# worker runs as `watchdog_worker` (DATABASE_URL_WORKER): the same without any write to the Graph.
+# The Postgres container creates both from docker/postgres/app-role.sql when the volume is first
+# made; an existing install converts by hand: docs/how-to/upgrade.md.
 x-app-environment: &app-environment
   DATABASE_URL: postgresql://watchdog_app:${POSTGRES_APP_PASSWORD:?MUST CHANGE - set POSTGRES_APP_PASSWORD in .env.production}@postgres:5432/${POSTGRES_DB:-watchdog}
   S3_ENDPOINT: ${S3_ENDPOINT:-http://s3:8333}
@@ -42,6 +43,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?MUST CHANGE - set POSTGRES_PASSWORD in .env.production}
       # Read by docker/postgres/app-role.sql, which runs once when the data volume is created.
       POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?MUST CHANGE - set POSTGRES_APP_PASSWORD in .env.production}
+      POSTGRES_WORKER_PASSWORD: ${POSTGRES_WORKER_PASSWORD:?MUST CHANGE - set POSTGRES_WORKER_PASSWORD in .env.production}
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./docker/postgres/app-role.sql:/docker-entrypoint-initdb.d/00_app_role.sql:ro
@@ -156,6 +158,8 @@ services:
       # The worker never holds the owner's credentials, even though .env.production carries them.
       DATABASE_URL_MIGRATE: ""
       POSTGRES_PASSWORD: ""
+      # It logs in as the worker role, which may write no Graph table (#720).
+      DATABASE_URL_WORKER: postgresql://watchdog_worker:${POSTGRES_WORKER_PASSWORD:?MUST CHANGE - set POSTGRES_WORKER_PASSWORD in .env.production}@postgres:5432/${POSTGRES_DB:-watchdog}
     volumes:
       - export_data:/data/export
     # Healthy web means migrations are done and the schema is current. The worker has no probe

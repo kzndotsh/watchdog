@@ -38,6 +38,7 @@ set_var WD_MASTER_VAULT_KEY "$vault_key"
 # The dev stack (docker-compose.yml, docker/postgres/init.sql) creates these accounts.
 set_var DATABASE_URL "postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog"
 set_var DATABASE_URL_MIGRATE "postgresql://postgres:postgres@127.0.0.1:5432/watchdog"
+set_var DATABASE_URL_WORKER "postgresql://watchdog_worker:watchdog@127.0.0.1:5432/watchdog"
 set_var S3_SECRET_KEY "watchdog-dev-secret"
 
 echo "Wrote $target with generated secrets. Next: just up, then just admin"

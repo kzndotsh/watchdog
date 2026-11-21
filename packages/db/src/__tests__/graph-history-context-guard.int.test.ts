@@ -20,7 +20,7 @@ import {
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
-import { APP_ROLE } from "../app-role.ts";
+import { APP_ROLE, WORKER_ROLE } from "../app-role.ts";
 import { setGraphHistoryContext } from "../history-context.ts";
 
 /**
@@ -212,11 +212,13 @@ beforeEach(async () => {
 });
 
 describe("graph history context guard: the application role", () => {
-  it("names the application role the way app-role.ts does", async () => {
+  it("names the application and worker roles the way app-role.ts does", async () => {
     const [fn] = await ownerDb.execute<{ src: string }>(
       sql`select prosrc as src from pg_proc where proname = 'graph_require_history_context'`
     );
-    expect(fn?.src).toContain(`current_user = '${APP_ROLE}'`);
+    expect(fn?.src).toContain(
+      `current_user IN ('${APP_ROLE}', '${WORKER_ROLE}')`
+    );
     const [me] = await db.execute<{ who: string }>(
       sql`select current_user as who`
     );

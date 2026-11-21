@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
-import { APP_ROLE, applyAppRoleGrants } from "./app-role";
+import { applyAppRoleGrants } from "./app-role";
 import { installJobQueueSchema } from "./job-queue-schema";
 
 /** The one thing the lock needs from a postgres.js client: tagged-template queries. */
@@ -52,8 +52,8 @@ export function migrationFailureMessage(error: unknown): string {
  * Apply the pending migrations in `migrationsFolder` (the `packages/db/drizzle` layout that
  * `drizzle-kit generate` writes, with the same `drizzle.__drizzle_migrations` bookkeeping as
  * `drizzle-kit migrate`) under the advisory lock, then, still under it and as the same (owner)
- * role: install or upgrade pg-boss's schema, and re-apply the application role's grants and the
- * audit-table revocations (`applyAppRoleGrants`; skipped when the role does not exist). Throws
+ * role: install or upgrade pg-boss's schema, and re-apply the application and worker roles' grants
+ * and revocations (`applyAppRoleGrants`; a role that does not exist is skipped). Throws
  * when a migration fails; the failed one is rolled back and nothing after it runs.
  */
 export async function runMigrations(options: {
@@ -61,7 +61,12 @@ export async function runMigrations(options: {
   readonly migrationsFolder: string;
   /** The application role to grant to; defaults to `APP_ROLE`. Tests use their own. */
   readonly appRole?: string;
-}): Promise<{ readonly appRoleGranted: boolean }> {
+  /** The worker role to grant to; defaults to `WORKER_ROLE`. Tests use their own. */
+  readonly workerRole?: string;
+}): Promise<{
+  readonly appRoleGranted: boolean;
+  readonly workerRoleGranted: boolean;
+}> {
   const sql = postgres(options.url, { max: 1, onnotice: () => {} });
   try {
     return await withMigrationLock(sql, async () => {
@@ -69,11 +74,11 @@ export async function runMigrations(options: {
         migrationsFolder: options.migrationsFolder,
       });
       await installJobQueueSchema(options.url);
-      const { applied } = await applyAppRoleGrants(
-        sql,
-        options.appRole ?? APP_ROLE
-      );
-      return { appRoleGranted: applied };
+      const { applied, workerApplied } = await applyAppRoleGrants(sql, {
+        app: options.appRole,
+        worker: options.workerRole,
+      });
+      return { appRoleGranted: applied, workerRoleGranted: workerApplied };
     });
   } finally {
     await sql.end({ timeout: 5 });
