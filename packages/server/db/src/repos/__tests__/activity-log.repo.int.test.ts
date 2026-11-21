@@ -107,8 +107,17 @@ describe("activityLogRepo", () => {
       action: "created",
       label: "two",
     });
-    const all = await activityLogRepo.drain(db, { after: START, limit: 10 });
-    expect(all.map((row) => row.label)).toEqual(["one", "two"]);
+    // The drain is commit-safe: any transaction on the cluster still open from before "two" (another
+    // connection's) holds it back until it ends. Once shown it stays shown.
+    await expect
+      .poll(
+        async () =>
+          (await activityLogRepo.drain(db, { after: START, limit: 10 })).map(
+            (row) => row.label
+          ),
+        { timeout: 10_000 }
+      )
+      .toEqual(["one", "two"]);
 
     const afterFirst = await activityLogRepo.drain(db, {
       after: { xid: first?.xid ?? "0", id: first?.id ?? 0 },

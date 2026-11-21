@@ -42,6 +42,7 @@ export {
   withOrganizationScope,
 } from "./db/organization-scope.ts";
 export {
+  analyzeTables,
   resetE2eDb,
   resetTestDb,
   withSystemTestTx,
