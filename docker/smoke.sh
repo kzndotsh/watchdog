@@ -155,8 +155,11 @@ done
 for secret in smoke-query-secret smoke-cookie-secret; do
   if logs_contain "$SMOKE_PREFIX-web-a" "$secret"; then fail "the web log holds $secret"; fi
 done
-asset="$(printf '%s' "$signin" | grep -o '/assets/[^"]*\.js' | head -1)"
-[[ -n "$asset" ]] || fail "the sign-in page references no /assets script"
+# A bash match, not `grep | head`: the shell lists enough assets that grep is still writing when
+# head exits, and the SIGPIPE fails the pipeline under pipefail.
+asset_pattern='(/assets/[^"]*\.js)'
+[[ "$signin" =~ $asset_pattern ]] || fail "the sign-in page references no /assets script"
+asset="${BASH_REMATCH[1]}"
 asset_url="http://127.0.0.1:$port_a$asset"
 br_headers="$(curl -fsS -D - -o /dev/null -H 'Accept-Encoding: br' "$asset_url")"
 grep -iF 'content-encoding: br' <<<"$br_headers" >/dev/null || fail "$asset is not served brotli-encoded: $br_headers"

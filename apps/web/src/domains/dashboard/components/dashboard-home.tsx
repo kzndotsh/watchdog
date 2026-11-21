@@ -18,7 +18,6 @@ import { dueTasksQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
-import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
@@ -267,8 +266,6 @@ function DashboardSplit({
   overview: ReactNode;
   activity: ReactNode;
 }) {
-  const hydrated = useHydrated();
-
   const overviewBody = (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
       {overview}
@@ -279,27 +276,6 @@ function DashboardSplit({
       {activity}
     </div>
   );
-
-  // Match SplitView: plain flex before JS so panel sizes do not jump on hydrate.
-  if (!hydrated) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div
-          className="flex min-h-0 flex-col overflow-hidden"
-          style={{ flexBasis: OVERVIEW_DEFAULT, flexShrink: 0 }}
-        >
-          {overviewBody}
-        </div>
-        <div className="bg-border h-px shrink-0" aria-hidden />
-        <div
-          className="flex min-h-0 flex-col overflow-hidden"
-          style={{ flexBasis: ACTIVITY_DEFAULT, flexGrow: 1 }}
-        >
-          {activityBody}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <ResizablePanelGroup

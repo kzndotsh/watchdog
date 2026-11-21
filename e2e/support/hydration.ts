@@ -1,4 +1,9 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+
+/**
+ * SSR is off, so anything on screen below the document shell was rendered by React and takes
+ * clicks at once; these flags only say how far the client render has got.
+ */
 
 /** Root providers mounted (`html[data-hydrated]`). Says nothing about route content. */
 export async function waitForHydrated(page: Page): Promise<void> {
@@ -23,46 +28,4 @@ export async function waitForHydratedNode(
 ): Promise<void> {
   await waitForHydrated(page);
   await page.locator(selector).waitFor({ timeout: 30_000 });
-}
-
-/**
- * Per-element guard on top of `waitForPageHydrated`: content under a nested
- * lazy or Suspense boundary (dialogs, tab bodies) can still be server markup
- * with no React props after the page frame committed, and a click on it is
- * dropped. Wait until React owns the target before clicking.
- */
-export async function clickHydrated(
-  target: Locator,
-  timeout = 30_000
-): Promise<void> {
-  await target.waitFor({ timeout });
-  await expect
-    .poll(
-      async () =>
-        target.evaluate((el) =>
-          Object.keys(el).some((key) => key.startsWith("__reactProps"))
-        ),
-      { timeout, message: "target was never hydrated by React" }
-    )
-    .toBe(true);
-  await target.click({ timeout });
-}
-
-/** `clickHydrated` for a text field: a value typed before React owns the input never reaches form state. */
-export async function fillHydrated(
-  target: Locator,
-  value: string,
-  timeout = 30_000
-): Promise<void> {
-  await target.waitFor({ timeout });
-  await expect
-    .poll(
-      async () =>
-        target.evaluate((el) =>
-          Object.keys(el).some((key) => key.startsWith("__reactProps"))
-        ),
-      { timeout, message: "target was never hydrated by React" }
-    )
-    .toBe(true);
-  await target.fill(value, { timeout });
 }

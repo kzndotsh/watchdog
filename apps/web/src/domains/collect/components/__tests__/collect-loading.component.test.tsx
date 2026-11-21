@@ -6,8 +6,12 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { renderToString } from "react-dom/server";
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { Collect } from "@/domains/collect/components/collect";
 import { collectListView } from "@/domains/collect/queries";
@@ -16,8 +20,8 @@ import { RouteCaseProvider } from "@/testing/route-case";
 import { collectList } from "@watchdog/schemas/jobs";
 import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
-// Collect renders on the server first (a refresh). Nothing is fetched there, so a queue
-// that has not settled must paint its skeleton; "no items" is for a settled, empty queue.
+// The first paint of a queue that has not settled is its skeleton; "no items" is for a
+// settled, empty queue.
 
 const CASE = buildCaseRecord();
 const QUEUE_LABEL = "Loading items";
@@ -34,8 +38,9 @@ function routerAt(pathname: string) {
   });
 }
 
-function serverRender(client: QueryClient): string {
-  return renderToString(
+/** The markup of the first render, before any fetch settles. */
+function firstPaint(client: QueryClient): string {
+  const { container, unmount } = render(
     <RouterContextProvider router={routerAt(`/cases/${CASE.slug}/collect`)}>
       <QueryClientProvider client={client}>
         <SidebarProvider>
@@ -46,11 +51,14 @@ function serverRender(client: QueryClient): string {
       </QueryClientProvider>
     </RouterContextProvider>
   );
+  const html = container.innerHTML;
+  unmount();
+  return html;
 }
 
 describe("Collect loading", () => {
-  it("server-renders the queue and detail skeletons while pending, never the empty queue", () => {
-    const html = serverRender(new QueryClient());
+  it("paints the queue and detail skeletons while pending, never the empty queue", () => {
+    const html = firstPaint(new QueryClient());
 
     expect(html).toContain(QUEUE_LABEL);
     expect(html).toContain(DETAIL_LABEL);
@@ -69,7 +77,7 @@ describe("Collect loading", () => {
       }
     );
 
-    const html = serverRender(client);
+    const html = firstPaint(client);
 
     expect(html).toMatch(EMPTY_QUEUE);
     expect(html).not.toContain(QUEUE_LABEL);

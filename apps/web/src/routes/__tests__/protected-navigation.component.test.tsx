@@ -24,18 +24,6 @@ const getSession = vi.hoisted(() => vi.fn());
 /** How many Cases the organization has (the first-Case gate reads `cases.list`). */
 const visibleCases = vi.hoisted(() => ({ count: 0 }));
 
-vi.mock("@tanstack/react-start", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-start")>();
-  return {
-    ...actual,
-    // The client branch only: this runs in jsdom, where the browser build would be used.
-    createIsomorphicFn: () => ({
-      server: () => ({
-        client: (clientHandler: () => unknown) => clientHandler,
-      }),
-    }),
-  };
-});
 vi.mock("@/auth/client", () => ({ authClient: { getSession } }));
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

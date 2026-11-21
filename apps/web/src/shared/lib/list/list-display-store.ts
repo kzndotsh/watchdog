@@ -14,7 +14,7 @@ export type StoredListDisplay = {
   readonly density: ListDensity;
 };
 
-export const DEFAULT_LIST_DISPLAY: StoredListDisplay = {
+const DEFAULT_LIST_DISPLAY: StoredListDisplay = {
   hiddenColumns: [],
   toggles: {},
   density: "comfortable",

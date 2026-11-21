@@ -15,7 +15,6 @@ import {
 } from "react";
 
 import { cn } from "@/lib/utils";
-import { useHydrated } from "@/shared/hooks/use-hydrated";
 import type { AppAction } from "@/shared/lib/app-action";
 import { filterActionsForSurface } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
@@ -175,7 +174,6 @@ export function GraphCanvas({
   onEdgeClick,
   onPaneClick,
 }: GraphCanvasProps) {
-  const hydrated = useHydrated();
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<GraphTransform>({ x: 0, y: 0, k: 1 });
   const panRef = useRef<{
@@ -277,18 +275,12 @@ export function GraphCanvas({
   }, [applyTransform, fitPadding, minZoom, nodes]);
 
   useLayoutEffect(() => {
-    if (!hydrated) {
-      return;
-    }
     setIsViewReady(false);
     fitToContainer();
     setIsViewReady(true);
-  }, [fitToContainer, hydrated, edges.length, nodeLayoutKey]);
+  }, [fitToContainer, edges.length, nodeLayoutKey]);
 
   useLayoutEffect(() => {
-    if (!hydrated) {
-      return;
-    }
     const element = containerRef.current;
     if (!element) {
       return;
@@ -300,14 +292,14 @@ export function GraphCanvas({
     return () => {
       observer.disconnect();
     };
-  }, [fitToContainer, hydrated]);
+  }, [fitToContainer]);
 
   const applyTransformEvent = useEffectEvent(applyTransform);
   const fitToContainerEvent = useEffectEvent(fitToContainer);
 
   useEffect(() => {
     const element = containerRef.current;
-    if (!element || !hydrated) {
+    if (!element) {
       return;
     }
 
@@ -366,7 +358,7 @@ export function GraphCanvas({
       element.removeEventListener("wheel", zoomFromWheel);
       window.removeEventListener("keydown", zoomFromKeyboard);
     };
-  }, [hydrated, maxZoom, minZoom]);
+  }, [maxZoom, minZoom]);
 
   const handleNodePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, node: GraphNode) => {
@@ -489,21 +481,6 @@ export function GraphCanvas({
   );
 
   const surfaceStyle = graphCanvasDotStyle(transform);
-
-  if (!hydrated) {
-    return (
-      <div
-        className={cn(
-          "relative h-full w-full overflow-hidden",
-          GRAPH_CANVAS_BG_CLASS,
-          className
-        )}
-        style={graphCanvasDotStyle()}
-      >
-        <GraphCanvasPendingShell className="h-full w-full" />
-      </div>
-    );
-  }
 
   return (
     <div

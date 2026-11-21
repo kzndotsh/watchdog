@@ -1,7 +1,7 @@
 import { testId } from "@watchdog/test-kit/fixtures";
 
 import { expect, test } from "../../fixtures/test";
-import { clickHydrated, waitForPageHydrated } from "../../support/hydration";
+import { waitForPageHydrated } from "../../support/hydration";
 
 test.describe("Triage queue", () => {
   test(
@@ -39,9 +39,10 @@ test.describe("Triage queue", () => {
 
       await page.goto(`/cases/${caseSlug}`);
       await waitForPageHydrated(page);
-      await clickHydrated(
-        page.getByRole("link", { name: "Triage", exact: true }).first()
-      );
+      await page
+        .getByRole("link", { name: "Triage", exact: true })
+        .first()
+        .click();
       // The nav link carries the pending view: the list itself has no default filter.
       await expect(page).toHaveURL(/\/triage\?.*status=/);
       await expect(page.getByText("Status: Pending")).toBeVisible({

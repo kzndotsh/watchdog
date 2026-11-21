@@ -1,18 +1,16 @@
-import { clickHydrated } from "../support/hydration";
 import { BasePage } from "./base.page";
 
 export class TriagePage extends BasePage {
   async clickAccept(caseSlug: string): Promise<void> {
     await this.goto(`/cases/${caseSlug}/triage`);
-    await clickHydrated(
-      this.page.getByRole("button", { name: /^accept$/i }),
-      90_000
-    );
+    await this.page
+      .getByRole("button", { name: /^accept$/i })
+      .click({ timeout: 90_000 });
   }
 
   async reject(caseSlug: string, reason = "e2e reject"): Promise<void> {
     await this.goto(`/cases/${caseSlug}/triage`);
-    await clickHydrated(this.page.getByRole("button", { name: /^reject$/i }));
+    await this.page.getByRole("button", { name: /^reject$/i }).click();
     await this.page.getByPlaceholder("Reject reason (optional)").fill(reason);
     await this.page.getByRole("button", { name: /confirm reject/i }).click();
     await this.page

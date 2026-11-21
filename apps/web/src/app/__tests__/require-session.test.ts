@@ -4,21 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const sessionQuery = vi.hoisted(() => vi.fn());
 
-vi.mock("@tanstack/react-start", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@tanstack/react-start")>()),
-  createIsomorphicFn: () => ({
-    server: (_handler: () => unknown) => ({
-      client: (clientHandler: () => Promise<unknown>) => async () =>
-        clientHandler(),
-    }),
-  }),
-}));
 vi.mock("@better-auth-ui/core", () => ({
   sessionOptions: () => ({ queryKey: ["session"], queryFn: sessionQuery }),
 }));
 
 vi.mock("@/auth/client", () => ({ authClient: {} }));
-// The `createIsomorphicFn` stand-in above would make the oRPC client a promise.
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );

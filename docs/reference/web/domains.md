@@ -25,7 +25,7 @@ domains/{noun}/
 | `lib/*` | Pure filters, status maps, `formOptions`, browser helpers | Yes |
 | `*.client.ts` | True browser-only utils (rare) | Client only |
 
-The web app has no server functions: every domain calls the API through `@/lib/orpc-client` (`orpc`), which runs the router in process during SSR and loaders and calls `/api/rpc` in the browser. `*.server` must never ship to the browser.
+The web app has no server functions: every domain calls the API through `@/lib/orpc-client` (`orpc`), which calls `/api/rpc` from the browser (SSR is off, so loaders run there too). `*.server` must never ship to the browser.
 
 **`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `app/hooks/` (`use-activity-stream`, `use-cases-changed-invalidation`), domain-free ones in `shared/hooks/` (`use-debounced-value`, `use-unsaved-guard`), UI-kit hooks beside their atom. A hook over an external store splits in two: a framework-free store module in `shared/lib/` (private state, a small `subscribe`/`getSnapshot` plus mutators interface; `display-scale-store.ts`, `palette-commands-store.ts`) and the hook in `shared/hooks/` that calls `useSyncExternalStore` on it. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
 

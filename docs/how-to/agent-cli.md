@@ -22,7 +22,7 @@ WD_API_KEY=<key-from-settings>
 
 ## Interactive API docs
 
-`/api/v1/` is the Scalar UI (session or API key); `/api/v1/spec.json` is the OpenAPI JSON. The web UI calls the same router over `/api/rpc` (its own browser only, CSRF header required) and in process during SSR; only agents and the CLI use `/api/v1`.
+`/api/v1/` is the Scalar UI (session or API key); `/api/v1/spec.json` is the OpenAPI JSON. The web UI calls the same router over `/api/rpc` (its own browser only, CSRF header required); only agents and the CLI use `/api/v1`.
 
 ## Notes by verb
 
