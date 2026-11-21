@@ -2,7 +2,7 @@ import { Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { Db, runDomainWith } from "@watchdog/core/infra";
+import { Db, runDomainWith, inOrganization } from "@watchdog/core/infra";
 import {
   cancelJobEffect,
   cancelPlaybookRunEffect,
@@ -196,9 +196,12 @@ describe("a Job write and its activity entry share one transaction", () => {
     const append = failNextAppend();
     await expectAppendFailure(
       runDomain(
-        advancePlaybookRunEffect({
-          playbookRunId: started.playbookRunId,
-        })
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          advancePlaybookRunEffect({
+            playbookRunId: started.playbookRunId,
+          })
+        )
       )
     );
     expect(append).toHaveBeenCalled();

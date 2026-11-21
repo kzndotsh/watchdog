@@ -14,7 +14,10 @@ import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue";
-import { withCaseOrganizationScope } from "../organization-scope.ts";
+import {
+  withCaseOrganizationScope,
+  withJobOrganizationScope,
+} from "../organization-scope.ts";
 
 type SeedJobOverrides = Partial<NewJob> &
   Partial<Pick<JobPatch, "resultSummary">> & {
@@ -79,22 +82,24 @@ export async function seedJob(
       `seedJob transitions must end with the Job's status (${status})`
     );
   }
-  const created = await jobsRepo.create(exec, {
-    caseId,
-    capabilityId: createOverrides.capabilityId ?? "network.dns.lookup",
-    input: createOverrides.input ?? { host: "example.com" },
-    status,
-    actorId: createOverrides.actorId ?? TEST_ACTOR_ID,
-    actorLabel: createOverrides.actorLabel,
-    actorKeyId: createOverrides.actorKeyId,
-    logs: createOverrides.logs,
-    playbookRunId: createOverrides.playbookRunId,
-    playbookStep: createOverrides.playbookStep,
-    playbookFanIndex: createOverrides.playbookFanIndex,
-    output: createOverrides.output,
-    evidenceIds: createOverrides.evidenceIds,
-    pivots: createOverrides.pivots,
-  });
+  const created = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+    jobsRepo.create(tx, {
+      caseId,
+      capabilityId: createOverrides.capabilityId ?? "network.dns.lookup",
+      input: createOverrides.input ?? { host: "example.com" },
+      status,
+      actorId: createOverrides.actorId ?? TEST_ACTOR_ID,
+      actorLabel: createOverrides.actorLabel,
+      actorKeyId: createOverrides.actorKeyId,
+      logs: createOverrides.logs,
+      playbookRunId: createOverrides.playbookRunId,
+      playbookStep: createOverrides.playbookStep,
+      playbookFanIndex: createOverrides.playbookFanIndex,
+      output: createOverrides.output,
+      evidenceIds: createOverrides.evidenceIds,
+      pivots: createOverrides.pivots,
+    })
+  );
   if (!created) {
     throw new Error("seedJob failed");
   }
@@ -103,7 +108,9 @@ export async function seedJob(
     await flushCollectQueue(exec);
     return created;
   }
-  const updated = await jobsRepo.update(exec, created.id, { resultSummary });
+  const updated = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+    jobsRepo.update(tx, created.id, { resultSummary })
+  );
   if (!updated) {
     throw new Error("seedJob resultSummary update failed");
   }
@@ -121,7 +128,9 @@ export async function backdateJob(
   jobId: string,
   times: { updatedAt: Date; startedAt?: Date }
 ): Promise<void> {
-  await exec.update(jobs).set(times).where(eq(jobs.id, jobId));
+  await withJobOrganizationScope(exec, jobId, async (tx) =>
+    tx.update(jobs).set(times).where(eq(jobs.id, jobId))
+  );
   await flushCollectQueue(exec);
 }
 
@@ -136,9 +145,11 @@ export async function forceJobStatus(
   status: JobStatus,
   fields?: { error?: string }
 ): Promise<void> {
-  await exec
-    .update(jobs)
-    .set({ status, ...fields })
-    .where(eq(jobs.id, jobId));
+  await withJobOrganizationScope(exec, jobId, async (tx) =>
+    tx
+      .update(jobs)
+      .set({ status, ...fields })
+      .where(eq(jobs.id, jobId))
+  );
   await flushCollectQueue(exec);
 }

@@ -7,6 +7,8 @@ import {
 } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import { withCaseOrganizationScope } from "../organization-scope.ts";
+
 type SeedProviderCallOptions = {
   seq?: number;
   url?: string;
@@ -28,39 +30,42 @@ export async function seedProviderCall(
 ): Promise<{ id: string }> {
   const id = randomUUID();
   const startedAt = options.startedAt ?? new Date("2026-03-01T10:00:00Z");
-  await providerCallsRepo.insertRequest(exec, {
-    id,
-    caseId,
-    jobId,
-    runId: randomUUID(),
-    seq: options.seq ?? 0,
-    transport: "http",
-    method: "GET",
-    urlRedacted: options.url ?? "https://provider.test/v1/host?key=[redacted]",
-    bodyKind: "response",
-    requestBodyState: "none",
-    startedAt,
-  });
-  if (options.outcome !== null) {
-    await providerCallsRepo.insertOutcome(exec, {
-      callId: id,
+  await withCaseOrganizationScope(exec, caseId, async (tx) => {
+    await providerCallsRepo.insertRequest(tx, {
+      id,
       caseId,
-      outcome: "response",
-      status: 200,
-      hops: [
-        { url: "https://provider.test/v1/host", status: 200, attempts: 1 },
-      ],
-      responseHeaders: { "content-type": "text/html; charset=utf-8" },
+      jobId,
+      runId: randomUUID(),
+      seq: options.seq ?? 0,
+      transport: "http",
+      method: "GET",
+      urlRedacted:
+        options.url ?? "https://provider.test/v1/host?key=[redacted]",
+      bodyKind: "response",
+      requestBodyState: "none",
       startedAt,
-      headersMs: 40,
-      durationMs: 120,
-      bodyState: "hashed",
-      bodyReason: "hash_only",
-      bodySha256: "a".repeat(64),
-      bodyBytes: 321,
-      endedAt: new Date("2026-03-01T10:00:00.120Z"),
-      ...options.outcome,
     });
-  }
+    if (options.outcome !== null) {
+      await providerCallsRepo.insertOutcome(tx, {
+        callId: id,
+        caseId,
+        outcome: "response",
+        status: 200,
+        hops: [
+          { url: "https://provider.test/v1/host", status: 200, attempts: 1 },
+        ],
+        responseHeaders: { "content-type": "text/html; charset=utf-8" },
+        startedAt,
+        headersMs: 40,
+        durationMs: 120,
+        bodyState: "hashed",
+        bodyReason: "hash_only",
+        bodySha256: "a".repeat(64),
+        bodyBytes: 321,
+        endedAt: new Date("2026-03-01T10:00:00.120Z"),
+        ...options.outcome,
+      });
+    }
+  });
   return { id };
 }

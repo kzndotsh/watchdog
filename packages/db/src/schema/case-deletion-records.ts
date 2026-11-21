@@ -9,6 +9,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { timestamptz, xid8 } from "./_helpers";
+import { organizationIsolation } from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 
 /** What a purge erased, by kind: the counts a deletion record keeps in place of the content. */
@@ -47,6 +48,7 @@ export const caseDeletionRecords = pgTable(
       .default(sql`pg_current_xact_id()`),
   },
   (t) => [
+    organizationIsolation("case_deletion_records", t.organizationId),
     index("case_deletion_records_case_id_idx").on(t.caseId, t.id),
     // The lifecycle guard looks a record up by Case, transaction and event.
     index("case_deletion_records_case_xid_idx").on(t.caseId, t.xid),

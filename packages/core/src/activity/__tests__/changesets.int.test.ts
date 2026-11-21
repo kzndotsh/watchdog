@@ -6,7 +6,7 @@ import {
   acceptProposalEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
-import { db, proposalsRepo } from "@watchdog/db";
+import { proposalsRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
@@ -21,6 +21,7 @@ import {
   seedEntity,
   seedEvidence,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

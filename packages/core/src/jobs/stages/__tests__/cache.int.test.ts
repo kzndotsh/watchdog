@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { runDomain } from "@watchdog/core/infra";
+import { Db, runDomainWith } from "@watchdog/core/infra";
 import type { JobArtifact } from "@watchdog/db";
 import {
   resetTestDb,
@@ -14,6 +14,10 @@ import { lookupCapCacheEffect } from "../../cap-cache";
 import { createJobLog } from "../../job-log";
 import { storeCacheStageEffect } from "../cache";
 import type { PreflightState } from "../preflight";
+
+// The landing and cache stages run inside a Job's organization scope (`inJobOrganization`, #719):
+// these tests call them directly, so the pool is in the test organization's scope.
+const runDomain = runDomainWith(Db.layerOf(db));
 
 const CAP_ID = "network.dns.lookup";
 const CAP_VERSION = "v1";

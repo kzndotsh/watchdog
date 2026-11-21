@@ -8,7 +8,7 @@ import type { OrganizationId } from "@watchdog/schemas/shared";
 import type { Db } from "./client";
 import type { DbExec, DbTx } from "./exec";
 import { ORGANIZATION_SETTING } from "./history-context";
-import { trimCaseId } from "./repos/_scoped-ids";
+import { trimCaseId, trimResourceId } from "./repos/_scoped-ids";
 import { organization } from "./schema/auth";
 import * as schema from "./schema/index";
 
@@ -49,6 +49,24 @@ export async function caseOrganizationIdUnchecked(
   if (id === undefined) return null;
   const rows = await exec.execute<{ organization_id: OrganizationId | null }>(
     sql`select public.case_organization_id(${id}::uuid) as organization_id`
+  );
+  return rows[0]?.organization_id ?? null;
+}
+
+/**
+ * The organization of a Job, read past row-level security (`job_organization_id`, SECURITY
+ * DEFINER): for the worker, which holds a Job id from the queue and must scope to the Job's
+ * organization before reading it. `null` for a missing Job or an id that is not a UUID. Never for
+ * an id a caller sent.
+ */
+export async function jobOrganizationIdUnchecked(
+  exec: DbExec,
+  jobId: string
+): Promise<OrganizationId | null> {
+  const id = trimResourceId(jobId);
+  if (id === undefined) return null;
+  const rows = await exec.execute<{ organization_id: OrganizationId | null }>(
+    sql`select public.job_organization_id(${id}::uuid) as organization_id`
   );
   return rows[0]?.organization_id ?? null;
 }
@@ -169,7 +187,7 @@ export function isOrganizationScoped(exec: DbExec): boolean {
 
 /**
  * The pool handle `db`, scoped to one organization: every statement and transaction run on it sets
- * `watchdog.org_id` first, so the row-level security policies on `cases` and `claims` show that
+ * `watchdog.org_id` first, so the row-level security policies on every Case-scoped table show that
  * organization's rows only. A handle without a scope sees none of them (fail closed). Scoping a
  * scoped handle again replaces the organization (it wraps the same base client). Handles are
  * cached per client and organization.

@@ -305,9 +305,9 @@ describe("the provider calls of a Job's run", () => {
     await backdateJob(db, job.id, {
       updatedAt: new Date(Date.now() - 2 * 86_400_000),
     });
-    await runDomainWith(Layer.mergeAll(Db.layer, recordingJobQueue().layer))(
-      reconcileJobsEffect()
-    );
+    await runDomainWith(
+      Layer.mergeAll(Db.layerOf(db), recordingJobQueue().layer)
+    )(reconcileJobsEffect());
 
     const failed = await jobsRepo.get(db, job.id);
     expect(failed).toMatchObject({
@@ -350,7 +350,7 @@ describe("the provider calls of a Job's run", () => {
     // loaded CI database, so the flag itself timed out. 800 ms gives it 400 ms and still proves
     // the stop is bounded by the budget, far below the 5 s production default.
     const started = Date.now();
-    await runDomainWith(Layer.mergeAll(Db.layer, hung.layer))(
+    await runDomainWith(Layer.mergeAll(Db.layerOf(db), hung.layer))(
       persistProviderCallsBestEffort(scope, () => ledger.drain(), 800)
     );
 

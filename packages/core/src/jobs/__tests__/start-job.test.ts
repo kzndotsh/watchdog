@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
 import { toJobRecord } from "../start-job";
 
@@ -13,6 +13,7 @@ describe("toJobRecord", () => {
     const record = toJobRecord({
       id: "job-1",
       caseId: testCaseId(1),
+      organizationId: TEST_ORGANIZATION_ID,
       capabilityId: "network.dns.lookup",
       input: { host: "example.com" },
       output: null,

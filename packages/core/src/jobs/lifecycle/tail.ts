@@ -7,6 +7,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import { errorMessage } from "../../errors/error-utils";
 import { InvalidError } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationIfFound } from "../../infra/organization-scope";
 import { logSwallowed } from "../../infra/process-log";
 import { capCacheKey, type CapCacheKey } from "../cap-cache";
 import { parseValidatedCapInputEffect } from "../cap-input";
@@ -30,7 +31,12 @@ export function advancePlaybookTailEffect(job: {
 }): Effect.Effect<void, never, Db | JobQueue> {
   const { jobId, caseId, playbookRunId } = job;
   if (playbookRunId === null) return Effect.void;
-  return advancePlaybookRunEffect({ playbookRunId }).pipe(
+  // In the Job's Case's organization (row-level security, #719): a no-op inside the Job run's
+  // own scope, the scope itself for a caller outside one.
+  return inCaseOrganizationIfFound(
+    caseId,
+    advancePlaybookRunEffect({ playbookRunId })
+  ).pipe(
     Effect.catchCause((cause) =>
       Effect.sync(() => {
         logSwallowed("playbook.advance", Cause.squash(cause), {

@@ -33,11 +33,13 @@ export async function seedEvidence(
   caseId: CaseId,
   overrides?: Partial<NewEvidence>
 ): Promise<EvidenceRow> {
-  const created = await evidenceRepo.create(exec, {
-    ...DEFAULT_EVIDENCE,
-    caseId,
-    ...overrides,
-  });
+  const created = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+    evidenceRepo.create(tx, {
+      ...DEFAULT_EVIDENCE,
+      caseId,
+      ...overrides,
+    })
+  );
   if (!created) {
     throw new Error("seedEvidence failed");
   }
@@ -69,7 +71,9 @@ export async function pinEvidenceId(
   row: EvidenceRow,
   id: string
 ): Promise<EvidenceRow> {
-  await exec.update(evidence).set({ id }).where(eq(evidence.id, row.id));
+  await withCaseOrganizationScope(exec, row.caseId, async (tx) =>
+    tx.update(evidence).set({ id }).where(eq(evidence.id, row.id))
+  );
   await flushCollectQueue(exec);
   return { ...row, id };
 }

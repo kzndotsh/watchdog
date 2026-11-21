@@ -1,7 +1,12 @@
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { Db, runDomainWith, transact } from "@watchdog/core/infra";
+import {
+  Db,
+  inOrganization,
+  runDomainWith,
+  transact,
+} from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { jobsRepo } from "@watchdog/db";
 import {
@@ -9,6 +14,7 @@ import {
   TERMINAL_JOB_STATUSES,
   type JobStatus,
 } from "@watchdog/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   listAllActivity,
   resetTestDb,
@@ -116,18 +122,29 @@ describe("Job lifecycle: a terminal Job never moves", () => {
       const { cased, job } = await seedTerminal(status);
       const before = await jobsRepo.get(db, job.id);
 
+      // In the Case's organization, as every canceller is: unscoped, the cancel would see no Job.
       const byJob = await runWithQueue(
-        transact((tx) =>
-          cancelWithin(
-            tx,
-            { kind: "job", caseId: cased.id, jobId: job.id },
-            "user_cancelled"
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          transact((tx) =>
+            cancelWithin(
+              tx,
+              { kind: "job", caseId: cased.id, jobId: job.id },
+              "user_cancelled"
+            )
           )
         )
       );
       const byCase = await runWithQueue(
-        transact((tx) =>
-          cancelWithin(tx, { kind: "case", caseId: cased.id }, "user_cancelled")
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          transact((tx) =>
+            cancelWithin(
+              tx,
+              { kind: "case", caseId: cased.id },
+              "user_cancelled"
+            )
+          )
         )
       );
       expect(byJob.cancelled).toEqual([]);

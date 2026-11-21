@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 
 import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { PatchOp } from "@watchdog/schemas/graph";
@@ -15,6 +15,11 @@ import { cases } from "../schema/cases";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { proposals } from "../schema/proposals";
+import {
+  drainWholeLog,
+  wholeLogHasPast,
+  wholeLogNewest,
+} from "./_activity-log-unscoped";
 import { orgCaseFilter } from "./_org-case-filter";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 
@@ -96,10 +101,6 @@ function afterCursor(after: ActivityCursor) {
   return sql`(${activity.xid}, ${activity.id}) > (${after.xid}::xid8, ${after.id})`;
 }
 
-function cursorOf(row: { xid: string; id: number } | undefined) {
-  return row === undefined ? null : { xid: row.xid, id: row.id };
-}
-
 /** `(xid, id)` order; `xid8` values are compared as integers, not as text. */
 function isNewer(a: ActivityCursor, b: ActivityCursor): boolean {
   const ax = BigInt(a.xid);
@@ -128,8 +129,8 @@ function pruneCandidatesQuery(opts: PruneActivityOpts, limit: number) {
       ? sql`TRUE`
       : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
   // The Cases come from the log itself, one index probe per Case (a loose scan of
-  // `activity_case_id_id_idx`), not from `cases`: row-level security (#718) shows the
-  // maintenance worker no Case, and the prune spans every organization.
+  // `activity_case_id_id_idx`), not from `cases`. Under row-level security (#719) the log shows
+  // only the organization the prune runs in (core visits each one in turn).
   return sql`
     WITH RECURSIVE c(id) AS (
       SELECT (SELECT f.case_id FROM activity f ORDER BY f.case_id LIMIT 1)
@@ -203,16 +204,12 @@ export const activityLogRepo = {
    */
   async drain(exec: DbExec, opts: DrainActivityOpts): Promise<ActivityRow[]> {
     const limit = Math.max(1, Math.trunc(opts.limit));
+    if (opts.organizationId === undefined) {
+      // The process-wide tailer: every organization's entries, past the policy on `activity`.
+      return drainWholeLog(exec, opts.after, limit);
+    }
     const where = and(afterCursor(opts.after), COMMIT_SAFE);
     const order = [activity.xid, activity.id] as const;
-    if (opts.organizationId === undefined) {
-      return exec
-        .select(getTableColumns(activity))
-        .from(activity)
-        .where(where)
-        .orderBy(...order)
-        .limit(limit);
-    }
     return exec
       .select(getTableColumns(activity))
       .from(activity)
@@ -227,35 +224,28 @@ export const activityLogRepo = {
       .limit(limit);
   },
 
-  /** True when any row, committed or not, sits past `after` (the tailer re-polls while it does). */
+  /**
+   * True when any row, committed or not, sits past `after` (the tailer re-polls while it does).
+   * The whole log, past the policy on `activity`, like the process-wide drain.
+   */
   async hasPast(exec: DbExec, after: ActivityCursor): Promise<boolean> {
-    const [row] = await exec
-      .select({ id: activity.id })
-      .from(activity)
-      .where(afterCursor(after))
-      .limit(1);
-    return row !== undefined;
+    return wholeLogHasPast(exec, after);
   },
 
-  /** The newest commit-safe position; `(0, 0)` when nothing is readable yet. */
+  /**
+   * The newest commit-safe position of the whole log (every organization's entries, past the
+   * policy on `activity`); `(0, 0)` when nothing is readable yet.
+   */
   async head(exec: DbExec): Promise<ActivityCursor> {
-    const [row] = await exec
-      .select({ xid: activity.xid, id: activity.id })
-      .from(activity)
-      .where(COMMIT_SAFE)
-      .orderBy(desc(activity.xid), desc(activity.id))
-      .limit(1);
-    return cursorOf(row) ?? { xid: "0", id: 0 };
+    return (await wholeLogNewest(exec, true)) ?? { xid: "0", id: 0 };
   },
 
-  /** The newest position of any row (safe or not); `null` for an empty log. */
+  /**
+   * The newest position of any row (safe or not) of the whole log, past the policy on
+   * `activity`; `null` for an empty log.
+   */
   async newest(exec: DbExec): Promise<ActivityCursor | null> {
-    const [row] = await exec
-      .select({ xid: activity.xid, id: activity.id })
-      .from(activity)
-      .orderBy(desc(activity.xid), desc(activity.id))
-      .limit(1);
-    return cursorOf(row);
+    return wholeLogNewest(exec, false);
   },
 
   /**

@@ -10,6 +10,7 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { createdAt } from "./_helpers";
+import { caseIsolation } from "./_organization-policy";
 import { claims } from "./claims";
 import { edges } from "./edges";
 import { evidence } from "./evidence";
@@ -43,6 +44,7 @@ export const claimEvidence = pgTable(
     createdAt,
   },
   (t) => [
+    caseIsolation("claim_evidence", t.caseId),
     primaryKey({ columns: [t.claimId, t.evidenceId] }),
     index("claim_evidence_evidence_id_idx").on(t.evidenceId),
     foreignKey({
@@ -69,6 +71,7 @@ export const identifierEvidence = pgTable(
     createdAt,
   },
   (t) => [
+    caseIsolation("identifier_evidence", t.caseId),
     primaryKey({ columns: [t.identifierId, t.evidenceId] }),
     index("identifier_evidence_evidence_id_idx").on(t.evidenceId),
     foreignKey({
@@ -95,6 +98,7 @@ export const edgeEvidence = pgTable(
     createdAt,
   },
   (t) => [
+    caseIsolation("edge_evidence", t.caseId),
     primaryKey({ columns: [t.edgeId, t.evidenceId] }),
     index("edge_evidence_evidence_id_idx").on(t.evidenceId),
     foreignKey({
@@ -123,6 +127,7 @@ export const proposalEvidence = pgTable(
     position: integer("position").notNull(),
   },
   (t) => [
+    caseIsolation("proposal_evidence", t.caseId),
     primaryKey({ columns: [t.proposalId, t.evidenceId] }),
     index("proposal_evidence_evidence_id_idx").on(t.evidenceId),
     index("proposal_evidence_case_id_idx").on(t.caseId),
@@ -158,6 +163,7 @@ export const jobEvidence = pgTable(
     position: integer("position").notNull(),
   },
   (t) => [
+    caseIsolation("job_evidence", t.caseId),
     primaryKey({ columns: [t.jobId, t.evidenceId] }),
     index("job_evidence_evidence_id_idx").on(t.evidenceId),
     index("job_evidence_case_id_idx").on(t.caseId),

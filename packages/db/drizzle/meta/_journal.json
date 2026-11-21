@@ -29,6 +29,13 @@
       "when": 1795222180972,
       "tag": "0003_organization_isolation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795228520916,
+      "tag": "0004_organization_isolation_case_tables",
+      "breakpoints": true
     }
   ]
 }

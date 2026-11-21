@@ -133,7 +133,7 @@ describe("stops and failures while the record is being saved", () => {
     // A direct call has a kept body, so the hung store stalls the save.
     const budgetMs = 800;
     const started = Date.now();
-    await runDomainWith(Layer.mergeAll(Db.layer, hungStore().layer))(
+    await runDomainWith(Layer.mergeAll(Db.layerOf(db), hungStore().layer))(
       persistProviderCallsBestEffort(scope, () => ledger.drain(), budgetMs)
     );
     const held = Date.now() - started;

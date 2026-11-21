@@ -5,6 +5,7 @@ import { isOpenJobStatus, parseTrimmedUuid } from "@watchdog/schemas/shared";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { jobsRepoFxDb } from "../infra/repos-fx";
+import { inJobOrganization } from "./job-organization";
 import { failJobEffect, isPlainRecord } from "./stages/helpers";
 
 /** Best-effort domain job id from a pg-boss delivery payload. */
@@ -24,16 +25,23 @@ export function failInvalidCapDeliveryEffect(
   return Effect.gen(function* failInvalidCapDeliveryGen() {
     const normalizedJobId = parseTrimmedUuid(jobId) ?? undefined;
     if (normalizedJobId === undefined) return;
-    const row = yield* jobsRepoFxDb.get(normalizedJobId);
-    if (row === null || !isOpenJobStatus(row.status)) return;
-    yield* failJobEffect(
+    // The worker holds only the delivery's Job id: read and fail the Job in its organization
+    // (row-level security, #719).
+    yield* inJobOrganization(
       normalizedJobId,
-      "invalid_payload",
-      {
-        caseId: row.caseId,
-        cause: "preflight_failed",
-      },
-      row.logs ?? []
+      Effect.gen(function* failInScopeGen() {
+        const row = yield* jobsRepoFxDb.get(normalizedJobId);
+        if (row === null || !isOpenJobStatus(row.status)) return;
+        yield* failJobEffect(
+          normalizedJobId,
+          "invalid_payload",
+          {
+            caseId: row.caseId,
+            cause: "preflight_failed",
+          },
+          row.logs ?? []
+        );
+      })
     );
   });
 }

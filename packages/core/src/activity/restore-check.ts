@@ -1,7 +1,14 @@
 import { Effect } from "effect";
 
+import { setOrganizationContext } from "@watchdog/db";
+
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import {
+  forEachOrganization,
+  listOrganizationIdsEffect,
+} from "../infra/organization-scope";
+import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   activityLogRepoFxDb,
@@ -37,11 +44,20 @@ export function repairRestoredActivityXidsEffect(): Effect.Effect<
   Db
 > {
   return Effect.gen(function* repairRestoredXidsGen() {
-    const future = yield* activityLogRepoFxDb.hasFutureXid();
+    // Row-level security (#719): the log is read and rewritten one organization at a time, the
+    // rewrite in one transaction that moves from one organization's scope to the next.
+    const future = (yield* forEachOrganization(() =>
+      activityLogRepoFxDb.hasFutureXid()
+    )).some(Boolean);
     if (!future) return { repaired: 0 };
+    const organizationIds = yield* listOrganizationIdsEffect();
     return yield* transact((tx) =>
       Effect.gen(function* repairBodyGen() {
-        const repaired = yield* activityLogRepoFx.zeroXids(tx);
+        let repaired = 0;
+        for (const organizationId of organizationIds) {
+          yield* tryDb(() => setOrganizationContext(tx, organizationId));
+          repaired += yield* activityLogRepoFx.zeroXids(tx);
+        }
         yield* activityFloorRepoFx.zeroXid(tx);
         yield* activityCursorsRepoFx.zeroXids(tx);
         return { repaired };

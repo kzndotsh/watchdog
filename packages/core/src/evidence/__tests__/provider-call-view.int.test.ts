@@ -17,6 +17,7 @@ import {
   seedJob,
   seedProviderCall,
   testDb as db,
+  withCaseOrganizationScope,
 } from "@watchdog/test-db";
 
 import { recordingBlobStore } from "../../infra/blob-store";
@@ -75,10 +76,13 @@ async function seedCapJob(
     // No test here reads the activity feed: skip the queued and running entries (two appends a Job).
     transitions: ["succeeded"],
   });
-  const updated = await jobsRepo.update(db, job.id, {
-    capVersion: "v-abc123",
-    ...patch,
-  });
+  // In the Case's organization scope: some Jobs here are another organization's (#719).
+  const updated = await withCaseOrganizationScope(db, caseId, async (tx) =>
+    jobsRepo.update(tx, job.id, {
+      capVersion: "v-abc123",
+      ...patch,
+    })
+  );
   if (!updated) throw new Error("job missing");
   return updated;
 }

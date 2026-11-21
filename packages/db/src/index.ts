@@ -43,6 +43,7 @@ export {
   caseOrganizationIdUnchecked,
   isOrganizationScoped,
   isTransaction,
+  jobOrganizationIdUnchecked,
   listOrganizationIds,
   organizationScopedDb,
   setOrganizationContext,

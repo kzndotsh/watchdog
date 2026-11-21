@@ -32,11 +32,10 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { db } from "@watchdog/db";
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { seedCase, seedEntity } from "@watchdog/test-db";
+import { seedCase, seedEntity, testDb as db } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 /**

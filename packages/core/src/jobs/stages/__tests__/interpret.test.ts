@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { recordingBlobStore } from "@watchdog/core/blob";
 import type { JobArtifact, JobRow } from "@watchdog/db";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { createJobLog } from "../../job-log";
@@ -47,6 +47,7 @@ function makeJobRow(): JobRow {
   return {
     id: testId(1),
     caseId: testCaseId(2),
+    organizationId: TEST_ORGANIZATION_ID,
     capabilityId: "network.dns.lookup",
     input: {},
     output: null,

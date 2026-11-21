@@ -17,7 +17,7 @@ import { tryDb } from "./postgres-effect";
 /**
  * Run `effect` with the `Db` service scoped to `organizationId` (row-level security, #718): every
  * statement and transaction it runs on the service sets `watchdog.org_id` first, so the policies on
- * `cases` and `claims` show that organization's rows and no other's. A `Db` that is itself a
+ * every Case-scoped table show that organization's rows and no other's. A `Db` that is itself a
  * transaction (a test's `Db.layerOf(tx)`) gets the setting for the rest of that transaction.
  *
  * The one way core code gains an organization scope: every exported Effect that takes an

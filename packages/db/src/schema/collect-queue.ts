@@ -20,6 +20,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { timestamptz, xid8 } from "./_helpers";
+import { caseIsolation } from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 
 /*
@@ -64,6 +65,7 @@ export const collectQueue = pgTable(
     searchText: text("search_text").notNull(),
   },
   (t) => [
+    caseIsolation("collect_queue", t.caseId),
     index("collect_queue_activity_idx").on(
       t.caseId,
       t.hidden,
@@ -109,6 +111,7 @@ export const collectQueueMember = pgTable(
     caseId: uuid("case_id").$type<CaseId>().notNull(),
   },
   (t) => [
+    caseIsolation("collect_queue_member", t.caseId),
     primaryKey({ columns: [t.jobId, t.rowId] }),
     index("collect_queue_member_row_idx").on(t.rowId),
     // The drift check counts a Case's member Jobs from this index alone.
@@ -136,12 +139,19 @@ export const collectQueueStale = pgTable(
     at: timestamptz("at").notNull(),
     error: text("error"),
   },
-  (t) => [index("collect_queue_stale_case_idx").on(t.caseId)]
+  (t) => [
+    caseIsolation("collect_queue_stale", t.caseId),
+    index("collect_queue_stale_case_idx").on(t.caseId),
+  ]
 );
 
 /** The drift check's round robin: when each Case was last counted and last fully compared. */
-export const collectQueueCase = pgTable("collect_queue_case", {
-  caseId: uuid("case_id").primaryKey(),
-  checkedAt: timestamptz("checked_at"),
-  diffedAt: timestamptz("diffed_at"),
-});
+export const collectQueueCase = pgTable(
+  "collect_queue_case",
+  {
+    caseId: uuid("case_id").primaryKey(),
+    checkedAt: timestamptz("checked_at"),
+    diffedAt: timestamptz("diffed_at"),
+  },
+  (t) => [caseIsolation("collect_queue_case", t.caseId)]
+);

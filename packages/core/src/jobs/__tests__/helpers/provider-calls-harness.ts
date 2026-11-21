@@ -12,9 +12,9 @@ import {
   type CapabilityDef,
   type CapServices,
 } from "@watchdog/caps/sdk";
-import { db, jobsRepo, type JobRow } from "@watchdog/db";
+import { jobsRepo, type JobRow } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
-import { seedJob } from "@watchdog/test-db";
+import { seedJob, testDb as db } from "@watchdog/test-db";
 import { listenFetchable } from "@watchdog/test-kit";
 import { mapToolsCatch, type ToolsTag } from "@watchdog/tools/errors";
 import {
@@ -188,10 +188,14 @@ export async function runningState(
   };
 }
 
-/** The services a collect run needs: the pool, the given blob store, a fake vault, and a client for loopback. */
+/**
+ * The services a collect run needs: the pool, the given blob store, a fake vault, and a client for
+ * loopback. The pool is in the test organization's scope, as the worker's Job run is in its Job's
+ * (`inJobOrganization`, row-level security #719): these tests run the stage itself.
+ */
 export function collectLayer(store: ReturnType<typeof recordingBlobStore>) {
   return Layer.mergeAll(
-    Db.layer,
+    Db.layerOf(db),
     store.layer,
     fakeVault().layer,
     outboundClientLayerWith({

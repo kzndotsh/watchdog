@@ -21,7 +21,12 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
+import { cases } from "./cases";
 import { entities } from "./entities";
 
 /**
@@ -35,6 +40,8 @@ export const identifiers = pgTable(
     entityId: uuid("entity_id").notNull(),
     /** The Entity's Case, held so the foreign key below can refuse a cross-Case row. */
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     type: text("type").$type<IdentifierType>().notNull(),
     /** Required when type=handle; empty string when unset (unique-friendly). */
     platform: text("platform").notNull().default(""),
@@ -50,6 +57,14 @@ export const identifiers = pgTable(
     ...rowVersion,
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "identifiers_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("identifiers", t.organizationId),
     uniqueIndex("identifiers_natural_uidx").on(
       t.entityId,
       t.type,

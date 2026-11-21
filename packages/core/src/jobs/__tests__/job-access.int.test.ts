@@ -25,6 +25,7 @@ import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { Db } from "../../infra/db-service.ts";
+import { inOrganization } from "../../infra/organization-scope.ts";
 import { runDomainWith } from "../../infra/run-domain.ts";
 import { JobFibers } from "../job-fibers.ts";
 import { recordingJobQueue } from "../job-queue.ts";
@@ -256,7 +257,12 @@ describe("Playbook steps re-check access", () => {
     });
     expect(first.actorKeyId).toBe(KEY_ID);
 
-    await runDomain(advancePlaybookRunEffect({ playbookRunId: run.id }));
+    await runDomain(
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        advancePlaybookRunEffect({ playbookRunId: run.id })
+      )
+    );
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     const next = members.find((j) => j.playbookStep === 1);
     if (next === undefined) throw new TypeError("expected a step 1 Job");

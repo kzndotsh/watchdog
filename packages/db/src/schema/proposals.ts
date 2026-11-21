@@ -1,5 +1,6 @@
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -14,6 +15,10 @@ import { PROPOSAL_STATUSES } from "@watchdog/schemas/shared";
 import type { ProposalStatus, CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { jobs } from "./jobs";
@@ -26,6 +31,8 @@ export const proposals = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),
     status: text("status").$type<ProposalStatus>().notNull().default("pending"),
     patch: jsonb("patch").$type<PatchOp[]>().notNull(),
@@ -55,6 +62,14 @@ export const proposals = pgTable(
     ...timestamps,
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "proposals_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("proposals", t.organizationId),
     // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
     index("proposals_case_created_idx").on(
       t.caseId,

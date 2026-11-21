@@ -2,7 +2,11 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { isDomainTag } from "@watchdog/core/errors";
-import { listCappedEffect, runDomain } from "@watchdog/core/infra";
+import {
+  inOrganization,
+  listCappedEffect,
+  runDomain,
+} from "@watchdog/core/infra";
 import {
   createTaskEffect,
   deleteTaskEffect,
@@ -378,16 +382,20 @@ describe("createTask", () => {
         })
       );
     }
+    // A capped read runs inside its caller's organization scope (row-level security, #719).
     const read = (cap: number) =>
       runDomain(
-        listCappedEffect({
-          def: taskList,
-          repo: taskListRepo,
-          scope: { caseId: cased.id },
-          query: taskList.queryOf({ sort: "position.asc" }),
-          cap,
-          toItems: (rows) => Effect.succeed(rows.map((row) => row.title)),
-        })
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          listCappedEffect({
+            def: taskList,
+            repo: taskListRepo,
+            scope: { caseId: cased.id },
+            query: taskList.queryOf({ sort: "position.asc" }),
+            cap,
+            toItems: (rows) => Effect.succeed(rows.map((row) => row.title)),
+          })
+        )
       );
     expect(await read(2)).toEqual({ items: ["A", "B"], isTruncated: true });
     expect(await read(3)).toEqual({

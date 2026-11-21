@@ -5,7 +5,8 @@ import {
   type UpdateEntityFieldsInput,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { entitiesRepo, db } from "@watchdog/db";
+import { entitiesRepo } from "@watchdog/db";
+import { testDb as db } from "@watchdog/test-db";
 
 /**
  * Edit an Entity the way a careful client does under contention: read its version, send it,

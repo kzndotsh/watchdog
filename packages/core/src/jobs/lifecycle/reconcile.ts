@@ -13,7 +13,10 @@ import { errorMessage } from "../../errors/error-utils";
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { inCaseOrganizationIfFound } from "../../infra/organization-scope";
+import {
+  forEachOrganization,
+  inCaseOrganizationIfFound,
+} from "../../infra/organization-scope";
 import { tryDb, tryDbWith } from "../../infra/postgres-effect";
 import { outsideTransaction, transact } from "../../infra/postgres-tx";
 import { logProcessWarning, logSwallowed } from "../../infra/process-log";
@@ -72,6 +75,20 @@ const SKIPPED: JobReconcileResult = {
 /** The failure text of a queued Job whose delivery ended or is gone before a worker took it. */
 const UNDELIVERED_ERROR =
   "This Job's queue delivery ended before a worker started it; start it again";
+
+/**
+ * A repair's candidate rows from every organization: row-level security (#719) shows a
+ * transaction only its organization's Jobs and runs, so the read runs once in each organization's
+ * scope. Each repair then scopes to its row's Case (`inCaseOrganizationIfFound`).
+ */
+function acrossOrganizations<A>(
+  read: Effect.Effect<readonly A[], DomainTag, Db>
+): Effect.Effect<A[], DomainTag, Db> {
+  return Effect.map(
+    forEachOrganization(() => read),
+    (perOrganization) => perOrganization.flat()
+  );
+}
 
 function capExpireOrUnknown(
   capabilityId: string
@@ -158,7 +175,7 @@ function repairRunningJobsEffect(): Effect.Effect<
   Db | JobQueue
 > {
   return Effect.gen(function* repairRunningJobsGen() {
-    const running = yield* jobsRepoFxDb.listRunning();
+    const running = yield* acrossOrganizations(jobsRepoFxDb.listRunning());
     const now = yield* Clock.currentTimeMillis;
     const verdicts = yield* Effect.forEach(
       running,
@@ -186,8 +203,8 @@ function failUndeliveredJobsEffect(): Effect.Effect<
   Db | JobQueue
 > {
   return Effect.gen(function* failUndeliveredJobsGen() {
-    const rows = yield* tryDbWith((exec) =>
-      listQueuedJobsWithoutDelivery(exec)
+    const rows = yield* acrossOrganizations(
+      tryDbWith((exec) => listQueuedJobsWithoutDelivery(exec))
     );
     const failed = yield* Effect.forEach(
       rows,
@@ -223,7 +240,9 @@ function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
   Db | JobQueue
 > {
   return Effect.gen(function* reconcileStuckPlaybookRunsGen() {
-    const running = yield* playbookRunsRepoFxDb.listRunning();
+    const running = yield* acrossOrganizations(
+      playbookRunsRepoFxDb.listRunning()
+    );
     const results = yield* Effect.forEach(
       running,
       (run) =>

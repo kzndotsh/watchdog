@@ -11,6 +11,7 @@ import {
 import { InternalError } from "@watchdog/core/errors";
 import {
   Db,
+  inOrganization,
   runDomain,
   runDomainWith,
   transact,
@@ -39,6 +40,7 @@ import {
   resetTestDb,
   seedCase,
   testDb as db,
+  withCaseOrganizationScope,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
@@ -59,29 +61,32 @@ describe("appendActivityEffect", () => {
     const cased = await seedCase(db);
     const failure = new InternalError({ reason: "rollback me" });
     const result = await runDomain(
-      transact((tx) =>
-        Effect.gen(function* rolledBackWrite() {
-          yield* setHistoryContextEffect(tx, {
-            channel: "system",
-            changeset: { caseId: cased.id },
-          });
-          const task = yield* tryDb(() =>
-            tasksRepo.create(tx, {
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        transact((tx) =>
+          Effect.gen(function* rolledBackWrite() {
+            yield* setHistoryContextEffect(tx, {
+              channel: "system",
+              changeset: { caseId: cased.id },
+            });
+            const task = yield* tryDb(() =>
+              tasksRepo.create(tx, {
+                caseId: cased.id,
+                title: "never committed",
+                status: "backlog",
+              })
+            );
+            yield* appendActivityEffect(tx, {
               caseId: cased.id,
-              title: "never committed",
-              status: "backlog",
-            })
-          );
-          yield* appendActivityEffect(tx, {
-            caseId: cased.id,
-            kind: "task",
-            action: "created",
-            subjectId: task?.id ?? null,
-            label: "never committed",
-            toValue: "backlog",
-          });
-          return yield* failure;
-        })
+              kind: "task",
+              action: "created",
+              subjectId: task?.id ?? null,
+              label: "never committed",
+              toValue: "backlog",
+            });
+            return yield* failure;
+          })
+        )
       ).pipe(Effect.flip)
     );
     expect(result).toBe(failure);
@@ -296,13 +301,16 @@ describe("reconnect replay", () => {
     });
     const scoped: ActivityEntry[] = [];
     const unscoped: ActivityEntry[] = [];
-    const append = (caseId: CaseId, label: string) =>
-      activityLogRepo.append(db, {
-        caseId,
-        kind: "task",
-        action: "created",
-        label,
-      });
+    // Each entry in its Case's organization scope (row-level security on `activity`, #719).
+    const append = async (caseId: CaseId, label: string) =>
+      withCaseOrganizationScope(db, caseId, async (tx) =>
+        activityLogRepo.append(tx, {
+          caseId,
+          kind: "task",
+          action: "created",
+          label,
+        })
+      );
 
     await runDomainWith(Db.layer)(
       Effect.gen(function* scopedSubscriber() {
@@ -428,12 +436,14 @@ describe("reconnect replay", () => {
       [foreign, "foreign"],
     ] as const) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
-      await activityLogRepo.append(db, {
-        caseId: cased.id,
-        kind: "task",
-        action: "created",
-        label,
-      });
+      await withCaseOrganizationScope(db, cased.id, async (tx) =>
+        activityLogRepo.append(tx, {
+          caseId: cased.id,
+          kind: "task",
+          action: "created",
+          label,
+        })
+      );
     }
     const labels = async (caseId?: CaseId) => {
       const replay = await runDomain(

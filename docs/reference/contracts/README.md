@@ -85,7 +85,7 @@ The API (`toOrpcError`) returns the code in the oRPC error `data` (`{ "code": "c
 
 Cases are org-scoped. Case-child reads and writes that take `caseId` resolve against the actor's organization; a foreign-org Case is **`not_found`** (no distinct wrong-org error). Missing org context on the session or API key is **403**. Ids of another org's children (entity, claim, evidence, job, proposal) passed under your own Case are rejected too. The live-events stream re-checks membership on every heartbeat.
 
-Below the application checks, `cases` and `claims` carry row-level security keyed on the transaction's organization, and a transaction with none reads nothing: [`custody`](custody.md#organization-isolation).
+Below the application checks, every Case-scoped table carries row-level security keyed on the transaction's organization, and a transaction with none reads nothing: [`custody`](custody.md#organization-isolation).
 
 Enforced by `packages/api/src/__tests__/org-isolation.int.test.ts`, which attacks the case-scoped procedures both ways and asserts after each attack that the victim organization's data is unchanged. `org-isolation-coverage.test.ts` (a unit test, no database) walks the router and fails when a procedure is neither in the attack list (`org-isolation-case-attacks.ts`) nor on its allowlist with a reason.
 

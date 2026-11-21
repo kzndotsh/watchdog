@@ -16,20 +16,22 @@ export async function seedProposal(
   overrides?: Partial<NewProposal>
 ): Promise<{ id: string }> {
   const overridesResolved = overrides ?? {};
-  const created = await proposalsRepo.create(exec, {
-    caseId,
-    status: overridesResolved.status ?? "pending",
-    patch,
-    summary:
-      overridesResolved.summary === undefined
-        ? "test proposal"
-        : overridesResolved.summary,
-    suppressedCount: overridesResolved.suppressedCount,
-    evidenceIds: overridesResolved.evidenceIds ?? [],
-    jobId: overridesResolved.jobId,
-    agentSourced: overridesResolved.agentSourced ?? false,
-    createdBy: overridesResolved.createdBy,
-  });
+  const created = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+    proposalsRepo.create(tx, {
+      caseId,
+      status: overridesResolved.status ?? "pending",
+      patch,
+      summary:
+        overridesResolved.summary === undefined
+          ? "test proposal"
+          : overridesResolved.summary,
+      suppressedCount: overridesResolved.suppressedCount,
+      evidenceIds: overridesResolved.evidenceIds ?? [],
+      jobId: overridesResolved.jobId,
+      agentSourced: overridesResolved.agentSourced ?? false,
+      createdBy: overridesResolved.createdBy,
+    })
+  );
   if (!created) {
     throw new Error("seedProposal failed");
   }

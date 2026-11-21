@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { recordingBlobStore } from "@watchdog/core/blob";
 import { isDomainTag } from "@watchdog/core/errors";
 import { dumpUrlEffect } from "@watchdog/core/evidence";
-import { Db, runDomainWith } from "@watchdog/core/infra";
+import { Db, runDomainWith, inOrganization } from "@watchdog/core/infra";
 import {
   recordingJobQueue,
   cancelPlaybookRunEffect,
@@ -248,9 +248,12 @@ describe("runPlaybook", () => {
     if (enrich === undefined) throw new TypeError("expected enrich job");
     await forceJobStatus(db, enrich.id, "succeeded");
     await runDomain(
-      advancePlaybookRunEffect({
-        playbookRunId: result.playbookRunId,
-      })
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        advancePlaybookRunEffect({
+          playbookRunId: result.playbookRunId,
+        })
+      )
     );
     const members = await jobsRepo.listForPlaybookRun(db, result.playbookRunId);
     const harvest = members.find((j) => j.capabilityId === "evidence.harvest");

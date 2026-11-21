@@ -21,6 +21,10 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { timestamptz } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { changesets } from "./changesets";
@@ -50,6 +54,8 @@ export const graphHistory = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     kind: text("kind").$type<GraphHistoryKind>().notNull(),
     rowId: uuid("row_id").notNull(),
     op: text("op").$type<GraphHistoryOp>().notNull(),
@@ -67,6 +73,14 @@ export const graphHistory = pgTable(
     at: timestamptz("at").notNull().defaultNow(),
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "graph_history_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("graph_history", t.organizationId),
     // The read path (one row's history, newest first: `graphHistoryList`) and the Case FK check.
     // NULLS FIRST is plain DESC: the page's ORDER BY id DESC matches it, so no Sort node.
     index("graph_history_case_row_idx").on(

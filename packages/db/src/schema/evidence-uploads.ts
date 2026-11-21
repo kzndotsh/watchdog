@@ -11,6 +11,7 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import { caseIsolation } from "./_organization-policy";
 import { cases } from "./cases";
 
 /**
@@ -49,6 +50,7 @@ export const evidenceUploads = pgTable(
     confirmedAt: timestamptz("confirmed_at"),
   },
   (t) => [
+    caseIsolation("evidence_uploads", t.caseId),
     // Leads with the Case: serves the foreign key and the per-key lookup.
     unique("evidence_uploads_case_uri_uq").on(t.caseId, t.uri),
     // The sweep reads only unconfirmed rows, oldest first.
