@@ -1,6 +1,6 @@
 # AGENTS.md — Watchdog
 
-Watchdog platform monorepo: Postgres + TypeScript under `apps/` · `packages/`. Investigation content (corpus, entity notes, vault vocabulary) lives in a separate private repo and never enters this one.
+Watchdog platform monorepo: Postgres + TypeScript in five workspaces, `packages/{domain,caps,server}` and `apps/{web,cli}` (plus the static `apps/site`). A workspace keeps each part in a folder with its own `src` (`packages/server/core`, `packages/caps/tools`); folders import one another through the workspace's subpath imports (`#db`, `#core/jobs`), other workspaces through `@watchdog/<workspace>/<folder>/...`, and `pnpm check:boundaries` holds the one deny list. Investigation content (corpus, entity notes, vault vocabulary) lives in a separate private repo and never enters this one.
 
 Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine: [`docs/explanation/product.md`](docs/explanation/product.md)). Platform and UI contracts → [`docs/`](docs/README.md) and [`docs/reference/web/`](docs/reference/web/README.md). Design values → [`DESIGN.md`](DESIGN.md) (its tokens are generated from `apps/web/src/styles/`).
 
@@ -14,7 +14,7 @@ Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine: [
 | Wipe case data · screenshot seed · perf seed | `just wipe yes` (keeps auth, organizations, vault) · `just seed-demo` · `just perf-seed` ([`perf-baseline`](docs/how-to/perf-baseline.md)) |
 | Install · migrate · new migration | `pnpm install` · `pnpm db:migrate` · `pnpm db:generate --name=<what_changed>` |
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
-| Done? | `pnpm verify` (changed files and affected packages; the stop hook runs it) · `pnpm verify --full` (the CI merge gate) |
+| Done? | `pnpm verify` (changed files and affected workspaces; the stop hook runs it) · `pnpm verify --full` (the CI merge gate) |
 | Lint · typecheck · tests | `pnpm check` · `pnpm fix` · `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` (`just test-db` first) · `pnpm test:e2e:smoke` |
 | Regenerate (never hand-edit the output) | `pnpm generate:caps` · `pnpm generate:client` · `pnpm generate:env` · `pnpm generate:design` · `pnpm generate-routes` |
 | Vendored shadcn (`apps/web/ui`, never edited) | `pnpm ui:add <name>` · `pnpm ui:sync` |
@@ -53,8 +53,8 @@ No tool checks these; review does.
 
 Read the nested guide before editing its tree, as an explicit step: auto-attachment is not reliable. There are three:
 
-- [`packages/server/AGENTS.md`](packages/server/AGENTS.md): every server-side package (`core`, `api`, `db`, `auth`, `policy`, `tools`, `log`, `env`, `schemas`, `ai`, `test-db`, `test-kit`) and `packages/server/worker`.
-- [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md): Caps, Playbooks and the Cap SDK.
+- [`packages/server/AGENTS.md`](packages/server/AGENTS.md): the server workspace (`core`, `api`, `db`, `auth`, `env`, `log`, `test-db`, `worker`) and the server-facing parts of `packages/domain` (`schemas`, `policy`, `test-kit`).
+- [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md): Caps, Playbooks, the Cap SDK, the provider tools (`tools/`) and model calls (`ai/`).
 - [`apps/web/AGENTS.md`](apps/web/AGENTS.md): the web app (UI contracts: [`docs/reference/web/`](docs/reference/web/README.md)).
 
 The rest of the tree has none:
@@ -77,7 +77,7 @@ Repo workflows live in [`.agents/skills/`](.agents/skills/) (`.claude/skills` li
 - `pnpm test` runs the unit, web-unit, e2e-parser, property and gate projects in one vitest run. The gate tests (`scripts/__tests__/*.gate.test.ts`) run real scripts in throwaway git repos.
 - `pnpm typecheck` checks each package on its `tsconfig.test.json` (source and tests), plus `scripts/` and `e2e/`: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error.
 - Pre-commit only formats staged files. The formatter ignores `docs/glossary.md`, `.agents/`, `.cursor/` and `.claude/`.
-- A dependency declared by two or more packages takes its version from the default `catalog:` in `pnpm-workspace.yaml`; peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
+- Shared dependency versions come from the default `catalog:` in `pnpm-workspace.yaml`; peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
 - Tracked `src` files stay at most 600 lines (`check:size`).
 - `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value).
 - Postgres `53300` (too many clients) in dev is usually HMR leaking pools: restart vite and the worker.

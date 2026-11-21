@@ -9,6 +9,8 @@ const GATE = "check-boundaries.mjs";
 type Pkg = {
   readonly deps?: readonly string[];
   readonly exports?: Record<string, string>;
+  /** The workspace's subpath imports (`#core/jobs`). */
+  readonly imports?: Record<string, string>;
   readonly files?: Record<string, string>;
 };
 
@@ -37,6 +39,7 @@ function workspace(packages: Record<string, Pkg>, apps: Record<string, Pkg>) {
       JSON.stringify({
         name: `@watchdog/${name}`,
         exports: pkg.exports ?? { ".": "./src/index.ts" },
+        ...(pkg.imports ? { imports: pkg.imports } : {}),
         dependencies: Object.fromEntries(
           (pkg.deps ?? []).map((d) => [`@watchdog/${d}`, "workspace:*"])
         ),
@@ -200,13 +203,14 @@ describe("check-boundaries gate", () => {
     expect(res.output).toContain("no workspace package");
   });
 
-  it("lets apps import declared packages and a package import itself", () => {
+  it("lets apps import declared packages and a workspace import its own subpath imports", () => {
     const res = workspace(
       {
         lib: {
           ...lib,
+          imports: { "#cases": "./src/cases/index.ts" },
           files: {
-            "src/self.ts": 'import { x } from "@watchdog/lib/cases";\n',
+            "src/self.ts": 'import { x } from "#cases";\n',
           },
         },
       },
@@ -218,6 +222,51 @@ describe("check-boundaries gate", () => {
       }
     ).run(GATE);
     expect(res.code).toBe(0);
+  });
+
+  it("fails a workspace importing itself by name, and a subpath import it does not map", () => {
+    const res = workspace(
+      {
+        lib: {
+          ...lib,
+          imports: { "#cases": "./src/cases/index.ts" },
+          files: {
+            "src/self.ts": 'import { x } from "@watchdog/lib/cases";\n',
+            "src/ghost.ts": 'import { y } from "#ghost";\n',
+          },
+        },
+      },
+      {}
+    ).run(GATE);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain(
+      'packages/lib/src/self.ts:1: "@watchdog/lib/cases" imports @watchdog/lib by its own name'
+    );
+    expect(res.output).toContain(
+      'packages/lib/src/ghost.ts:1: "#ghost" is not a subpath import of @watchdog/lib; use one of: "#cases"'
+    );
+  });
+
+  it("fails a relative import from one folder of a workspace into another, naming the subpath imports", () => {
+    const res = workspace(
+      {
+        server: {
+          imports: { "#db": "./db/src/index.ts" },
+          files: {
+            "db/src/index.ts": "export const d = 1;\n",
+            "auth/src/a.ts": 'import { d } from "../../db/src/index";\n',
+            "auth/src/b.ts": 'import { e } from "./c";\n',
+            "auth/src/c.ts": "export const e = 1;\n",
+          },
+        },
+      },
+      {}
+    ).run(GATE);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain(
+      'packages/server/auth/src/a.ts:1: relative import "../../db/src/index" reaches into the db folder of @watchdog/server; import it through the workspace\'s subpath imports: "#db"'
+    );
+    expect(res.output).not.toContain("auth/src/b.ts");
   });
 
   it("accepts devDependencies for test files and ignores comments", () => {
@@ -246,19 +295,22 @@ describe("check-boundaries gate", () => {
   });
 
   it("exempts only the generated client AppRouter alias from the relative rule", () => {
+    const alias =
+      'export type { AppRouter } from "../../../../../packages/server/api/src/router.ts";\n';
     const res = workspace(
+      { server: {} },
       {
-        api: {},
-        client: {
+        cli: {
           files: {
-            "src/generated/app-router.ts":
-              'export type { AppRouter } from "../../../api/src/router.ts";\n',
+            "client/src/generated/app-router.ts": alias,
+            "client/src/generated/other.ts": alias,
           },
         },
-      },
-      {}
+      }
     ).run(GATE);
-    expect(res.code).toBe(0);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("apps/cli/client/src/generated/other.ts:1");
+    expect(res.output).not.toContain("app-router.ts");
   });
 
   it("scans new untracked files so staged additions are checked", () => {
@@ -267,13 +319,13 @@ describe("check-boundaries gate", () => {
     expect(repo.run(GATE).code).toBe(1);
   });
 
-  describe("denied imports", () => {
-    it("fails a Cap importing the database package even when declared", () => {
+  describe("the deny list", () => {
+    it("fails a Cap importing the database even when the server is declared", () => {
       const res = workspace(
         {
-          db: {},
+          server: { exports: { "./db": "./db/src/index.ts" } },
           caps: {
-            deps: ["db"],
+            deps: ["server"],
             files: { "src/a.ts": 'import { x } from "@watchdog/server/db";\n' },
           },
         },
@@ -284,7 +336,7 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain("Caps never write the Graph");
     });
 
-    it("fails the ORM and the Postgres driver in Caps, subpaths and tests included", () => {
+    it("fails the ORM and the Postgres driver anywhere in Caps, tools and tests included", () => {
       const res = workspace(
         {
           caps: {
@@ -292,7 +344,7 @@ describe("check-boundaries gate", () => {
               "src/a.ts": 'import { eq } from "drizzle-orm";\n',
               "src/b.ts": 'import { pgTable } from "drizzle-orm/pg-core";\n',
               "src/__tests__/c.test.ts": 'import postgres from "postgres";\n',
-              "src/d.ts": 'const pg = await import("pg");\n',
+              "tools/src/d.ts": 'const pg = await import("pg");\n',
             },
           },
         },
@@ -304,50 +356,77 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain(
         'packages/caps/src/__tests__/c.test.ts:1: "postgres"'
       );
-      expect(res.output).toContain('packages/caps/src/d.ts:1: "pg"');
+      expect(res.output).toContain('packages/caps/tools/src/d.ts:1: "pg"');
     });
 
-    it("fails api reaching the database or ORM, and core reaching the ORM", () => {
+    it("fails api reaching the database (by subpath or relative path) or the ORM, and core reaching the ORM", () => {
       const res = workspace(
         {
-          db: {},
-          api: {
-            deps: ["db"],
+          server: {
+            imports: { "#db": "./db/src/index.ts" },
             files: {
-              "src/a.ts": 'import { x } from "@watchdog/server/db";\n',
-              "src/b.ts": 'import { sql } from "drizzle-orm";\n',
+              "db/src/index.ts": "export const x = 1;\n",
+              "api/src/a.ts": 'import { x } from "#db";\n',
+              "api/src/b.ts": 'import { sql } from "drizzle-orm";\n',
+              "api/src/c.ts": 'import { x } from "../../db/src/index";\n',
+              "core/src/b.ts": 'import { sql } from "drizzle-orm";\n',
             },
-          },
-          core: {
-            files: { "src/b.ts": 'import { sql } from "drizzle-orm";\n' },
           },
         },
         {}
       ).run(GATE);
       expect(res.code).toBe(1);
       expect(res.output).toContain(
-        'packages/server/api/src/a.ts:1: "@watchdog/server/db"'
+        'packages/server/api/src/a.ts:1: "#db": code under packages/server/api/ may not import #db'
       );
       expect(res.output).toContain(
         'packages/server/api/src/b.ts:1: "drizzle-orm"'
+      );
+      expect(res.output).toContain(
+        'packages/server/api/src/c.ts:1: "../../db/src/index": code under packages/server/api/ may not import #db'
       );
       expect(res.output).toContain(
         'packages/server/core/src/b.ts:1: "drizzle-orm"'
       );
     });
 
-    it("lets other packages use the database, ORM and driver, and core use the database package", () => {
+    it("keeps the server folders layered: the worker reaches no database, db reaches no service", () => {
       const res = workspace(
         {
-          db: {
+          server: {
+            imports: {
+              "#db": "./db/src/index.ts",
+              "#core": "./core/src/index.ts",
+            },
             files: {
-              "src/a.ts":
-                'import { sql } from "drizzle-orm";\nimport postgres from "postgres";\n',
+              "db/src/index.ts":
+                'import { c } from "#core";\nexport const x = c;\n',
+              "core/src/index.ts": "export const c = 1;\n",
+              "worker/src/main.ts": 'import { x } from "#db";\n',
             },
           },
-          core: {
-            deps: ["db"],
-            files: { "src/b.ts": 'import { x } from "@watchdog/server/db";\n' },
+        },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain(
+        'packages/server/worker/src/main.ts:1: "#db": code under packages/server/worker/ may not import #db'
+      );
+      expect(res.output).toContain(
+        'packages/server/db/src/index.ts:1: "#core": code under packages/server/db/ may not import #core'
+      );
+    });
+
+    it("lets db use the ORM and driver, and core use the database", () => {
+      const res = workspace(
+        {
+          server: {
+            imports: { "#db": "./db/src/index.ts" },
+            files: {
+              "db/src/index.ts":
+                'import { sql } from "drizzle-orm";\nimport postgres from "postgres";\n',
+              "core/src/b.ts": 'import { x } from "#db";\n',
+            },
           },
         },
         {}
@@ -422,7 +501,16 @@ describe("check-boundaries gate", () => {
 
   describe("tools name no Cap id or Vault slot", () => {
     const tools = (files: Record<string, string>) =>
-      workspace({ tools: { files } }, {}).run(GATE);
+      workspace(
+        {
+          caps: {
+            files: Object.fromEntries(
+              Object.entries(files).map(([rel, src]) => [`tools/${rel}`, src])
+            ),
+          },
+        },
+        {}
+      ).run(GATE);
 
     it("passes a clean tools tree, and tests and testing helpers that name a Cap", () => {
       const res = tools({
@@ -499,7 +587,16 @@ describe("check-boundaries gate", () => {
   });
   describe("core folders import no cycle", () => {
     const core = (files: Record<string, string>) =>
-      workspace({ core: { files } }, {}).run(GATE);
+      workspace(
+        {
+          server: {
+            files: Object.fromEntries(
+              Object.entries(files).map(([rel, src]) => [`core/${rel}`, src])
+            ),
+          },
+        },
+        {}
+      ).run(GATE);
 
     it("passes folders that import in one direction, and tests, root files and same-folder imports", () => {
       const res = core({
@@ -544,20 +641,19 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain("cases, jobs import each other in a cycle");
     });
 
-    it("counts a self-import through a public subpath (`@watchdog/server/core/jobs`) as a folder edge", () => {
+    it("counts a subpath import (`#core/jobs`) as a folder edge", () => {
       const res = workspace(
         {
-          core: {
-            exports: {
-              ".": "./src/index.ts",
-              "./jobs": "./src/jobs/index.ts",
-              "./cases": "./src/cases/index.ts",
+          server: {
+            imports: {
+              "#core/jobs": "./core/src/jobs/index.ts",
+              "#core/cases": "./core/src/cases/index.ts",
             },
             files: {
-              "src/jobs/index.ts":
-                'import { a } from "@watchdog/server/core/cases";\nexport const j = a;\n',
-              "src/cases/index.ts":
-                'import { j } from "@watchdog/server/core/jobs";\nexport const a = j;\n',
+              "core/src/jobs/index.ts":
+                'import { a } from "#core/cases";\nexport const j = a;\n',
+              "core/src/cases/index.ts":
+                'import { j } from "#core/jobs";\nexport const a = j;\n',
             },
           },
         },

@@ -18,13 +18,10 @@ function fixture() {
   repo.write("package.json", '{"name":"root"}');
   repo.write("apps/web/package.json", pkg("@wd/web", ["@wd/api"]));
   repo.write("apps/cli/package.json", pkg("@wd/cli", ["@wd/schemas"]));
-  repo.write("packages/server/api/package.json", pkg("@wd/api", ["@wd/core"]));
-  repo.write(
-    "packages/server/core/package.json",
-    pkg("@wd/core", ["@wd/schemas"])
-  );
-  repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
-  repo.write("packages/caps/tools/package.json", pkg("@wd/tools"));
+  repo.write("packages/api/package.json", pkg("@wd/api", ["@wd/core"]));
+  repo.write("packages/core/package.json", pkg("@wd/core", ["@wd/schemas"]));
+  repo.write("packages/schemas/package.json", pkg("@wd/schemas"));
+  repo.write("packages/tools/package.json", pkg("@wd/tools"));
   repo.write("docs/readme.md", "docs\n");
   repo.commitAll("base");
   repo.git("checkout", "--quiet", "-b", "feature");
@@ -36,7 +33,7 @@ const names = (out: string) => out.trim().split("\n").filter(Boolean).sort();
 describe("changed-packages", () => {
   it("selects a leaf package and every dependent", () => {
     const repo = fixture();
-    repo.write("packages/domain/schemas/src/a.ts", "export {};\n");
+    repo.write("packages/schemas/src/a.ts", "export {};\n");
     repo.commitAll("change schemas");
 
     const res = repo.run(GATE);
@@ -53,7 +50,7 @@ describe("changed-packages", () => {
 
   it("does not select dependencies or unrelated packages", () => {
     const repo = fixture();
-    repo.write("packages/server/api/src/a.ts", "export {};\n");
+    repo.write("packages/api/src/a.ts", "export {};\n");
     repo.commitAll("change api");
 
     expect(names(repo.run(GATE).output)).toEqual(["@wd/api", "@wd/web"]);
@@ -61,7 +58,7 @@ describe("changed-packages", () => {
 
   it("includes uncommitted and untracked changes", () => {
     const repo = fixture();
-    repo.write("packages/caps/tools/src/new.ts", "export {};\n");
+    repo.write("packages/tools/src/new.ts", "export {};\n");
 
     expect(names(repo.run(GATE).output)).toEqual(["@wd/tools"]);
   });
@@ -94,13 +91,13 @@ describe("changed-packages", () => {
 
   it("prints JSON with --json", () => {
     const repo = fixture();
-    repo.write("packages/caps/tools/src/a.ts", "export {};\n");
+    repo.write("packages/tools/src/a.ts", "export {};\n");
     repo.commitAll("tools");
 
     const res = repo.run(GATE, ["--json"]);
 
     expect(JSON.parse(res.output)).toEqual([
-      { name: "@wd/tools", dir: "packages/caps/tools" },
+      { name: "@wd/tools", dir: "packages/tools" },
     ]);
   });
 
@@ -127,13 +124,13 @@ describe("changed-packages", () => {
 
   it("accepts --base <ref> together with --json", () => {
     const repo = fixture();
-    repo.write("packages/caps/tools/src/a.ts", "export {};\n");
+    repo.write("packages/tools/src/a.ts", "export {};\n");
     repo.commitAll("tools");
 
     const res = repo.run(GATE, ["--base", "main", "--json"]);
 
     expect(JSON.parse(res.output)).toEqual([
-      { name: "@wd/tools", dir: "packages/caps/tools" },
+      { name: "@wd/tools", dir: "packages/tools" },
     ]);
   });
 });

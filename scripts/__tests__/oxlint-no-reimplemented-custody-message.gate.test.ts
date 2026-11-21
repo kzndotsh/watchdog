@@ -5,7 +5,7 @@
  * written into a throwaway repo that carries the real config and plugin
  * (helpers/oxlint-fixture.ts). The fixture starts with no baseline.
  */
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -23,12 +23,20 @@ const MSG = "confirmed requires at least one Evidence attachment";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 
-/** Every real app and package directory, so a new workspace is covered without an edit. */
-const scopes = ["apps", "packages"].flatMap((group) =>
-  readdirSync(path.join(repoRoot, group), { withFileTypes: true })
+/** A directory's subdirectories, node_modules left out. */
+const subdirs = (dir: string) =>
+  readdirSync(path.join(repoRoot, dir), { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
-    .map((entry) => `${group}/${entry.name}`)
-);
+    .map((entry) => `${dir}/${entry.name}`);
+
+/**
+ * Every real source root: each workspace with its own `src`, and each folder of a workspace
+ * that has one (`packages/server/core`), so a new workspace or folder is covered without an edit.
+ */
+const scopes = ["apps", "packages"]
+  .flatMap((group) => subdirs(group))
+  .flatMap((workspace) => [workspace, ...subdirs(workspace)])
+  .filter((dir) => existsSync(path.join(repoRoot, dir, "src")));
 
 const createFixture = oxlintFixtureFactory();
 
@@ -151,7 +159,7 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
     expect(hits(`${DIR}/${name}`)).toHaveLength(0);
   });
 
-  it("scans every real app and package directory", () => {
+  it("scans every real source root", () => {
     expect(scopes).toEqual(
       expect.arrayContaining(["apps/web", "apps/site", "packages/server/core"])
     );

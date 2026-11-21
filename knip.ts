@@ -65,11 +65,18 @@ const config: KnipConfig = {
       entry: [
         "src/router.tsx",
         "src/routes/**/*.{ts,tsx}",
+        // Vendored shadcn primitives: the whole set is kept in sync, used or not.
+        "ui/src/components/*.tsx",
+        "ui/src/hooks/*.ts",
         "scripts/**/*.{mjs,ts,js}",
         "src/**/__tests__/**/*.{test.ts,component.test.tsx}",
         "src/test-setup.ts",
       ],
-      project: ["src/**/*.{ts,tsx}", "scripts/**/*.{mjs,ts,js}"],
+      project: [
+        "src/**/*.{ts,tsx}",
+        "ui/src/**/*.{ts,tsx}",
+        "scripts/**/*.{mjs,ts,js}",
+      ],
       ignoreFiles: [
         "src/shared/layout/section-label.tsx",
         // Read by path in react-compiler-coverage.test.ts, never imported.
@@ -86,14 +93,6 @@ const config: KnipConfig = {
         "playwright",
       ],
     },
-    "packages/server/worker": {
-      entry: [
-        "src/main.ts",
-        "scripts/build.mjs",
-        "src/**/__tests__/**/*.test.ts",
-      ],
-      project: ["src/**/*.ts", "scripts/**/*.mjs"],
-    },
     "apps/cli": {
       entry: [
         "src/main.ts",
@@ -101,82 +100,73 @@ const config: KnipConfig = {
         "scripts/pack-smoke.mjs",
         "src/**/__tests__/**/*.test.ts",
         "src/commands/__tests__/**/*.test.ts",
-      ],
-      project: ["src/**/*.ts", "scripts/**/*.{ts,mjs}"],
-    },
-    "packages/caps/ai": {
-      entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/server/api": {
-      entry: ["src/index.ts", "scripts/**/*.ts", "src/**/__tests__/**/*.ts"],
-      project: ["src/**/*.ts", "scripts/**/*.ts"],
-    },
-    "packages/server/auth": {
-      entry: [
-        "src/server.ts",
-        "src/instance-admin.ts",
-        "src/org-roles.ts",
-        "src/invitation-url.ts",
-        "src/**/__tests__/**/*.test.ts",
-      ],
-      project: ["src/**/*.ts"],
-    },
-    "packages/caps": {
-      entry: ["src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "apps/cli/client": {
-      entry: ["src/index.ts"],
-      project: ["src/**/*.ts", "!src/generated/**"],
-    },
-    "packages/server/core": {
-      entry: ["src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/server/db": {
-      // The container's migrator: src/migrate-cli.ts (bundled by build-migrate.mjs).
-      entry: [
-        "src/index.ts",
-        "src/migrate-cli.ts",
-        "scripts/build-migrate.mjs",
-        "src/**/__tests__/**/*.ts",
+        "client/src/index.ts",
+        "client/src/**/__tests__/**/*.test.ts",
       ],
       project: [
         "src/**/*.ts",
-        "src/migrate-cli.ts",
-        "scripts/build-migrate.mjs",
+        "scripts/**/*.{ts,mjs}",
+        "client/src/**/*.ts",
+        "!client/src/generated/**",
       ],
     },
-    "packages/domain/policy": {
-      entry: ["src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/domain/schemas": {
-      entry: ["src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/server/log": {
-      entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/server/test-db": {
-      entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/domain/test-kit": {
+    "packages/caps": {
       entry: [
-        "src/index.ts",
-        "src/fc.ts",
-        "src/fixtures.ts",
-        "src/http/msw-setup.ts",
-        "src/http/mock-server.ts",
+        "src/**/__tests__/**/*.test.ts",
+        "ai/src/index.ts",
+        "ai/src/**/__tests__/**/*.test.ts",
+        "tools/src/**/__tests__/**/*.test.ts",
       ],
-      project: ["src/**/*.ts"],
+      project: ["src/**/*.ts", "ai/src/**/*.ts", "tools/src/**/*.ts"],
     },
-    "packages/caps/tools": {
-      entry: ["src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
+    "packages/domain": {
+      entry: [
+        "policy/src/**/__tests__/**/*.test.ts",
+        "schemas/src/**/__tests__/**/*.test.ts",
+        "test-kit/src/index.ts",
+        "test-kit/src/fc.ts",
+        "test-kit/src/fixtures.ts",
+        "test-kit/src/http/msw-setup.ts",
+        "test-kit/src/http/mock-server.ts",
+      ],
+      project: [
+        "policy/src/**/*.ts",
+        "schemas/src/**/*.ts",
+        "test-kit/src/**/*.ts",
+      ],
+    },
+    "packages/server": {
+      entry: [
+        "api/src/index.ts",
+        "api/scripts/**/*.ts",
+        "api/src/**/__tests__/**/*.ts",
+        "auth/src/server.ts",
+        "auth/src/instance-admin.ts",
+        "auth/src/org-roles.ts",
+        "auth/src/invitation-url.ts",
+        "auth/src/bootstrap-admin-cli.ts",
+        "auth/src/**/__tests__/**/*.test.ts",
+        "core/src/vault-rekey-cli.ts",
+        "core/src/**/__tests__/**/*.test.ts",
+        // The container's migrator: db/src/migrate-cli.ts (bundled by build-migrate.mjs).
+        "db/src/index.ts",
+        "db/src/migrate-cli.ts",
+        "db/scripts/build-migrate.mjs",
+        "db/src/**/__tests__/**/*.ts",
+        "log/src/index.ts",
+        "log/src/**/__tests__/**/*.test.ts",
+        "test-db/src/index.ts",
+        "test-db/src/**/__tests__/**/*.test.ts",
+        "worker/src/main.ts",
+        "worker/scripts/build.mjs",
+        "worker/src/**/__tests__/**/*.test.ts",
+      ],
+      project: [
+        "*/src/**/*.ts",
+        "api/scripts/**/*.ts",
+        "db/scripts/build-migrate.mjs",
+        "worker/scripts/**/*.mjs",
+      ],
     },
   },
 };

@@ -1,38 +1,46 @@
-# Platform packages
+# Platform workspaces
 
-**What this is:** the import-direction matrix for `apps/*` and `packages/*` (15 packages, 4 apps).  
+**What this is:** the five workspaces, the folders inside them, and the import-direction rules between them.  
 **What this is not:** Cap SPI ([`caps-boundary.md`](caps-boundary.md)), jobs/oRPC ([`jobs-orpc.md`](jobs-orpc.md)), web Start/Query ([`../web/architecture.md`](../web/architecture.md)).
 
-The package list is `packages/*/package.json` and `apps/*/package.json`; each package's own `AGENTS.md` says what it owns. Do not duplicate the list here.
+## Layout
+
+| Workspace | Folders | What it holds |
+| --- | --- | --- |
+| `packages/domain` (`@watchdog/domain`) | `schemas`, `policy`, `test-kit` | Pure types and vocabulary, custody rules, the test harness every workspace's tests share. No workspace dependency |
+| `packages/caps` (`@watchdog/caps`) | `src` (Caps, Playbooks, SDK), `tools`, `ai` | Caps and the provider tools and model calls they use. Depends on domain only |
+| `packages/server` (`@watchdog/server`) | `core`, `api`, `db`, `auth`, `env`, `log`, `test-db`, `worker` | The services, the oRPC router, the schema and repos, identity, boot config, logging and the Job runner. Depends on domain and caps |
+| `apps/web` (`@watchdog/web`) | `src`, `ui` (vendored shadcn) | The web app and its HTTP entry. Depends on domain, caps and server |
+| `apps/cli` (`@watchdog/cli`) | `src`, `client` (generated API client) | `wd`. Depends on domain only; talks HTTP |
+
+`apps/site` is the static Astro page and depends on no workspace. A feature usually touches one or two workspaces: the server folder that owns it and the web screen that shows it.
+
+A folder imports another folder of its own workspace through the workspace's subpath imports (`package.json` `imports`: `#db`, `#core/jobs`, `#tools/http`, `#ui/components/button`, `#client`). Another workspace imports it through `exports` (`@watchdog/server/core/jobs`, `@watchdog/caps/tools/http`, `@watchdog/domain/schemas/shared`). Only the entries those maps list resolve.
 
 ## Enforcement
 
-- **Declared `dependencies`** are the matrix: pnpm's strict `node_modules` means an undeclared `@watchdog/*` import does not resolve (`pnpm typecheck` fails). Declaring a forbidden dependency fails nothing, so the rows below are guidance unless another bullet names a gate.
-- **`pnpm check:boundaries`** (`scripts/check-boundaries.mjs`, `pnpm verify` and CI): an import of `@watchdog/*` must name a workspace package the importer declares, through a path its `exports` map lists; the failure names the public entry points. Packages and apps never import an app. Its `DENIED_IMPORTS` list fails an import whatever the package declares: caps imports no `@watchdog/server/db`, `drizzle-orm`, `postgres` or `pg`; api no `@watchdog/server/db` or `drizzle-orm`; core no `drizzle-orm`.
-- **oxlint `no-restricted-imports`** (`oxlint.config.ts`): `apps/web` may not import `@watchdog/server/db` or unwrapped primitives; `apps/cli` may not import `core`, `db`, `api`, `log` or `env`; `apps/web/ui` wrappers may not import `db`.
-- **`import/no-cycle: error`** across the workspace.
-- **oxlint `watchdog/db-repo-*` rules** (`scripts/oxlint-plugin/`, scoped to `packages/server/db/src/repos/*.repo.ts` in `oxlint.config.ts`, so `pnpm check`) enforce the repos rules: no `SQL` type, no transaction, no throw, no notify, `exec: DbExec` first, no `.toISOString()` (its only DTO check), no `trimmedOrNull`, `trimmedOrUndefined` only in lookup methods, no job status set literal, no zod import, and no raw `sql` fragment (baselined).
-- Everything else in the "Must not import" column is guidance backed only by the dependency declarations.
+- **Declared `dependencies`**: pnpm's strict `node_modules` means an undeclared `@watchdog/*` import does not resolve (`pnpm typecheck` fails).
+- **`pnpm check:boundaries`** (`scripts/check-boundaries.mjs`, `pnpm verify` and CI): a `@watchdog/*` import names a declared workspace through its `exports`; a `#` import names an entry of the importer's `imports`; a relative path into another workspace or from one folder into another fails; apps are never imported. **`DENY_LIST`** is the one statement of which code may not import what, tests included, relative paths into a denied folder counted:
 
-## Forbidden imports
+  | Code under | Never imports | Why |
+  | --- | --- | --- |
+  | `packages/caps/` | `@watchdog/server`, `drizzle-orm`, `postgres`, `pg` | A Cap cannot write the Graph |
+  | `packages/server/api/` | `#db`, `drizzle-orm` | api goes through core |
+  | `packages/server/core/` | `drizzle-orm`, `#api`, `#auth`, `#worker` | core calls repos and sits below the entries |
+  | `packages/server/worker/` | `#db`, `drizzle-orm`, `#api`, `#auth` | The worker runs core and nothing else |
+  | `packages/server/auth/` | `#core`, `#api`, `#worker` | auth takes its database handle as a parameter |
+  | `packages/server/db/` | `#core`, `#api`, `#auth`, `#worker` | db is below every service |
+  | `packages/server/env/`, `packages/server/log/` | the other server folders | Leaves every folder reads |
+  | `packages/domain/schemas/` | `#policy` | policy is written in the schema vocabulary |
+  | `packages/domain/test-kit/` | `#schemas`, `#policy` | Usable by every workspace's tests |
+  | `packages/caps/tools/` | `#ai` | Model calls belong to the Cap that makes them |
 
-| Package | Must not import |
-| --- | --- |
-| `@watchdog/server/env`, `@watchdog/domain/schemas`, `@watchdog/web/ui`, `@watchdog/server/log` | any other `@watchdog/*` (leaf packages) |
-| `@watchdog/domain/policy` | db, caps, core, api, apps, tools, ai |
-| `@watchdog/server/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle (db's integration tests use the harness; db never imports it outside tests) |
-| `@watchdog/caps/ai` | db, caps, core |
-| `@watchdog/caps/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
-| `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | **db**, `drizzle-orm`, `postgres`, `pg` (`check:boundaries` rule 8), core, api, apps |
-| `@watchdog/server/auth` | api, core, caps, apps, `@tanstack/*`. Depends on db (Better Auth adapter), env, log, schemas |
-| `@watchdog/server/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); callers import per-domain subpaths (`@watchdog/server/core/cases`, `/graph`, `/jobs`, ...); the worker imports the same entry points and `/maintenance` |
-| `@watchdog/server/api` | apps, **db**, drizzle-orm (goes through core) |
-| `apps/cli/client` | api, apps, db, caps, core, log (generated JSON in `src/generated`; the `app-router` type entry aliases the live `AppRouter` in-monorepo only) |
-| `@watchdog/domain/test-kit`, `@watchdog/server/test-db` | dev only: never imported from production code |
-| `apps/cli` | core, db, api, env, log (talks HTTP via `apps/cli/client` + schemas) |
-| `apps/web` | **db** (auth's db access is `@watchdog/server/auth`; the SSE route uses core) |
-| `packages/server/worker` | declares only core, env, log, schemas, tools |
-| `apps/site` | any `@watchdog/*` runtime package, `apps/web/src` (tokens are copied, not imported) |
+  It also keeps Cap ids and Vault slot names out of `packages/caps/tools/src`, and holds the core and web domain folders acyclic.
+
+- **oxlint `no-restricted-imports`** (`oxlint.config.ts`): `apps/web` may not import `@watchdog/server/db` or unwrapped primitives; `apps/cli` may not import the server; core and auth may not import the global pool from `#db`.
+- **`import/no-cycle: error`** across the repo.
+- **oxlint `watchdog/db-repo-*` rules** (`scripts/oxlint-plugin/`, scoped to `packages/server/db/src/repos/*.repo.ts`) enforce the repos rules: no `SQL` type, no transaction, no throw, no notify, `exec: DbExec` first, no `.toISOString()` (its only DTO check), no `trimmedOrNull`, `trimmedOrUndefined` only in lookup methods, no job status set literal, no zod import, and no raw `sql` fragment (baselined).
+- `test-kit` and `test-db` are dev only: production code never imports them (`watchdog/no-test-imports-in-production`).
 
 ## Where shared contracts live
 

@@ -5,8 +5,7 @@
   "type": "module",
   "imports": {
     "#ui/components/*": "./ui/src/components/*.tsx",
-    "#ui/hooks/*": "./ui/src/hooks/*.ts",
-    "#ui/styles/*": "./ui/src/styles/*"
+    "#ui/hooks/*": "./ui/src/hooks/*.ts"
   },
   "scripts": {
     "dev": "vite dev --port 3000",

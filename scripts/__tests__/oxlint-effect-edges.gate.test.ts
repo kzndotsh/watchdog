@@ -236,18 +236,24 @@ describe("Effect try/tryPromise catch requirement (oxlint.config.ts)", () => {
 
 describe("Effect language-service rules over the edge roots", () => {
   it.each(["api", "core"])(
-    "rejects a catch returning unknown in packages/%s/src",
+    "rejects a catch returning unknown in packages/server/%s/src",
     (pkg) => {
       expect(
-        hitsFor(`packages/${pkg}/src/lang/unknown-catch.ts`, UNKNOWN_CATCH)
+        hitsFor(
+          `packages/server/${pkg}/src/lang/unknown-catch.ts`,
+          UNKNOWN_CATCH
+        )
       ).toHaveLength(1);
     }
   );
   it.each(["api", "core"])(
-    "rejects run* inside an Effect in packages/%s/src",
+    "rejects run* inside an Effect in packages/server/%s/src",
     (pkg) => {
       expect(
-        hitsFor(`packages/${pkg}/src/lang/run-inside-effect.ts`, RUN_INSIDE)
+        hitsFor(
+          `packages/server/${pkg}/src/lang/run-inside-effect.ts`,
+          RUN_INSIDE
+        )
       ).toHaveLength(1);
     }
   );

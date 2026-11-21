@@ -11,7 +11,7 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 
 | Project | Files | Environment | Size | Command |
 | --- | --- | --- | --- | --- |
-| `unit` | `*.test.ts` under `packages/*/src`, `packages/*/scripts`, `packages/server/worker`, `apps/cli` | node | small | `pnpm test:unit` |
+| `unit` | `*.test.ts` under each workspace's and folder's `src` and `scripts` in `packages/` (`packages/caps/src`, `packages/server/core/src`), and `apps/cli` (with its `client`) | node | small | `pnpm test:unit` |
 | `web-unit` | `*.test.ts` under `apps/web/src`, except the DOM files below and `*.int.test.ts` | node | small | `pnpm test:unit` |
 | `property` | `*.property.test.ts` under `packages/*` or `apps/*` | node | small | `pnpm test:property` |
 | `component` | `*.component.test.tsx` under `apps/web/src`, plus the hook and DOM `*.test.ts` files listed as `webDomTestGlobs` in `vitest.config.ts` | happy-dom | small | `pnpm test:component` |
@@ -34,7 +34,7 @@ Each Vitest project is one row. The file globs are `vitest.config.ts`, which win
 
 | Tier | Where | Isolation |
 | --- | --- | --- |
-| Unit | `packages/*/src/**/__tests__/**/*.test.ts` + `packages/server/worker` + `apps/cli` (`unit`), and `apps/web/src/**/__tests__/**/*.test.ts` without a DOM (`web-unit`) | In-process, no network or database; `SKIP_ENV_VALIDATION=1`. A few read source or fixtures from disk |
+| Unit | `packages/*/src/**/__tests__/**/*.test.ts` and `packages/*/*/src/**/__tests__/**/*.test.ts` + `apps/cli` (`unit`), and `apps/web/src/**/__tests__/**/*.test.ts` without a DOM (`web-unit`) | In-process, no network or database; `SKIP_ENV_VALIDATION=1`. A few read source or fixtures from disk |
 | Property | `*.property.test.ts` under `packages/*` or `apps/*` | fast-check via `@watchdog/domain/test-kit/fc` |
 | Gate | `scripts/__tests__/*.gate.test.ts` | Runs a gate script as a CLI, or oxlint over a fixture, in a temp git repo; asserts exit code + output ([`ci-gates.md`](../ci-gates.md#gate-tests)). Nothing is written into the working tree |
 | Component | `apps/web/src/**/__tests__/**/*.component.test.tsx` and the DOM `*.test.ts` (hooks, stores, query client) | happy-dom + Testing Library |

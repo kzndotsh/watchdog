@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * Package-boundary gate. Every source file under apps/* and packages/* must keep to
- * three rules about `@watchdog/*` imports:
+ * Workspace-boundary gate. Five workspaces (packages/domain, packages/caps, packages/server,
+ * apps/web, apps/cli; apps/site stands alone) and the folders inside them. Every source file
+ * under apps/* and packages/* keeps to these rules:
  *
- *   1. Declared: the importing package lists the target in its package.json
- *      (dependencies, devDependencies, peerDependencies or optionalDependencies).
+ *   1. Declared: a `@watchdog/*` import names a workspace the importer lists in its
+ *      package.json (dependencies, devDependencies, peerDependencies or optionalDependencies).
  *      pnpm's strict node_modules makes an undeclared import fail only where it is
  *      resolved, so a missing line can hide until runtime or a bundler.
- *   2. Public: the import path matches an entry of the target's `exports` map. An
- *      internal path (`@watchdog/server/core/src/...`) or a relative path into another
- *      workspace directory (`../../core/src/...`) fails and the message lists the
- *      public entry points.
+ *   2. Public: a `@watchdog/*` import matches an entry of the target's `exports` map, and a
+ *      subpath import (`#db`, `#core/jobs`) an entry of the importer's own `imports` map. A
+ *      relative path into another workspace, or from one folder of a workspace into another
+ *      (`../../db/src/...` from `packages/server/core`), fails and the message names the entry
+ *      points to use instead.
  *   3. Downward: apps are leaves. No package or other app imports an app.
  *   4. Tools know no Cap: a production source file of packages/caps/tools/src (not `__tests__`,
  *      `testing/` or a test file) holds no Cap id and no Vault slot name as a string
@@ -29,15 +31,17 @@
  *      `cases`, ...) depend on one another in one direction only, so a piece two domains
  *      use lives with its owner (or in `shared/` when it is generic). Tests are not counted.
  *      The message names the cycle with one import per edge.
- *   8. Denied imports: a package in DENIED_IMPORTS never imports the modules it lists (or a
- *      subpath of one), declared or not, in any of its files. Caps reach no database, ORM or
- *      Postgres driver, so a Cap cannot write the Graph; api reaches storage only through core;
- *      core calls repos, never the ORM.
+ *   8. The deny list: DENY_LIST is the one statement of which code may not import what. Each
+ *      entry names a directory and the modules no file under it imports (a module or any
+ *      subpath of it), declared or not, tests included; a relative import that lands in a
+ *      denied folder fails the same way. Caps reach no database, ORM or Postgres driver, so a
+ *      Cap cannot write the Graph; api reaches storage only through core; core calls repos,
+ *      never the ORM; the server folders keep their layering.
  *
  * What the other tools cover (audit in docs/contributing/ci-gates.md): knip reports
  * unlisted dependencies only in CI and knows nothing of `exports`; oxlint
  * `no-restricted-imports` bans specific names in specific trees; `import/no-cycle`
- * catches cycles. None of them checks all three rules above.
+ * catches cycles.
  *
  *   node scripts/check-boundaries.mjs
  */
@@ -84,6 +88,8 @@ const workspaceYaml = asRecord(
  *   declared: Set<string>,
  *   exportKeys: string[],
  *   exportTargets: Record<string, unknown>,
+ *   importTargets: Record<string, string>,
+ *   folders: Set<string>,
  * }} Pkg
  */
 
@@ -127,6 +133,23 @@ for (const glob of globs) {
       exportKeys: exportKeys.some((k) => k.startsWith("."))
         ? exportKeys.filter((k) => k.startsWith("."))
         : ["."],
+      /** `#x` -> file, the workspace's subpath imports. */
+      importTargets: Object.fromEntries(
+        Object.entries(asRecord(manifest.imports)).filter(
+          ([, target]) => typeof target === "string"
+        )
+      ),
+      /** The folders of the workspace: top-level directories with their own `src` (`core`, `ui`). */
+      folders: new Set(
+        readdirSync(path.join(root, dir), { withFileTypes: true })
+          .filter(
+            (d) =>
+              d.isDirectory() &&
+              d.name !== "node_modules" &&
+              existsSync(path.join(root, dir, d.name, "src"))
+          )
+          .map((d) => d.name)
+      ),
     });
   }
 }
@@ -148,11 +171,60 @@ function isExported(pkg, subpath) {
   });
 }
 
+/**
+ * The subpath imports of a workspace, those of one folder when `folder` is set.
+ * @param {Pkg} pkg
+ * @param {string} folder
+ */
+function subpathEntries(pkg, folder) {
+  const keys = Object.keys(pkg.importTargets).filter(
+    (key) =>
+      folder === "" || key === `#${folder}` || key.startsWith(`#${folder}/`)
+  );
+  return keys.length === 0 ? "(none)" : keys.map((k) => `"${k}"`).join(", ");
+}
+
 /** @param {Pkg} pkg */
 function entryPoints(pkg) {
   return pkg.exportKeys
     .map((k) => (k === "." ? `"${pkg.name}"` : `"${pkg.name}/${k.slice(2)}"`))
     .join(", ");
+}
+
+/**
+ * The file a subpath import (`#core/jobs`) names in its workspace, or null when the
+ * workspace's `imports` map has no entry for it.
+ * @param {Pkg} pkg
+ * @param {string} spec
+ */
+function importTarget(pkg, spec) {
+  for (const [key, target] of Object.entries(pkg.importTargets)) {
+    if (!key.includes("*")) {
+      if (key === spec) return path.posix.join(pkg.dir, target);
+      continue;
+    }
+    const [head = "", tail = ""] = key.split("*");
+    if (
+      spec.length > head.length + tail.length &&
+      spec.startsWith(head) &&
+      spec.endsWith(tail)
+    ) {
+      const middle = spec.slice(head.length, spec.length - tail.length);
+      return path.posix.join(pkg.dir, target.replace("*", middle));
+    }
+  }
+  return null;
+}
+
+/**
+ * The folder of a workspace a repo path sits in (`core` for packages/server/core/src/x.ts), or
+ * "" for the workspace's own files (packages/caps/src, scripts/).
+ * @param {Pkg} pkg
+ * @param {string} rel
+ */
+function folderOf(pkg, rel) {
+  const first = rel.slice(pkg.dir.length + 1).split("/")[0] ?? "";
+  return pkg.folders.has(first) ? first : "";
 }
 
 /**
@@ -166,44 +238,91 @@ const RELATIVE_ALLOWED = new Set([
 ]);
 
 /**
- * Modules a package never imports, whatever it declares: package name -> denied modules and why.
- * @type {Map<string, { deny: string[], why: string }>}
+ * The deny list: the one statement of which code may not import what. `from` is a directory
+ * prefix; `deny` lists modules (a package name, a `@watchdog/*` entry, or a subpath import such
+ * as `#db`) that no file under it imports, nor any subpath of them. A denied subpath import also
+ * denies a relative import into that folder of the workspace.
+ * @type {{ from: string, deny: string[], why: string }[]}
  */
-const DENIED_IMPORTS = new Map([
-  [
-    "@watchdog/caps",
-    {
-      deny: ["@watchdog/server/db", "drizzle-orm", "postgres", "pg"],
-      why: "Caps never write the Graph: a Cap returns Proposal ops and reaches storage only through ctx",
-    },
-  ],
-  [
-    "@watchdog/server/api",
-    {
-      deny: ["@watchdog/server/db", "drizzle-orm"],
-      why: "api reaches storage only through @watchdog/server/core",
-    },
-  ],
-  [
-    "@watchdog/server/core",
-    {
-      deny: ["drizzle-orm"],
-      why: "core calls the repos in @watchdog/server/db, never the ORM",
-    },
-  ],
-]);
+const DENY_LIST = [
+  {
+    from: "packages/caps/",
+    deny: ["@watchdog/server", "drizzle-orm", "postgres", "pg"],
+    why: "Caps never write the Graph: a Cap returns Proposal ops and reaches storage only through ctx",
+  },
+  {
+    from: "packages/server/api/",
+    deny: ["#db", "drizzle-orm"],
+    why: "api reaches storage only through core",
+  },
+  {
+    from: "packages/server/core/",
+    deny: ["drizzle-orm", "#api", "#auth", "#worker"],
+    why: "core calls the repos in db, never the ORM, and sits below api, auth and the worker",
+  },
+  {
+    from: "packages/server/worker/",
+    deny: ["#db", "drizzle-orm", "#api", "#auth"],
+    why: "the worker is thin: it runs core and never reaches the database or the HTTP layer itself",
+  },
+  {
+    from: "packages/server/auth/",
+    deny: ["#core", "#api", "#worker"],
+    why: "auth sits below core: it takes its database handle as a parameter",
+  },
+  {
+    from: "packages/server/db/",
+    deny: ["#core", "#api", "#auth", "#worker"],
+    why: "db holds the schema and the repos, below every service",
+  },
+  {
+    from: "packages/server/env/",
+    deny: ["#core", "#api", "#auth", "#db", "#log", "#worker"],
+    why: "env is the boot config every folder reads; it reads none of them",
+  },
+  {
+    from: "packages/server/log/",
+    deny: ["#core", "#api", "#auth", "#db", "#env", "#worker"],
+    why: "log is process logging every folder uses; it uses none of them",
+  },
+  {
+    from: "packages/domain/schemas/",
+    deny: ["#policy"],
+    why: "schemas is the vocabulary policy is written in",
+  },
+  {
+    from: "packages/domain/test-kit/",
+    deny: ["#schemas", "#policy"],
+    why: "test-kit imports no workspace code, so every workspace's tests can use it",
+  },
+  {
+    from: "packages/caps/tools/",
+    deny: ["#ai"],
+    why: "tools fetch and parse; model calls belong to the Cap that makes them",
+  },
+];
 
 /**
- * @param {string} owner the importing package's name
+ * @param {string} rel the importing file
  * @param {string} spec
+ * @param {string | null} target the repo file a relative or subpath import resolves to
+ * @param {Pkg} owner
  * @param {string} where file:line of the import
  */
-function deniedImportProblem(owner, spec, where) {
-  const rule = DENIED_IMPORTS.get(owner);
-  const hit = rule?.deny.find((m) => spec === m || spec.startsWith(`${m}/`));
-  return hit === undefined
-    ? undefined
-    : `${where}: "${spec}": ${owner} may not import ${hit}. ${rule?.why}`;
+function deniedImportProblem(rel, spec, target, owner, where) {
+  for (const rule of DENY_LIST) {
+    if (!rel.startsWith(rule.from)) continue;
+    const hit = rule.deny.find((m) => {
+      if (spec === m || spec.startsWith(`${m}/`)) return true;
+      if (!m.startsWith("#") || target === null) return false;
+      const folder = `${owner.dir}/${m.slice(1)}/`;
+      return target.startsWith(folder) && !rel.startsWith(folder);
+    });
+    if (hit !== undefined) {
+      return `${where}: "${spec}": code under ${rule.from} may not import ${hit}. ${rule.why}`;
+    }
+  }
+  return null;
 }
 
 /**
@@ -506,17 +625,28 @@ for (const rel of listed) {
     const where = `${rel}:${line}`;
     recordWebEdge(rel, spec, where);
 
-    const denied = deniedImportProblem(owner.name, spec, where);
-    if (denied !== undefined) {
+    const relativeTarget = spec.startsWith(".")
+      ? path.posix.normalize(path.posix.join(path.posix.dirname(rel), spec))
+      : null;
+    const subpathTarget = spec.startsWith("#")
+      ? importTarget(owner, spec)
+      : null;
+
+    const denied = deniedImportProblem(
+      rel,
+      spec,
+      relativeTarget ?? subpathTarget,
+      owner,
+      where
+    );
+    if (denied !== null) {
       problems.push(denied);
       continue;
     }
 
-    if (spec.startsWith(".")) {
+    if (relativeTarget !== null) {
       if (RELATIVE_ALLOWED.has(rel)) continue;
-      const target = path.posix.normalize(
-        path.posix.join(path.posix.dirname(rel), spec)
-      );
+      const target = relativeTarget;
       const other = packages.find(
         (p) =>
           p !== owner && (target === p.dir || target.startsWith(`${p.dir}/`))
@@ -525,8 +655,28 @@ for (const rel of listed) {
         problems.push(
           `${where}: relative import "${spec}" reaches into ${other.name}; import it through its public entry points: ${entryPoints(other)}`
         );
+      } else if (target.startsWith(`${owner.dir}/`)) {
+        const from = folderOf(owner, rel);
+        const to = folderOf(owner, target);
+        if (to !== "" && to !== from) {
+          problems.push(
+            `${where}: relative import "${spec}" reaches into the ${to} folder of ${owner.name}; import it through the workspace's subpath imports: ${subpathEntries(owner, to)}`
+          );
+        }
       }
       recordCoreEdge(rel, target, where, spec);
+      continue;
+    }
+
+    if (spec.startsWith("#")) {
+      if (subpathTarget === null) {
+        problems.push(
+          `${where}: "${spec}" is not a subpath import of ${owner.name}; use one of: ${subpathEntries(owner, "")}`
+        );
+        continue;
+      }
+      // A subpath import inside core (`#core/cases`) is a folder edge too.
+      recordCoreEdge(rel, subpathTarget, where, spec);
       continue;
     }
 
@@ -534,12 +684,9 @@ for (const rel of listed) {
     const [scope = "", pkgName = "", ...rest] = spec.split("/");
     const name = `${scope}/${pkgName}`;
     if (name === owner.name) {
-      // A self-import through a public subpath (`@watchdog/server/core/cases`) is a folder edge too.
-      const file =
-        owner.exportTargets[`.${rest.length > 0 ? `/${rest.join("/")}` : ""}`];
-      if (typeof file === "string") {
-        recordCoreEdge(rel, path.posix.join(owner.dir, file), where, spec);
-      }
+      problems.push(
+        `${where}: "${spec}" imports ${owner.name} by its own name; inside a workspace use its subpath imports: ${subpathEntries(owner, "")}`
+      );
       continue;
     }
     const target = byName.get(name);
@@ -608,10 +755,10 @@ for (const group of importCycles([...webEdges.keys()])) {
 if (problems.length > 0) {
   for (const p of problems) console.error(`✗ ${p}`);
   console.error(
-    "\nPackages import only declared workspace packages, only through their package.json exports; apps are never imported; no package makes a denied import (caps: no database, ORM or driver); tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder; web domains import no cycle. See docs/contributing/ci-gates.md."
+    "\nWorkspaces import only declared workspaces, only through their package.json exports, and their own folders through their subpath imports; apps are never imported; no file makes an import the deny list forbids (caps: no database, ORM or driver); tools name no Cap id or Vault slot; core folders import no cycle; infra imports no domain folder; web domains import no cycle. See docs/contributing/ci-gates.md."
   );
   process.exit(1);
 }
 console.log(
-  `check:boundaries: ok (${scanned} source files across ${packages.length} workspace packages)`
+  `check:boundaries: ok (${scanned} source files across ${packages.length} workspaces)`
 );

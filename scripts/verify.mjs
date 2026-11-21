@@ -43,7 +43,6 @@ const STATIC_GATES = [
   "check:agents:strict",
   "check:docs:strict",
   "check:tagged-errors:strict",
-  "check:workspace-reexports",
   "check:vendor",
   "check:size",
   "check:action-pins",

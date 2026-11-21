@@ -114,14 +114,12 @@ jobs:
               - 'env.production.example'
               - 'scripts/s3-init.sh'
               - 'apps/web/**'
-              - 'packages/server/worker/**'
               - 'packages/**'
             caps:
+              # Caps with their tools and ai folders.
               - 'packages/caps/**'
-              # A Cap's version fingerprints the tools, schemas and ai modules it reaches.
-              - 'packages/caps/tools/**'
+              # A Cap's version fingerprints the schemas modules it reaches.
               - 'packages/domain/schemas/**'
-              - 'packages/caps/ai/**'
               - 'docs/reference/platform/cap-register.md'
             api:
               - 'packages/server/api/**'

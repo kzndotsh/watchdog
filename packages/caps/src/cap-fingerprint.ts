@@ -104,6 +104,26 @@ const kindOf = (kind: string): string => kind;
 type PathAlias = { prefix: string; suffix: string; targets: string[] };
 type Aliases = { exact: Map<string, string>; patterns: PathAlias[] };
 
+function aliasesOf(paths: Record<string, string[]>): Aliases {
+  const exact = new Map<string, string>();
+  const patterns: PathAlias[] = [];
+  for (const [key, targets] of Object.entries(paths)) {
+    const star = key.indexOf("*");
+    if (star === -1) {
+      exact.set(key, targets[0] ?? "");
+    } else {
+      patterns.push({
+        prefix: key.slice(0, star),
+        suffix: key.slice(star + 1),
+        targets,
+      });
+    }
+  }
+  // Longest prefix first, as TypeScript picks.
+  patterns.sort((a, b) => b.prefix.length - a.prefix.length);
+  return { exact, patterns };
+}
+
 function readPathAliases(root: string): Aliases {
   const raw = readFileSync(path.join(root, "tsconfig.json"), "utf-8");
   const parsed = TSCONFIG_PATHS.parse(JSON.parse(stripJsonComments(raw)));
@@ -126,26 +146,6 @@ function readPackageImports(root: string, pkgDir: string): Aliases {
       ])
     )
   );
-}
-
-function aliasesOf(paths: Record<string, string[]>): Aliases {
-  const exact = new Map<string, string>();
-  const patterns: PathAlias[] = [];
-  for (const [key, targets] of Object.entries(paths)) {
-    const star = key.indexOf("*");
-    if (star === -1) {
-      exact.set(key, targets[0] ?? "");
-    } else {
-      patterns.push({
-        prefix: key.slice(0, star),
-        suffix: key.slice(star + 1),
-        targets,
-      });
-    }
-  }
-  // Longest prefix first, as TypeScript picks.
-  patterns.sort((a, b) => b.prefix.length - a.prefix.length);
-  return { exact, patterns };
 }
 
 /** `importers:` of pnpm-lock.yaml: workspace package dir to `dependency name -> resolved version`. */
