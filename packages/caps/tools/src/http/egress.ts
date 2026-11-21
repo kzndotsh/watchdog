@@ -93,7 +93,7 @@ export type EgressApi = {
 };
 
 export class Egress extends Context.Service<Egress, EgressApi>()(
-  "@watchdog/tools/http/Egress"
+  "#tools/http/Egress"
 ) {}
 
 /** One Job's door and its ledger. */

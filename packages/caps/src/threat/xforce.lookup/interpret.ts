@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { XforceLookupSnapshot } from "@watchdog/tools/threat";
+import type { XforceLookupSnapshot } from "#tools/threat";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";

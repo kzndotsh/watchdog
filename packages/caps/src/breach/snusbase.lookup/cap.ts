@@ -4,7 +4,7 @@ import {
   redactSnusbaseSnapshot,
   fetchSnusbaseLookupEffect,
   snusbaseLookupSnapshotSchema,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { snusbase } from "../../providers";

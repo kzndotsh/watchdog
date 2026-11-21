@@ -1,6 +1,6 @@
 /**
  * The one parser of the `WD_EGRESS_PROXY` setting, shared by the env schema and
- * the outbound client in `@watchdog/tools/http`. Pure: no process state, so the
+ * the outbound client in `@watchdog/caps/tools/http`. Pure: no process state, so the
  * client can import it without loading the validated server env.
  *
  * Returns the proxy URL when `raw` is an http(s) URL, otherwise `null`.

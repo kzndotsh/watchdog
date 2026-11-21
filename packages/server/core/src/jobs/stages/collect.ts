@@ -12,12 +12,11 @@ import {
   type ArtifactReadLimit,
   type CapContext,
 } from "@watchdog/caps/sdk";
-import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 import {
   MissingCredentialError,
   ValidationVendorError,
   type ToolsTag,
-} from "@watchdog/tools/errors";
+} from "@watchdog/caps/tools/errors";
 import {
   Egress,
   egressPolicyFor,
@@ -25,7 +24,8 @@ import {
   makeJobEgress,
   OutboundClient,
   type EgressLedger,
-} from "@watchdog/tools/http";
+} from "@watchdog/caps/tools/http";
+import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 
 import { credentialModeOfVersion } from "../../caps/breach-caps";
 import { errorMessage } from "../../errors/error-utils";

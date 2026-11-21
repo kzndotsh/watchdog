@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { UnshortenSnapshot } from "@watchdog/tools/http";
+import type { UnshortenSnapshot } from "#tools/http";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

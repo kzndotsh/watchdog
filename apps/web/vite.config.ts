@@ -90,11 +90,11 @@ const config = defineConfig({
       process.env.WD_BUNDLE_SSR === "1"
         ? true
         : [
-            "@watchdog/ai",
+            "@watchdog/caps/ai",
             "@watchdog/caps",
             "@watchdog/domain",
             "@watchdog/server",
-            "@watchdog/tools",
+            "@watchdog/caps/tools",
             "@watchdog/ui",
           ],
   },

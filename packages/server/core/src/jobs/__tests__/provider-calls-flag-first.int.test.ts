@@ -9,8 +9,8 @@ import {
   seedJob,
   testDb as db,
 } from "#test-db";
+import { makeJobEgress } from "@watchdog/caps/tools/http";
 import type { CaseId } from "@watchdog/domain/schemas/shared";
-import { makeJobEgress } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store";
 import { Db } from "../../infra/db-service";

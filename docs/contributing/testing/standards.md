@@ -24,7 +24,7 @@ A mock replaces something the code under test talks to. It earns its place only 
 
 | Boundary | How | Example |
 | --- | --- | --- |
-| Network and vendor clients | MSW through `@watchdog/domain/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/tools/src/http/__tests__/page-enrich.test.ts` |
+| Network and vendor clients | MSW through `@watchdog/domain/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/caps/tools/src/http/__tests__/page-enrich.test.ts` |
 | Database | A real Postgres through `@watchdog/server/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/server/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
 | Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `packages/server/worker/src/__tests__/maintenance.test.ts` |
 | Framework seams | The router, `window`, `EventSource`, the toast and auth server modules, through the shared doubles below | `apps/web/src/testing/` |

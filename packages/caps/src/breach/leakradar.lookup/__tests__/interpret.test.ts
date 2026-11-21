@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { LeakradarLookupSnapshot } from "#tools/breach";
 import { testId } from "@watchdog/domain/test-kit";
-import type { LeakradarLookupSnapshot } from "@watchdog/tools/breach";
 
 import { claimText, itRejectsIncompleteReport } from "../../../testing";
 import { leakradarLookup } from "../cap.ts";

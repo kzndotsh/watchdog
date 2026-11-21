@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { breachQuerySeedSchema } from "@watchdog/domain/schemas/caps";
-import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
 import {
   LEAKRADAR_DEFAULT_PAGE_SIZE,
   LEAKRADAR_MAX_PAGE,
   LEAKRADAR_MAX_PAGE_SIZE,
   leakradarKindSchema,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
+import { breachQuerySeedSchema } from "@watchdog/domain/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
 
 export const leakradarLookupInput = z.object({
   query: breachQuerySeedSchema.describe("Email address, username or domain"),

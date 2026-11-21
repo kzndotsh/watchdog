@@ -128,7 +128,7 @@ import {
   type BossDriver,
   type QueuedJob,
 } from "#core/jobs";
-import { OutboundClient } from "@watchdog/tools/http";
+import { OutboundClient } from "@watchdog/caps/tools/http";
 
 import { bootWorkerEffect } from "../boot-worker";
 import { WorkerConfigError } from "../config-error";

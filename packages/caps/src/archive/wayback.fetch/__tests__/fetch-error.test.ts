@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import { ValidationVendorError } from "#tools/errors";
 
 const { closestWaybackTimestampEffect, fetchWaybackSnapshotEffect } =
   vi.hoisted(() => ({
@@ -9,9 +9,8 @@ const { closestWaybackTimestampEffect, fetchWaybackSnapshotEffect } =
     fetchWaybackSnapshotEffect: vi.fn(),
   }));
 
-vi.mock("@watchdog/tools/wayback", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@watchdog/tools/wayback")>();
+vi.mock("#tools/wayback", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#tools/wayback")>();
   return {
     ...actual,
     closestWaybackTimestampEffect,

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import { ValidationVendorError } from "@watchdog/caps/tools/errors";
 
 import { InternalError, InvalidError } from "../../../errors/tagged-errors";
 import { readArtifactBytesEffect } from "../../../infra/blob";

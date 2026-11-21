@@ -7,8 +7,8 @@
     "paths": {
       "@/*": ["./apps/web/src/*"],
 
-      "@watchdog/ai": ["./packages/ai/src/index.ts"],
-      "@watchdog/ai/*": ["./packages/ai/src/*"],
+      "@watchdog/caps/ai": ["./packages/caps/ai/src/index.ts"],
+      "@watchdog/caps/ai/*": ["./packages/caps/ai/src/*"],
 
       "@watchdog/server/api": ["./packages/server/api/src/index.ts"],
       "@watchdog/server/api/*": ["./packages/server/api/src/*"],
@@ -59,7 +59,7 @@
       ],
       "@watchdog/domain/test-kit/*": ["./packages/domain/test-kit/src/*"],
 
-      "@watchdog/tools/*": ["./packages/tools/src/*"],
+      "@watchdog/caps/tools/*": ["./packages/caps/tools/src/*"],
 
       "@watchdog/ui/*": ["./packages/ui/src/*"]
     }

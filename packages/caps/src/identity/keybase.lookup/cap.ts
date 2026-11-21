@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchKeybaseLookupEffect,
   keybaseLookupSnapshotSchema,
-} from "@watchdog/tools/identity";
+} from "#tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { keybase } from "../../providers";

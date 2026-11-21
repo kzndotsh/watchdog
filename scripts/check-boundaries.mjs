@@ -12,7 +12,7 @@
  *      workspace directory (`../../core/src/...`) fails and the message lists the
  *      public entry points.
  *   3. Downward: apps are leaves. No package or other app imports an app.
- *   4. Tools know no Cap: a production source file of packages/tools/src (not `__tests__`,
+ *   4. Tools know no Cap: a production source file of packages/caps/tools/src (not `__tests__`,
  *      `testing/` or a test file) holds no Cap id and no Vault slot name as a string
  *      literal. A Cap hands its facts to a tool as parameters (the user agent, the key
  *      value); the lists are read from packages/caps/capabilities.gen.json (Cap ids and
@@ -221,7 +221,7 @@ const infraImportProblems = [];
 const CORE_SRC = "packages/server/core/src/";
 /** A non-test file inside a top-level folder of core's src. */
 const CORE_FOLDER_FILE =
-  /^packages\/core\/src\/(?<folder>[^/]+)\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
+  /^packages\/server\/core\/src\/(?<folder>[^/]+)\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
 
 const WEB_SRC = "apps/web/src/";
 const WEB_DOMAINS = `${WEB_SRC}domains/`;
@@ -395,7 +395,7 @@ function capFacts() {
 }
 
 const TOOLS_SOURCE =
-  /^packages\/tools\/src\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
+  /^packages\/caps\/tools\/src\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
 const capFactsByLiteral = capFacts();
 /** Any Cap id or slot name as a whole token inside a literal (not part of a longer name or host). */
 const capFactToken = new RegExp(

@@ -5,7 +5,7 @@ import type { BlobStore } from "#core/blob";
 import { coreServicesLayer, Db } from "#core/infra";
 import { JobFibers, type JobQueue, type JobQueueWorker } from "#core/jobs";
 import type { Vault } from "#core/vault";
-import type { OutboundClient } from "@watchdog/tools/http";
+import type { OutboundClient } from "@watchdog/caps/tools/http";
 
 import { workerShutdownLayer, type WorkerShutdown } from "./shutdown";
 

@@ -17,7 +17,7 @@ import {
   toDomainTag,
 } from "#core/errors";
 import { runWithRequestLogger } from "#log";
-import { BlockedTargetError } from "@watchdog/tools/errors";
+import { BlockedTargetError } from "@watchdog/caps/tools/errors";
 
 import { toOrpcError } from "../map-domain-error";
 

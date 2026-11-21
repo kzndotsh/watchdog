@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { isEmptyDraft, type ProcessExtractDraft } from "@watchdog/ai";
+import { isEmptyDraft, type ProcessExtractDraft } from "#ai";
 import {
   validateIdentifierWrite,
   type PatchOp,

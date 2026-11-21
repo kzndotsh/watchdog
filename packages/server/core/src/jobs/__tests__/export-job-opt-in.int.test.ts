@@ -15,10 +15,10 @@ import {
   seedProviderCall,
   testDb as db,
 } from "#test-db";
+import { outboundClientLayer } from "@watchdog/caps/tools/http";
 import type { CaseId } from "@watchdog/domain/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
-import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { requireBreachCredentialOptInEffect } from "../../export/breach-credential-opt-in";
 import { caseExportObjectKey } from "../../export/export-objects";

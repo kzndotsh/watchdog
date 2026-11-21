@@ -22,7 +22,7 @@ import { recordingBlobStore } from "#core/blob";
 import { Db } from "#core/infra";
 import { JobFibers, recordingJobQueue, type QueuedJob } from "#core/jobs";
 import { fakeVault } from "#core/vault";
-import { outboundClientLayer } from "@watchdog/tools/http";
+import { outboundClientLayer } from "@watchdog/caps/tools/http";
 
 import { processCapJobBatchEffect, processCapJobEffect } from "../boot-worker";
 

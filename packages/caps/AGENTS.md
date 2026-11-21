@@ -1,6 +1,6 @@
 # Caps guide
 
-> Scope: `packages/caps` (Caps, Playbooks, the Cap SDK in `src/sdk/`). Inherits the root [AGENTS.md](../../AGENTS.md); outbound HTTP rules: [`packages/server/AGENTS.md`](../core/AGENTS.md#outbound-http-packagestools-packagesai).
+> Scope: `packages/caps`: Caps, Playbooks and the Cap SDK (`src/`, SDK in `src/sdk/`), the provider tools (`tools/`) and the model calls (`ai/`). Inherits the root [AGENTS.md](../../AGENTS.md).
 
 A Cap never writes the Graph: `run` collects, `interpret` returns Proposal ops, and Triage Accept applies them. A new Cap starts with `/create-cap`; naming, layers and the D1–D5 ship decisions are in [`caps-lexicon`](../../docs/reference/platform/caps-lexicon.md).
 
@@ -25,5 +25,11 @@ A Cap never writes the Graph: `run` collects, `interpret` returns Proposal ops, 
 
 - One folder per Cap id, dots to path segments (`network/dns.lookup/{cap,interpret,input}.ts`). Inside this package import the SDK by relative path (Vite does not resolve package self-references); inside `playbooks/` import Caps from `../registry`, not the barrel.
 - Collect input seeds use the `*SeedSchema` helpers; interpret emits identifiers normalized like an Identifier write. A batch limit that drops values says so with `identifierTruncationNote`, never a hand-written note.
-- Producer Zod lives in `@watchdog/tools/<domain>`: import it, never re-export or retype it.
+- Producer Zod lives in `tools/` (`#tools/<domain>`): import it, never re-export or retype it.
 - A Playbook emits step 0 only; later steps are created once their sources settle, and a failed step skips only its dependents. Playbook ids are kebab-case and start with `seedKinds[0]`. Keep harvest + `extract.ai` and act Caps out of default books.
+
+## Outbound HTTP (`tools/`, `ai/`)
+
+- Every request goes through `OutboundClient` / the Job's `Egress` (DNS, TLS and model calls too); the client validates each address and redirect hop. Pass `limits` for different bounds; never add a per-call host guard ([outbound HTTP](../../docs/reference/platform/caps-boundary.md#outbound-http)).
+- A tool takes the user agent and any key as parameters, names no Cap id or Vault slot, and owns its producer Zod. A model call inside a Cap uses the `fetch` from `Egress.llmFetchFor(origin)`.
+- A `ValidationVendorError` message is a fixed sentence (it reaches clients); its `cause` holds upstream diagnostics only (`upstreamDiagnostic`), never the caller's input or free upstream text.

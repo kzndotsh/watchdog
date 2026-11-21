@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  fetchHashlookupEffect,
-  hashlookupSnapshotSchema,
-} from "@watchdog/tools/threat";
+import { fetchHashlookupEffect, hashlookupSnapshotSchema } from "#tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { circl } from "../../providers";

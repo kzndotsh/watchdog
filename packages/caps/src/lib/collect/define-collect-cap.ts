@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
+import type { CredentialFingerprint } from "#tools/breach";
+import type { ToolsTag } from "#tools/errors";
 import type { FoundValue } from "@watchdog/domain/schemas/jobs";
 import type { JsonValue } from "@watchdog/domain/schemas/shared";
-import type { CredentialFingerprint } from "@watchdog/tools/breach";
-import type { ToolsTag } from "@watchdog/tools/errors";
 
 import {
   type BREACH_CAP_CATEGORY,

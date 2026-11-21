@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import {
   fetchC99SubdomainsEffect,
   c99LookupSnapshotSchema,
-} from "@watchdog/tools/network";
-import { normalizeHost } from "@watchdog/tools/normalize";
+} from "#tools/network";
+import { normalizeHost } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { c99 } from "../../providers";

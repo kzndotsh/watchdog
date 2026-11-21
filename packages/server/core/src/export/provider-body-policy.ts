@@ -5,11 +5,11 @@ import {
   redistributionVerdictFor,
   type RedistributionVerdict,
 } from "@watchdog/caps";
+import { contactAdmits, type Touch } from "@watchdog/caps/tools/http";
 import {
   fixedContactHost,
   type CapContact,
 } from "@watchdog/domain/schemas/caps";
-import { contactAdmits, type Touch } from "@watchdog/tools/http";
 
 /**
  * Why a stored raw response is not in the Export. The envelope in `provider-calls.jsonl` always

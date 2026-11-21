@@ -480,7 +480,7 @@ importers:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
 
-  packages/ai:
+  packages/caps:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^4.0.106
@@ -497,31 +497,12 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.1.4
-    devDependencies:
-      '@types/node':
+      postal-mime:
+        specifier: ^4.2.1
+        version: 4.2.1
+      undici:
         specifier: 'catalog:'
-        version: 26.6.6
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
-
-  packages/caps:
-    dependencies:
-      '@watchdog/ai':
-        specifier: workspace:*
-        version: link:../ai
-      '@watchdog/domain':
-        specifier: workspace:*
-        version: link:../domain
-      '@watchdog/tools':
-        specifier: workspace:*
-        version: link:../tools
-      effect:
-        specifier: 'catalog:'
-        version: 4.1.4
+        version: 8.12.4
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -618,9 +599,6 @@ importers:
       '@watchdog/domain':
         specifier: workspace:*
         version: link:../domain
-      '@watchdog/tools':
-        specifier: workspace:*
-        version: link:../tools
       better-auth:
         specifier: 'catalog:'
         version: 1.7.25(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.169.5(esbuild@0.28.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.19)(rollup@4.62.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.1)(postgres@4.1.1))(pg@8.23.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.14)(vitest@5.1.1)
@@ -670,31 +648,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 5.1.1(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.1)(happy-dom@21.0.4)(jsdom@31.0.1(@noble/hashes@2.4.0))(msw@3.0.7(@types/node@26.6.6)(graphql@16.14.2)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-
-  packages/tools:
-    dependencies:
-      '@watchdog/domain':
-        specifier: workspace:*
-        version: link:../domain
-      effect:
-        specifier: 'catalog:'
-        version: 4.1.4
-      postal-mime:
-        specifier: ^4.2.1
-        version: 4.2.1
-      undici:
-        specifier: 'catalog:'
-        version: 8.12.4
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.6
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
 
   packages/ui:
     dependencies:

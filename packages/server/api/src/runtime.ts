@@ -8,11 +8,11 @@ import { coreServicesLayer, Db, inWorkerRole } from "#core/infra";
 import type { JobQueue } from "#core/jobs";
 import { jobQueueProducerLayer } from "#core/jobs";
 import type { Vault } from "#core/vault";
+import type { OutboundClient } from "@watchdog/caps/tools/http";
 import type {
   ApiCredential,
   ProcedureScope,
 } from "@watchdog/domain/schemas/shared";
-import type { OutboundClient } from "@watchdog/tools/http";
 
 import { inWorkerRoleRequest, runAsCaller } from "./caller-role";
 import { toOrpcError } from "./map-domain-error";

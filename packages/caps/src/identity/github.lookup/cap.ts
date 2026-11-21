@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchGithubUserEffect,
   githubUserSnapshotSchema,
-} from "@watchdog/tools/identity";
+} from "#tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { github } from "../../providers";

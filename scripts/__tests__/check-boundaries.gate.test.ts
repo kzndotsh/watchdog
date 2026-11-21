@@ -439,7 +439,7 @@ describe("check-boundaries gate", () => {
         "src/a.ts": 'export const ua = ["x", "net.probe.lookup"].join(" ");\n',
       });
       expect(res.code).not.toBe(0);
-      expect(res.output).toContain("packages/tools/src/a.ts:1");
+      expect(res.output).toContain("packages/caps/tools/src/a.ts:1");
       expect(res.output).toContain("net.probe.lookup");
       expect(res.output).toContain("Cap id");
     });
@@ -473,7 +473,7 @@ describe("check-boundaries gate", () => {
         "src/a.ts": "export const ua = `watchdog/1.0\n(net.probe.lookup)`;\n",
       });
       expect(res.code).not.toBe(0);
-      expect(res.output).toContain("packages/tools/src/a.ts:2");
+      expect(res.output).toContain("packages/caps/tools/src/a.ts:2");
       expect(res.output).toContain("net.probe.lookup");
     });
 
@@ -485,7 +485,7 @@ describe("check-boundaries gate", () => {
       expect(res.code).toBe(0);
     });
 
-    it("applies only to packages/tools", () => {
+    it("applies only to packages/caps/tools", () => {
       const res = workspace(
         {
           other: {

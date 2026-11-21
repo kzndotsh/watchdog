@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchGreedybearLookupEffect,
   greedybearLookupSnapshotSchema,
-} from "@watchdog/tools/threat";
+} from "#tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greedybear } from "../../providers";

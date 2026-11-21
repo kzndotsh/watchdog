@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   submitWaybackSaveEffect,
   archiveSubmitSnapshotSchema,
-} from "@watchdog/tools/wayback";
+} from "#tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { internetArchive } from "../../providers";

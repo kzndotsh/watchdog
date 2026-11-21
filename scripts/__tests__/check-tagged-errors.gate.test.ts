@@ -77,7 +77,7 @@ describe("check-tagged-errors gate", () => {
   it("fails when two tagged error classes share a code", () => {
     const repo = repoWith({
       "packages/server/core/src/a.ts": CLEAN,
-      "packages/tools/src/b.ts": [
+      "packages/caps/tools/src/b.ts": [
         'export class OtherError extends Data.TaggedError("OtherError")<{}> {',
         '  readonly code = "vault" as const;',
         "}",

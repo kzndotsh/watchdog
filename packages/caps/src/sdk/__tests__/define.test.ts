@@ -2,8 +2,8 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { ValidationVendorError } from "#tools/errors";
 import { hostSeedSchema } from "@watchdog/domain/schemas/caps";
-import { ValidationVendorError } from "@watchdog/tools/errors";
 
 import {
   DEFAULT_CAP_TIMEOUT_MS,

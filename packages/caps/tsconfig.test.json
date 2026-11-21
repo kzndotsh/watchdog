@@ -2,9 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "rootDir": "."
+    "noEmit": true
   },
-  "include": ["src", "scripts/**/*.ts"],
+  "include": ["src", "ai/src", "tools/src", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

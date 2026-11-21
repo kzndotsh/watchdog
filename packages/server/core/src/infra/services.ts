@@ -1,6 +1,6 @@
 import { Layer } from "effect";
 
-import { outboundClientLayer } from "@watchdog/tools/http";
+import { outboundClientLayer } from "@watchdog/caps/tools/http";
 
 import { blobStoreLayer } from "./blob-store";
 import type { Db } from "./db-service";

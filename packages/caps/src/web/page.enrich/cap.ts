@@ -1,13 +1,7 @@
 import { Effect } from "effect";
 
-import {
-  ValidationVendorError,
-  upstreamDiagnostic,
-} from "@watchdog/tools/errors";
-import {
-  fetchPageEnrichEffect,
-  pageEnrichSnapshotSchema,
-} from "@watchdog/tools/http";
+import { ValidationVendorError, upstreamDiagnostic } from "#tools/errors";
+import { fetchPageEnrichEffect, pageEnrichSnapshotSchema } from "#tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";

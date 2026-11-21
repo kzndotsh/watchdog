@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { DnsReverseSnapshot } from "@watchdog/tools/dns";
+import type { DnsReverseSnapshot } from "#tools/dns";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

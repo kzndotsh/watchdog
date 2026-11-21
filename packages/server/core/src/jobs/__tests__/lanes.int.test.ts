@@ -11,11 +11,11 @@ import {
   testDb as db,
 } from "#test-db";
 import type { JobLane } from "@watchdog/caps/sdk";
+import { outboundClientLayer } from "@watchdog/caps/tools/http";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
 import { EGRESS_CLASSES, type CaseId } from "@watchdog/domain/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
-import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";
 import { Db } from "../../infra/db-service.ts";

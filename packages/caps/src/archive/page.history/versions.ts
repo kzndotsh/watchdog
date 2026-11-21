@@ -1,8 +1,8 @@
 import { Clock, Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
-import type { ToolsTag } from "@watchdog/tools/errors";
-import { DEFAULT_OUTBOUND_LIMITS } from "@watchdog/tools/http";
+import type { ToolsTag } from "#tools/errors";
+import { DEFAULT_OUTBOUND_LIMITS } from "#tools/http";
 import {
   fetchWaybackCaptureEffect,
   pageTextOf,
@@ -12,7 +12,7 @@ import {
   type WaybackCdxRow,
   type WaybackFailedVersion,
   type WaybackVersion,
-} from "@watchdog/tools/wayback";
+} from "#tools/wayback";
 
 import type { CapArtifact } from "../../sdk";
 

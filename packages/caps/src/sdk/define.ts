@@ -2,6 +2,12 @@ import type { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import type { z } from "zod";
 
+import type {
+  BreachCredentialMode,
+  CredentialFingerprint,
+} from "#tools/breach";
+import type { ToolsTag } from "#tools/errors";
+import type { Egress } from "#tools/http";
 import type { CapContact } from "@watchdog/domain/schemas/caps";
 import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 import type { PatchOp } from "@watchdog/domain/schemas/graph";
@@ -13,12 +19,6 @@ import type {
   JobPivots,
   JsonValue,
 } from "@watchdog/domain/schemas/shared";
-import type {
-  BreachCredentialMode,
-  CredentialFingerprint,
-} from "@watchdog/tools/breach";
-import type { ToolsTag } from "@watchdog/tools/errors";
-import type { Egress } from "@watchdog/tools/http";
 
 import type { BREACH_CAP_CATEGORY } from "./descriptor";
 import { isBreachCapId } from "./descriptor";

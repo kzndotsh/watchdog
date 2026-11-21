@@ -351,7 +351,7 @@ const breachCapFields = {
 };
 
 /**
- * Optional egress proxy for every Cap request (`@watchdog/tools/http` reads the
+ * Optional egress proxy for every Cap request (`@watchdog/caps/tools/http` reads the
  * same `WD_EGRESS_PROXY` from the process environment). An http(s) URL; the
  * proxy then resolves and connects, so see docs/reference/platform/caps-boundary.md
  * for the checks that still run in Watchdog. `WD_AI_PRIVATE_ORIGINS` is the operator's list

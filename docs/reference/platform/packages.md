@@ -21,8 +21,8 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | `@watchdog/server/env`, `@watchdog/domain/schemas`, `@watchdog/ui`, `@watchdog/server/log` | any other `@watchdog/*` (leaf packages) |
 | `@watchdog/domain/policy` | db, caps, core, api, apps, tools, ai |
 | `@watchdog/server/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle (db's integration tests use the harness; db never imports it outside tests) |
-| `@watchdog/ai` | db, caps, core |
-| `@watchdog/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
+| `@watchdog/caps/ai` | db, caps, core |
+| `@watchdog/caps/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
 | `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | **db**, `drizzle-orm`, `postgres`, `pg` (`check:boundaries` rule 8), core, api, apps |
 | `@watchdog/server/auth` | api, core, caps, apps, `@tanstack/*`. Depends on db (Better Auth adapter), env, log, schemas |
 | `@watchdog/server/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); callers import per-domain subpaths (`@watchdog/server/core/cases`, `/graph`, `/jobs`, ...); the worker imports the same entry points and `/maintenance` |

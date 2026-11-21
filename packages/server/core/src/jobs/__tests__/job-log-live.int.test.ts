@@ -13,13 +13,13 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "#test-db";
+import { ValidationVendorError } from "@watchdog/caps/tools/errors";
+import { outboundClientLayer } from "@watchdog/caps/tools/http";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/domain/schemas/testing";
 import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
-import { ValidationVendorError } from "@watchdog/tools/errors";
-import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";
 import { Db } from "../../infra/db-service.ts";

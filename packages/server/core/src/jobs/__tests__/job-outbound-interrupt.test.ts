@@ -4,14 +4,14 @@ import type { AddressInfo } from "node:net";
 import { Cause, Effect, Exit, Fiber, FiberMap, Layer } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { listenFetchable } from "@watchdog/domain/test-kit";
 import {
   fetchUnshortenEffect,
   httpClientLayer,
   isBlockedAddress,
   outboundClientLayerWith,
-} from "@watchdog/tools/http";
-import { unrecordedEgressLayer } from "@watchdog/tools/testing";
+} from "@watchdog/caps/tools/http";
+import { unrecordedEgressLayer } from "@watchdog/caps/tools/testing";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { JobFibers } from "../job-fibers";
 

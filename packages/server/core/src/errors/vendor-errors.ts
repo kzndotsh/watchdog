@@ -1,11 +1,11 @@
 import { Match } from "effect";
 
-import type { ToolsTag } from "@watchdog/tools/errors";
+import type { ToolsTag } from "@watchdog/caps/tools/errors";
 
 import { InternalError, InvalidError, type DomainTag } from "./tagged-errors";
 
 /**
- * Vendor (`@watchdog/tools`) failure tag to core tag. Keyed by tag name and
+ * Vendor (`@watchdog/caps/tools`) failure tag to core tag. Keyed by tag name and
  * exhaustive, so a new vendor tag fails typecheck until it is classified here.
  * Never reads a message to decide the class; the message is carried through
  * unchanged as the reason.

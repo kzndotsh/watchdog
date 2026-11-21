@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/normalize";
+import { normalizeIp } from "#tools/normalize";
 import {
   fetchGreynoiseCommunityEffect,
   greynoiseLookupSnapshotSchema,
-} from "@watchdog/tools/threat";
+} from "#tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greynoise } from "../../providers";

@@ -36,12 +36,12 @@ import {
   jobWideEventFields,
   logStartupWarnings,
 } from "#log";
+import type { OutboundClient } from "@watchdog/caps/tools/http";
 import type { ActivityEntry } from "@watchdog/domain/schemas/feed";
 import {
   trimmedUuidSchema,
   type CaseId,
 } from "@watchdog/domain/schemas/shared";
-import type { OutboundClient } from "@watchdog/tools/http";
 
 import { WorkerConfigError } from "./config-error";
 import {

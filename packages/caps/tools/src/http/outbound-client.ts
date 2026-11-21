@@ -20,7 +20,7 @@ export class OutboundClient extends Context.Service<
     /** The private-origin door, handed only to the Job's `Egress` (see `OutboundTransport`). */
     readonly fetchPrivateOrigin: SafeFetch;
   }
->()("@watchdog/tools/http/OutboundClient") {}
+>()("#tools/http/OutboundClient") {}
 
 /**
  * Builds an `OutboundClient` whose pools close when the Layer's scope closes: the

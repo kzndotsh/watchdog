@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
+import type { PgpKeyHit, PgpLookupSnapshot } from "#tools/identity";
 import { testId } from "@watchdog/domain/test-kit";
-import type { PgpKeyHit, PgpLookupSnapshot } from "@watchdog/tools/identity";
 
 import {
   expectNoConfidenceOnPatch,

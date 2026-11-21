@@ -1,12 +1,12 @@
 import { Effect } from "effect";
 
-import type { JobPivots } from "@watchdog/domain/schemas/shared";
-import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
+import { mapToolsCatch, ValidationVendorError } from "#tools/errors";
 import {
   analyzeFileBytes,
   FILE_MAX_INPUT_BYTES,
   inputLimitMessage,
-} from "@watchdog/tools/file";
+} from "#tools/file";
+import type { JobPivots } from "@watchdog/domain/schemas/shared";
 
 import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";

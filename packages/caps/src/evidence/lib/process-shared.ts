@@ -1,9 +1,7 @@
 import { Effect } from "effect";
 
-import {
-  processExtractDraftSchema,
-  type ProcessExtractDraft,
-} from "@watchdog/ai";
+import { processExtractDraftSchema, type ProcessExtractDraft } from "#ai";
+import type { ToolsTag } from "#tools/errors";
 import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 import {
   DERIVED_JSON_ARTIFACT,
@@ -14,7 +12,6 @@ import {
   parseTrimmedUuid,
   trimmedOrUndefined,
 } from "@watchdog/domain/schemas/shared";
-import type { ToolsTag } from "@watchdog/tools/errors";
 
 import type {
   CapArtifact,

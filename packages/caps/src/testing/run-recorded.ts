@@ -6,8 +6,8 @@ import {
   type EgressLedgerOptions,
   type EgressOptions,
   type ProviderCall,
-} from "@watchdog/tools/http";
-import { recordingEgress } from "@watchdog/tools/testing";
+} from "#tools/http";
+import { recordingEgress } from "#tools/testing";
 
 import type { CapRun, CapRunResult } from "../sdk";
 import { runCapProvided } from "../sdk/run";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { ProviderCall } from "#tools/http";
 import type { CapContact } from "@watchdog/domain/schemas/caps";
-import type { ProviderCall } from "@watchdog/tools/http";
 
 import { touchedHosts, undeclaredHosts } from "../declared-hosts";
 

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   MissingCredentialError,
   ValidationVendorError,
-} from "@watchdog/tools/errors";
+} from "@watchdog/caps/tools/errors";
 
 import { getCredentialEffect } from "../../../infra/vault";
 import { fakeVault } from "../../../infra/vault-fake";

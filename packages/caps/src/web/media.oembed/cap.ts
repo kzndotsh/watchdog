@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import {
-  ValidationVendorError,
-  upstreamDiagnostic,
-} from "@watchdog/tools/errors";
-import { fetchOembedEffect, oembedSnapshotSchema } from "@watchdog/tools/http";
+import { ValidationVendorError, upstreamDiagnostic } from "#tools/errors";
+import { fetchOembedEffect, oembedSnapshotSchema } from "#tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { oembedVendors } from "../../providers";

@@ -4,7 +4,7 @@ import {
   waybackBoundsOrdered,
   waybackBoundTimestamp,
   type WaybackBoundEdge,
-} from "@watchdog/tools/wayback";
+} from "#tools/wayback";
 
 const BOUND_HINT = "Use YYYY, YYYY-MM or YYYY-MM-DD";
 

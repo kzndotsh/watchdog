@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { GithubUserSnapshot } from "@watchdog/tools/identity";
+import type { GithubUserSnapshot } from "#tools/identity";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

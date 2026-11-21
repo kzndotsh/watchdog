@@ -40,7 +40,7 @@ const effecttsgoOff = {
   "effecttsgo/unstable-api-usage": "off",
 } as const;
 
-/** Re-enabled in packages/tools — Clock-backed timestamps and abort signals. */
+/** Re-enabled in packages/caps/tools — Clock-backed timestamps and abort signals. */
 const effecttsgoTier2Warn = {
   "effecttsgo/global-date-in-effect": "warn",
   "effecttsgo/abort-controller-in-effect": "warn",
@@ -69,10 +69,10 @@ const effecttsgoTier1Warn = {
 const effectEdgeRoots = [
   "packages/server/core/src/**/*.{ts,tsx}",
   "packages/server/api/src/**/*.{ts,tsx}",
-  "packages/tools/src/**/*.{ts,tsx}",
+  "packages/caps/tools/src/**/*.{ts,tsx}",
   "packages/domain/policy/src/**/*.{ts,tsx}",
   "packages/caps/src/**/*.{ts,tsx}",
-  "packages/ai/src/**/*.{ts,tsx}",
+  "packages/caps/ai/src/**/*.{ts,tsx}",
   "packages/server/db/src/**/*.{ts,tsx}",
   "packages/server/log/src/**/*.{ts,tsx}",
   "apps/cli/src/**/*.{ts,tsx}",
@@ -521,8 +521,8 @@ export default defineConfig({
       files: [
         "packages/server/core/src/errors/tagged-errors.ts",
         "packages/server/core/src/infra/repo-layers.ts",
-        "packages/tools/src/errors/tagged-errors.ts",
-        "packages/ai/src/structured-extract.ts",
+        "packages/caps/tools/src/errors/tagged-errors.ts",
+        "packages/caps/ai/src/structured-extract.ts",
       ],
       rules: {
         "eslint/max-classes-per-file": "off",
@@ -888,7 +888,7 @@ export default defineConfig({
         "packages/server/db/scripts/**/*.{mjs,ts}",
         "packages/**/scripts/**/*.{mjs,ts}",
         "packages/caps/src/**/*.{ts,tsx}",
-        "packages/ai/src/**/*.{ts,tsx}",
+        "packages/caps/ai/src/**/*.{ts,tsx}",
         "packages/server/env/src/**/*.{ts,tsx}",
         "packages/server/log/src/**/*.{ts,tsx}",
         "packages/domain/schemas/src/**/*.{ts,tsx}",
@@ -909,7 +909,7 @@ export default defineConfig({
     },
     {
       // Tools HTTP/DNS — tier-2 rules stay on; boundary rules stay off.
-      files: ["packages/tools/src/**/*.{ts,tsx}"],
+      files: ["packages/caps/tools/src/**/*.{ts,tsx}"],
       rules: {
         ...effecttsgoOff,
         ...effecttsgoTier2Warn,
@@ -919,19 +919,19 @@ export default defineConfig({
     },
     {
       files: [
-        "packages/tools/src/**/__tests__/**/*.{ts,tsx}",
-        "packages/tools/src/**/*.{test,spec,int.test}.{ts,tsx}",
+        "packages/caps/tools/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/caps/tools/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: effecttsgoOff,
     },
     {
       // One outbound HTTP client (docs/reference/platform/caps-boundary.md): Caps and tools
-      // reach the network through `@watchdog/tools/http` (`OutboundClient`, `httpClientLayer`),
+      // reach the network through `@watchdog/caps/tools/http` (`OutboundClient`, `httpClientLayer`),
       // which validates every resolved address and redirect hop, streams with a byte cap and
       // times out. A direct `fetch`, a raw transport or a raw socket skips all of that.
       files: [
         "packages/caps/src/**/*.{ts,tsx}",
-        "packages/tools/src/**/*.{ts,tsx}",
+        "packages/caps/tools/src/**/*.{ts,tsx}",
       ],
       rules: {
         "eslint/no-restricted-globals": [
@@ -939,7 +939,7 @@ export default defineConfig({
           {
             name: "fetch",
             message:
-              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+              "Use OutboundClient or httpClientLayer from @watchdog/caps/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           },
           {
             name: "require",
@@ -954,7 +954,7 @@ export default defineConfig({
             object,
             property: "fetch",
             message:
-              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+              "Use OutboundClient or httpClientLayer from @watchdog/caps/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           })),
         ],
         "eslint/no-restricted-imports": [
@@ -965,7 +965,7 @@ export default defineConfig({
                 [name, `node:${name}`].map((module) => ({
                   name: module,
                   message:
-                    "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http), not a raw transport or socket.",
+                    "Use OutboundClient or httpClientLayer from @watchdog/caps/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http), not a raw transport or socket.",
                 }))
               ),
               ...["dns", "dns/promises"].flatMap((name) =>
@@ -993,7 +993,7 @@ export default defineConfig({
                 name: "undici",
                 allowTypeImports: true,
                 message:
-                  "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http), not a raw HTTP transport.",
+                  "Use OutboundClient or httpClientLayer from @watchdog/caps/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http), not a raw HTTP transport.",
               },
               {
                 name: "effect/http",
@@ -1011,22 +1011,22 @@ export default defineConfig({
       // egress module's TLS socket and DNS resolver are the only production files that touch a
       // transport, socket or resolver directly.
       files: [
-        "packages/tools/src/http/safe-fetch.ts",
-        "packages/tools/src/http/http-client-layer.ts",
-        "packages/tools/src/http/outbound-policy.ts",
-        "packages/tools/src/http/egress-tls.ts",
-        "packages/tools/src/http/egress-dns.ts",
+        "packages/caps/tools/src/http/safe-fetch.ts",
+        "packages/caps/tools/src/http/http-client-layer.ts",
+        "packages/caps/tools/src/http/outbound-policy.ts",
+        "packages/caps/tools/src/http/egress-tls.ts",
+        "packages/caps/tools/src/http/egress-dns.ts",
       ],
       rules: { "eslint/no-restricted-imports": "off" },
     },
     {
       // Tests that stand up a local HTTP server or proxy.
       files: [
-        "packages/tools/src/http/__tests__/safe-fetch.test.ts",
-        "packages/tools/src/http/__tests__/safe-fetch-proxy.test.ts",
-        "packages/tools/src/http/__tests__/safe-fetch-retry.test.ts",
-        "packages/tools/src/http/__tests__/helpers/loopback-server.ts",
-        "packages/tools/src/http/__tests__/outbound-lifecycle.test.ts",
+        "packages/caps/tools/src/http/__tests__/safe-fetch.test.ts",
+        "packages/caps/tools/src/http/__tests__/safe-fetch-proxy.test.ts",
+        "packages/caps/tools/src/http/__tests__/safe-fetch-retry.test.ts",
+        "packages/caps/tools/src/http/__tests__/helpers/loopback-server.ts",
+        "packages/caps/tools/src/http/__tests__/outbound-lifecycle.test.ts",
       ],
       rules: {
         "eslint/no-restricted-imports": "off",
@@ -1381,7 +1381,7 @@ export default defineConfig({
     },
     {
       // Tools clients: promise chains avoid desloppify async_no_await; require-await is off globally.
-      files: ["packages/tools/src/**/*.{ts,tsx}"],
+      files: ["packages/caps/tools/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-use-before-define": "off",
         "promise/prefer-await-to-then": "off",

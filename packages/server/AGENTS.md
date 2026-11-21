@@ -38,12 +38,6 @@ Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema an
 - A new procedure joins the org-isolation attack matrix or its reasoned allowlist; a list procedure is a declared list (ADR-0007) or a bounded list in `pagination-coverage.test.ts`.
 - Credentials procedures expose vault slots, never plaintext. A new transport error code changes `apiErrorMap`, `toOrpcError` and the client types together.
 
-## Outbound HTTP (`packages/tools`, `packages/ai`)
-
-- Every request goes through `OutboundClient` / the Job's `Egress` (DNS, TLS and model calls too); the client validates each address and redirect hop. Pass `limits` for different bounds; never add a per-call host guard ([outbound HTTP](../../docs/reference/platform/caps-boundary.md#outbound-http)).
-- A tool takes the user agent and any key as parameters, names no Cap id or Vault slot, and owns its producer Zod. A model call inside a Cap uses the `fetch` from `Egress.llmFetchFor(origin)`.
-- A `ValidationVendorError` message is a fixed sentence (it reaches clients); its `cause` holds upstream diagnostics only (`upstreamDiagnostic`), never the caller's input or free upstream text.
-
 ## Identity, config and logs (`packages/server/auth`, `env`, `log`)
 
 - Auth takes its database handle as a parameter. Framework plugins go last (`createAuth({ trailingPlugins })`). API keys are created only by `createScopedApiKey`. Never log an invitation accept URL.

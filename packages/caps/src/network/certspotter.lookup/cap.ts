@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import {
   fetchCertspotterLookupEffect,
   certspotterLookupSnapshotSchema,
-} from "@watchdog/tools/ct";
-import { normalizeHost } from "@watchdog/tools/normalize";
+} from "#tools/ct";
+import { normalizeHost } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotter } from "../../providers";

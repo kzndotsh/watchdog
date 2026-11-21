@@ -12,8 +12,8 @@ Contract layer for Watchdog: shared atoms in `@watchdog/domain/schemas`, domain 
       ↓
 @watchdog/domain/policy    assertPatchGates / patchNeedsConfidence (pure; schemas only)
 @watchdog/caps/sdk  defineCapability SPI + CapDescriptor
-@watchdog/tools     fetch/parse helpers + producer Zod (dns/whois/oembed reports)
-@watchdog/ai        LLM provider + structuredExtract + ProcessExtractDraft Zod
+@watchdog/caps/tools     fetch/parse helpers + producer Zod (dns/whois/oembed reports)
+@watchdog/caps/ai        LLM provider + structuredExtract + ProcessExtractDraft Zod
       ↓
 @watchdog/server/db        Drizzle columns .$type<>() from schemas; imports `PatchOp` and `JobPivots` from schemas for its column types; it does not re-export them
 @watchdog/caps      Cap implementations + registry; Zod inputs; capabilities.gen.json
@@ -34,7 +34,7 @@ Where to find things:
 | Accept gates (rules across ops) | `@watchdog/domain/policy` (`assertPatchGates`) |
 | Patch application | `packages/server/core/src/graph/patch/apply-*-op.ts`, `parse-agent-patch.ts` |
 | Edge update validation | `packages/server/core/src/graph/edge-update.ts` |
-| Producer report shapes | `@watchdog/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from a `@watchdog/tools/<domain>` subpath directly (no Cap-local re-export) |
+| Producer report shapes | `@watchdog/caps/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from a `@watchdog/caps/tools/<domain>` subpath directly (no Cap-local re-export) |
 
 ## Platform vocab is the only vocab here
 

@@ -3,7 +3,7 @@ import { rm } from "node:fs/promises";
 import { Cause, Data, Effect, Exit, Fiber, FiberMap, Ref } from "effect";
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
-import type { OutboundClient } from "@watchdog/tools/http";
+import type { OutboundClient } from "@watchdog/caps/tools/http";
 
 import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import type { BlobStore } from "../infra/blob-store";

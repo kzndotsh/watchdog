@@ -14,14 +14,14 @@ import {
   type CapabilityDef,
   type CapServices,
 } from "@watchdog/caps/sdk";
-import type { CaseId } from "@watchdog/domain/schemas/shared";
-import { listenFetchable } from "@watchdog/domain/test-kit";
-import { mapToolsCatch, type ToolsTag } from "@watchdog/tools/errors";
+import { mapToolsCatch, type ToolsTag } from "@watchdog/caps/tools/errors";
 import {
   Egress,
   isBlockedAddress,
   outboundClientLayerWith,
-} from "@watchdog/tools/http";
+} from "@watchdog/caps/tools/http";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { recordingBlobStore } from "../../../infra/blob-store";
 import { Db } from "../../../infra/db-service";

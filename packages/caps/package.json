@@ -3,25 +3,71 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
+  "imports": {
+    "#ai": "./ai/src/index.ts",
+    "#tools/archive": "./tools/src/archive/index.ts",
+    "#tools/breach": "./tools/src/breach/index.ts",
+    "#tools/cache": "./tools/src/cache/index.ts",
+    "#tools/ct": "./tools/src/ct/index.ts",
+    "#tools/dns": "./tools/src/dns/index.ts",
+    "#tools/errors": "./tools/src/errors/index.ts",
+    "#tools/file": "./tools/src/file/index.ts",
+    "#tools/html": "./tools/src/html/index.ts",
+    "#tools/http": "./tools/src/http/index.ts",
+    "#tools/identity": "./tools/src/identity/index.ts",
+    "#tools/network": "./tools/src/network/index.ts",
+    "#tools/normalize": "./tools/src/normalize/index.ts",
+    "#tools/parse": "./tools/src/parse/index.ts",
+    "#tools/threat": "./tools/src/threat/index.ts",
+    "#tools/testing": "./tools/src/testing/index.ts",
+    "#tools/tls": "./tools/src/tls/index.ts",
+    "#tools/wayback": "./tools/src/wayback/index.ts",
+    "#tools/whois": "./tools/src/whois/index.ts"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./sdk": "./src/sdk/index.ts",
-    "./capabilities.gen.json": "./capabilities.gen.json"
+    "./capabilities.gen.json": "./capabilities.gen.json",
+    "./ai": "./ai/src/index.ts",
+    "./tools/archive": "./tools/src/archive/index.ts",
+    "./tools/breach": "./tools/src/breach/index.ts",
+    "./tools/cache": "./tools/src/cache/index.ts",
+    "./tools/ct": "./tools/src/ct/index.ts",
+    "./tools/dns": "./tools/src/dns/index.ts",
+    "./tools/errors": "./tools/src/errors/index.ts",
+    "./tools/file": "./tools/src/file/index.ts",
+    "./tools/html": "./tools/src/html/index.ts",
+    "./tools/http": "./tools/src/http/index.ts",
+    "./tools/identity": "./tools/src/identity/index.ts",
+    "./tools/network": "./tools/src/network/index.ts",
+    "./tools/normalize": "./tools/src/normalize/index.ts",
+    "./tools/parse": "./tools/src/parse/index.ts",
+    "./tools/threat": "./tools/src/threat/index.ts",
+    "./tools/testing": "./tools/src/testing/index.ts",
+    "./tools/tls": "./tools/src/tls/index.ts",
+    "./tools/wayback": "./tools/src/wayback/index.ts",
+    "./tools/whois": "./tools/src/whois/index.ts"
   },
   "scripts": {
     "generate": "tsx scripts/generate-capabilities.ts",
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
-    "@watchdog/ai": "workspace:*",
+    "@ai-sdk/anthropic": "^4.0.106",
+    "@ai-sdk/openai-compatible": "^3.0.93",
     "@watchdog/domain": "workspace:*",
-    "@watchdog/tools": "workspace:*",
+    "ai": "^7.0.176",
     "effect": "catalog:",
+    "postal-mime": "^4.2.1",
+    "undici": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "oxc-parser": "catalog:",
     "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "zod": "^4.4.3"
   }
 }

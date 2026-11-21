@@ -7,18 +7,15 @@ import {
   createWatchdogModel,
   processExtractDraftSchema,
   structuredExtractEffect,
-} from "@watchdog/ai";
+} from "#ai";
+import { BlockedTargetError, ValidationVendorError } from "#tools/errors";
+import { ANTHROPIC_API_ORIGIN, Egress } from "#tools/http";
 import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 import { EVIDENCE_EXTRACT_AI_CAPABILITY_ID } from "@watchdog/domain/schemas/jobs";
 import {
   IDENTIFIER_PLATFORM_SLUGS,
   trimmedOrUndefined,
 } from "@watchdog/domain/schemas/shared";
-import {
-  BlockedTargetError,
-  ValidationVendorError,
-} from "@watchdog/tools/errors";
-import { ANTHROPIC_API_ORIGIN, Egress } from "@watchdog/tools/http";
 
 import { anthropic } from "../../providers";
 import { contact, defineCapability, type CapContext } from "../../sdk";

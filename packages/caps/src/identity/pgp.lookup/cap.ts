@@ -1,12 +1,12 @@
 import { Effect } from "effect";
 
-import { classifyPgpQuery } from "@watchdog/domain/schemas/caps";
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import { ValidationVendorError } from "#tools/errors";
 import {
   PGP_KEYSERVERS,
   fetchPgpLookupEffect,
   pgpLookupSnapshotSchema,
-} from "@watchdog/tools/identity";
+} from "#tools/identity";
+import { classifyPgpQuery } from "@watchdog/domain/schemas/caps";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { openpgpKeyservers } from "../../providers";

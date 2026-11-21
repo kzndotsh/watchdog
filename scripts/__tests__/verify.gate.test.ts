@@ -29,8 +29,8 @@ function fixture() {
     pkg("@wd/core", ["@wd/schemas"])
   );
   repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
-  repo.write("packages/tools/package.json", pkg("@wd/tools"));
-  repo.write("packages/tools/src/gone.ts", "export {};\n");
+  repo.write("packages/caps/tools/package.json", pkg("@wd/tools"));
+  repo.write("packages/caps/tools/src/gone.ts", "export {};\n");
   repo.write("packages/caps/capabilities.gen.json", "{}\n");
   repo.write("docs/readme.md", "docs\n");
   repo.commitAll("base");
@@ -79,8 +79,8 @@ describe("verify (changed)", () => {
 
   it("includes uncommitted and untracked files, and never lints a deleted one", () => {
     const repo = fixture();
-    repo.write("packages/tools/src/new.ts", "export {};\n");
-    repo.git("rm", "--quiet", "packages/tools/src/gone.ts");
+    repo.write("packages/caps/tools/src/new.ts", "export {};\n");
+    repo.git("rm", "--quiet", "packages/caps/tools/src/gone.ts");
 
     const steps = plan(repo);
 
@@ -191,7 +191,7 @@ function runWithFakePnpm(
 describe("verify execution", () => {
   it("passes when every step passes", () => {
     const repo = fixture();
-    repo.write("packages/tools/src/a.ts", "export {};\n");
+    repo.write("packages/caps/tools/src/a.ts", "export {};\n");
 
     const res = runWithFakePnpm(repo, [], {});
 
@@ -201,7 +201,7 @@ describe("verify execution", () => {
 
   it("runs every step after a failure, prints the failure, and exits 1", () => {
     const repo = fixture();
-    repo.write("packages/tools/src/a.ts", "export {};\n");
+    repo.write("packages/caps/tools/src/a.ts", "export {};\n");
 
     const res = runWithFakePnpm(repo, [], { FAKE_FAIL: "check:size" });
 

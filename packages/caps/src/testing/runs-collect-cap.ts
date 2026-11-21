@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 
+import type { CredentialFingerprint } from "#tools/breach";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
 import {
   parseJsonValue,
@@ -10,7 +11,6 @@ import {
 } from "@watchdog/domain/schemas/shared";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit/fixtures";
-import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
 import type {
   CapContext,

@@ -11,9 +11,9 @@ import {
 } from "vitest";
 import { z } from "zod";
 
+import { egressPolicyFor } from "#tools/http";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
-import { egressPolicyFor } from "@watchdog/tools/http";
 
 import { CAPABILITIES } from "../registry";
 import { credentialSpecSlots, type CapabilityDef } from "../sdk";

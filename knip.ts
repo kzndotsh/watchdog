@@ -104,7 +104,7 @@ const config: KnipConfig = {
       ],
       project: ["src/**/*.ts", "scripts/**/*.{ts,mjs}"],
     },
-    "packages/ai": {
+    "packages/caps/ai": {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
@@ -174,7 +174,7 @@ const config: KnipConfig = {
       ],
       project: ["src/**/*.ts"],
     },
-    "packages/tools": {
+    "packages/caps/tools": {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },

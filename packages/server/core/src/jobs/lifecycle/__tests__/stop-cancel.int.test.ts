@@ -22,10 +22,10 @@ import {
   seedPlaybookRun,
   testDb as db,
 } from "#test-db";
+import { outboundClientLayer } from "@watchdog/caps/tools/http";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
 import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
-import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { deleteCaseEffect } from "../../../case-deletion/tombstone.ts";
 import { InternalError } from "../../../errors/tagged-errors.ts";

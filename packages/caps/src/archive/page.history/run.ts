@@ -1,15 +1,12 @@
 import { Clock, Effect } from "effect";
 import type { z } from "zod";
 
-import {
-  RateLimitedError,
-  ValidationVendorError,
-} from "@watchdog/tools/errors";
+import { RateLimitedError, ValidationVendorError } from "#tools/errors";
 import {
   fetchWaybackLookupEffect,
   waybackHistorySnapshotSchema,
   type WaybackHistorySnapshot,
-} from "@watchdog/tools/wayback";
+} from "#tools/wayback";
 
 import { uploadJsonReportPair } from "../../lib/collect/upload-json-report-pair";
 import { watchdogUserAgent, type CapContext, type CapRun } from "../../sdk";

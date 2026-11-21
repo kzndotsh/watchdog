@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { WaybackHistorySnapshot } from "#tools/wayback";
 import { testId } from "@watchdog/domain/test-kit";
-import type { WaybackHistorySnapshot } from "@watchdog/tools/wayback";
 
 import {
   claimText,

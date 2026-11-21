@@ -4,7 +4,7 @@ import { env } from "#env/server";
 import type {
   CredentialFingerprint,
   CredentialRole,
-} from "@watchdog/tools/breach";
+} from "@watchdog/caps/tools/breach";
 
 import { masterKeyBytes } from "./vault-crypto";
 

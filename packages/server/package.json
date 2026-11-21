@@ -108,7 +108,6 @@
     "@t3-oss/env-core": "^0.13.11",
     "@watchdog/caps": "workspace:*",
     "@watchdog/domain": "workspace:*",
-    "@watchdog/tools": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",

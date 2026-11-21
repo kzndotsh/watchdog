@@ -8,7 +8,7 @@ import {
   type BossDriver,
   type QueueTx,
 } from "#core/jobs";
-import { OutboundClient, outboundClientLayer } from "@watchdog/tools/http";
+import { OutboundClient, outboundClientLayer } from "@watchdog/caps/tools/http";
 
 import { makeAppLive, makeAppRuntime } from "../runtime";
 

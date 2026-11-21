@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { ShodanLookupSnapshot } from "@watchdog/tools/network";
+import type { ShodanLookupSnapshot } from "#tools/network";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

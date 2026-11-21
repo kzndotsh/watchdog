@@ -1,11 +1,8 @@
 import { Effect } from "effect";
 
+import { fetchCrtShLookupEffect, ctLookupSnapshotSchema } from "#tools/ct";
+import { normalizeHost } from "#tools/normalize";
 import type { JobPivots } from "@watchdog/domain/schemas/shared";
-import {
-  fetchCrtShLookupEffect,
-  ctLookupSnapshotSchema,
-} from "@watchdog/tools/ct";
-import { normalizeHost } from "@watchdog/tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { foundOfType } from "../../lib/collect/found-values";

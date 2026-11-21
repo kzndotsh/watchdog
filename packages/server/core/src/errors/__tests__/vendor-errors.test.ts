@@ -10,7 +10,7 @@ import {
   ValidationVendorError,
   mapToolsCatch,
   type ToolsTag,
-} from "@watchdog/tools/errors";
+} from "@watchdog/caps/tools/errors";
 
 import { InternalError, InvalidError } from "../tagged-errors";
 import { toDomainTag } from "../vendor-errors";

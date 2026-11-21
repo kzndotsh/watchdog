@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { PgpKeyHit, PgpLookupSnapshot } from "@watchdog/tools/identity";
+import type { PgpKeyHit, PgpLookupSnapshot } from "#tools/identity";
 
 import {
   interpretIdentifierBatches,

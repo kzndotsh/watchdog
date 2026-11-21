@@ -119,10 +119,10 @@ const EDGE_SOURCE = `${IMPORT}export const a = () => Effect.runPromise(Effect.vo
 const ROOTS = [
   "packages/server/core/src",
   "packages/server/api/src",
-  "packages/tools/src",
+  "packages/caps/tools/src",
   "packages/domain/policy/src",
   "packages/caps/src",
-  "packages/ai/src",
+  "packages/caps/ai/src",
   "packages/server/db/src",
   "apps/cli/src",
   "packages/server/log/src",

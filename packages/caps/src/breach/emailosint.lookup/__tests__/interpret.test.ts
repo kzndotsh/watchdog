@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { EmailosintLookupSnapshot } from "#tools/breach";
 import { testId } from "@watchdog/domain/test-kit";
-import type { EmailosintLookupSnapshot } from "@watchdog/tools/breach";
 
 import {
   claimText,

@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { jobsRepo, providerCallsRepo } from "#db";
 import { resetTestDb, seedCase, seedJob, testDb as db } from "#test-db";
+import { createServedCache, makeJobEgress } from "@watchdog/caps/tools/http";
 import type { CaseId } from "@watchdog/domain/schemas/shared";
-import { createServedCache, makeJobEgress } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store";
 import { Db } from "../../infra/db-service";

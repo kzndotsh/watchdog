@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import { normalizeHost } from "@watchdog/tools/normalize";
-import {
-  fetchRdapWhoisEffect,
-  whoisSnapshotSchema,
-} from "@watchdog/tools/whois";
+import { normalizeHost } from "#tools/normalize";
+import { fetchRdapWhoisEffect, whoisSnapshotSchema } from "#tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { rdap } from "../../providers";

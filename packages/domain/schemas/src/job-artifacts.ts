@@ -1,6 +1,6 @@
 /**
  * Job / Cap artifact + capability id contracts.
- * Persistence policy lives here — not in `@watchdog/ai` (LLM/extract only).
+ * Persistence policy lives here — not in `@watchdog/caps/ai` (LLM/extract only).
  */
 
 /** Deterministic identifier harvest from Evidence text. */

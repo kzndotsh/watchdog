@@ -24,7 +24,7 @@ function fixture() {
     pkg("@wd/core", ["@wd/schemas"])
   );
   repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
-  repo.write("packages/tools/package.json", pkg("@wd/tools"));
+  repo.write("packages/caps/tools/package.json", pkg("@wd/tools"));
   repo.write("docs/readme.md", "docs\n");
   repo.commitAll("base");
   repo.git("checkout", "--quiet", "-b", "feature");
@@ -61,7 +61,7 @@ describe("changed-packages", () => {
 
   it("includes uncommitted and untracked changes", () => {
     const repo = fixture();
-    repo.write("packages/tools/src/new.ts", "export {};\n");
+    repo.write("packages/caps/tools/src/new.ts", "export {};\n");
 
     expect(names(repo.run(GATE).output)).toEqual(["@wd/tools"]);
   });
@@ -94,13 +94,13 @@ describe("changed-packages", () => {
 
   it("prints JSON with --json", () => {
     const repo = fixture();
-    repo.write("packages/tools/src/a.ts", "export {};\n");
+    repo.write("packages/caps/tools/src/a.ts", "export {};\n");
     repo.commitAll("tools");
 
     const res = repo.run(GATE, ["--json"]);
 
     expect(JSON.parse(res.output)).toEqual([
-      { name: "@wd/tools", dir: "packages/tools" },
+      { name: "@wd/tools", dir: "packages/caps/tools" },
     ]);
   });
 
@@ -127,13 +127,13 @@ describe("changed-packages", () => {
 
   it("accepts --base <ref> together with --json", () => {
     const repo = fixture();
-    repo.write("packages/tools/src/a.ts", "export {};\n");
+    repo.write("packages/caps/tools/src/a.ts", "export {};\n");
     repo.commitAll("tools");
 
     const res = repo.run(GATE, ["--base", "main", "--json"]);
 
     expect(JSON.parse(res.output)).toEqual([
-      { name: "@wd/tools", dir: "packages/tools" },
+      { name: "@wd/tools", dir: "packages/caps/tools" },
     ]);
   });
 });

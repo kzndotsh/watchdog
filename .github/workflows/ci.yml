@@ -119,9 +119,9 @@ jobs:
             caps:
               - 'packages/caps/**'
               # A Cap's version fingerprints the tools, schemas and ai modules it reaches.
-              - 'packages/tools/**'
+              - 'packages/caps/tools/**'
               - 'packages/domain/schemas/**'
-              - 'packages/ai/**'
+              - 'packages/caps/ai/**'
               - 'docs/reference/platform/cap-register.md'
             api:
               - 'packages/server/api/**'

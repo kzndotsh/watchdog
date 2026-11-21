@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import {
   fetchIpctlLookupEffect,
   ipctlLookupSnapshotSchema,
-} from "@watchdog/tools/network";
-import { normalizeIp } from "@watchdog/tools/normalize";
+} from "#tools/network";
+import { normalizeIp } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipctl } from "../../providers";
