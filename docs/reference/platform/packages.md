@@ -20,7 +20,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | --- | --- |
 | `@watchdog/env`, `@watchdog/schemas`, `@watchdog/ui`, `@watchdog/log` | any other `@watchdog/*` (leaf packages) |
 | `@watchdog/policy` | db, caps, core, api, apps, tools, ai |
-| `@watchdog/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle ([`packages/test-db/AGENTS.md`](../../../packages/test-db/AGENTS.md)) |
+| `@watchdog/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle (db's integration tests use the harness; db never imports it outside tests) |
 | `@watchdog/ai` | db, caps, core |
 | `@watchdog/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
 | `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | **db**, `drizzle-orm`, `postgres`, `pg` (`check:boundaries` rule 8), core, api, apps |

@@ -36,6 +36,8 @@ function PrefetchOnMount({ load }: { load: () => Promise<unknown> }) {
  * `shouldPrefetch`, shortly after mount; `load` is a `memoizeImport` loader so a hover or focus
  * handler can warm it too). It mounts on the first open and stays mounted, so a close keeps
  * its exit animation and state. Same props as the component `pick` selects.
+ *
+ * @canonical `lazyOverlay`: A lazy dialog or drawer (mounts on first open and stays mounted; optional prefetch after `OVERLAY_PREFETCH_MS`; never hand-write the `lazy` + `isMounted` + timer)
  */
 export function lazyOverlay<M, P extends { open: boolean }>(
   load: () => Promise<M>,

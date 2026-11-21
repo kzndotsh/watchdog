@@ -100,7 +100,7 @@ const globalPoolImportNames = [
 
 /**
  * The sanctioned `Effect.run*` edges: the allowlist. A new production edge is added here
- * with its reason in the nearest AGENTS.md.
+ * with its reason in a comment beside its entry.
  */
 const effectRunEdges = [
   // Process: the API ManagedRuntime and `runApp`.
@@ -209,14 +209,14 @@ const webImportRestrictions = (
             name: "@tanstack/react-query",
             importNames: INFINITE_QUERY_NAMES,
             message:
-              "A list reads a page at a time through the list standard (listView + useList, useListFeed or useListFirstPage), never a hand-built infinite query. Only shared/lib/list and shared/hooks/list may; see conventions.md.",
+              "A list reads a page at a time through the list standard (listView + useList, useListFeed or useListFirstPage), never a hand-built infinite query. Only shared/lib/list and shared/hooks/list may; see docs/reference/web/lists.md.",
           },
         ]),
     ...["@tanstack/react-table", "@tanstack/table-core"].map((name) => ({
       name,
       importNames: CLIENT_TABLE_NAMES,
       message:
-        "No client row models or filter features: the server sorts, filters and pages a list (ADR-0007). A bounded table adds them in shared/ui/data-table/table-features.ts; see conventions.md.",
+        "No client row models or filter features: the server sorts, filters and pages a list (ADR-0007). A bounded table adds them in shared/ui/data-table/table-features.ts; see docs/reference/web/lists.md.",
     })),
   ],
   patterns: [
@@ -304,6 +304,9 @@ export default defineConfig({
     // script/JSDoc noise — descriptions aren't our lint bar
     "jsdoc/require-param-description": "off",
     "jsdoc/require-returns-description": "off",
+    // `@canonical` marks the shared kit on its export (check:agents keeps each tag attached;
+    // `git grep -n '@canonical'` lists it).
+    "jsdoc/check-tag-names": ["error", { definedTags: ["canonical"] }],
 
     // effecttsgo recommended warn rules stay on for uncovered paths (ultracite
     // does not deny warnings). Boundary layers disable via effecttsgoOff overrides.
@@ -468,7 +471,7 @@ export default defineConfig({
   },
   overrides: [
     {
-      // packages/db repo contract (packages/db/AGENTS.md Repo contract): repo modules only,
+      // packages/db repo contract (packages/core/AGENTS.md, Database): repo modules only,
       // not the `_*.ts` helpers or tests beside them.
       files: ["packages/db/src/repos/*.repo.ts"],
       rules: {
@@ -926,12 +929,12 @@ export default defineConfig({
           {
             name: "fetch",
             message:
-              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           },
           {
             name: "require",
             message:
-              "Caps and tools are ESM: import through the restricted-imports allowlist (see packages/tools/AGENTS.md), never require a transport or socket module.",
+              "Caps and tools are ESM: import through the restricted-imports allowlist (see docs/reference/platform/caps-boundary.md#outbound-http), never require a transport or socket module.",
           },
         ],
         // `globalThis.fetch(...)` is a property read, not the `fetch` global.
@@ -941,7 +944,7 @@ export default defineConfig({
             object,
             property: "fetch",
             message:
-              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md); a direct fetch skips the outbound address, redirect, size and timeout checks.",
+              "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http); a direct fetch skips the outbound address, redirect, size and timeout checks.",
           })),
         ],
         "eslint/no-restricted-imports": [
@@ -952,7 +955,7 @@ export default defineConfig({
                 [name, `node:${name}`].map((module) => ({
                   name: module,
                   message:
-                    "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw transport or socket.",
+                    "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http), not a raw transport or socket.",
                 }))
               ),
               ...["dns", "dns/promises"].flatMap((name) =>
@@ -960,7 +963,7 @@ export default defineConfig({
                   name: module,
                   allowTypeImports: true,
                   message:
-                    "DNS lookups live in the egress module (`Egress.resolve`) and the outbound policy (see packages/tools/AGENTS.md).",
+                    "DNS lookups live in the egress module (`Egress.resolve`) and the outbound policy (see docs/reference/platform/caps-boundary.md#outbound-http).",
                 }))
               ),
               ...["net", "node:net"].map((module) => ({
@@ -974,13 +977,13 @@ export default defineConfig({
                   "Socket",
                 ],
                 message:
-                  "Open sockets only through the outbound client (see packages/tools/AGENTS.md).",
+                  "Open sockets only through the outbound client (see docs/reference/platform/caps-boundary.md#outbound-http).",
               })),
               {
                 name: "undici",
                 allowTypeImports: true,
                 message:
-                  "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see packages/tools/AGENTS.md), not a raw HTTP transport.",
+                  "Use OutboundClient or httpClientLayer from @watchdog/tools/http (see docs/reference/platform/caps-boundary.md#outbound-http), not a raw HTTP transport.",
               },
               {
                 name: "effect/http",
@@ -1075,7 +1078,7 @@ export default defineConfig({
                 name: "@watchdog/db",
                 importNames: globalPoolImportNames,
                 message:
-                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it (conventions.md).",
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it, so one pool per process ends cleanly at shutdown.",
               },
               {
                 name: "@aws-sdk/client-s3",
@@ -1094,7 +1097,7 @@ export default defineConfig({
       },
     },
     {
-      // Only the Job lifecycle module changes a Job's status (conventions.md): `jobsRepo.settle`
+      // Only the Job lifecycle module changes a Job's status: `jobsRepo.settle`
       // is called from lifecycle/settle.ts alone, and `jobs-settle.repo.ts` is the one db file
       // that writes `jobs.status`. Seeds sit outside `src` (db demo-seed) or in test-db.
       files: ["packages/*/src/**/*.{ts,tsx}", "apps/*/src/**/*.{ts,tsx}"],
@@ -1167,7 +1170,7 @@ export default defineConfig({
                 name: "@watchdog/db",
                 importNames: globalPoolImportNames,
                 message:
-                  "Auth takes the database handle as a parameter (createAuth({ db })); the process pool is owned by Db.owned (conventions.md).",
+                  "Auth takes the database handle as a parameter (createAuth({ db })); the process pool is owned by Db.owned, so one pool per process ends cleanly at shutdown.",
               },
             ],
           },
@@ -1196,7 +1199,7 @@ export default defineConfig({
                 name: "@watchdog/db",
                 importNames: globalPoolImportNames,
                 message:
-                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it (conventions.md).",
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it, so one pool per process ends cleanly at shutdown.",
               },
             ],
           },

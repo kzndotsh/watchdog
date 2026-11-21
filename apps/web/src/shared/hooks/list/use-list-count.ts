@@ -11,6 +11,8 @@ import type { AnyListDef, ListQuery } from "@watchdog/schemas/shared";
  * (`<ListCount variant="compact" isLive={false} />`) for the tab's default view,
  * `def.queryOf({}, fixed)`. It observes the same Query key as the tab's own unfiltered view, so
  * an open tab costs no second request, and it never reads more than the first page.
+ *
+ * @canonical `useListCount`: A tab's count from a list's first-page `total` (never a whole read)
  */
 export function useListCount<D extends AnyListDef, Scope, Item>(
   view: ListView<D, Scope, Item>,

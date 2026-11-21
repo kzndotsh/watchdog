@@ -158,7 +158,8 @@ function entryPoints(pkg) {
 /**
  * The one sanctioned relative reach into another package: the generated client
  * AppRouter type alias, which keeps `@watchdog/client` free of an `@watchdog/api`
- * dependency (packages/client/AGENTS.md).
+ * dependency: it is a type-only alias of the live router, so the CLI types follow the API
+ * without a runtime dependency.
  */
 const RELATIVE_ALLOWED = new Set([
   "packages/client/src/generated/app-router.ts",

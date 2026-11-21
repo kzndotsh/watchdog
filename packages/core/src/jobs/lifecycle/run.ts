@@ -481,6 +481,8 @@ function runAttempt<R, S>(
  * leaves one terminal status, one activity entry and one Playbook advance, the same as a finish.
  * The stop slot of the attempt (`JobFibers.attemptFor`) holds the cause of the first source that
  * stopped it; the settle stores it in `error_code`.
+ *
+ * @canonical `run`: The worker's one Job settle (claim, preflight, Cap body, release from the Exit)
  */
 export function run<R, S>(
   jobId: string,

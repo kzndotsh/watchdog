@@ -93,6 +93,8 @@ function afterCommitEffect(
  * fenced heartbeat, and a rollback leaves both as they were. Nothing else outside the database
  * happens here: the returned `afterCommit` does it once the caller's transaction has committed.
  * `error` is the Job's error text (reconcile's access message); without it none is written.
+ *
+ * @canonical `cancelWithin`: Cancel Jobs inside the caller's transaction (API cancel, Case delete; `afterCommit` aborts fibers and advances runs)
  */
 export function cancelWithin(
   tx: DbTx,

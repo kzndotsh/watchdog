@@ -43,6 +43,8 @@ type IdChipProps = {
  *
  * Truncated: full value always via DS tooltip (never native `title`).
  * Copyable: tip swaps to “Copied” briefly after click.
+ *
+ * @canonical `IdChip`: Opaque id chip
  */
 export function IdChip({
   value,

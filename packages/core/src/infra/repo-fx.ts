@@ -143,6 +143,8 @@ export function repoFxDb<F extends FxModule>(fx: F): RepoFxDb<F> {
  * Run `body` on the caller's handle, or on the pool when none is given: for helpers whose
  * caller may or may not be inside a transaction (`onExec(exec, (h) => xRepoFx.m(h, ...))`).
  * The `Db` service is read only when `exec` is absent, though the type always names it.
+ *
+ * @canonical `onExec`: A helper whose handle is optional (a caller's `tx`, else the pool): `onExec(exec, (h) => xRepoFx.m(h, ...))`
  */
 export function onExec<A, E>(
   exec: DbExec | undefined,

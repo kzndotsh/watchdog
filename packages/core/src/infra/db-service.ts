@@ -35,6 +35,8 @@ function openProcessPool(): OwnedPool {
  * worker composes it outside the queue and `JobFibers`; the web runtime
  * (`AppLive`) composes it and is disposed on the dev reload hook. `Db.layer`
  * borrows the same pool without owning it.
+ *
+ * @canonical `Db`: The Postgres pool's one owner per process (`Db.owned`, scoped: release ends the client; `Db.layer` borrows it; production code never imports the global `db` / `client`)
  */
 export class Db extends Context.Service<Db, DbExec>()(
   "@watchdog/core/infra/Db"

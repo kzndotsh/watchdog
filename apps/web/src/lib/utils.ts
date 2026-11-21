@@ -1,7 +1,13 @@
 import { slugifyName as schemaSlugifyName } from "@watchdog/schemas/shared";
 
+/**
+ * @canonical `cn`: Class merging
+ */
 export { cn } from "cn";
 
+/**
+ * @canonical `slugifyName`, `nextAutoSlug`: Slugs
+ */
 export function slugifyName(name: string): string {
   return schemaSlugifyName(name);
 }
@@ -66,6 +72,8 @@ export function isServerFailure(err: unknown): boolean {
  * `Couldn't save claim`). Pass it as the fallback to `errMessage` / `queryLoadError`, or use
  * it where there is no error object; never write a failure message by hand. The verb is
  * lower case and in its base form; the noun names the thing that did not happen.
+ *
+ * @canonical `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure`: Web failure copy (`Couldn't <verb> <noun>`)
  */
 export function couldnt(verb: string, noun: string): string {
   return `Couldn't ${verb} ${noun}`;

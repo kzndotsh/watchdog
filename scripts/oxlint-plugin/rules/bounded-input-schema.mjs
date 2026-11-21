@@ -201,7 +201,7 @@ const isInputPosition = (node, wholeFile) => {
  * Fails an unbounded `z.string()`, `z.array()`, `z.url()` or `z.email()` in an input
  * schema: a field with no maximum lets one request carry unbounded text or lists. The
  * maximums are named once in `@watchdog/schemas` (`limits.ts`). Scope (paths) is in
- * `oxlint.config.ts`; there is no baseline. Policy: docs/reference/platform/conventions.md.
+ * `oxlint.config.ts`; there is no baseline.
  */
 export const boundedInputSchema = {
   meta: {

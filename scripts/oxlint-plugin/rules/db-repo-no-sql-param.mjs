@@ -40,7 +40,7 @@ export const dbRepoNoSqlParam = {
         if (hit) {
           context.report({
             node,
-            message: `Repos take plain values, never drizzle SQL fragments: pass the value and build the condition inside the repo (${REPO_CONTRACT} rule 5).`,
+            message: `Repos take plain values, never drizzle SQL fragments: pass the value and build the condition inside the repo (${REPO_CONTRACT}).`,
           });
         }
       },

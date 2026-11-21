@@ -53,7 +53,11 @@ export function settleJobInTx(
   });
 }
 
-/** {@link settleJobInTx} in a transaction of its own, for a writer that has none open. */
+/**
+ * {@link settleJobInTx} in a transaction of its own, for a writer that has none open.
+ *
+ * @canonical `settleJobEffect`: Job status change (the only writer; a lint rule bans others): claim, finish, fail, cancel, reclaim
+ */
 export function settleJobEffect(
   target: { readonly jobId: string; readonly caseId: CaseId },
   event: JobEvent,

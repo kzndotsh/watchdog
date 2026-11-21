@@ -105,6 +105,8 @@ export function dossierHistory(
  * cascade removes or unlinks) lands in `graph_history` with its author and
  * changeset. Returns the changeset id. The settings end with the transaction,
  * so call it on that transaction's `tx`, never on the pool.
+ *
+ * @canonical `setHistoryContextEffect`: Who writes the Graph and the transaction's changeset (#724), for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest)
  */
 export function setHistoryContextEffect(
   tx: DbExec,

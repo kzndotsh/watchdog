@@ -53,7 +53,7 @@ export const effectTryRequiresCatch = {
         if (hasCatchOption(node.arguments[0])) return;
         context.report({
           node,
-          message: `Effect.${name} without its own { try, catch } maps every failure to UnknownError: pass an inline object whose catch wraps the cause in a tagged error, e.g. Effect.${name}({ try: () => ..., catch: (cause) => new XError({ cause }) }) (docs/reference/platform/conventions.md, Effect row).`,
+          message: `Effect.${name} without its own { try, catch } maps every failure to UnknownError: pass an inline object whose catch wraps the cause in a tagged error, e.g. Effect.${name}({ try: () => ..., catch: (cause) => new XError({ cause }) }), so the failure keeps a tag the caller can match.`,
         });
       },
     };

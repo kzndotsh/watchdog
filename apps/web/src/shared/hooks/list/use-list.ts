@@ -35,6 +35,8 @@ import {
  *   error is the error state, or an alert above kept rows.
  * - A moving sort (`moving: true`) keeps the first occurrence of an id across pages.
  * - A refresh (SSE, a mutation) is throttled per view by `softInvalidate`.
+ *
+ * @canonical `useList`: A list screen's state (URL view, search draft, status, count, Load more, selection; never per-screen filter state)
  */
 export function useList<
   D extends AnyListDef,

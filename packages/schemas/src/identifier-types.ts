@@ -58,6 +58,8 @@ const soft: IdentifierTypeEntry = { validate: validateSoftValue };
  * The one Identifier type table. The mapped type is exhaustive: a type added to
  * `IDENTIFIER_TYPES` without an entry fails to compile. Canonicalization,
  * validation and paste recognition all read it.
+ *
+ * @canonical `IDENTIFIER_TYPE_TABLE`, `identifierTypeEntry`: Identifier type facts (canonicalizer, validator, paste recogniser per type; never a `switch` over the type; a type without an entry fails to compile)
  */
 export const IDENTIFIER_TYPE_TABLE: Readonly<
   Record<IdentifierType, IdentifierTypeEntry>

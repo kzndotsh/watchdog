@@ -200,7 +200,7 @@ Add when the behavior crosses pages, real browser timing, or auth/session chrome
 
 ## Lint rule tests
 
-A custom oxlint rule (`scripts/oxlint-plugin/`) is tested like a gate: `scripts/__tests__/oxlint-<rule>.gate.test.ts` writes fixture files into a throwaway repo with `oxlintFixtureFactory` (`scripts/__tests__/helpers/oxlint-fixture.ts`), runs the real oxlint against the real `oxlint.config.ts`, and asserts the rule id, message and line, never the rule's internals. A rule that crashes fails the harness instead of passing vacuously. The recipe for a new rule, including its shrink-only baseline test, is in [conventions](../../reference/platform/conventions.md#adding-a-lint-rule).
+A custom oxlint rule (`scripts/oxlint-plugin/`) is tested like a gate: `scripts/__tests__/oxlint-<rule>.gate.test.ts` writes fixture files into a throwaway repo with `oxlintFixtureFactory` (`scripts/__tests__/helpers/oxlint-fixture.ts`), runs the real oxlint against the real `oxlint.config.ts`, and asserts the rule id, message and line, never the rule's internals. A rule that crashes fails the harness instead of passing vacuously. The recipe for a new rule, including its shrink-only baseline test, is in [Adding a lint rule](../ci-gates.md#adding-a-lint-rule).
 
 ## Tests are typechecked
 

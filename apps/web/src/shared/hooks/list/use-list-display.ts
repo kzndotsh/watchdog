@@ -34,6 +34,8 @@ export type ListDisplay = {
 /**
  * Per-viewer presentation state of one list, stored locally under `wd.list.<key>` (never the
  * URL: it is not part of what a shared link shows).
+ *
+ * @canonical `useListDisplay`: A list's per-viewer columns, toggles and density
  */
 export function useListDisplay(
   key: string,

@@ -1,6 +1,6 @@
 # Domain Docs
 
-> **Layout: single-context.** [`docs/glossary.md`](../glossary.md) is the authority for product nouns (not at the repo root, so the glossary-at-root convention in the vendored skills is deliberately not followed here); `docs/adr/` holds the decision records (index in [`docs/README.md`](../README.md)).
+> **Layout: single-context.** [`docs/glossary.md`](../glossary.md) is the authority for product nouns (not at the repo root, so the glossary-at-root convention in the generic skills is deliberately not followed here); `docs/adr/` holds the decision records (index in [`docs/README.md`](../README.md)).
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 

@@ -14,7 +14,7 @@ export const dbRepoNoNotify = {
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */
   create(context) {
-    const message = `Repos must not emit events: only the activity trigger notifies, so the signal is part of the transaction (ADR-0005; ${REPO_CONTRACT} rule 2).`;
+    const message = `Repos must not emit events: only the activity trigger notifies, so the signal is part of the transaction (ADR-0005; ${REPO_CONTRACT}).`;
     /** @param {unknown} node */
     const flag = (node) => {
       context.report({ node, message });

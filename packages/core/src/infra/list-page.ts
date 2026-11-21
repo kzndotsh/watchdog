@@ -93,6 +93,9 @@ function totalOf(count: number, cap: number): ListTotal {
     : { count, isCapped: false };
 }
 
+/**
+ * @canonical `listPageEffect`, `listByIdsEffect`: A declared list's service body: cursor v2, page, capped total; rows by id
+ */
 export function listPageEffect<
   Def extends AnyListDef,
   Row extends ListRow,

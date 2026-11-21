@@ -76,7 +76,11 @@ export function procedureDouble<P extends OrpcPath>(
   return doubleAt(path) as unknown as ProcedureDouble<P>;
 }
 
-/** Factory of `vi.mock("@/lib/orpc-client", ...)`: the real client and utils over the doubles. */
+/**
+ * Factory of `vi.mock("@/lib/orpc-client", ...)`: the real client and utils over the doubles.
+ *
+ * @canonical `orpcClientModuleDouble`, `procedureDouble`, `sessionInOrganization`: A screen or hook test of a domain on the oRPC client: the real client and Query utils over one `vi.fn` per procedure path (`vi.mock("@/lib/orpc-client", ...)` with `orpcClientModuleDouble`; `procedureDouble("claims.list")` receives the input; `sessionInOrganization` answers `auth.whoami`)
+ */
 export function orpcClientModuleDouble() {
   const orpcClient: RouterClient<AppRouter> = createORPCClient({
     call: async (path, input) => doubleAt(path.join("."))(input),

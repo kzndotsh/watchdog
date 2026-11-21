@@ -32,7 +32,7 @@ May edit the docs that describe the dirty code, nested `AGENTS.md`, tests for th
 1. List dirty paths (`git status --porcelain`; add `git diff --name-only` if needed).
 2. Load [close-out.md](references/close-out.md) and apply hygiene + test-gap on those paths.
 3. Docs: patch the pages that describe the dirty code (grep `docs/` and the nested `AGENTS.md` for its paths and nouns), verifying claims against the diff. No new docs unless asked.
-4. Touch a nested `AGENTS.md` only if its Commands or a rule/gotcha actually changed.
+4. Touch an `AGENTS.md` only if a rule or gotcha it states actually changed. A new shared helper gets an `@canonical` tag on its export instead of a guide line.
 5. If caps / web routes changed, run `pnpm generate:caps` or `pnpm generate-routes` (the client contract is gitignored build output: `pnpm typecheck` regenerates it). Do not hand-edit generated output.
 6. Run `pnpm fix`, then `pnpm verify`; for what verify leaves out (component, integration, e2e), read and execute [check-gates](../check-gates/SKILL.md).
 7. If `apps/web` UI behavior changed and browser tools exist, exercise the flow; otherwise say what was not verified.

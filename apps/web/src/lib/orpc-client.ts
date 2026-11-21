@@ -26,5 +26,7 @@ const orpcClient: RouterClient<AppRouter> = createORPCClient(
  * TanStack Query utils over every procedure: `orpc.claims.list.call`, `.key`, `.infiniteKey`.
  * Keys are `[path, { input, type }]`, so `orpc.claims.key({ input: { caseId } })` is every
  * Claims query of a Case (a Case-scoped procedure takes `caseId` at the top level of its input).
+ *
+ * @canonical `orpc`: The web app's API calls, browser and server (there are no server functions): oRPC TanStack Query utils, `orpc.<path>.call` / `.key` / `.infiniteKey`; a Case's keys are `orpc.<domain>.key({ input: { caseId } })`
  */
 export const orpc = createTanstackQueryUtils(orpcClient);

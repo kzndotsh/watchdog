@@ -180,17 +180,6 @@ describe("check-agents gate", () => {
     expect(res.output).toContain("_Banned_");
   });
 
-  it("fails a package AGENTS.md without a Commands section", () => {
-    const repo = cleanRepo();
-    repo.write(
-      "packages/core/AGENTS.md",
-      "# AGENTS.md\n\n> Scope: `packages/core`\n"
-    );
-    const res = repo.run("check-agents.mjs", strict);
-    expect(res.code).toBe(1);
-    expect(res.output).toContain("Commands");
-  });
-
   it("fails a package AGENTS.md without a Scope blurb", () => {
     const repo = cleanRepo();
     repo.write("packages/core/AGENTS.md", "# AGENTS.md\n\n## Commands\n");
@@ -199,23 +188,48 @@ describe("check-agents gate", () => {
     expect(res.output).toContain("Scope");
   });
 
-  it("fails a package directory with no AGENTS.md", () => {
+  it("fails a nested AGENTS.md outside the guide directories", () => {
+    const repo = cleanRepo();
+    repo.write("packages/other/AGENTS.md", PKG_AGENTS);
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain(
+      "packages/other/AGENTS.md: nested guides live only in"
+    );
+  });
+
+  it("fails a guide directory with no AGENTS.md", () => {
+    const repo = cleanRepo();
+    repo.write("apps/web/index.ts", "export {};\n");
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("missing apps/web/AGENTS.md");
+  });
+
+  it("passes a package directory with no AGENTS.md", () => {
     const repo = cleanRepo();
     repo.write("packages/other/index.ts", "export {};\n");
     const res = repo.run("check-agents.mjs", strict);
-    expect(res.code).toBe(1);
-    expect(res.output).toContain("missing packages/other/AGENTS.md");
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
   });
 
+  it("fails a root AGENTS.md over 120 lines", () => {
+    const repo = cleanRepo();
+    repo.write("AGENTS.md", `${ROOT_AGENTS}${"- filler line\n".repeat(120)}`);
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("root >120 lines");
+  });
   it("fails an oversized nested AGENTS.md", () => {
     const repo = cleanRepo();
     repo.write(
       "packages/core/AGENTS.md",
-      `${PKG_AGENTS}${"- filler line\n".repeat(160)}`
+      `${PKG_AGENTS}${"- filler line\n".repeat(100)}`
     );
     const res = repo.run("check-agents.mjs", strict);
     expect(res.code).toBe(1);
-    expect(res.output).toContain("nested >150 lines");
+    expect(res.output).toContain("nested >100 lines");
   });
 
   it("fails a broken relative link in an AGENTS.md", () => {
@@ -250,43 +264,38 @@ describe("check-agents gate", () => {
     expect(res.output).toContain("@AGENTS.md");
   });
 
-  describe("Canonical helpers section", () => {
-    const section = (rows: string) =>
-      `${ROOT_AGENTS}\n## Canonical helpers\n\n| Concern | Module | Export |\n| --- | --- | --- |\n${rows}\n`;
-
-    function helperRepo(rows: string, source?: string) {
+  describe("@canonical tags", () => {
+    function tagRepo(source: string) {
       const repo = cleanRepo();
-      repo.write("AGENTS.md", section(rows));
-      if (source !== undefined) repo.write("packages/core/src/util.ts", source);
+      repo.write("packages/core/src/util.ts", source);
       return repo;
     }
 
-    it("passes a row whose module exports the identifier", () => {
-      const repo = helperRepo(
-        "| Thing | `packages/core/src/util.ts` | `thing` |",
-        "export function thing() {}\n"
+    it("passes a tag on the JSDoc directly above its export", () => {
+      const repo = tagRepo(
+        "/**\n * Does a thing.\n *\n * @canonical `thing`: when you need a thing\n */\nexport function thing() {}\n"
       );
       const res = repo.run("check-agents.mjs", strict);
       expect(res.output).toContain("0 finding(s)");
       expect(res.code).toBe(0);
     });
 
-    it("passes const, class, type, interface and renamed list exports", () => {
-      const repo = helperRepo(
+    it("passes const, class and re-export lists, and a lint comment between", () => {
+      const repo = tagRepo(
         [
-          "| A | `packages/core/src/util.ts` | `a` |",
-          "| B | `packages/core/src/util.ts` | `B` |",
-          "| C | `packages/core/src/util.ts` | `C` |",
-          "| D | `packages/core/src/util.ts` | `D` |",
-          "| E | `packages/core/src/util.ts` | `renamed` |",
-        ].join("\n"),
-        [
+          "/** @canonical `a`, `B`: values */",
           "export const a = 1;",
           "export class B {}",
+          "/**",
+          " * @canonical `C`: a type",
+          " */",
+          "// oxlint-disable-next-line no-explicit-any",
           "export type C = string;",
-          "export interface D {}",
-          "const inner = 1;",
-          "export { inner as renamed };",
+          "/** @canonical `thing`: re-exported by name */",
+          "export {",
+          "  other,",
+          "  thing,",
+          '} from "./impl";',
         ].join("\n")
       );
       const res = repo.run("check-agents.mjs", strict);
@@ -294,71 +303,41 @@ describe("check-agents gate", () => {
       expect(res.code).toBe(0);
     });
 
-    it("passes an identifier re-exported by name with export { X } from", () => {
-      const repo = helperRepo(
-        "| Thing | `packages/core/src/util.ts` | `thing` |",
-        'export {\n  other,\n  thing,\n} from "./impl";\n'
-      );
-      const res = repo.run("check-agents.mjs", strict);
-      expect(res.output).toContain("0 finding(s)");
-      expect(res.code).toBe(0);
-    });
-
-    it("fails an identifier reachable only through export * from", () => {
-      const repo = helperRepo(
-        "| Thing | `packages/core/src/util.ts` | `thing` |",
-        'export * from "./impl";\n'
+    it("fails a tag whose JSDoc is not directly above the export it names", () => {
+      const repo = tagRepo(
+        "/** @canonical `thing`: detached */\nconst inner = 1;\nexport function thing() {}\n"
       );
       const res = repo.run("check-agents.mjs", strict);
       expect(res.code).toBe(1);
-      expect(res.output).toContain("does not export `thing`");
+      expect(res.output).toContain("packages/core/src/util.ts:1: @canonical");
+      expect(res.output).toContain("must tag the JSDoc directly above");
     });
 
-    it("fails a row naming an export the module does not have", () => {
-      const repo = helperRepo(
-        "| Thing | `packages/core/src/util.ts` | `gone` |",
-        "export function thing() {}\n"
+    it("fails a tag naming an export the module does not have", () => {
+      const repo = tagRepo(
+        "/** @canonical `thing`, `gone`: two names */\nexport function thing() {}\n"
       );
       const res = repo.run("check-agents.mjs", strict);
       expect(res.code).toBe(1);
       expect(res.output).toContain("does not export `gone`");
-      expect(res.output).toContain("Thing");
     });
 
-    it("fails a row whose module file is missing", () => {
-      const repo = helperRepo(
-        "| Thing | `packages/core/src/nope.ts` | `thing` |"
+    it("fails a name reachable only through export * from", () => {
+      const repo = tagRepo(
+        '/** @canonical `thing`, `hidden`: two names */\nexport function thing() {}\nexport * from "./impl";\n'
       );
       const res = repo.run("check-agents.mjs", strict);
       expect(res.code).toBe(1);
-      expect(res.output).toContain(
-        "module not found: packages/core/src/nope.ts"
-      );
+      expect(res.output).toContain("does not export `hidden`");
     });
 
-    it("fails a row that is not module and export in backticks", () => {
-      const repo = helperRepo("| Thing | packages/core/src/util.ts | thing |");
-      const res = repo.run("check-agents.mjs", strict);
-      expect(res.code).toBe(1);
-      expect(res.output).toContain("malformed Canonical helpers row");
-    });
-
-    it("checks a nested AGENTS.md that has the section", () => {
-      const repo = cleanRepo();
-      repo.write(
-        "packages/core/AGENTS.md",
-        `${PKG_AGENTS}\n## Canonical helpers\n\n| Concern | Module | Export |\n| --- | --- | --- |\n| Thing | \`packages/core/nope.ts\` | \`thing\` |\n`
+    it("fails a tag without names and a use", () => {
+      const repo = tagRepo(
+        "/** @canonical thing */\nexport function thing() {}\n"
       );
       const res = repo.run("check-agents.mjs", strict);
       expect(res.code).toBe(1);
-      expect(res.output).toContain("packages/core/AGENTS.md");
-    });
-
-    it("runs no check when there is no Canonical helpers section", () => {
-      const repo = cleanRepo();
-      const res = repo.run("check-agents.mjs", strict);
-      expect(res.output).toContain("0 finding(s)");
-      expect(res.code).toBe(0);
+      expect(res.output).toContain("tag must read");
     });
   });
 });

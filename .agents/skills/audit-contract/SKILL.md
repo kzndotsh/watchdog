@@ -2,7 +2,7 @@
 name: audit-contract
 description: >-
   Use when checking whether code in a package or app matches the contract
-  declared in its nearest AGENTS.md: its Rules/Boundaries tables, Accept tiers
+  declared in its nearest AGENTS.md: its custody invariants and rules, Accept tiers
   (unverified/possible/confirmed), the ingress path (Intake to Evidence,
   Caps interpret to Proposal to Triage Accept), or source-of-truth rules
   (Postgres Case Graph, Export as projection). Trigger on "audit the

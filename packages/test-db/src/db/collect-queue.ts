@@ -20,6 +20,8 @@ import { owner } from "./with-test-tx";
  * Run Collect's queue flush now, on `exec`'s session. The projection is written by a deferred
  * trigger at COMMIT, so a test whose transaction rolls back (`withTestTx`) would never see it:
  * the `seed*` helpers call this at their end. A no-op when the session recorded no key.
+ *
+ * @canonical `flushCollectQueue`: Collect's queue projection in a rolled-back test (runs the flush the COMMIT would; the `seed*` helpers call it)
  */
 export async function flushCollectQueue(exec: DbExec): Promise<void> {
   await exec.execute(sql`select public.collect_queue_flush()`);

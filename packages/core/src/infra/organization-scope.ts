@@ -26,6 +26,8 @@ import { tryDb } from "./postgres-effect";
  * `organizationId` runs its body in it, so callers (procedures, routes, tests) change nothing,
  * and a path that forgets reads no Case at all (fail closed) instead of another organization's.
  * Scoping again, to the same or another organization, replaces the scope.
+ *
+ * @canonical `inOrganization`, `inCaseOrganizationUnchecked`, `forEachOrganization`: Row-level security scope: run an Effect in an organization (every exported core Effect that takes an `organizationId` wraps its body), or in a trusted Case's own organization
  */
 export function inOrganization<A, E, R>(
   organizationId: OrganizationId,

@@ -42,5 +42,5 @@ May edit any file a failing gate points at, to make that gate pass. Does not cha
 - `test:integration` needs Postgres (`just test-db`). If services are down, report **Blocked**; do not skip silently.
 - The list plan gate (`list-conformance-plans.scale.int.test.ts`, in the `scale` vitest project: `pnpm test:scale`, not part of `test:integration`) needs `WD_PERF_DATABASE_URL` at a perf-seeded database (`PERF_SEED_DIV=1 just perf-seed`); without it the file skips locally, and CI seeds one.
 - `generate:caps` fails on drift: run the generator and commit the artifact; do not hand-edit generated output. `generate:client` output (`packages/client/src/generated/`) is gitignored and rebuilt by install, `pnpm typecheck` and `pnpm build:cli`. `generate-routes` drift is checked by `pnpm verify --full`; run it when route files change.
-- The `watchdog/db-repo-*` lint rules (part of `pnpm check`) are mechanical only; passing does not satisfy the review-only repo rules in `packages/db/AGENTS.md`.
+- The `watchdog/db-repo-*` lint rules (part of `pnpm check`) are mechanical only; passing does not satisfy the review-only repo rules in `packages/core/AGENTS.md` (Database).
 - `pnpm doctor:react` and desloppify are advisory (CI Advisory job / main only), not merge gates.

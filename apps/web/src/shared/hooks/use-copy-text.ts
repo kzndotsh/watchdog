@@ -39,6 +39,8 @@ type UseCopyTextOptions = CopyTextOptions & {
 /**
  * Copy text and expose an `isCopied` state that resets after `resetMs`. A write that settles after
  * unmount sets nothing and leaves no timer behind.
+ *
+ * @canonical `useCopyText`, `copyText`: Copy text to the clipboard with the copied state and toasts (never call `navigator.clipboard.writeText` in a component; `route-error.tsx` keeps its own because its copied state never resets): `useCopyText` for a control with a copied state, `copyText` for a one-shot
  */
 export function useCopyText({
   resetMs = COPIED_RESET_MS,

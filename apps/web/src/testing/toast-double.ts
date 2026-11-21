@@ -11,6 +11,8 @@ import { vi } from "vitest";
  *
  * and import `toast` from `@/shared/ui/toast` as the code under test does. A test that
  * needs the real toaster (it renders `<Toaster />` and reads the DOM) does not mock it.
+ *
+ * @canonical `toastModuleDouble`: `@/shared/ui/toast` spies in web tests
  */
 export const toastModuleDouble = () => ({
   Toaster: () => null,

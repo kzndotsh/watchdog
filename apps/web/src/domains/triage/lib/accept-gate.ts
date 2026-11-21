@@ -33,6 +33,9 @@ export function gatedAcceptInput(input: GatedAcceptInput): GatedAcceptInput {
   return input;
 }
 
+/**
+ * @canonical `acceptGate`: Accept gate
+ */
 export function acceptGate(input: GatedAcceptInput): AcceptGateResult {
   const invalidIdentifierOps = listInvalidIdentifierOps(input.patch);
   const hasInvalidIdentifierOps = invalidIdentifierOps.length > 0;

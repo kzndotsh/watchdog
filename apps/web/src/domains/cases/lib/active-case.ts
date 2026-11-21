@@ -38,7 +38,11 @@ export function subscribeToLastCase(callback: () => void): () => void {
   };
 }
 
-/** Remember `caseId` as the last Case entered (a Case route, a switch, a new Case). */
+/**
+ * Remember `caseId` as the last Case entered (a Case route, a switch, a new Case).
+ *
+ * @canonical `rememberLastCase`, `readLastCaseId`, `pickDefaultCase`: The Active Case of a screen whose URL names no Case: the last Case this browser entered (`localStorage`, never a cookie or server state), else the first visible one
+ */
 export function rememberLastCase(caseId: string): void {
   if (readLastCaseId() === caseId) return;
   fallback = caseId;
