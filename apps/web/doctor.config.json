@@ -8,6 +8,6 @@
       "deslop/unused-export",
       "react-doctor/prefer-dynamic-import"
     ],
-    "files": ["src/auth/ui/**", "src/routeTree.gen.ts"]
+    "files": ["src/auth/ui/**", "src/routeTree.gen.ts", "ui/**"]
   }
 }

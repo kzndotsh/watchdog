@@ -210,7 +210,8 @@ function importTarget(pkg, spec) {
       spec.endsWith(tail)
     ) {
       const middle = spec.slice(head.length, spec.length - tail.length);
-      return path.posix.join(pkg.dir, target.replace("*", middle));
+      // As Node resolves a pattern: every `*` in the target takes the matched part.
+      return path.posix.join(pkg.dir, target.replaceAll("*", middle));
     }
   }
   return null;

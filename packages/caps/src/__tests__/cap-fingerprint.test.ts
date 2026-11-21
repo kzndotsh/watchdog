@@ -8,6 +8,7 @@ import {
   CapCrawler,
   capEntryFiles,
   isExcludedFromFingerprint,
+  packageImportTargets,
   parseLockfileImporters,
 } from "../cap-fingerprint";
 import { CAPABILITIES } from "../registry";
@@ -262,5 +263,27 @@ describe("cap fingerprint helpers", () => {
     expect([...entries.keys()].sort()).toEqual(
       CAPABILITIES.map((c) => c.id).sort()
     );
+  });
+});
+
+describe("packageImportTargets", () => {
+  it("maps a plain and a conditional subpath import to repo-relative targets", () => {
+    expect(
+      packageImportTargets("packages/caps", {
+        "#tools/*": "./tools/src/*.ts",
+        "#ai": { import: "./ai/src/index.ts", default: "./ai/dist/index.js" },
+        "#fallback": { default: "./fallback.ts" },
+      })
+    ).toEqual({
+      "#tools/*": ["packages/caps/tools/src/*.ts"],
+      "#ai": ["packages/caps/ai/src/index.ts"],
+      "#fallback": ["packages/caps/fallback.ts"],
+    });
+  });
+
+  it("refuses an entry with no import or default target, rather than skip its files", () => {
+    expect(() =>
+      packageImportTargets("packages/caps", { "#x": { browser: "./x.ts" } })
+    ).toThrow(/#x/);
   });
 });

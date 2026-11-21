@@ -131,21 +131,44 @@ function readPathAliases(root: string): Aliases {
 }
 
 const PACKAGE_IMPORTS = z.object({
-  imports: z.record(z.string(), z.string()).optional(),
+  imports: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.record(z.string(), z.unknown())])
+    )
+    .optional(),
 });
+
+type PackageImports = NonNullable<z.infer<typeof PACKAGE_IMPORTS>["imports"]>;
+
+/**
+ * A workspace's subpath imports as repo-relative targets. A conditional entry resolves through its
+ * `import` target, else `default` (what this source tree loads); one with neither is refused,
+ * because skipping it would leave its files out of every Cap fingerprint that reaches it.
+ */
+export function packageImportTargets(
+  pkgDir: string,
+  imports: PackageImports
+): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(imports).map(([key, entry]) => {
+      const target =
+        typeof entry === "string" ? entry : (entry.import ?? entry.default);
+      if (typeof target !== "string") {
+        throw new TypeError(
+          `${pkgDir}/package.json imports "${key}": no import or default target to fingerprint`
+        );
+      }
+      return [key, [path.posix.join(pkgDir, target)]];
+    })
+  );
+}
 
 /** A workspace package's subpath imports (`#db/...`), with targets relative to the repo root. */
 function readPackageImports(root: string, pkgDir: string): Aliases {
   const raw = readFileSync(path.join(root, pkgDir, "package.json"), "utf-8");
   const parsed = PACKAGE_IMPORTS.parse(JSON.parse(raw));
-  return aliasesOf(
-    Object.fromEntries(
-      Object.entries(parsed.imports ?? {}).map(([key, target]) => [
-        key,
-        [path.posix.join(pkgDir, target)],
-      ])
-    )
-  );
+  return aliasesOf(packageImportTargets(pkgDir, parsed.imports ?? {}));
 }
 
 /** `importers:` of pnpm-lock.yaml: workspace package dir to `dependency name -> resolved version`. */

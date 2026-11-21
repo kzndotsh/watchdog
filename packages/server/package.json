@@ -81,6 +81,7 @@
     "db:build:migrate": "cd db && node scripts/build-migrate.mjs",
     "db:studio": "cd db && drizzle-kit studio",
     "db:seed:demo": "cd db && tsx scripts/demo-seed/run.ts",
+    "db:check-seed-patches": "cd db && tsx scripts/check-seed-patches.ts",
     "auth:bootstrap-admin": "cd auth && tsx src/bootstrap-admin-cli.ts",
     "auth:build:bootstrap": "cd auth && node scripts/build-bootstrap.mjs",
     "worker:dev": "tsx watch worker/src/main.ts",
