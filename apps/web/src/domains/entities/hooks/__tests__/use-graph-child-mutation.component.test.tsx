@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const serverFn = vi.hoisted(() => vi.fn());
+const procedure = vi.hoisted(() => vi.fn());
 const onError = vi.hoisted(() => vi.fn());
 
 vi.mock("@/shared/ui/toast", async () => {
@@ -24,7 +24,7 @@ import {
 type Variables = EntityScope & { label: string };
 
 const useRenameThing = defineGraphChildMutation({
-  fn: serverFn,
+  call: procedure,
   parse: ({ caseId, label }: Variables) => ({ caseId, label }),
   success: ({ label }: Variables) => `Renamed to ${label}`,
   verb: "rename",
@@ -37,18 +37,19 @@ describe("defineGraphChildMutation", () => {
   it("calls the server with the parsed variables, settles the starting Case's Entity caches after onSuccess, and toasts", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useRenameThing({ onSuccess: onDone }),
-      serverFn,
+      procedure,
       expectCallbackBeforeInvalidation: true,
       variables,
     });
-    expect(serverFn).toHaveBeenCalledWith({
-      data: { caseId: SCOPE_A.caseId, label: "Alpha" },
+    expect(procedure).toHaveBeenCalledWith({
+      caseId: SCOPE_A.caseId,
+      label: "Alpha",
     });
     expect(toast.success).toHaveBeenCalledWith("Renamed to Alpha");
   });
 
   it("toasts only after the starting Case's Entity caches are invalidated", async () => {
-    serverFn.mockResolvedValue({});
+    procedure.mockResolvedValue({});
     const { wrapper, invalidated } = createHarness();
     const settledAtToast: boolean[] = [];
     vi.mocked(toast.success).mockImplementation(() => {
@@ -68,7 +69,7 @@ describe("defineGraphChildMutation", () => {
   it("reports a rejected write with the server's message and settles nothing", async () => {
     await expectReportsFailure({
       useVerb: () => useRenameThing({ onError }),
-      serverFn,
+      procedure,
       variables,
       onError,
     });
@@ -77,7 +78,7 @@ describe("defineGraphChildMutation", () => {
   it("reports a server failure as the house copy for the verb and noun", async () => {
     await expectReportsFailure({
       useVerb: () => useRenameThing({ onError }),
-      serverFn,
+      procedure,
       variables,
       onError,
       rejectWith: { code: "INTERNAL_SERVER_ERROR", status: 500 },

@@ -4,8 +4,8 @@ import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
-import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { scopeCaseSlug } from "@/shared/lib/query-ingress";
 
@@ -31,13 +31,13 @@ export function useSaveEntityProse({
       expectedVersion,
       patch,
     }: SaveEntityProseVariables) =>
-      updateEntityFieldsFn({
-        data: buildUpdateEntityFieldsData(caseId, {
+      orpc.entities.update.call(
+        buildUpdateEntityFieldsData(caseId, {
           entityId,
           expectedVersion,
           ...patch,
-        }),
-      }),
+        })
+      ),
     onSuccess: async (next, { caseId, entityId, entitySlug }) => {
       const { scoped } = scopeCaseSlug(caseId, entitySlug);
       queryClient.setQueryData(

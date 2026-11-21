@@ -15,35 +15,19 @@ import {
 import type { DossierIdentifiersSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import {
-  lastListRequest,
+  lastProcedureInput,
   matchesChoice,
   matchesQ,
-  memoryListPage,
+  memoryListProcedure,
 } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseIdentifierRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
-const countIdentifierTypesFn = vi.hoisted(() => vi.fn());
-const createIdentifierFn = vi.hoisted(() => vi.fn());
-const deleteIdentifierFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
-  listIdentifiersPageFn,
-  countIdentifierTypesFn,
-  createIdentifierFn,
-  updateIdentifierFn: vi.fn(),
-  deleteIdentifierFn,
-}));
-
-const entityReads = vi.hoisted(() => ({
-  matchEntityNamesFn: vi.fn(),
-  listEntitiesPageFn: vi.fn(),
-  listEntitiesPickerPageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
-}));
-vi.mock("@/domains/entities/entities.functions", () => entityReads);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 // The Evidence cell titles links and picks through `evidence.getMany` / one list page (#559).
 vi.mock("@/domains/intake/intake.functions", () => ({
@@ -61,6 +45,11 @@ import { IdentifiersSection } from "@/domains/dossier/components/identifiers-sec
 import { listDisplayStorageKey } from "@/shared/lib/list/list-display-store";
 import { toast } from "@/shared/ui/toast";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+const listIdentifiers = procedureDouble("identifiers.list");
+const countIdentifierTypes = procedureDouble("identifiers.typeCounts");
+const createIdentifier = procedureDouble("identifiers.create");
+const deleteIdentifier = procedureDouble("identifiers.delete");
 
 const ENTITY = {
   id: testId(20),
@@ -100,26 +89,24 @@ function matchesRequest(
 }
 
 function serve(rows: readonly CaseIdentifierRecord[]) {
-  countIdentifierTypesFn.mockReset();
-  countIdentifierTypesFn.mockImplementation(
-    async ({ data }: { data: Readonly<Record<string, unknown>> }) => {
-      const byType = new Map<string, number>();
-      for (const row of rows) {
-        if (matchesRequest(row, data)) {
-          byType.set(row.type, (byType.get(row.type) ?? 0) + 1);
-        }
+  countIdentifierTypes.mockReset();
+  countIdentifierTypes.mockImplementation(async (data) => {
+    const byType = new Map<CaseIdentifierRecord["type"], number>();
+    for (const row of rows) {
+      if (matchesRequest(row, data)) {
+        byType.set(row.type, (byType.get(row.type) ?? 0) + 1);
       }
-      return {
-        counts: [...byType]
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([type, count]) => ({ type, count })),
-        isCapped: false,
-      };
     }
-  );
-  listIdentifiersPageFn.mockReset();
-  listIdentifiersPageFn.mockImplementation(
-    memoryListPage(rows, {
+    return {
+      counts: [...byType]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([type, count]) => ({ type, count })),
+      isCapped: false,
+    };
+  });
+  listIdentifiers.mockReset();
+  listIdentifiers.mockImplementation(
+    memoryListProcedure(rows, {
       pageSize: PAGE_SIZE,
       matches: matchesRequest,
       compare: (sort) => (a, b) =>
@@ -131,7 +118,7 @@ function serve(rows: readonly CaseIdentifierRecord[]) {
 }
 
 function lastRequest(): Record<string, unknown> {
-  return lastListRequest(listIdentifiersPageFn);
+  return lastProcedureInput(listIdentifiers);
 }
 
 /** The Identifiers tab: the view in "the URL" (state here), as the Dossier route keeps it. */
@@ -235,10 +222,12 @@ describe("IdentifiersSection", () => {
   it("refreshes the list after a bulk import that finishes once the screen moved to another Entity", async () => {
     serve([]);
     let finishImport: () => void = () => undefined;
-    createIdentifierFn.mockReset();
-    createIdentifierFn.mockReturnValue(
-      new Promise<void>((resolve) => {
-        finishImport = resolve;
+    createIdentifier.mockReset();
+    createIdentifier.mockReturnValue(
+      new Promise((resolve) => {
+        finishImport = () => {
+          resolve(buildCaseIdentifierRecord({ entityId: ENTITY.id }));
+        };
       })
     );
     const client = new QueryClient();
@@ -262,28 +251,26 @@ describe("IdentifiersSection", () => {
       await screen.findByRole("button", { name: "Import 1 identifier" })
     );
     await waitFor(() => {
-      expect(createIdentifierFn).toHaveBeenCalledTimes(1);
+      expect(createIdentifier).toHaveBeenCalledTimes(1);
     });
     rerender(section(OTHER_ENTITY));
     await waitFor(() => {
       expect(lastRequest()).toMatchObject({ entityId: OTHER_ENTITY.id });
     });
-    const requestsBefore = listIdentifiersPageFn.mock.calls.length;
+    const requestsBefore = listIdentifiers.mock.calls.length;
 
     finishImport();
 
     await waitFor(() => {
-      expect(listIdentifiersPageFn.mock.calls.length).toBeGreaterThan(
-        requestsBefore
-      );
+      expect(listIdentifiers.mock.calls.length).toBeGreaterThan(requestsBefore);
     });
-    expect(createIdentifierFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(createIdentifier).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId: CASE_ID,
         entityId: ENTITY.id,
         value: "new@example.com",
-      }),
-    });
+      })
+    );
     await waitFor(() => {
       expect(
         screen.queryByRole("heading", { name: "Bulk add identifiers" })
@@ -295,9 +282,10 @@ describe("IdentifiersSection", () => {
     const user = userEvent.setup({ delay: null });
     const rows = entityIdentifiers(2);
     renderTab(rows);
-    deleteIdentifierFn.mockReset();
-    deleteIdentifierFn.mockImplementation(async () => {
+    deleteIdentifier.mockReset();
+    deleteIdentifier.mockImplementation(async () => {
       serve(rows.slice(1));
+      return { ok: true };
     });
     const doomed = (await screen.findByDisplayValue(rows[0].value)).closest(
       "tr"
@@ -311,8 +299,9 @@ describe("IdentifiersSection", () => {
       expect(screen.queryByDisplayValue(rows[0].value)).not.toBeInTheDocument();
     });
     expect(screen.getByDisplayValue(rows[1].value)).toBeInTheDocument();
-    expect(deleteIdentifierFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, identifierId: rows[0].id },
+    expect(deleteIdentifier).toHaveBeenCalledWith({
+      caseId: CASE_ID,
+      identifierId: rows[0].id,
     });
     expect(toast.success).toHaveBeenCalledWith("Identifier deleted");
   });
@@ -457,10 +446,9 @@ describe("IdentifiersSection grouped by type", () => {
   }
 
   function typedRequests(): unknown[] {
-    return listIdentifiersPageFn.mock.calls.flatMap(([arg]) => {
-      const data = (arg as { data: Record<string, unknown> }).data;
-      return data.type === undefined ? [] : [data.type];
-    });
+    return listIdentifiers.mock.calls.flatMap(([input]) =>
+      input.type === undefined ? [] : [input.type]
+    );
   }
 
   it("heads each type with the server's count; a small group opens, a big one waits to be opened", async () => {
@@ -500,8 +488,10 @@ describe("IdentifiersSection grouped by type", () => {
     expect(
       screen.queryByRole("button", { name: /^Domain/ })
     ).not.toBeInTheDocument();
-    expect(countIdentifierTypesFn).toHaveBeenLastCalledWith({
-      data: { caseId: CASE_ID, entityId: ENTITY.id, q: "ops1" },
+    expect(countIdentifierTypes).toHaveBeenLastCalledWith({
+      caseId: CASE_ID,
+      entityId: ENTITY.id,
+      q: "ops1",
     });
     expect(
       await screen.findByDisplayValue("ops1@example.com")

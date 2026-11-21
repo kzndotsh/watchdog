@@ -3,19 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { pickerTestWrapper } from "@/testing/memory-picker-port";
+import { procedureDouble } from "@/testing/orpc-client";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
-  createIdentifierFn: vi.fn(),
-}));
-
-const entityReads = vi.hoisted(() => ({
-  matchEntityNamesFn: vi.fn(),
-  listEntitiesPageFn: vi.fn(),
-  listEntitiesPickerPageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
-}));
-vi.mock("@/domains/entities/entities.functions", () => entityReads);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -37,14 +30,20 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 
+const matchNames = procedureDouble("entities.matchNames");
+const listEntities = procedureDouble("entities.list");
+const pickerPage = procedureDouble("entities.pickerPage");
+const getEntities = procedureDouble("entities.getMany");
+
 describe("BulkAddIdentifiersDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    entityReads.listEntitiesPickerPageFn.mockResolvedValue({
+    pickerPage.mockResolvedValue({
       items: [],
       nextCursor: null,
+      total: null,
     });
-    entityReads.getEntitiesFn.mockResolvedValue([]);
+    getEntities.mockResolvedValue([]);
   });
 
   it("shows paste stage copy and enables Continue after tabular paste", async () => {
@@ -77,7 +76,7 @@ describe("BulkAddIdentifiersDialog", () => {
 
   it("matches the pasted Entity names on the server, once, and never reads the whole list", async () => {
     const user = userEvent.setup();
-    entityReads.matchEntityNamesFn.mockResolvedValue([
+    matchNames.mockResolvedValue([
       { id: testId(1), name: "Alice Ng", slug: "alice-ng", kind: "person" },
       { id: testId(2), name: "Acme Corp", slug: "acme-corp", kind: "org" },
       { id: testId(3), name: "Acme Corp", slug: "acme-corp-2", kind: "org" },
@@ -95,29 +94,27 @@ describe("BulkAddIdentifiersDialog", () => {
     await user.paste(
       "entity,email\nalice ng,a@example.com\nAcme Corp,b@example.com\nNobody,c@example.com"
     );
-    expect(entityReads.matchEntityNamesFn).not.toHaveBeenCalled();
+    expect(matchNames).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() => {
-      expect(entityReads.matchEntityNamesFn).toHaveBeenCalledTimes(1);
+      expect(matchNames).toHaveBeenCalledTimes(1);
     });
-    expect(entityReads.matchEntityNamesFn).toHaveBeenCalledWith({
-      data: {
-        caseId: testId(10),
-        names: ["Acme Corp", "Nobody", "alice ng"],
-      },
+    expect(matchNames).toHaveBeenCalledWith({
+      caseId: testId(10),
+      names: ["Acme Corp", "Nobody", "alice ng"],
     });
     // The browser's rule runs over the answer: one match resolves, two are ambiguous, none is unknown.
     expect(
       await screen.findByRole("button", { name: "Import 1 identifier" })
     ).toBeEnabled();
-    expect(entityReads.listEntitiesPageFn).not.toHaveBeenCalled();
+    expect(listEntities).not.toHaveBeenCalled();
   });
 
   it("shows a retryable error when the name lookup fails, and never leaves Import stuck", async () => {
     const user = userEvent.setup();
-    entityReads.matchEntityNamesFn.mockRejectedValueOnce(new Error("boom"));
-    entityReads.matchEntityNamesFn.mockResolvedValue([
+    matchNames.mockRejectedValueOnce(new Error("boom"));
+    matchNames.mockResolvedValue([
       { id: testId(1), name: "Alice Ng", slug: "alice-ng", kind: "person" },
     ]);
     render(

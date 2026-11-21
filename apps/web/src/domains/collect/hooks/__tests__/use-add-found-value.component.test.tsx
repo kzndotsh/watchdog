@@ -3,12 +3,9 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-const fns = vi.hoisted(() => ({
-  createIdentifierFn: vi.fn(),
-  updateIdentifierFn: vi.fn(),
-}));
-
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => fns);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -16,8 +13,12 @@ vi.mock("@/shared/ui/toast", async () => {
 
 import { useAddFoundValue } from "@/domains/collect/hooks/use-add-found-value";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { procedureDouble } from "@/testing/orpc-client";
+import { buildCaseIdentifierRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+
+const createIdentifier = procedureDouble("identifiers.create");
 
 const CASE_ID = testCaseId(1);
 const JOB_ID = testId(2);
@@ -55,7 +56,9 @@ const VALUE = {
 
 describe("useAddFoundValue", () => {
   it("adds the value at Unverified citing the Job's Evidence, then refreshes the Found list", async () => {
-    fns.createIdentifierFn.mockResolvedValue({ id: testId(9) });
+    createIdentifier.mockResolvedValue(
+      buildCaseIdentifierRecord({ id: testId(9) })
+    );
     const { result, invalidate } = setup();
 
     let isAdded = false;
@@ -67,8 +70,8 @@ describe("useAddFoundValue", () => {
     });
 
     expect(isAdded).toBe(true);
-    expect(fns.createIdentifierFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(createIdentifier).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId: CASE_ID,
         entityId: testId(11),
         type: "domain",
@@ -76,15 +79,15 @@ describe("useAddFoundValue", () => {
         status: "unknown",
         confidence: "unverified",
         evidenceIds: [EVIDENCE_ID],
-      }),
-    });
+      })
+    );
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: jobsKeys.found(CASE_ID, JOB_ID),
     });
   });
 
   it("reports a failed write and leaves the Found list alone", async () => {
-    fns.createIdentifierFn.mockRejectedValue(new Error("boom"));
+    createIdentifier.mockRejectedValue(new Error("boom"));
     const { result, invalidate, onError } = setup();
 
     let isAdded = true;

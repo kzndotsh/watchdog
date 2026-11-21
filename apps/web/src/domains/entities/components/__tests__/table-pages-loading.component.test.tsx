@@ -21,19 +21,9 @@ vi.mock("@tanstack/react-router", () => ({
     select({ location: { pathname: "/" }, matches: [] }),
 }));
 
-vi.mock("@/domains/entities/entities.functions", () => ({
-  getEntityBySlugFn: vi.fn(),
-  createEntityFn: vi.fn(),
-  updateEntityFieldsFn: vi.fn(),
-}));
-
-vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  listEdgesFn: vi.fn(),
-  listEdgesForCaseFn: vi.fn(),
-  createEdgeFn: vi.fn(),
-  updateEdgeFn: vi.fn(),
-  deleteEdgeFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { EntityTable } from "@/domains/entities/components/entity-table";
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";

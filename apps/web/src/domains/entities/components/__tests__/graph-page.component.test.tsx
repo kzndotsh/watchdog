@@ -27,13 +27,12 @@ vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
 }));
 
 const fns = vi.hoisted(() => ({
-  getGraphSnapshotFn: vi.fn(),
   getCaseCountsFn: vi.fn(),
 }));
 
-vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  getGraphSnapshotFn: fns.getGraphSnapshotFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/domains/cases/cases.functions", () => ({
   getCaseCountsFn: fns.getCaseCountsFn,
 }));
@@ -56,7 +55,10 @@ vi.mock("@/domains/entities/components/case-graph/case-graph-canvas", () => ({
 import type { CaseCounts, CaseRecord } from "@/domains/cases/types";
 import { GraphPage } from "@/domains/entities/components/graph-page";
 import type { GraphSnapshot } from "@/domains/entities/edges/types";
+import { procedureDouble } from "@/testing/orpc-client";
 import { renderIn } from "@/testing/render-in-case";
+
+const graphSnapshot = procedureDouble("graph.snapshot");
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -131,24 +133,22 @@ describe("GraphPage", () => {
   });
 
   it("draws the snapshot from one request, with no notice when nothing was cut", async () => {
-    fns.getGraphSnapshotFn.mockResolvedValue(snapshotOf(3, 2, false));
+    graphSnapshot.mockResolvedValue(snapshotOf(3, 2, false));
 
     renderGraphPage();
 
     expect(
       await screen.findByText("Graph canvas: 3 entities, 2 connections")
     ).toBeInTheDocument();
-    expect(fns.getGraphSnapshotFn).toHaveBeenCalledTimes(1);
-    expect(fns.getGraphSnapshotFn).toHaveBeenCalledWith({
-      data: { caseId: CASE.id },
-    });
+    expect(graphSnapshot).toHaveBeenCalledTimes(1);
+    expect(graphSnapshot).toHaveBeenCalledWith({ caseId: CASE.id });
     expect(screen.queryByText(/^Showing/)).not.toBeInTheDocument();
     // The counts are only for the notice: no request when nothing was cut.
     expect(fns.getCaseCountsFn).not.toHaveBeenCalled();
   });
 
   it("says how many of the Case's Entities it shows when the server cut them", async () => {
-    fns.getGraphSnapshotFn.mockResolvedValue(snapshotOf(150, 40, true));
+    graphSnapshot.mockResolvedValue(snapshotOf(150, 40, true));
     fns.getCaseCountsFn.mockResolvedValue(
       countsOf({ count: 1000, isCapped: true }, { count: 900, isCapped: false })
     );
@@ -167,7 +167,7 @@ describe("GraphPage", () => {
   });
 
   it("names the Connections when only they were cut", async () => {
-    fns.getGraphSnapshotFn.mockResolvedValue(snapshotOf(12, 600, true));
+    graphSnapshot.mockResolvedValue(snapshotOf(12, 600, true));
     fns.getCaseCountsFn.mockResolvedValue(
       countsOf({ count: 12, isCapped: false }, { count: 750, isCapped: false })
     );
@@ -182,8 +182,8 @@ describe("GraphPage", () => {
   });
 
   it("shows a retryable error when the snapshot fails", async () => {
-    fns.getGraphSnapshotFn.mockRejectedValueOnce(new Error("graph failed"));
-    fns.getGraphSnapshotFn.mockResolvedValueOnce(snapshotOf(2, 1, false));
+    graphSnapshot.mockRejectedValueOnce(new Error("graph failed"));
+    graphSnapshot.mockResolvedValueOnce(snapshotOf(2, 1, false));
 
     renderGraphPage();
 

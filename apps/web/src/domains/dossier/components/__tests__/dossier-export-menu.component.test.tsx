@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-// Only the network boundary is faked: the two `*.functions` modules and the Markdown
+// Only the network boundary is faked: the settings `*.functions` module, the oRPC client and the Markdown
 // export request. The menu, the hook, the dialog and the settings query run for real
 // under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
 vi.mock("@/domains/organization/organization-settings.functions", () => ({
@@ -17,9 +17,9 @@ vi.mock("@/domains/organization/organization-settings.functions", () => ({
   updateOrganizationSettingsFn: vi.fn(),
 }));
 
-vi.mock("@/domains/entities/entities.functions", () => ({
-  recordOpenInFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -27,9 +27,11 @@ vi.mock("@/shared/ui/toast", async () => {
 });
 
 import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-menu";
-import { recordOpenInFn } from "@/domains/entities/entities.functions";
 import { getOrganizationSettingsFn } from "@/domains/organization/organization-settings.functions";
 import { toast } from "@/shared/ui/toast";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const recordOpenIn = procedureDouble("entities.recordOpenIn");
 
 const CASE_ID = testId(10);
 const MARKDOWN = "# Ada Lovelace\n\nAnalyst.";
@@ -85,7 +87,7 @@ describe("DossierExportMenu", () => {
     vi.mocked(getOrganizationSettingsFn).mockResolvedValue({
       openInExternalTools: true,
     });
-    vi.mocked(recordOpenInFn).mockResolvedValue({ ok: true });
+    recordOpenIn.mockResolvedValue({ ok: true });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(MARKDOWN, { status: 200 }))
@@ -116,7 +118,7 @@ describe("DossierExportMenu", () => {
     const dialog = await screen.findByRole("alertdialog");
     expect(dialog).toHaveTextContent("Send Ada Lovelace to Claude?");
     expect(dialog).toHaveTextContent(`${MARKDOWN.length} characters (0.0 KB)`);
-    expect(recordOpenInFn).not.toHaveBeenCalled();
+    expect(recordOpenIn).not.toHaveBeenCalled();
     expect(openSpy).not.toHaveBeenCalled();
   });
 
@@ -134,8 +136,10 @@ describe("DossierExportMenu", () => {
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Opened in ChatGPT");
     });
-    expect(recordOpenInFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, slug: "ada-lovelace", destination: "chatgpt" },
+    expect(recordOpenIn).toHaveBeenCalledWith({
+      caseId: CASE_ID,
+      slug: "ada-lovelace",
+      destination: "chatgpt",
     });
     expect(openSpy).toHaveBeenCalledExactlyOnceWith("about:blank", "_blank");
     expect(tab.window.opener).toBeNull();
@@ -146,7 +150,7 @@ describe("DossierExportMenu", () => {
 
   it("opens the tab in the click but loads the chat only once recorded", async () => {
     let loadedWhenRecorded: boolean | undefined;
-    vi.mocked(recordOpenInFn).mockImplementation(async () => {
+    recordOpenIn.mockImplementation(async () => {
       loadedWhenRecorded = tab.load.mock.calls.length > 0;
       return { ok: true };
     });
@@ -161,10 +165,10 @@ describe("DossierExportMenu", () => {
     );
 
     await waitFor(() => {
-      expect(recordOpenInFn).toHaveBeenCalledTimes(1);
+      expect(recordOpenIn).toHaveBeenCalledTimes(1);
     });
     expect(openSpy.mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(recordOpenInFn).mock.invocationCallOrder[0] ?? 0
+      recordOpenIn.mock.invocationCallOrder[0] ?? 0
     );
     expect(loadedWhenRecorded).toBe(false);
     await waitFor(() => {
@@ -184,12 +188,12 @@ describe("DossierExportMenu", () => {
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     });
-    expect(recordOpenInFn).not.toHaveBeenCalled();
+    expect(recordOpenIn).not.toHaveBeenCalled();
     expect(openSpy).not.toHaveBeenCalled();
   });
 
   it("does not open the chat when Open in cannot be recorded", async () => {
-    vi.mocked(recordOpenInFn).mockRejectedValue(
+    recordOpenIn.mockRejectedValue(
       new Error("Open in is turned off for this organization")
     );
     const user = userEvent.setup();
@@ -228,7 +232,7 @@ describe("DossierExportMenu", () => {
         "Your browser blocked the new tab. Allow pop-ups for Watchdog and send again."
       );
     });
-    expect(recordOpenInFn).not.toHaveBeenCalled();
+    expect(recordOpenIn).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
     // The confirmation stays up so the user can allow pop-ups and send again.
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();

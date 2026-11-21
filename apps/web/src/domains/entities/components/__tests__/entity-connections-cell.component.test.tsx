@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { EntityConnectionsCell } from "@/domains/entities/components/entity-connections-cell";
+import { procedureDouble } from "@/testing/orpc-client";
 import {
   buildCaseEdgeRecord,
   buildEntityListConnection,
@@ -17,11 +18,11 @@ vi.mock("@/domains/entities/components/connection-composer-fields", () => ({
   ConnectionComposerFields: () => <div>Composer fields</div>,
 }));
 
-const listEdgesPageFn = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  listEdgesPageFn,
-}));
+const listEdges = procedureDouble("edges.list");
 
 const CASE_ID = testCaseId(10);
 const ENTITY = buildEntityListItem({
@@ -55,7 +56,7 @@ describe("EntityConnectionsCell", () => {
     expect(
       screen.getByRole("button", { name: "Add connection for Alpha Entity" })
     ).toBeInTheDocument();
-    expect(listEdgesPageFn).not.toHaveBeenCalled();
+    expect(listEdges).not.toHaveBeenCalled();
   });
 
   it("names the one Connection from the row, with its phrase as the tooltip", () => {
@@ -82,13 +83,13 @@ describe("EntityConnectionsCell", () => {
         name: /Edit connection Hosted on acme-corp/i,
       })
     ).toHaveAttribute("title", "Hosted on acme-corp");
-    expect(listEdgesPageFn).not.toHaveBeenCalled();
+    expect(listEdges).not.toHaveBeenCalled();
   });
 
   it("collapses several Connections to direction counts and reads them only when opened", async () => {
     const user = userEvent.setup();
     // The list's rows carry both ends: one outbound (Alpha owns Zed), one inbound (Acme leads Alpha).
-    listEdgesPageFn.mockResolvedValue({
+    listEdges.mockResolvedValue({
       items: [
         buildCaseEdgeRecord({
           id: testId(41),
@@ -129,15 +130,15 @@ describe("EntityConnectionsCell", () => {
     expect(
       screen.queryByRole("button", { name: /Edit connection/i })
     ).not.toBeInTheDocument();
-    expect(listEdgesPageFn).not.toHaveBeenCalled();
+    expect(listEdges).not.toHaveBeenCalled();
 
     await user.click(counts);
     const zed = await screen.findByRole("button", { name: /Zed/ });
     // One page of the Connection list with the Entity fixed, in the list's own order.
-    expect(listEdgesPageFn).toHaveBeenCalledTimes(1);
-    expect(listEdgesPageFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({ caseId: CASE_ID, entityId: ENTITY.id }),
-    });
+    expect(listEdges).toHaveBeenCalledTimes(1);
+    expect(listEdges).toHaveBeenCalledWith(
+      expect.objectContaining({ caseId: CASE_ID, entityId: ENTITY.id })
+    );
     expect(zed).toHaveTextContent("Owns");
     expect(screen.getByRole("button", { name: /Acme/ })).toHaveTextContent(
       "Led by"
@@ -149,7 +150,7 @@ describe("EntityConnectionsCell", () => {
 
   it("reads one page only, and says how many more the Dossier lists", async () => {
     const user = userEvent.setup();
-    listEdgesPageFn.mockResolvedValue({
+    listEdges.mockResolvedValue({
       items: [
         buildCaseEdgeRecord({
           id: testId(43),
@@ -173,7 +174,7 @@ describe("EntityConnectionsCell", () => {
     );
     await user.click(screen.getByRole("button", { name: "120 connections" }));
     expect(await screen.findByText(/Showing 1 of 120/)).toBeInTheDocument();
-    expect(listEdgesPageFn).toHaveBeenCalledTimes(1);
+    expect(listEdges).toHaveBeenCalledTimes(1);
   });
 
   it("unlinks the one Connection from the popover footer when editing", async () => {

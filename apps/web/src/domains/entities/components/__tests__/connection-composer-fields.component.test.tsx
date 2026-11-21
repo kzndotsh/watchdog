@@ -4,18 +4,15 @@ import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ConnectionComposerFields } from "@/domains/entities/components/connection-composer-fields";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildEntityRecord } from "@/testing/records";
 import { edgePhraseValue } from "@watchdog/schemas/shared";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-// The peer picker's reads (#559): one small page of the Case's Entity list, and by-ids.
-const entityReads = vi.hoisted(() => ({
-  listEntitiesPickerPageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
-}));
-
-vi.mock("@/domains/entities/entities.functions", () => entityReads);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/field-combobox", () => ({
   FieldCombobox: ({
@@ -71,17 +68,21 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
   ),
 }));
 
+// The peer picker's reads (#559): one small page of the Case's Entity list, and by-ids.
+const pickerPage = procedureDouble("entities.pickerPage");
+const getEntities = procedureDouble("entities.getMany");
+
 const CASE_ID = testCaseId(10);
 const CENTER = { id: testId(1), kind: "person" as const };
 const PEER = buildEntityRecord({ id: testId(2), name: "Beta", kind: "org" });
 
 function renderFields(ui: ReactElement) {
-  entityReads.listEntitiesPickerPageFn.mockResolvedValue({
+  pickerPage.mockResolvedValue({
     items: [PEER],
     nextCursor: null,
     total: { count: 1, isCapped: false },
   });
-  entityReads.getEntitiesFn.mockResolvedValue([PEER]);
+  getEntities.mockResolvedValue([PEER]);
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -134,12 +135,12 @@ describe("ConnectionComposerFields", () => {
     );
 
     await waitFor(() => {
-      expect(entityReads.listEntitiesPickerPageFn).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+      expect(pickerPage).toHaveBeenCalledWith(
+        expect.objectContaining({
           caseId: CASE_ID,
           kind: ["infra", "org"],
-        }),
-      });
+        })
+      );
     });
   });
 

@@ -7,22 +7,18 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { DossierEventsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { EventRecord } from "@/domains/entities/events/types";
 import {
-  lastListRequest,
+  lastProcedureInput,
   matchesQ,
-  memoryListPage,
+  memoryListProcedure,
 } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildEventRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const listEventsPageFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/events/events.functions", () => ({
-  listEventsPageFn,
-  createEventFn: vi.fn(),
-  updateEventFn: vi.fn(),
-  deleteEventFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -35,6 +31,8 @@ vi.mock("@/app/lib/query-invalidation", () => ({
 
 import { EventsSection } from "@/domains/dossier/components/events-section";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+const listEvents = procedureDouble("events.list");
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -53,9 +51,9 @@ function entityEvents(count: number): EventRecord[] {
 }
 
 function serve(rows: readonly EventRecord[]) {
-  listEventsPageFn.mockReset();
-  listEventsPageFn.mockImplementation(
-    memoryListPage(rows, {
+  listEvents.mockReset();
+  listEvents.mockImplementation(
+    memoryListProcedure(rows, {
       pageSize: 5,
       matches: (row, data) =>
         (data.entityId === undefined || data.entityId === row.entityId) &&
@@ -68,7 +66,7 @@ function serve(rows: readonly EventRecord[]) {
   );
 }
 
-const lastRequest = () => lastListRequest(listEventsPageFn);
+const lastRequest = () => lastProcedureInput(listEvents);
 
 /** The Events tab: the view in "the URL" (state here), as the Dossier route keeps it. */
 function TabSection({

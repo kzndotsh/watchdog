@@ -1,12 +1,10 @@
 import { describe, it, vi } from "vitest";
 
-const fns = vi.hoisted(() => ({
-  createIdentifierFn: vi.fn(),
-  updateIdentifierFn: vi.fn(),
-}));
 const onError = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => fns);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -20,13 +18,19 @@ import {
   useCreateIdentifier,
   useUpdateIdentifier,
 } from "@/domains/entities/identifiers/mutations";
+import { procedureDouble } from "@/testing/orpc-client";
 import { testId } from "@watchdog/test-kit";
+
+const procedures = {
+  createIdentifierFn: procedureDouble("identifiers.create"),
+  updateIdentifierFn: procedureDouble("identifiers.update"),
+};
 
 describe("identifiers Graph child mutations", () => {
   it("settles the Case the identifier was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: () => useCreateIdentifier(),
-      serverFn: fns.createIdentifierFn,
+      procedure: procedures.createIdentifierFn,
       variables: {
         ...SCOPE_A,
         value: {
@@ -44,7 +48,7 @@ describe("identifiers Graph child mutations", () => {
   it("settles the Case the identifier was edited in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useUpdateIdentifier({ onSuccess: onDone, onError }),
-      serverFn: fns.updateIdentifierFn,
+      procedure: procedures.updateIdentifierFn,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,

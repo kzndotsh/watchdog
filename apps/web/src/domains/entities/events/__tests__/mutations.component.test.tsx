@@ -1,13 +1,10 @@
 import { describe, it, vi } from "vitest";
 
-const fns = vi.hoisted(() => ({
-  createEventFn: vi.fn(),
-  deleteEventFn: vi.fn(),
-  updateEventFn: vi.fn(),
-}));
 const onError = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/entities/events/events.functions", () => fns);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -22,13 +19,20 @@ import {
   SCOPE_A,
   expectSettlesStartingCase,
 } from "@/domains/entities/hooks/__tests__/helpers/entity-write-harness";
+import { procedureDouble } from "@/testing/orpc-client";
 import { testId } from "@watchdog/test-kit";
+
+const procedures = {
+  createEventFn: procedureDouble("events.create"),
+  deleteEventFn: procedureDouble("events.delete"),
+  updateEventFn: procedureDouble("events.update"),
+};
 
 describe("events Graph child mutations", () => {
   it("settles the Case the event was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useCreateEvent({ onSuccess: onDone }),
-      serverFn: fns.createEventFn,
+      procedure: procedures.createEventFn,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -44,7 +48,7 @@ describe("events Graph child mutations", () => {
   it("settles the Case the event was deleted in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: () => useDeleteEvent({ onError }),
-      serverFn: fns.deleteEventFn,
+      procedure: procedures.deleteEventFn,
       variables: {
         ...SCOPE_A,
         eventId: testId(33),
@@ -55,7 +59,7 @@ describe("events Graph child mutations", () => {
   it("settles the Case the event was edited in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useUpdateEvent({ onSuccess: onDone }),
-      serverFn: fns.updateEventFn,
+      procedure: procedures.updateEventFn,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,

@@ -7,25 +7,19 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { DossierQuestionsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { QuestionRecord } from "@/domains/entities/questions/types";
 import {
-  lastListRequest,
+  lastProcedureInput,
   matchesChoice,
   matchesQ,
-  memoryListPage,
+  memoryListProcedure,
 } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildQuestionRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const listQuestionsPageFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/questions/questions.functions", () => ({
-  listQuestionsPageFn,
-  createQuestionFn: vi.fn(),
-  updateQuestionFn: vi.fn(),
-  resolveQuestionFn: vi.fn(),
-  reopenQuestionFn: vi.fn(),
-  deleteQuestionFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -38,6 +32,8 @@ vi.mock("@/app/lib/query-invalidation", () => ({
 
 import { QuestionsSection } from "@/domains/dossier/components/questions-section";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+const listQuestions = procedureDouble("questions.list");
 
 const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(20);
@@ -69,9 +65,9 @@ function entityQuestions(count: number): QuestionRecord[] {
 }
 
 function serve(rows: readonly QuestionRecord[]) {
-  listQuestionsPageFn.mockReset();
-  listQuestionsPageFn.mockImplementation(
-    memoryListPage(rows, {
+  listQuestions.mockReset();
+  listQuestions.mockImplementation(
+    memoryListProcedure(rows, {
       pageSize: 5,
       matches: (row, data) =>
         matchesChoice(row.status, data.status) &&
@@ -85,7 +81,7 @@ function serve(rows: readonly QuestionRecord[]) {
   );
 }
 
-const lastRequest = () => lastListRequest(listQuestionsPageFn);
+const lastRequest = () => lastProcedureInput(listQuestions);
 
 function TabSection({
   initial,

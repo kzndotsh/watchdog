@@ -1,13 +1,10 @@
 import { describe, it, vi } from "vitest";
 
-const fns = vi.hoisted(() => ({
-  createEdgeFn: vi.fn(),
-  deleteEdgeFn: vi.fn(),
-  updateEdgeFn: vi.fn(),
-}));
 const onError = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/entities/edges/edges.functions", () => fns);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -24,6 +21,7 @@ import {
   SCOPE_A,
   expectSettlesStartingCase,
 } from "@/domains/entities/hooks/__tests__/helpers/entity-write-harness";
+import { procedureDouble } from "@/testing/orpc-client";
 import { testId } from "@watchdog/test-kit";
 
 const EDGE: EdgeRecord = {
@@ -42,11 +40,17 @@ const EDGE: EdgeRecord = {
   direction: "out",
 };
 
+const procedures = {
+  createEdgeFn: procedureDouble("edges.create"),
+  deleteEdgeFn: procedureDouble("edges.delete"),
+  updateEdgeFn: procedureDouble("edges.update"),
+};
+
 describe("edges Graph child mutations", () => {
   it("settles the Case the connection was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useCreateConnection({ onSuccess: onDone, onError }),
-      serverFn: fns.createEdgeFn,
+      procedure: procedures.createEdgeFn,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -65,7 +69,7 @@ describe("edges Graph child mutations", () => {
   it("settles the Case the connection was deleted in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useDeleteConnection({ onSuccess: onDone, onError }),
-      serverFn: fns.deleteEdgeFn,
+      procedure: procedures.deleteEdgeFn,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -77,7 +81,7 @@ describe("edges Graph child mutations", () => {
   it("settles the Case the connection was edited in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useUpdateConnection({ onSuccess: onDone, onError }),
-      serverFn: fns.updateEdgeFn,
+      procedure: procedures.updateEdgeFn,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,

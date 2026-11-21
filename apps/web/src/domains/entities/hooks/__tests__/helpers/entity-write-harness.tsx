@@ -83,9 +83,8 @@ type WriteVerb<V> = {
  * A write started in Case A settles Case A's Entity caches, not Case B's, even
  * when the screen re-renders for Case B before the server answers: the Case and
  * Entity come from the mutation variables fixed at `mutate`, never from what the
- * hook or screen holds when the answer lands. `serverFn` is the mocked server
- * function the hook calls (`{ data: input }`), or with `isProcedure` the oRPC
- * procedure double (`procedureDouble`, called with the input itself).
+ * hook or screen holds when the answer lands. `procedure` is the oRPC procedure
+ * double the hook calls (`procedureDouble`, called with the input itself).
  *
  * `useVerb` receives `onDone`, which the test wires to the hook's success
  * callback; the helper then pins the order every hook inherited from the
@@ -95,21 +94,19 @@ type WriteVerb<V> = {
  */
 export async function expectSettlesStartingCase<V>({
   useVerb,
-  serverFn,
+  procedure,
   variables,
   resolveWith = {},
   expectCallbackBeforeInvalidation = false,
-  isProcedure = false,
 }: {
   useVerb: (onDone: () => void) => WriteVerb<V>;
-  serverFn: Mock;
+  procedure: Mock;
   variables: V;
   resolveWith?: unknown;
   expectCallbackBeforeInvalidation?: boolean;
-  isProcedure?: boolean;
 }) {
   let finish: () => void = () => undefined;
-  serverFn.mockReturnValue(
+  procedure.mockReturnValue(
     new Promise<unknown>((resolve) => {
       finish = () => {
         resolve(resolveWith);
@@ -131,11 +128,10 @@ export async function expectSettlesStartingCase<V>({
   });
   rerender({ activeCaseId: CASE_B });
   await waitFor(() => {
-    expect(serverFn).toHaveBeenCalledTimes(1);
+    expect(procedure).toHaveBeenCalledTimes(1);
   });
-  const startedIn = expect.objectContaining({ caseId: CASE_A });
-  expect(serverFn).toHaveBeenCalledWith(
-    isProcedure ? startedIn : { data: startedIn }
+  expect(procedure).toHaveBeenCalledWith(
+    expect.objectContaining({ caseId: CASE_A })
   );
   expect(invalidated(CASE_A)).toEqual(settledKeys(CASE_A).map(() => false));
 
@@ -157,22 +153,22 @@ export async function expectSettlesStartingCase<V>({
 /** A rejected write reports the server's message and leaves every cache untouched. */
 export async function expectReportsFailure<V>({
   useVerb,
-  serverFn,
+  procedure,
   variables,
   onError,
   rejectWith = new Error("nope"),
   message = "nope",
 }: {
   useVerb: () => WriteVerb<V>;
-  serverFn: Mock;
+  procedure: Mock;
   variables: V;
   onError: Mock;
-  /** What the server function rejects with (default: a plain `Error("nope")`). */
+  /** What the procedure rejects with (default: a plain `Error("nope")`). */
   rejectWith?: unknown;
   /** The failure message the hook must report for it. */
   message?: string;
 }) {
-  serverFn.mockRejectedValue(rejectWith);
+  procedure.mockRejectedValue(rejectWith);
   const { wrapper, invalidated } = createHarness();
   const { result } = renderHook(() => useVerb(), { wrapper });
 

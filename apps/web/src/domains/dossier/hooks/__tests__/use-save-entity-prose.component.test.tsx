@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-const serverFn = vi.hoisted(() => vi.fn());
 const onError = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/entities/entities.functions", () => ({
-  updateEntityFieldsFn: serverFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
@@ -21,13 +20,16 @@ import {
   expectReportsFailure,
   expectSettlesStartingCase,
 } from "@/domains/entities/hooks/__tests__/helpers/entity-write-harness";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const updateEntity = procedureDouble("entities.update");
 
 describe("useSaveEntityProse", () => {
   it("settles the Case the summary was saved in (from the variables) when the screen re-renders for another Case", async () => {
     const saved = { id: "saved-entity", summary: "Runs the site" };
     const { queryClient } = await expectSettlesStartingCase({
       useVerb: () => useSaveEntityProse({ onError }),
-      serverFn,
+      procedure: updateEntity,
       resolveWith: saved,
       variables: {
         ...SCOPE_A,
@@ -47,7 +49,7 @@ describe("useSaveEntityProse", () => {
   it("reports a rejected write and settles nothing", async () => {
     await expectReportsFailure({
       useVerb: () => useSaveEntityProse({ onError }),
-      serverFn,
+      procedure: updateEntity,
       variables: {
         ...SCOPE_A,
         expectedVersion: 1,
