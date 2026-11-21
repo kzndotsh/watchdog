@@ -1,7 +1,7 @@
 import { createLoggerStorage } from "evlog/toolkit/storage";
 
 const { storage, useLogger } = createLoggerStorage(
-  "request middleware context. Ensure apps/web src/start.ts registers evlog requestMiddleware."
+  "request middleware context. Ensure apps/web/src/start.ts registers evlog requestMiddleware."
 );
 
 export { storage };

@@ -16,7 +16,7 @@ export function useRouteCase(): CaseRecord | null {
 
 /**
  * The URL's Case for a component that only renders inside a Case route (a Work screen
- * and its parts): its links and navigation name the Case from here, never from the cookie.
+ * and its parts): its links and navigation name the Case from here, never from the last Case entered.
  */
 export function useWorkCase(): CaseRecord {
   const routeCase = useRouteCase();

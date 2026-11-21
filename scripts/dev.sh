@@ -12,7 +12,7 @@
 # which forwards it once and waits up to WD_DEV_GRACE_SECONDS (default 10) for the services;
 # a second Ctrl+C, or the end of the grace period, force-kills what is left.
 #
-# The services run their package `dev` script directly, not through `pnpm`, which would report
+# The services run their package script (`dev`, `worker:dev`) directly, not through `pnpm`, which would report
 # the 130 exit of an interrupted service as ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL.
 #
 # WD_WEB_PORT and WD_SITE_PORT (default 3000 and 3001, integers 1-65535) replace the `--port` in

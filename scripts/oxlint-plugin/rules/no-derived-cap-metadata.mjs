@@ -52,7 +52,7 @@ export const noDerivedCapMetadata = {
           context.report({
             node,
             message:
-              "Hard-coded Watchdog User-Agent: use `watchdogUserAgent(id)` from the Cap sdk (`../../sdk`); a defineCollectCap `fetch(ctx, { userAgent })` already receives it (conventions: derived Cap metadata has one source).",
+              "Hard-coded Watchdog User-Agent: use `watchdogUserAgent(id)` from the Cap sdk (`../../sdk`); a defineCollectCap `fetch(ctx, { userAgent })` already receives it (derived Cap metadata has one source).",
           });
         }
       },
@@ -71,7 +71,7 @@ export const noDerivedCapMetadata = {
         ) {
           context.report({
             node: labelProp,
-            message: `reportLabel "${id}" repeats the Cap id: drop it, reportLabel defaults to the id (conventions: derived Cap metadata has one source).`,
+            message: `reportLabel "${id}" repeats the Cap id: drop it, reportLabel defaults to the id (derived Cap metadata has one source).`,
           });
         }
         const flagsProp = find("flags");
@@ -86,7 +86,7 @@ export const noDerivedCapMetadata = {
             if (DERIVED_FLAGS.has(flag)) {
               context.report({
                 node: element,
-                message: `The "${flag}" flag is derived (needs_key from credentials, third_party from contacts): remove it from \`flags\` (conventions: derived Cap metadata has one source).`,
+                message: `The "${flag}" flag is derived (needs_key from credentials, third_party from contacts): remove it from \`flags\` (derived Cap metadata has one source).`,
               });
             }
           }

@@ -149,7 +149,7 @@ describe("bounded-input-schema (oxlint.config.ts)", () => {
     expect(found).toHaveLength(1);
     expect(found[0]?.message).toContain("z.string()");
     expect(found[0]?.message).toContain(".max(");
-    expect(found[0]?.message).toContain("conventions");
+    expect(found[0]?.message).toContain("(input schemas are bounded)");
     expect(found[0]?.line).toBe(3);
   });
   it("names the array constructor for an unbounded list", () => {

@@ -56,7 +56,7 @@ const nameOf = (line: string) => line.split("=", 1)[0] ?? "";
 
 /**
  * Better Auth splits a cookie cache that does not fit one cookie into `session_data.0`,
- * `.1`, ... Every chunk then rides on every request (page, asset, server function), so a
+ * `.1`, ... Every chunk then rides on every request (page, asset, API call), so a
  * large `user.image` (the profile editor stores a resized avatar as an inline `data:` URL
  * when no upload backend is configured) can push the `Cookie` header past what servers
  * accept. A cache that would be chunked is dropped instead: the browser's copy is expired

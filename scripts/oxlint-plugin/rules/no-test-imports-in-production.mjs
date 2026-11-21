@@ -43,7 +43,7 @@ export const noTestImportsInProduction = {
       if (!isTestPackage && !isTestModule) return;
       context.report({
         node,
-        message: `production source imports test-only code (${specifier}): move the shared piece into non-test source, or move this file into a test tree (__tests__, *.test.ts, or a testing/ helper folder) (conventions: production source never imports test-only code)`,
+        message: `production source imports test-only code (${specifier}): move the shared piece into non-test source, or move this file into a test tree (__tests__, *.test.ts, or a testing/ helper folder) (production source never imports test-only code)`,
       });
     });
   },

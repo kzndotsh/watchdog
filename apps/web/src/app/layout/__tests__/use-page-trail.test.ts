@@ -119,7 +119,7 @@ describe("usePageTrail", () => {
     expect(result.current.items.at(-1)?.label).not.toBe("Unavailable");
   });
 
-  it("looks the entity up in the URL's Case, not the cookie's", () => {
+  it("looks the entity up in the URL's Case, not the last Case entered", () => {
     at("/cases/alpha/entities/acme", {
       caseSlug: "alpha",
       entitySlug: "acme",

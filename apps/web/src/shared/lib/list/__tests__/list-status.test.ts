@@ -27,7 +27,7 @@ describe("listStatus", () => {
 });
 
 describe("isStaleCursorError", () => {
-  it("reads the API's data.code, or the message tail once a ServerFn dropped data", () => {
+  it("reads the API's data.code, or the message tail when data is missing", () => {
     expect(isStaleCursorError({ data: { code: "cursor_stale" } })).toBe(true);
     expect(
       isStaleCursorError(

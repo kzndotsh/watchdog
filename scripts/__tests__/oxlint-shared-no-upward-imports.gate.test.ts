@@ -130,9 +130,7 @@ describe("shared imports no domain, app or route (shared-no-upward-imports)", ()
     const [hit] = hits(`${UI}/alias.ts`);
     expect(hit?.message).toContain("@/domains/entities/lib/a");
     expect(hit?.message).toContain("move");
-    expect(hit?.message).toContain(
-      "conventions: shared imports no domain, app or route"
-    );
+    expect(hit?.message).toContain("shared imports no domain, app or route");
     expect(hit?.line).toBe(1);
   });
 

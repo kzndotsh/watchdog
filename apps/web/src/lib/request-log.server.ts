@@ -5,8 +5,8 @@
  * query string, and request headers (cookies, authorization), the query and bodies are never
  * read into the event.
  *
- * The app already emits a richer wide event for `/api/**` (except `EDGE_LOGGED_API`) and for
- * server functions (`src/start.ts`), so those are skipped here: one event per request. Static
+ * The app's request middleware (`src/start.ts`) already emits a richer wide event for `/api/**`
+ * (except `EDGE_LOGGED_API`), so those are skipped here: one event per request. Static
  * files and the health probes are logged at `debug`, which the logger drops (see
  * `initWatchdogLogger`), so they do not drown the page and error events.
  */

@@ -104,7 +104,7 @@ function directives(entries: Record<string, readonly string[]>): string {
  *   lets Shiki's regex engine compile its WebAssembly module (Evidence code
  *   highlighting); it does not allow `eval()` or inline script.
  * - `style-src`: same-origin sheets plus the nonce for `<style>` elements (TanStack
- *   Start, Base UI). `style-src-attr 'unsafe-inline'` stays because server-rendered
+ *   Start, Base UI). `style-src-attr 'unsafe-inline'` stays because rendered
  *   `style="..."` attributes carry computed layout (sidebar width, split-view and
  *   graph positions, table column widths); a style attribute cannot run script.
  *   Development uses `'unsafe-inline'` for `<style>` too, because Vite injects CSS

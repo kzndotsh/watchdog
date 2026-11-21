@@ -146,7 +146,7 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
       "@watchdog/domain/policy/confirmed-evidence"
     );
     expect(hit?.message).toContain("never the @watchdog/domain/policy root");
-    expect(hit?.message).toContain("conventions: one source per domain rule");
+    expect(hit?.message).toContain("one source per domain rule");
     expect(hit?.line).toBe(2);
   });
 

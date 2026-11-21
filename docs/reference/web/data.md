@@ -20,7 +20,7 @@ Query owns server-state caching. The router's `defaultPreloadStaleTime` is `0` (
 | The organization activity stream calling the same contracts | Server-pushed job, proposal, graph, evidence, task and Case updates |
 
 - Never copy server lists from `useLoaderData` into `useState`; local state is for selection, dialogs, form drafts, and client filters.
-- One `QueryClient` per request, created by `createAppQueryClient()` inside `getRouter()`. Never `export const queryClient = new QueryClient()`.
+- One `QueryClient` per router, created by `createAppQueryClient()` inside `getRouter()`. Never `export const queryClient = new QueryClient()`.
 
 | File | Owns |
 | --- | --- |

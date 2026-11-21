@@ -23,7 +23,7 @@ const WHOLE_FILE =
 const INPUT_NAME = /(?:Input|Fields|Filters|Params)(?:Schema)?$/;
 
 const FIX =
-  "add `.max(<named limit>)` (NAME_MAX, NOTES_MAX, URL_MAX, ARRAY_MAX, ... from `@watchdog/domain/schemas/shared`) or use `requiredText(max)` / `optionalText(max)` (conventions: input schemas are bounded)";
+  "add `.max(<named limit>)` (NAME_MAX, NOTES_MAX, URL_MAX, ARRAY_MAX, ... from `@watchdog/domain/schemas/shared`) or use `requiredText(max)` / `optionalText(max)` (input schemas are bounded)";
 
 /**
  * `z.string()` / `z.array(...)` / `z.url()` / `z.email()`: the constructor name.

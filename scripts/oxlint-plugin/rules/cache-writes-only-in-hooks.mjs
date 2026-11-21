@@ -9,7 +9,7 @@ import { CACHE_WRITE_MEMBERS, staticKeyName } from "../lib/react-query.mjs";
 
 /** @param {string} member */
 const message = (member) =>
-  `${member} outside a hook: do cache writes in a domain hook (\`domains/<domain>/hooks/use-*\` or \`shared/hooks/\`) or add a named contract to \`app/lib/query-invalidation.ts\` and call it from the mutation's \`onSuccess\`, not an ad-hoc call here (conventions: mutations and invalidation only in domain hooks)`;
+  `${member} outside a hook: do cache writes in a domain hook (\`domains/<domain>/hooks/use-*\` or \`shared/hooks/\`) or add a named contract to \`app/lib/query-invalidation.ts\` and call it from the mutation's \`onSuccess\`, not an ad-hoc call here (mutations and invalidation only in domain hooks)`;
 
 /**
  * QueryClient cache writes (`invalidateQueries`, `setQueryData`, `setQueriesData`,

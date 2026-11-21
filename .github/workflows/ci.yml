@@ -636,7 +636,8 @@ jobs:
       # Two web replicas migrate an empty database at once, readiness and the sign-in page,
       # the worker, and a deliberately failing migration that must stop the container. The
       # database URL is the owner's; the script creates the application role (watchdog_app) and
-      # runs web and worker as it, then asserts the role cannot alter, drop or truncate tables.
+      # the worker role (watchdog_worker), runs web and worker as them, then asserts the application
+      # role cannot alter, drop or truncate tables.
       - name: Smoke test
         env:
           WEB_IMAGE: watchdog-web:ci

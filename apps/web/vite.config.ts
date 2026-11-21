@@ -110,11 +110,11 @@ const config = defineConfig({
     },
   },
   optimizeDeps: {
-    // Belt for residual HMR / server-fn discovery after client code stays on
+    // Belt for residual HMR discovery after client code stays on
     // `@watchdog/domain/policy/patch-needs-confidence` (do not import Effect in browser UI).
     include: ["effect"],
     // The dependency scan reads source before TanStack Start strips server code, so it follows
-    // server function bodies, `api/` route handlers and `*.server.ts` files into the workspace
+    // `api/` route handlers and `*.server.ts` files into the workspace
     // packages and bundles their server-only dependencies for the browser. None of these runs
     // client-side: leaving them out keeps the cold-start optimizer pass small. A package the
     // browser does load that lands here fails loudly (an unresolved or unoptimized import).

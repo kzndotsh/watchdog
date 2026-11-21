@@ -302,7 +302,7 @@ export const noButtonHeightClass = {
           const tokens = [...new Set(found)].join(" ");
           context.report({
             node,
-            message: `<Button> sets its height with ${tokens}: height belongs to the size scale, so use size="xs" (h-5), "sm" (h-6), default (h-7) or "lg" (h-8), the square "icon-xs" / "icon-sm" / "icon" / "icon-lg", or "inline" for a text link, and add a size to the wrapper in shared/ui/primitives/button.tsx when none fits (conventions: no height utilities on Button)`,
+            message: `<Button> sets its height with ${tokens}: height belongs to the size scale, so use size="xs" (h-5), "sm" (h-6), default (h-7) or "lg" (h-8), the square "icon-xs" / "icon-sm" / "icon" / "icon-lg", or "inline" for a text link, and add a size to the wrapper in shared/ui/primitives/button.tsx when none fits (no height utilities on Button)`,
           });
         }
       },

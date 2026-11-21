@@ -299,7 +299,7 @@ original_migrations="$(count "$db_name" "select count(*) from drizzle.__drizzle_
 echo "dump $(wc -c <"$dump_file") bytes restored into $restore_db: admin and $original_migrations migrations present"
 
 echo "== 6. the application role has data privileges only"
-# Run as watchdog_app, the role the web and worker containers connect as. A statement that must
+# Run as watchdog_app, the role the web container connects as. A statement that must
 # fail is run for its error text: Postgres says "permission denied" or "must be owner".
 app_sql() { pg_client psql "$app_url" -At -v ON_ERROR_STOP=1 -c "$1" 2>&1; }
 must_deny() {

@@ -233,7 +233,7 @@ describe("named props type (component-props-type)", () => {
     expect(hit?.message).toContain("A types 3 props inline");
     expect(hit?.message).toContain("type AProps = { ... }");
     expect(hit?.message).toContain(
-      "conventions: a named XProps type when a component has more than two props"
+      "a named XProps type when a component has more than two props"
     );
   });
 

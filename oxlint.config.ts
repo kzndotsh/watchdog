@@ -167,8 +167,7 @@ const INFINITE_QUERY_NAMES = ["useInfiniteQuery", "infiniteQueryOptions"];
 
 /**
  * Client row models and filter features: the browser sorts, filters or pages nothing a list
- * shows (a declared list's server does, ADR-0007). A bounded table that needs them goes in
- * `shared/ui/data-table/table-features.ts` with a named exemption below.
+ * shows (a declared list's server does, ADR-0007).
  */
 const CLIENT_TABLE_NAMES = [
   "createFilteredRowModel",
@@ -216,7 +215,7 @@ const webImportRestrictions = (
       name,
       importNames: CLIENT_TABLE_NAMES,
       message:
-        "No client row models or filter features: the server sorts, filters and pages a list (ADR-0007). A bounded table adds them in shared/ui/data-table/table-features.ts; see docs/reference/web/lists.md.",
+        "No client row models or filter features: the server sorts, filters and pages a list (ADR-0007); see docs/reference/web/lists.md.",
     })),
   ],
   patterns: [
@@ -520,7 +519,6 @@ export default defineConfig({
     {
       files: [
         "packages/server/core/src/errors/tagged-errors.ts",
-        "packages/server/core/src/infra/repo-layers.ts",
         "packages/caps/tools/src/errors/tagged-errors.ts",
         "packages/caps/ai/src/structured-extract.ts",
       ],
@@ -567,7 +565,7 @@ export default defineConfig({
     },
     {
       // One source per domain rule: the custody evidence message is typed once, in
-      // @watchdog/domain/policy; everywhere else imports it (conventions: one source per domain
+      // @watchdog/domain/policy; everywhere else imports it (one source per domain
       // rule). Tests are not exempt: they assert against the imported constant.
       files: [
         "apps/*/src/**/*.{ts,tsx}",
@@ -590,7 +588,7 @@ export default defineConfig({
     {
       // Production source imports no test-only code and no `.ts` extension. The typecheck is
       // one program per package on tsconfig.test.json, which allows both; these rules keep
-      // the restrictions tsconfig.json used to enforce (conventions: production source never
+      // the restrictions tsconfig.json used to enforce (production source never
       // imports test-only code). apps/web allows the extension in its own tsconfig.
       files: [
         "apps/*/src/**/*.{ts,tsx}",
@@ -684,7 +682,7 @@ export default defineConfig({
       rules: { "watchdog/no-button-height-class": "off" },
     },
     {
-      // Web layering (docs/reference/web/domains.md, conventions table "Web" rows).
+      // Web layering (docs/reference/web/domains.md).
       files: ["apps/web/src/shared/**/*.{ts,tsx}"],
       rules: { "watchdog/shared-no-upward-imports": "error" },
     },
@@ -1283,7 +1281,6 @@ export default defineConfig({
         "apps/web/src/domains/**/hooks/use-*-table-state.ts",
         "apps/web/src/domains/tasks/components/use-task-form-dialog.ts",
         "apps/web/src/shared/ui/identifiers/**/*.tsx",
-        "apps/web/src/shared/ui/rich-text/rich-text-toolbar-controls.tsx",
         "apps/web/src/shared/ui/relative-time.tsx",
         "apps/web/src/domains/entities/lib/parse-identifier-paste.types.ts",
       ],

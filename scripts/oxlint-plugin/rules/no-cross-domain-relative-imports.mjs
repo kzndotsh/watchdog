@@ -42,7 +42,7 @@ export const noCrossDomainRelativeImports = {
       }
       context.report({
         node,
-        message: `Relative import ${specifier} leaves the ${domain[1]} domain: import it as \`@/${target}\`; relative paths stay inside the domain folder (conventions: imports that leave a domain use the @/ alias)`,
+        message: `Relative import ${specifier} leaves the ${domain[1]} domain: import it as \`@/${target}\`; relative paths stay inside the domain folder (imports that leave a domain use the @/ alias)`,
       });
     });
   },

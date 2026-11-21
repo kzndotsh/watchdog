@@ -109,9 +109,7 @@ describe("no height utilities on Button (no-button-height-class)", () => {
     expect(hit?.message).toContain("min-h-0");
     expect(hit?.message).toContain("size-6");
     expect(hit?.message).toContain("size=");
-    expect(hit?.message).toContain(
-      "conventions: no height utilities on Button"
-    );
+    expect(hit?.message).toContain("no height utilities on Button");
     expect(hit?.line).toBe(2);
   });
 

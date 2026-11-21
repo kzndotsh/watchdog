@@ -23,7 +23,7 @@ export const STALE_STABLE = 300_000;
  * (`SESSION_COOKIE_CACHE_SECONDS` in `@watchdog/server/auth`): a refetch inside that window
  * could only be answered from the cookie, so asking sooner buys nothing. A session
  * revoked elsewhere is noticed within this window on the next navigation, and at once
- * when a server function answers 401 (`createAppQueryClient`).
+ * when an API call answers 401 (`createAppQueryClient`).
  */
 export const STALE_SESSION = 60_000;
 

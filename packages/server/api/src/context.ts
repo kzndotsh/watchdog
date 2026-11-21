@@ -2,7 +2,7 @@ import type { AuditableLogger } from "#log";
 import type { ApiCaller } from "@watchdog/domain/schemas/shared";
 
 export type ApiContext = {
-  /** Present when Start ALS has bound a request/ServerFn logger. */
+  /** Present when Start ALS has bound a request logger. */
   log?: AuditableLogger;
   /**
    * Headers added to the HTTP response (oRPC's `ResponseHeadersPlugin` provides them); absent

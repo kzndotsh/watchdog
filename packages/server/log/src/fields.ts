@@ -44,7 +44,7 @@ export type DbLogFields = {
   ms: number;
 };
 
-/** Top-level fields on the request wide event (API routes and server functions). */
+/** Top-level fields on the request wide event (API routes). */
 export type RequestTimingLogFields = {
   /** Wall time of the request in ms, measured in the request middleware. */
   durationMs: number;

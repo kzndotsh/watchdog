@@ -284,7 +284,7 @@ export const oneComponentPerFile = withBaseline("one-component-per-file", {
         for (const component of extra) {
           context.report({
             node: component.node,
-            message: `${component.name} is a second exported component in this file (${first.name} is the first): give each exported component its own file, keep helpers private, and re-export from an index.ts barrel when callers need one path (conventions: one exported component per .tsx file; registries are allowlisted in oxlint.config.ts)`,
+            message: `${component.name} is a second exported component in this file (${first.name} is the first): give each exported component its own file, keep helpers private, and re-export from an index.ts barrel when callers need one path (one exported component per .tsx file; registries are allowlisted in oxlint.config.ts)`,
           });
         }
       },
