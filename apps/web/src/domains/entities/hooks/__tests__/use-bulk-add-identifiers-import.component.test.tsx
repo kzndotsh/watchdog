@@ -3,22 +3,26 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import type {
   IdentifierPasteRow,
   IdentifierPasteTable,
 } from "@/domains/entities/lib/parse-identifier-paste";
 
-const createIdentifierFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
-  createIdentifierFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
 });
 
+import { procedureDouble } from "@/testing/orpc-client";
+import { buildCaseIdentifierRecord } from "@/testing/records";
+
 import { useBulkAddIdentifiersImport } from "../use-bulk-add-identifiers-import";
+
+const createIdentifier = procedureDouble("identifiers.create");
 
 const CASE_A = "550e8400-e29b-41d4-a716-446655440000";
 const CASE_B = "550e8400-e29b-41d4-a716-446655440001";
@@ -56,9 +60,11 @@ const table: IdentifierPasteTable = {
 describe("useBulkAddIdentifiersImport", () => {
   it("reports the Case that received the rows after the screen moves to another Case", async () => {
     let finish: () => void = () => undefined;
-    createIdentifierFn.mockReturnValue(
-      new Promise<void>((resolve) => {
-        finish = resolve;
+    createIdentifier.mockReturnValue(
+      new Promise<CaseIdentifierRecord>((resolve) => {
+        finish = () => {
+          resolve(buildCaseIdentifierRecord({ entityId: ENTITY_ID }));
+        };
       })
     );
     const queryClient = new QueryClient({
@@ -85,7 +91,7 @@ describe("useBulkAddIdentifiersImport", () => {
     });
     rerender({ tag: CASE_B });
     await waitFor(() => {
-      expect(createIdentifierFn).toHaveBeenCalled();
+      expect(createIdentifier).toHaveBeenCalled();
     });
     await act(async () => {
       finish();
@@ -95,8 +101,8 @@ describe("useBulkAddIdentifiersImport", () => {
     await waitFor(() => {
       expect(onImported).toHaveBeenCalledWith(CASE_B, [ENTITY_ID], CASE_A);
     });
-    expect(createIdentifierFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({ caseId: CASE_A, entityId: ENTITY_ID }),
-    });
+    expect(createIdentifier).toHaveBeenCalledWith(
+      expect.objectContaining({ caseId: CASE_A, entityId: ENTITY_ID })
+    );
   });
 });

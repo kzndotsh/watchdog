@@ -2,11 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
-import { deleteIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import { deleteIdentifierInputSchema } from "@watchdog/schemas/graph";
 
 export type DeleteIdentifierTarget = {
   id: string;
@@ -36,12 +35,7 @@ export function useDeleteIdentifier({
     // Case and target travel as the mutation variables: hook props follow re-renders (an
     // Active Case switch), and a pending deletion must settle the Case it was started for.
     mutationFn: async ({ caseId, target }: DeleteIdentifierVariables) =>
-      deleteIdentifierFn({
-        data: deleteIdentifierInputSchema.parse({
-          caseId,
-          identifierId: target.id,
-        }),
-      }),
+      orpc.identifiers.delete.call({ caseId, identifierId: target.id }),
     onSuccess: async (_data, { caseId, target }) => {
       setError(null);
       onOpenChange(false);

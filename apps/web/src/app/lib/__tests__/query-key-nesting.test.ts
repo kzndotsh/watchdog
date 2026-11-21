@@ -10,7 +10,11 @@ import { casesKeys, deletedCaseListView } from "@/domains/cases/queries";
 import { collectKeys } from "@/domains/collect/collect-keys";
 import { collectListView } from "@/domains/collect/queries";
 import { claimListView, claimsKeys } from "@/domains/entities/claims/queries";
-import { edgeListView, edgesKeys } from "@/domains/entities/edges/queries";
+import {
+  edgeListView,
+  edgesKeys,
+  graphKeys,
+} from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventListView, eventsKeys } from "@/domains/entities/events/queries";
 import {
@@ -95,11 +99,8 @@ const factories: readonly Factory[] = [
     k.item(CASE, ID, false),
   ]),
   factory("claimsKeys", claimsKeys.all(CASE), claimsKeys, () => []),
-  factory("edgesKeys", edgesKeys.all(CASE), edgesKeys, (k) => [
-    k.graphSnapshot(CASE),
-    k.graphEgo(CASE, ID),
-    k.byId(CASE, ID),
-  ]),
+  factory("edgesKeys", edgesKeys.all(CASE), edgesKeys, () => []),
+  factory("graphKeys", graphKeys.all(CASE), graphKeys, () => []),
   factory("entitiesKeys", entitiesKeys.all(CASE), entitiesKeys, (k) => [
     k.detail(CASE, "alpha"),
   ]),

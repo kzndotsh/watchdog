@@ -1,6 +1,6 @@
-import { ORPCError, safe } from "@orpc/server";
+import { ORPCError, safe } from "@orpc/client";
 
-/** Map oRPC NOT_FOUND → null for optional ServerFn lookups. */
+/** Map oRPC NOT_FOUND → null for optional lookups (a ServerFn, or the oRPC client in the browser). */
 export async function orpcNullIfNotFound<T>(
   promise: Promise<T>
 ): Promise<T | null> {

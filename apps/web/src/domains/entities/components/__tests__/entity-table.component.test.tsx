@@ -6,7 +6,12 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import type { EntityListItem } from "@/domains/entities/types";
-import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  lastProcedureInput,
+  matchesChoice,
+  matchesQ,
+  memoryListProcedure,
+} from "@/testing/memory-list";
 import {
   buildCaseIdentifierRecord,
   buildEntityListConnection,
@@ -36,37 +41,22 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-// The page read, and the whole-list reads the screen must never make.
-const entityReads = vi.hoisted(() => ({
-  listEntitiesPageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
-  createEntityFn: vi.fn(),
-  updateEntityFieldsFn: vi.fn(),
-}));
-const edgeReads = vi.hoisted(() => ({
-  listEdgesFn: vi.fn(),
-  listEdgesForCaseFn: vi.fn(),
-  createEdgeFn: vi.fn(),
-  updateEdgeFn: vi.fn(),
-  deleteEdgeFn: vi.fn(),
-}));
-
-// An expanded row reads its Entity's Identifier counts by type, then each open group's page.
-const identifierReads = vi.hoisted(() => ({
-  listIdentifiersPageFn: vi.fn(),
-  countIdentifierTypesFn: vi.fn(),
-}));
-
-vi.mock("@/domains/entities/entities.functions", () => entityReads);
-vi.mock(
-  "@/domains/entities/identifiers/identifiers.functions",
-  () => identifierReads
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
-vi.mock("@/domains/entities/edges/edges.functions", () => edgeReads);
 
 import { EntityTable } from "@/domains/entities/components/entity-table";
+import { procedureDouble } from "@/testing/orpc-client";
 import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+// The page read, and the Connection list the screen must not read for its rows.
+const listEntities = procedureDouble("entities.list");
+const listEdges = procedureDouble("edges.list");
+
+// An expanded row reads its Entity's Identifier counts by type, then each open group's page.
+const listIdentifiers = procedureDouble("identifiers.list");
+const countIdentifierTypes = procedureDouble("identifiers.typeCounts");
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -97,7 +87,7 @@ function entities(count: number): EntityListItem[] {
 const PAGE_SIZE = 5;
 
 function entityServer(rows: readonly EntityListItem[]) {
-  return memoryListPage(rows, {
+  return memoryListProcedure(rows, {
     pageSize: PAGE_SIZE,
     matches: (row, data) =>
       matchesChoice(row.kind, data.kind) &&
@@ -136,8 +126,8 @@ function Route({
 }
 
 function renderPage(rows: readonly EntityListItem[], initial: Search = {}) {
-  entityReads.listEntitiesPageFn.mockReset();
-  entityReads.listEntitiesPageFn.mockImplementation(entityServer(rows));
+  listEntities.mockReset();
+  listEntities.mockImplementation(entityServer(rows));
   const onPatch = vi.fn();
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -151,15 +141,7 @@ function renderPage(rows: readonly EntityListItem[], initial: Search = {}) {
 }
 
 /** The params of the last page the screen asked for. */
-function lastRequest(): Record<string, unknown> {
-  const call: unknown = entityReads.listEntitiesPageFn.mock.lastCall?.[0];
-  if (typeof call !== "object" || call === null || !("data" in call)) {
-    throw new Error("no list request yet");
-  }
-  const { data } = call;
-  if (typeof data !== "object" || data === null) throw new Error("no data");
-  return { ...data };
-}
+const lastRequest = () => lastProcedureInput(listEntities);
 
 beforeAll(preloadSharedLazyChunks);
 
@@ -168,7 +150,7 @@ describe("EntityTable (the list standard)", () => {
     const user = userEvent.setup();
     renderPage(entities(8));
     expect(await screen.findByText("Showing 5 of 8")).toBeInTheDocument();
-    expect(entityReads.listEntitiesPageFn).toHaveBeenCalledTimes(1);
+    expect(listEntities).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({ caseId: ACTIVE.id });
 
     await user.click(screen.getByRole("button", { name: "Load more" }));
@@ -203,8 +185,7 @@ describe("EntityTable (the list standard)", () => {
     expect(
       screen.getByRole("button", { name: "3 connections" })
     ).toHaveAttribute("title", "2 outgoing, 1 incoming");
-    expect(edgeReads.listEdgesForCaseFn).not.toHaveBeenCalled();
-    expect(edgeReads.listEdgesFn).not.toHaveBeenCalled();
+    expect(listEdges).not.toHaveBeenCalled();
   });
 
   it("searches on the server and writes `q` to the URL", async () => {
@@ -284,7 +265,7 @@ describe("EntityTable (the list standard)", () => {
 
     const server = entityServer([]);
     let release: () => void = () => undefined;
-    entityReads.listEntitiesPageFn.mockImplementation(
+    listEntities.mockImplementation(
       (input: Parameters<typeof server>[0]) =>
         new Promise((resolve) => {
           release = () => {
@@ -320,7 +301,7 @@ describe("EntityTable (the list standard)", () => {
     renderPage(entities(20), url);
 
     await screen.findByText("Showing 5");
-    expect(entityReads.listEntitiesPageFn).toHaveBeenCalledTimes(1);
+    expect(listEntities).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({
       caseId: ACTIVE.id,
       kind: ["org"],
@@ -374,17 +355,17 @@ describe("EntityTable (the list standard)", () => {
         value: `ops${n}@example.com`,
       })
     );
-    identifierReads.countIdentifierTypesFn.mockReset();
-    identifierReads.countIdentifierTypesFn.mockResolvedValue({
+    countIdentifierTypes.mockReset();
+    countIdentifierTypes.mockResolvedValue({
       counts: [
         { type: "domain", count: 40 },
         { type: "email", count: 2 },
       ],
       isCapped: false,
     });
-    identifierReads.listIdentifiersPageFn.mockReset();
-    identifierReads.listIdentifiersPageFn.mockImplementation(
-      memoryListPage(emails, {
+    listIdentifiers.mockReset();
+    listIdentifiers.mockImplementation(
+      memoryListProcedure(emails, {
         pageSize: PAGE_SIZE,
         matches: (row, data) =>
           matchesChoice(row.type, data.type) && data.entityId === row.entityId,
@@ -395,7 +376,7 @@ describe("EntityTable (the list standard)", () => {
     const expand = await screen.findByRole("button", {
       name: `Show identifiers of ${first.name}`,
     });
-    expect(identifierReads.countIdentifierTypesFn).not.toHaveBeenCalled();
+    expect(countIdentifierTypes).not.toHaveBeenCalled();
 
     await user.click(expand);
 
@@ -403,12 +384,15 @@ describe("EntityTable (the list standard)", () => {
       await screen.findByRole("button", { name: "Domain (40)" })
     ).toHaveAttribute("aria-expanded", "false");
     expect(await screen.findByText("ops1@example.com")).toBeInTheDocument();
-    expect(identifierReads.countIdentifierTypesFn).toHaveBeenCalledWith({
-      data: { caseId: ACTIVE.id, entityId: first.id },
+    expect(countIdentifierTypes).toHaveBeenCalledWith({
+      caseId: ACTIVE.id,
+      entityId: first.id,
     });
-    expect(identifierReads.listIdentifiersPageFn).toHaveBeenCalledTimes(1);
-    expect(identifierReads.listIdentifiersPageFn).toHaveBeenCalledWith({
-      data: { caseId: ACTIVE.id, entityId: first.id, type: ["email"] },
+    expect(listIdentifiers).toHaveBeenCalledTimes(1);
+    expect(listIdentifiers).toHaveBeenCalledWith({
+      caseId: ACTIVE.id,
+      entityId: first.id,
+      type: ["email"],
     });
 
     await user.click(
@@ -429,18 +413,18 @@ describe("EntityTable (the list standard)", () => {
         value: `ops${n}@example.com`,
       })
     );
-    identifierReads.countIdentifierTypesFn.mockReset();
-    identifierReads.countIdentifierTypesFn.mockResolvedValue({
+    countIdentifierTypes.mockReset();
+    countIdentifierTypes.mockResolvedValue({
       counts: [{ type: "email", count: 8 }],
       isCapped: false,
     });
-    const firstPage = memoryListPage(emails, {
+    const firstPage = memoryListProcedure(emails, {
       pageSize: PAGE_SIZE,
       matches: () => true,
       compare: () => (a, b) => a.value.localeCompare(b.value),
     });
-    identifierReads.listIdentifiersPageFn.mockReset();
-    identifierReads.listIdentifiersPageFn
+    listIdentifiers.mockReset();
+    listIdentifiers
       .mockImplementationOnce(firstPage)
       .mockRejectedValue(new Error("network down"));
     renderPage(entities(1));

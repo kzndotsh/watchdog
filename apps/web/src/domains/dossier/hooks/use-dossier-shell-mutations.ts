@@ -4,9 +4,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { DossierEditFormValues } from "@/domains/dossier/components/dossier-edit-dialog";
-import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -29,13 +29,13 @@ async function invalidateDossierEntity(
 }
 
 function renameEntity(ctx: EntityMutationContext, name: string) {
-  return updateEntityFieldsFn({
-    data: buildUpdateEntityFieldsData(ctx.caseId, {
+  return orpc.entities.update.call(
+    buildUpdateEntityFieldsData(ctx.caseId, {
       entityId: ctx.entity.id,
       expectedVersion: ctx.entity.version,
       name,
-    }),
-  });
+    })
+  );
 }
 
 async function onRenameSuccess(ctx: EntityMutationContext): Promise<void> {
@@ -58,16 +58,16 @@ function editEntity(
   ctx: EntityMutationContext,
   { values, expectedVersion }: EditEntityVariables
 ) {
-  return updateEntityFieldsFn({
-    data: buildUpdateEntityFieldsData(ctx.caseId, {
+  return orpc.entities.update.call(
+    buildUpdateEntityFieldsData(ctx.caseId, {
       entityId: ctx.entity.id,
       expectedVersion,
       kind: values.kind,
       name: values.name,
       summary: values.summary,
       notes: values.notes,
-    }),
-  });
+    })
+  );
 }
 
 async function onEditSuccess(ctx: EntityMutationContext): Promise<void> {

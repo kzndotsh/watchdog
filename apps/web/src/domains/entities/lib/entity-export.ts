@@ -1,4 +1,4 @@
-import { recordOpenInFn } from "@/domains/entities/entities.functions";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { dossierPath } from "@/shared/lib/case-path";
@@ -128,12 +128,10 @@ export async function confirmOpenIn({
   tab: Window;
 }): Promise<void> {
   try {
-    await recordOpenInFn({
-      data: {
-        caseId: openIn.caseId,
-        slug: openIn.entitySlug,
-        destination: openIn.destination,
-      },
+    await orpc.entities.recordOpenIn.call({
+      caseId: openIn.caseId,
+      slug: openIn.entitySlug,
+      destination: openIn.destination,
     });
   } catch (error) {
     tab.close();

@@ -3,10 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
-import { updateIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import type {
@@ -33,9 +33,7 @@ type UpdateIdentifierVars = {
 };
 
 function updateIdentifierFields(caseId: string, input: UpdateIdentifierVars) {
-  return updateIdentifierFn({
-    data: buildUpdateIdentifierData(caseId, input),
-  });
+  return orpc.identifiers.update.call(buildUpdateIdentifierData(caseId, input));
 }
 
 async function onIdentifierUpdated(

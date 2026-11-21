@@ -10,7 +10,7 @@ import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import { collectKeys } from "@/domains/collect/collect-keys";
 import { claimsKeys } from "@/domains/entities/claims/queries";
-import { edgesKeys } from "@/domains/entities/edges/queries";
+import { edgesKeys, graphKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventsKeys } from "@/domains/entities/events/queries";
 import { historyKeys } from "@/domains/entities/history/queries";
@@ -168,6 +168,7 @@ export async function invalidateAfterProposalAccept(
     collectKeys.all(caseId),
     claimsKeys.all(caseId),
     edgesKeys.all(caseId),
+    graphKeys.all(caseId),
     eventsKeys.all(caseId),
     identifiersKeys.all(caseId),
     questionsKeys.all(caseId),
@@ -190,6 +191,7 @@ function entityChangedKeys(
   return [
     entitiesKeys.all(caseId),
     edgesKeys.all(caseId),
+    graphKeys.all(caseId),
     identifiersKeys.all(caseId),
     proposalsKeys.all(caseId),
     historyKeys.all(caseId),

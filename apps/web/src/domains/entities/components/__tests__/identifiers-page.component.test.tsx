@@ -6,7 +6,12 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import {
+  lastProcedureInput,
+  matchesChoice,
+  matchesQ,
+  memoryListProcedure,
+} from "@/testing/memory-list";
 import {
   buildCaseIdentifierRecord,
   buildEntityRecord,
@@ -40,21 +45,12 @@ vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
     open ? <div>Bulk identifiers dialog</div> : null,
 }));
 
-const listIdentifiersPageFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
-  listIdentifiersPageFn,
-  createIdentifierFn: vi.fn(),
-  updateIdentifierFn: vi.fn(),
-  deleteIdentifierFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 // The pickers' reads (#559): one small page and by-ids. The whole-list reads stay spies that
 // the screen must never call.
-const entityReads = vi.hoisted(() => ({
-  listEntitiesPickerPageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
-}));
 const evidenceReads = vi.hoisted(() => ({
   listEvidenceFn: vi.fn(),
   listEvidencePageFn: vi.fn(),
@@ -62,12 +58,16 @@ const evidenceReads = vi.hoisted(() => ({
   getEvidenceManyFn: vi.fn(),
 }));
 
-vi.mock("@/domains/entities/entities.functions", () => entityReads);
 vi.mock("@/domains/intake/intake.functions", () => evidenceReads);
 
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
+import { procedureDouble } from "@/testing/orpc-client";
 import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
+
+const listIdentifiers = procedureDouble("identifiers.list");
+const pickerPage = procedureDouble("entities.pickerPage");
+const getEntities = procedureDouble("entities.getMany");
 
 const ACTIVE: CaseRecord = {
   id: testCaseId(10),
@@ -97,7 +97,7 @@ function identifiers(count: number): CaseIdentifierRecord[] {
 const PAGE_SIZE = 5;
 
 function identifierServer(rows: readonly CaseIdentifierRecord[]) {
-  return memoryListPage(rows, {
+  return memoryListProcedure(rows, {
     pageSize: PAGE_SIZE,
     matches: (row, data) =>
       matchesChoice(row.type, data.type) &&
@@ -140,20 +140,20 @@ function renderPage(
   rows: readonly CaseIdentifierRecord[],
   initial: Search = {}
 ) {
-  entityReads.listEntitiesPickerPageFn.mockResolvedValue({
+  pickerPage.mockResolvedValue({
     items: [ACME],
     nextCursor: null,
     total: { count: 1, isCapped: false },
   });
-  entityReads.getEntitiesFn.mockResolvedValue([ACME]);
+  getEntities.mockResolvedValue([ACME]);
   evidenceReads.listEvidencePickerPageFn.mockResolvedValue({
     items: [],
     nextCursor: null,
     total: { count: 0, isCapped: false },
   });
   evidenceReads.getEvidenceManyFn.mockResolvedValue([]);
-  listIdentifiersPageFn.mockReset();
-  listIdentifiersPageFn.mockImplementation(identifierServer(rows));
+  listIdentifiers.mockReset();
+  listIdentifiers.mockImplementation(identifierServer(rows));
   const onPatch = vi.fn();
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -167,15 +167,7 @@ function renderPage(
 }
 
 /** The params of the last page the screen asked for. */
-function lastRequest(): Record<string, unknown> {
-  const call: unknown = listIdentifiersPageFn.mock.lastCall?.[0];
-  if (typeof call !== "object" || call === null || !("data" in call)) {
-    throw new Error("no list request yet");
-  }
-  const { data } = call;
-  if (typeof data !== "object" || data === null) throw new Error("no data");
-  return { ...data };
-}
+const lastRequest = () => lastProcedureInput(listIdentifiers);
 
 beforeAll(preloadSharedLazyChunks);
 
@@ -185,8 +177,9 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(
       await screen.findByText(/Acme Corp/, { selector: "span" })
     ).toBeInTheDocument();
-    expect(entityReads.getEntitiesFn).toHaveBeenCalledWith({
-      data: { caseId: ACTIVE.id, ids: [ACME.id] },
+    expect(getEntities).toHaveBeenCalledWith({
+      caseId: ACTIVE.id,
+      ids: [ACME.id],
     });
     expect(evidenceReads.listEvidenceFn).not.toHaveBeenCalled();
   });
@@ -198,23 +191,23 @@ describe("IdentifiersPage (the list standard)", () => {
     expect(
       await screen.findByText(/Acme Corp/, { selector: "span" })
     ).toBeInTheDocument();
-    expect(entityReads.listEntitiesPickerPageFn).not.toHaveBeenCalled();
+    expect(pickerPage).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
     await screen.findByRole("combobox", { name: "Entity value" });
     await waitFor(() => {
-      expect(entityReads.listEntitiesPickerPageFn).toHaveBeenCalledTimes(1);
+      expect(pickerPage).toHaveBeenCalledTimes(1);
     });
-    expect(entityReads.listEntitiesPickerPageFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({ caseId: ACTIVE.id, limit: 20 }),
-    });
+    expect(pickerPage).toHaveBeenCalledWith(
+      expect.objectContaining({ caseId: ACTIVE.id, limit: 20 })
+    );
   });
 
   it("loads one page, counts the total and pages with Load more", async () => {
     const user = userEvent.setup();
     renderPage(identifiers(8));
     expect(await screen.findByText("Showing 5 of 8")).toBeInTheDocument();
-    expect(listIdentifiersPageFn).toHaveBeenCalledTimes(1);
+    expect(listIdentifiers).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({ caseId: ACTIVE.id });
 
     await user.click(screen.getByRole("button", { name: "Load more" }));
@@ -306,7 +299,7 @@ describe("IdentifiersPage (the list standard)", () => {
     renderPage(identifiers(20), url);
 
     await screen.findByText("Showing 5");
-    expect(listIdentifiersPageFn).toHaveBeenCalledTimes(1);
+    expect(listIdentifiers).toHaveBeenCalledTimes(1);
     expect(lastRequest()).toEqual({
       caseId: ACTIVE.id,
       type: ["phone"],

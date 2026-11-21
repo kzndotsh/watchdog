@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { buildJobListRecord } from "@/testing/records";
+import { buildEntityRecord, buildJobListRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -32,12 +32,9 @@ const fns = vi.hoisted(() => ({
   getEvidenceManyFn: vi.fn(),
   listRecentJobsFn: vi.fn(),
   listProposalQueuePageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
   // The whole-list reads this screen no longer makes: any call fails the test.
   listEvidenceFn: vi.fn(),
   listJobsFn: vi.fn(),
-  listEdgesForCaseFn: vi.fn(),
-  listIdentifiersForCaseFn: vi.fn(),
 }));
 
 vi.mock("@/domains/cases/cases.functions", () => ({
@@ -55,14 +52,14 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
 vi.mock("@/domains/triage/triage.functions", () => ({
   listProposalQueuePageFn: fns.listProposalQueuePageFn,
 }));
-vi.mock("@/domains/entities/entities.functions", () => ({
-  getEntitiesFn: fns.getEntitiesFn,
-}));
-vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  listEdgesForCaseFn: fns.listEdgesForCaseFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { CaseOverviewTab } from "@/domains/dashboard/components/case-overview-tab";
+import { procedureDouble } from "@/testing/orpc-client";
+
+const getEntities = procedureDouble("entities.getMany");
 
 const CASE: CaseRecord = {
   id: testCaseId(1),
@@ -105,7 +102,7 @@ describe("CaseOverviewTab", () => {
       total: exact(0),
     });
     fns.getEvidenceManyFn.mockResolvedValue([]);
-    fns.getEntitiesFn.mockResolvedValue([]);
+    getEntities.mockResolvedValue([]);
     fns.listRecentJobsFn.mockResolvedValue([]);
     fns.listProposalQueuePageFn.mockResolvedValue({
       items: [],
@@ -165,8 +162,8 @@ describe("CaseOverviewTab", () => {
     for (const whole of [
       fns.listEvidenceFn,
       fns.listJobsFn,
-      fns.listEdgesForCaseFn,
-      fns.listIdentifiersForCaseFn,
+      procedureDouble("edges.list"),
+      procedureDouble("identifiers.list"),
     ]) {
       expect(whole).not.toHaveBeenCalled();
     }
@@ -182,19 +179,20 @@ describe("CaseOverviewTab", () => {
         resultSummary: null,
       }),
     ]);
-    fns.getEntitiesFn.mockResolvedValue([
-      {
+    getEntities.mockResolvedValue([
+      buildEntityRecord({
         id: entityId,
         name: "Acme Ltd",
         kind: "org",
         slug: "acme-ltd",
-      },
+      }),
     ]);
     renderTab();
 
     await waitFor(() => {
-      expect(fns.getEntitiesFn).toHaveBeenCalledWith({
-        data: { caseId: CASE.id, ids: [entityId] },
+      expect(getEntities).toHaveBeenCalledWith({
+        caseId: CASE.id,
+        ids: [entityId],
       });
     });
   });

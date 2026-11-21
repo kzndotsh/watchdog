@@ -1,8 +1,3 @@
-import {
-  createEdgeFn,
-  deleteEdgeFn,
-  updateEdgeFn,
-} from "@/domains/entities/edges/edges.functions";
 import type {
   ConnectionFormValues,
   EdgeRecord,
@@ -13,7 +8,7 @@ import {
   buildUpdateEdgeData,
 } from "@/domains/entities/lib/edge-write";
 import type { EntityScope } from "@/domains/entities/types";
-import { edgeScopeInputSchema } from "@watchdog/schemas/graph";
+import { orpc } from "@/lib/orpc-client";
 
 export type CreateConnectionVariables = EntityScope & {
   values: ConnectionFormValues;
@@ -21,7 +16,7 @@ export type CreateConnectionVariables = EntityScope & {
 
 /** Add a Connection (Edge) from an Entity. */
 export const useCreateConnection = defineGraphChildMutation({
-  fn: createEdgeFn,
+  call: orpc.edges.create.call,
   parse: ({ caseId, entityId, values }: CreateConnectionVariables) =>
     buildCreateEdgeData({
       caseId,
@@ -49,7 +44,7 @@ export type UpdateConnectionVariables = EntityScope & {
 
 /** Edit a Connection (Edge). */
 export const useUpdateConnection = defineGraphChildMutation({
-  fn: updateEdgeFn,
+  call: orpc.edges.update.call,
   parse: ({
     caseId,
     entityId,
@@ -81,9 +76,11 @@ export type DeleteConnectionVariables = EntityScope & { edgeId: string };
 
 /** Delete a Connection (Edge). */
 export const useDeleteConnection = defineGraphChildMutation({
-  fn: deleteEdgeFn,
-  parse: ({ caseId, edgeId }: DeleteConnectionVariables) =>
-    edgeScopeInputSchema.parse({ caseId, edgeId }),
+  call: orpc.edges.delete.call,
+  parse: ({ caseId, edgeId }: DeleteConnectionVariables) => ({
+    caseId,
+    edgeId,
+  }),
   success: "Connection deleted",
   verb: "delete",
   noun: "connection",

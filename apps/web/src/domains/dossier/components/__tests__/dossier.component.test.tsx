@@ -66,7 +66,7 @@ vi.mock("@/shared/ui/rich-text", () => ({
   ),
 }));
 
-// The server functions are the network boundary: every module the Dossier reads or writes
+// The oRPC client and the server functions are the network boundary: every module the Dossier reads or writes
 // through is faked at its edge (one spy per export), and the tests set what each answers.
 const serverFn = vi.hoisted(() => {
   const spies = new Map<
@@ -84,31 +84,8 @@ const stubFns = vi.hoisted(
     Object.fromEntries(names.split(" ").map((name) => [name, serverFn(name)]))
 );
 
-vi.mock("@/domains/entities/entities.functions", () =>
-  stubFns(
-    "listEntitiesPageFn listEntitiesPickerPageFn matchEntityNamesFn getEntitiesFn getEntityBySlugFn createEntityFn updateEntityFieldsFn recordOpenInFn deleteEntityFn"
-  )
-);
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
-);
-vi.mock("@/domains/entities/edges/edges.functions", () =>
-  stubFns(
-    "listEdgesPageFn getEdgesFn getGraphEgoFn getGraphSnapshotFn createEdgeFn updateEdgeFn deleteEdgeFn"
-  )
-);
-vi.mock("@/domains/entities/events/events.functions", () =>
-  stubFns("listEventsPageFn createEventFn deleteEventFn updateEventFn")
-);
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () =>
-  stubFns(
-    "listIdentifiersPageFn countIdentifierTypesFn createIdentifierFn updateIdentifierFn deleteIdentifierFn"
-  )
-);
-vi.mock("@/domains/entities/questions/questions.functions", () =>
-  stubFns(
-    "listQuestionsPageFn createQuestionFn resolveQuestionFn updateQuestionFn reopenQuestionFn deleteQuestionFn"
-  )
 );
 vi.mock("@/domains/entities/history/history.functions", () =>
   stubFns("listGraphHistoryFn graphRowAttributionFn")
@@ -160,9 +137,9 @@ const IDENTIFIERS = [
   }),
 ];
 
-const getEntityBySlugFn = serverFn("getEntityBySlugFn");
-const listIdentifiersPageFn = serverFn("listIdentifiersPageFn");
-const countIdentifierTypesFn = serverFn("countIdentifierTypesFn");
+const getEntity = procedureDouble("entities.get");
+const listIdentifiers = procedureDouble("identifiers.list");
+const countIdentifierTypes = procedureDouble("identifiers.typeCounts");
 const getTaskBoardFn = serverFn("getTaskBoardFn");
 
 const emptyPage = memoryListPage<unknown>([], { matches: () => false });
@@ -170,27 +147,27 @@ const emptyPage = memoryListPage<unknown>([], { matches: () => false });
 beforeAll(preloadSharedLazyChunks);
 
 beforeEach(() => {
-  getEntityBySlugFn.mockReset().mockResolvedValue(ENTITY);
-  procedureDouble("claims.list")
-    .mockReset()
-    .mockImplementation(memoryListProcedure([], { matches: () => false }));
-  for (const name of [
-    "listEdgesPageFn",
-    "listEventsPageFn",
-    "listQuestionsPageFn",
-    "listEvidencePageFn",
+  getEntity.mockReset().mockResolvedValue(ENTITY);
+  for (const list of [
+    procedureDouble("claims.list"),
+    procedureDouble("edges.list"),
+    procedureDouble("events.list"),
+    procedureDouble("questions.list"),
   ]) {
-    serverFn(name).mockReset().mockImplementation(emptyPage);
+    list
+      .mockReset()
+      .mockImplementation(memoryListProcedure([], { matches: () => false }));
   }
-  listIdentifiersPageFn.mockReset().mockImplementation(
-    memoryListPage(IDENTIFIERS, {
+  serverFn("listEvidencePageFn").mockReset().mockImplementation(emptyPage);
+  listIdentifiers.mockReset().mockImplementation(
+    memoryListProcedure(IDENTIFIERS, {
       matches: (row, data) =>
         matchesChoice(row.type, data.type) &&
         matchesQ(data, [row.value, row.platform, row.notes]),
     })
   );
   // The Identifiers tab groups by type: one email, one phone, each group open.
-  countIdentifierTypesFn.mockReset().mockResolvedValue({
+  countIdentifierTypes.mockReset().mockResolvedValue({
     counts: [
       { type: "email", count: 1 },
       { type: "phone", count: 1 },

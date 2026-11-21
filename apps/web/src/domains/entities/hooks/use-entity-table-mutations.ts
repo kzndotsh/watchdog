@@ -5,15 +5,6 @@ import { useStaleVersionToast } from "@/app/hooks/use-stale-version-toast";
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import type { EntityEditTarget } from "@/domains/entities/components/entity-table.columns";
 import {
-  createEdgeFn,
-  deleteEdgeFn,
-  updateEdgeFn,
-} from "@/domains/entities/edges/edges.functions";
-import {
-  createEntityFn,
-  updateEntityFieldsFn,
-} from "@/domains/entities/entities.functions";
-import {
   buildCreateEdgeData,
   buildUpdateEdgeData,
   type CreateEntityConnectionInput,
@@ -21,16 +12,13 @@ import {
 } from "@/domains/entities/lib/edge-write";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import {
   TOAST_ENTITY_CREATED,
   TOAST_ENTITY_UPDATED,
 } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import {
-  edgeScopeInputSchema,
-  createEntityInputSchema,
-} from "@watchdog/schemas/graph";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
 type UpdateEntityVars = {
@@ -57,9 +45,7 @@ type ConnectionDeleteVars = {
 };
 
 function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
-  return updateEntityFieldsFn({
-    data: buildUpdateEntityFieldsData(caseId, vars),
-  });
+  return orpc.entities.update.call(buildUpdateEntityFieldsData(caseId, vars));
 }
 
 async function onEntityFieldsUpdated(
@@ -80,13 +66,13 @@ function onEntityFieldsError(error: unknown): void {
 }
 
 function createEntityConnection(caseId: string, vars: ConnectionVars) {
-  return createEdgeFn({
-    data: buildCreateEdgeData({
+  return orpc.edges.create.call(
+    buildCreateEdgeData({
       caseId,
       centerId: vars.centerId,
       core: vars.input,
-    }),
-  });
+    })
+  );
 }
 
 async function onConnectionCreated(
@@ -102,8 +88,8 @@ async function onConnectionCreated(
 }
 
 function updateEntityConnection(caseId: string, vars: ConnectionUpdateVars) {
-  return updateEdgeFn({
-    data: buildUpdateEdgeData({
+  return orpc.edges.update.call(
+    buildUpdateEdgeData({
       caseId,
       centerId: vars.centerId,
       edgeId: vars.input.edgeId,
@@ -114,8 +100,8 @@ function updateEntityConnection(caseId: string, vars: ConnectionUpdateVars) {
         toId: vars.input.existingToId,
         peerId: vars.input.existingPeerId,
       },
-    }),
-  });
+    })
+  );
 }
 
 async function onConnectionUpdated(
@@ -131,12 +117,7 @@ async function onConnectionUpdated(
 }
 
 function deleteEntityConnection(caseId: string, vars: ConnectionDeleteVars) {
-  return deleteEdgeFn({
-    data: edgeScopeInputSchema.parse({
-      caseId,
-      edgeId: vars.edgeId,
-    }),
-  });
+  return orpc.edges.delete.call({ caseId, edgeId: vars.edgeId });
 }
 
 async function onConnectionDeleted(
@@ -158,13 +139,7 @@ async function createEntityRecord(
   name: string,
   kind: EntityKind
 ): Promise<void> {
-  const created = await createEntityFn({
-    data: createEntityInputSchema.parse({
-      caseId,
-      kind,
-      name,
-    }),
-  });
+  const created = await orpc.entities.create.call({ caseId, kind, name });
   toast.success(TOAST_ENTITY_CREATED);
   await invalidateAfterEntityChanged(
     queryClient,

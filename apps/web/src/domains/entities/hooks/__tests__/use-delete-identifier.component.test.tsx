@@ -3,15 +3,16 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-const deleteIdentifierFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
-  deleteIdentifierFn,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { identifiersKeys } from "@/domains/entities/identifiers/queries";
+import { procedureDouble } from "@/testing/orpc-client";
 
 import { useDeleteIdentifier } from "../use-delete-identifier";
+
+const deleteIdentifier = procedureDouble("identifiers.delete");
 
 const CASE_A = "550e8400-e29b-41d4-a716-446655440000";
 const CASE_B = "550e8400-e29b-41d4-a716-446655440001";
@@ -29,9 +30,11 @@ const target = {
 describe("useDeleteIdentifier", () => {
   it("settles the Case the deletion started in after the screen moves to another Case", async () => {
     let finish: () => void = () => undefined;
-    deleteIdentifierFn.mockReturnValue(
-      new Promise<void>((resolve) => {
-        finish = resolve;
+    deleteIdentifier.mockReturnValue(
+      new Promise<{ ok: true }>((resolve) => {
+        finish = () => {
+          resolve({ ok: true });
+        };
       })
     );
     const queryClient = new QueryClient({
@@ -61,7 +64,7 @@ describe("useDeleteIdentifier", () => {
     });
     rerender({ tag: CASE_B });
     await waitFor(() => {
-      expect(deleteIdentifierFn).toHaveBeenCalled();
+      expect(deleteIdentifier).toHaveBeenCalled();
     });
     await act(async () => {
       finish();
@@ -76,8 +79,9 @@ describe("useDeleteIdentifier", () => {
     expect(
       queryClient.getQueryState(identifiersKeys.all(CASE_B))?.isInvalidated
     ).toBe(false);
-    expect(deleteIdentifierFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_A, identifierId: IDENTIFIER_ID },
+    expect(deleteIdentifier).toHaveBeenCalledWith({
+      caseId: CASE_A,
+      identifierId: IDENTIFIER_ID,
     });
     expect(onDeleted).toHaveBeenCalledWith(CASE_B, target);
   });

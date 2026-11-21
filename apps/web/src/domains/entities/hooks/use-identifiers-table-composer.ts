@@ -4,9 +4,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
-import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildCreateIdentifierData } from "@/domains/entities/lib/identifier-write";
+import { orpc } from "@/lib/orpc-client";
 import { errMessage } from "@/lib/utils";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
 import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/commit-identifier-field";
@@ -122,8 +122,8 @@ export function useIdentifiersTableComposer(
   const createMutation = useMutation({
     mutationFn: async (value: IdentifierCreateValues) => {
       const platform = normalizeIdentifierPlatform(value.platform);
-      return createIdentifierFn({
-        data: buildCreateIdentifierData(caseId, {
+      return orpc.identifiers.create.call(
+        buildCreateIdentifierData(caseId, {
           entityId: value.entityId,
           type: value.type,
           value: value.value,
@@ -131,8 +131,8 @@ export function useIdentifiersTableComposer(
           status: value.status,
           confidence: value.confidence,
           evidenceIds: value.evidenceIds,
-        }),
-      });
+        })
+      );
     },
   });
 

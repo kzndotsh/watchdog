@@ -10,11 +10,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NotesSection } from "@/domains/dossier/components/notes-section";
 import { SummarySection } from "@/domains/dossier/components/summary-section";
-import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import type { EntityRecord } from "@/domains/entities/types";
+import { procedureDouble } from "@/testing/orpc-client";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
+
+const updateEntity = procedureDouble("entities.update");
 
 /** The component reads the router (unsaved-changes guard), so it renders under a real one. */
 let router = createTestRouter();
@@ -25,9 +27,9 @@ beforeEach(() => {
   router = createTestRouter();
 });
 
-vi.mock("@/domains/entities/entities.functions", () => ({
-  updateEntityFieldsFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
@@ -114,7 +116,7 @@ describe("summary-notes sections", () => {
   });
 
   it("still asks about an edit made after the blur save started", async () => {
-    vi.mocked(updateEntityFieldsFn).mockReturnValue(new Promise(() => {}));
+    updateEntity.mockReturnValue(new Promise(() => {}));
     renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
     const notes = screen.getByLabelText("Notes");
     fireEvent.change(notes, { target: { value: "Saved on blur" } });
@@ -133,7 +135,7 @@ describe("summary-notes sections", () => {
   });
 
   it("navigates without asking once the blur save is under way", async () => {
-    vi.mocked(updateEntityFieldsFn).mockReturnValue(new Promise(() => {}));
+    updateEntity.mockReturnValue(new Promise(() => {}));
     renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
     const notes = screen.getByLabelText("Notes");
     fireEvent.change(notes, { target: { value: "Saved on blur" } });
@@ -162,7 +164,7 @@ describe("summary-notes sections", () => {
   });
 
   it("saves only notes without sending summary", async () => {
-    const updateFn = vi.mocked(updateEntityFieldsFn);
+    const updateFn = updateEntity;
     updateFn.mockResolvedValue(ENTITY);
     renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
     const notes = screen.getByLabelText("Notes");
@@ -170,18 +172,16 @@ describe("summary-notes sections", () => {
     fireEvent.blur(notes);
     await waitFor(() => {
       expect(updateFn).toHaveBeenCalledWith({
-        data: {
-          caseId: testId(10),
-          entityId: testId(1),
-          expectedVersion: 1,
-          notes: "Updated notes",
-        },
+        caseId: testId(10),
+        entityId: testId(1),
+        expectedVersion: 1,
+        notes: "Updated notes",
       });
     });
   });
 
   it("saves only summary without sending notes", async () => {
-    const updateFn = vi.mocked(updateEntityFieldsFn);
+    const updateFn = updateEntity;
     updateFn.mockResolvedValue(ENTITY);
     renderWithClient(<SummarySection caseId={testId(10)} entity={ENTITY} />);
     const summary = screen.getByLabelText("Summary");
@@ -189,18 +189,16 @@ describe("summary-notes sections", () => {
     fireEvent.blur(summary);
     await waitFor(() => {
       expect(updateFn).toHaveBeenCalledWith({
-        data: {
-          caseId: testId(10),
-          entityId: testId(1),
-          expectedVersion: 1,
-          summary: "Updated summary",
-        },
+        caseId: testId(10),
+        entityId: testId(1),
+        expectedVersion: 1,
+        summary: "Updated summary",
       });
     });
   });
 
   it("clears summary with null on blur", async () => {
-    const updateFn = vi.mocked(updateEntityFieldsFn);
+    const updateFn = updateEntity;
     updateFn.mockResolvedValue({ ...ENTITY, summary: null });
     renderWithClient(<SummarySection caseId={testId(10)} entity={ENTITY} />);
     const summary = screen.getByLabelText("Summary");
@@ -208,18 +206,16 @@ describe("summary-notes sections", () => {
     fireEvent.blur(summary);
     await waitFor(() => {
       expect(updateFn).toHaveBeenCalledWith({
-        data: {
-          caseId: testId(10),
-          entityId: testId(1),
-          expectedVersion: 1,
-          summary: null,
-        },
+        caseId: testId(10),
+        entityId: testId(1),
+        expectedVersion: 1,
+        summary: null,
       });
     });
   });
 
   it("clears notes with null on blur", async () => {
-    const updateFn = vi.mocked(updateEntityFieldsFn);
+    const updateFn = updateEntity;
     updateFn.mockResolvedValue({ ...ENTITY, notes: null });
     renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
     const notes = screen.getByLabelText("Notes");
@@ -227,12 +223,10 @@ describe("summary-notes sections", () => {
     fireEvent.blur(notes);
     await waitFor(() => {
       expect(updateFn).toHaveBeenCalledWith({
-        data: {
-          caseId: testId(10),
-          entityId: testId(1),
-          expectedVersion: 1,
-          notes: null,
-        },
+        caseId: testId(10),
+        entityId: testId(1),
+        expectedVersion: 1,
+        notes: null,
       });
     });
   });

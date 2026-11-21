@@ -51,8 +51,13 @@ describe("entities index route", () => {
     expect(query).not.toHaveBeenCalled();
     expect(firstPage).toHaveBeenCalledTimes(1);
     const [options] = firstPage.mock.calls[0] ?? [];
-    expect(options?.queryKey.slice(0, 2)).toEqual(["entities", ACTIVE.id]);
-    expect(String(options?.queryKey.at(-1))).toContain("acme");
+    expect(options?.queryKey).toEqual([
+      ["entities", "list"],
+      {
+        type: "infinite",
+        input: expect.objectContaining({ caseId: ACTIVE.id, q: "acme" }),
+      },
+    ]);
   });
 
   it("renders the entity table with the route's search", () => {

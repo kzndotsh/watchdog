@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import {
   identifierPasteRowKey,
   isIdentifierPasteRowImportable,
@@ -8,6 +7,7 @@ import {
   type IdentifierPasteRow,
   type IdentifierPasteTable,
 } from "@/domains/entities/lib/parse-identifier-paste";
+import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { createIdentifierInputSchema } from "@watchdog/schemas/graph";
@@ -57,7 +57,7 @@ export function useBulkAddIdentifiersImport(options: {
             confidence: row.confidence,
           });
           // oxlint-disable-next-line eslint/no-await-in-loop, react-doctor/async-await-in-loop -- sequential partial success
-          await createIdentifierFn({ data });
+          await orpc.identifiers.create.call(data);
           imported += 1;
           importedEntityIds.push(data.entityId);
         } catch (error) {

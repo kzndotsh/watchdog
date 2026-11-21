@@ -67,15 +67,9 @@ vi.mock("@/domains/settings/settings.functions", () => ({
   listCredentialsFn: async () => [],
 }));
 
-vi.mock("@/domains/entities/entities.functions", () => ({
-  listEntitiesPickerPageFn: async () => ({
-    items: [],
-    nextCursor: null,
-    total: null,
-  }),
-  getEntitiesFn: async () => [],
-  getEntityBySlugFn: async () => null,
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { Collect } from "@/domains/collect/components/collect";
 import {
@@ -85,6 +79,7 @@ import {
 import { TOAST_COLLECT_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 import { matchesChoice, matchesQ, memoryListPage } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildJobListRecord, buildJobRecord } from "@/testing/records";
 import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
@@ -228,6 +223,13 @@ class ResizeObserverDouble {
 beforeAll(preloadSharedLazyChunks);
 
 beforeEach(() => {
+  // The Entity pickers' reads: an empty Case.
+  procedureDouble("entities.pickerPage").mockResolvedValue({
+    items: [],
+    nextCursor: null,
+    total: null,
+  });
+  procedureDouble("entities.getMany").mockResolvedValue([]);
   listCapabilitiesFn.mockReset();
   listCapabilitiesFn.mockResolvedValue([]);
   listPlaybooksFn.mockReset();

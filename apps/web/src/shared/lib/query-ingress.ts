@@ -145,10 +145,6 @@ export function parseCaseBySlugInput(caseSlug: string) {
   return getCaseBySlugInputSchema.parse({ caseSlug });
 }
 
-export function parseCaseSlugInput(caseId: string, slug: string) {
-  return entitySlugScopeInputSchema.parse({ caseId, slug });
-}
-
 export function parseListJobsInput(caseId: string) {
   return jobList.input.parse({ caseId });
 }
@@ -163,10 +159,6 @@ export function parsePlaybookRunInput(caseId: string, playbookRunId: string) {
 
 export function parseEvidenceScopeInput(caseId: string, evidenceId: string) {
   return evidenceScopeInputSchema.parse({ caseId, evidenceId });
-}
-
-export function parseEntityScopeInput(caseId: string, entityId: string) {
-  return entityScopeInputSchema.parse({ caseId, entityId });
 }
 
 export function parseCaseScopeInput(caseId: string) {

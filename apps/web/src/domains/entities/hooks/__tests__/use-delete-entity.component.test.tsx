@@ -5,15 +5,20 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
 
-const deleteEntityFn = vi.hoisted(() => vi.fn());
 const invalidateAfterEntityChanged = vi.hoisted(() => vi.fn());
 
-vi.mock("@/domains/entities/entities.functions", () => ({ deleteEntityFn }));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged,
 }));
 
+import { procedureDouble } from "@/testing/orpc-client";
+
 import { useDeleteEntity } from "../use-delete-entity";
+
+const deleteEntity = procedureDouble("entities.delete");
 
 const CASE_A = "550e8400-e29b-41d4-a716-446655440000";
 const CASE_B = "550e8400-e29b-41d4-a716-446655440001";
@@ -28,9 +33,11 @@ const entity: Pick<EntityRecord, "id" | "name" | "slug"> = {
 describe("useDeleteEntity", () => {
   it("settles the Case the deletion started in after the screen moves to another Case", async () => {
     let finish: () => void = () => undefined;
-    deleteEntityFn.mockReturnValue(
-      new Promise<void>((resolve) => {
-        finish = resolve;
+    deleteEntity.mockReturnValue(
+      new Promise<{ ok: true }>((resolve) => {
+        finish = () => {
+          resolve({ ok: true });
+        };
       })
     );
     invalidateAfterEntityChanged.mockResolvedValue(undefined);
@@ -57,7 +64,7 @@ describe("useDeleteEntity", () => {
     });
     rerender({ tag: CASE_B });
     await waitFor(() => {
-      expect(deleteEntityFn).toHaveBeenCalled();
+      expect(deleteEntity).toHaveBeenCalled();
     });
     await act(async () => {
       finish();
@@ -74,8 +81,9 @@ describe("useDeleteEntity", () => {
       queryClient,
       CASE_B
     );
-    expect(deleteEntityFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_A, entityId: ENTITY_ID },
+    expect(deleteEntity).toHaveBeenCalledWith({
+      caseId: CASE_A,
+      entityId: ENTITY_ID,
     });
     expect(onDeleted).toHaveBeenCalledWith(CASE_B, entity);
   });

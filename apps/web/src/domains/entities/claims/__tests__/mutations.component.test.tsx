@@ -30,8 +30,7 @@ describe("claims Graph child mutations", () => {
   it("settles the Case the claim was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useCreateClaim({ onSuccess: onDone }),
-      serverFn: procedures.create,
-      isProcedure: true,
+      procedure: procedures.create,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -51,8 +50,7 @@ describe("claims Graph child mutations", () => {
         useRetractClaim({
           onSuccess: onDone,
         }),
-      serverFn: procedures.retract,
-      isProcedure: true,
+      procedure: procedures.retract,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
@@ -66,8 +64,7 @@ describe("claims Graph child mutations", () => {
   it("settles the Case the claim was edited in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: (onDone) => useUpdateClaim({ onSuccess: onDone }),
-      serverFn: procedures.update,
-      isProcedure: true,
+      procedure: procedures.update,
       expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,

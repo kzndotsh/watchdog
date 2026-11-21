@@ -4,31 +4,29 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { edgeListView, edgesKeys } from "@/domains/entities/edges/queries";
+import {
+  edgeListView,
+  graphEgoQuery,
+  graphSnapshotQuery,
+} from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { useEntityTableMutations } from "@/domains/entities/hooks/use-entity-table-mutations";
+import { procedureDouble } from "@/testing/orpc-client";
 import { edgeList } from "@watchdog/schemas/graph";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const createEdgeFn = vi.hoisted(() => vi.fn());
-const deleteEdgeFn = vi.hoisted(() => vi.fn());
-
-vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  createEdgeFn,
-  updateEdgeFn: vi.fn(),
-  deleteEdgeFn,
-}));
-
-vi.mock("@/domains/entities/entities.functions", () => ({
-  createEntityFn: vi.fn(),
-  updateEntityFieldsFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
   return toastModuleDouble();
 });
+
+const createEdge = procedureDouble("edges.create");
+const deleteEdge = procedureDouble("edges.delete");
 
 const CASE_ID = testCaseId(10);
 const ALPHA = testId(1);
@@ -38,7 +36,7 @@ const EDGE_ID = testId(3);
 /** Every query the Entities table (and the Dossier connections tab) reads for a connection. */
 const CONNECTION_QUERY_KEYS: readonly (readonly [string, QueryKey])[] = [
   ["the Case's entity list", entitiesKeys.all(CASE_ID)],
-  ["the Graph page's snapshot", edgesKeys.graphSnapshot(CASE_ID)],
+  ["the Graph page's snapshot", graphSnapshotQuery(CASE_ID).queryKey],
   [
     "the first endpoint's Connections (Dossier)",
     edgeListView.key(
@@ -53,7 +51,7 @@ const CONNECTION_QUERY_KEYS: readonly (readonly [string, QueryKey])[] = [
       edgeList.queryOf({}, { entityId: BETA })
     ),
   ],
-  ["the first endpoint's ego graph", edgesKeys.graphEgo(CASE_ID, ALPHA)],
+  ["the first endpoint's ego graph", graphEgoQuery(CASE_ID, ALPHA).queryKey],
 ];
 
 function setup() {
@@ -83,7 +81,21 @@ function expectConnectionQueriesInvalidated(queryClient: QueryClient) {
 
 describe("useEntityTableMutations connection writes", () => {
   it("invalidates both endpoints and the table's data after a link", async () => {
-    createEdgeFn.mockResolvedValue({ id: EDGE_ID });
+    createEdge.mockResolvedValue({
+      version: 1,
+      id: EDGE_ID,
+      fromId: ALPHA,
+      toId: BETA,
+      predicate: "associate_of",
+      confidence: "unverified",
+      notes: null,
+      evidenceIds: [],
+      peerId: BETA,
+      peerName: "Beta",
+      peerSlug: "beta",
+      peerKind: "person",
+      direction: "out",
+    });
     const { queryClient, result } = setup();
 
     await act(async () => {
@@ -94,19 +106,19 @@ describe("useEntityTableMutations connection writes", () => {
       });
     });
 
-    expect(createEdgeFn).toHaveBeenCalledTimes(1);
+    expect(createEdge).toHaveBeenCalledTimes(1);
     expectConnectionQueriesInvalidated(queryClient);
   });
 
   it("invalidates both endpoints and the table's data after an unlink", async () => {
-    deleteEdgeFn.mockResolvedValue(undefined);
+    deleteEdge.mockResolvedValue({ ok: true });
     const { queryClient, result } = setup();
 
     await act(async () => {
       await result.current.deleteConnection(ALPHA, EDGE_ID);
     });
 
-    expect(deleteEdgeFn).toHaveBeenCalledTimes(1);
+    expect(deleteEdge).toHaveBeenCalledTimes(1);
     expectConnectionQueriesInvalidated(queryClient);
   });
 });

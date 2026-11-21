@@ -15,16 +15,18 @@ import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import { collectKeys } from "@/domains/collect/collect-keys";
 import { claimsKeys } from "@/domains/entities/claims/queries";
-import { edgesKeys } from "@/domains/entities/edges/queries";
+import { edgesKeys, graphKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventsKeys } from "@/domains/entities/events/queries";
 import { historyKeys } from "@/domains/entities/history/queries";
 import { identifiersKeys } from "@/domains/entities/identifiers/queries";
+import { entityListView } from "@/domains/entities/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
 import { jobsKeys } from "@/domains/jobs/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
 import { LIST_REFETCH_THROTTLE_MS } from "@/shared/lib/list/list-refetch-throttle";
+import { entityList } from "@watchdog/schemas/graph";
 
 /** No declared list view is cached in the mock clients: every key refetches directly. */
 function noListViews() {
@@ -163,6 +165,7 @@ describe("query invalidation contracts", () => {
     for (const queryKey of [
       entitiesKeys.all("case-1"),
       edgesKeys.all("case-1"),
+      graphKeys.all("case-1"),
       identifiersKeys.all("case-1"),
       claimsKeys.all("case-1"),
       eventsKeys.all("case-1"),
@@ -209,6 +212,12 @@ describe("query invalidation contracts", () => {
   });
 });
 
+/** A key's domain: its first segment, or the first part of an oRPC key's procedure path. */
+function keyRoot(queryKey: readonly unknown[] | undefined): string {
+  const [head] = queryKey ?? [];
+  return String(Array.isArray(head) ? head[0] : head);
+}
+
 describe("parallel refetch after a mutation", () => {
   /** A QueryClient whose refetchQueries calls are held open until the test releases them. */
   function heldClient() {
@@ -235,9 +244,9 @@ describe("parallel refetch after a mutation", () => {
       done();
     })();
 
-    // proposals, entities, evidence, collect, claims, edges, events, identifiers, questions, history, activity, search, counts
+    // proposals, entities, evidence, collect, claims, edges, graph, events, identifiers, questions, history, activity, search, counts
     await vi.waitFor(() => {
-      expect(started).toHaveLength(13);
+      expect(started).toHaveLength(14);
     });
     expect(done).not.toHaveBeenCalled();
 
@@ -259,7 +268,7 @@ describe("parallel refetch after a mutation", () => {
     } as unknown as QueryClient;
     await invalidateAfterProposalAccept(client, "case-1");
     const firstRefetch = order.indexOf("refetch");
-    expect(order.slice(0, firstRefetch)).toHaveLength(13);
+    expect(order.slice(0, firstRefetch)).toHaveLength(14);
     expect(order.slice(firstRefetch).every((step) => step === "refetch")).toBe(
       true
     );
@@ -283,14 +292,14 @@ describe("parallel refetch after a mutation", () => {
       invalidateQueries: vi.fn().mockResolvedValue(undefined),
       refetchQueries: vi.fn(
         async (filters: { queryKey?: readonly unknown[] }) => {
-          if (filters.queryKey?.[0] === "entities") {
+          if (keyRoot(filters.queryKey) === "entities") {
             settled.push("entities");
             throw boom;
           }
           await new Promise<void>((resolve) => {
             setTimeout(resolve, 20);
           });
-          settled.push(String(filters.queryKey?.[0]));
+          settled.push(keyRoot(filters.queryKey));
         }
       ),
       getQueryCache: noListViews,
@@ -299,8 +308,8 @@ describe("parallel refetch after a mutation", () => {
     await expect(invalidateAfterProposalAccept(client, "case-1")).rejects.toBe(
       boom
     );
-    // Nothing was left running and no slice was skipped: all ten ran to completion.
-    expect(settled).toHaveLength(13);
+    // Nothing was left running and no slice was skipped: every one ran to completion.
+    expect(settled).toHaveLength(14);
   });
 
   it("leaves every active slice fresh after one round (real QueryClient)", async () => {
@@ -314,6 +323,7 @@ describe("parallel refetch after a mutation", () => {
       entitiesKeys.all("case-1"),
       claimsKeys.all("case-1"),
       edgesKeys.all("case-1"),
+      graphKeys.all("case-1"),
       eventsKeys.all("case-1"),
       identifiersKeys.all("case-1"),
       questionsKeys.all("case-1"),
@@ -370,7 +380,10 @@ describe("parallel refetch after a mutation", () => {
     });
     let fetches = 0;
     const observer = new QueryObserver(client, {
-      queryKey: [...entitiesKeys.all("case-1"), "list", "entities", "[]"],
+      queryKey: entityListView.key(
+        { caseId: "case-1" },
+        entityList.queryOf({}, {})
+      ),
       meta: { isListView: true },
       queryFn: async () => {
         fetches += 1;

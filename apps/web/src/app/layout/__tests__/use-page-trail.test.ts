@@ -18,6 +18,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { usePageTrail } from "@/app/layout/use-page-trail";
+import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
 import { buildCaseRecord } from "@/testing/records";
 
@@ -127,9 +128,10 @@ describe("usePageTrail", () => {
 
     render();
 
-    const entityCall = useQueryMock.mock.calls.find(
-      (call) => call[0]?.queryKey?.[0] === "entities"
+    expect(useQueryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: entitiesKeys.detail(ALPHA.id, "acme"),
+      })
     );
-    expect(entityCall?.[0]?.queryKey).toContain(ALPHA.id);
   });
 });

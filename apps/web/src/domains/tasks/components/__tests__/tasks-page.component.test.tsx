@@ -64,21 +64,25 @@ vi.mock("@/domains/tasks/tasks.functions", () => ({
   reorderTasksFn: vi.fn(),
 }));
 
-// The Entity filter's reads: by id for the chip, one small page once the popover opens. The
-// whole Entity list is a spy the board must never call (cards carry their Entity's label).
-const entityReads = vi.hoisted(() => ({
-  listEntitiesPickerPageFn: vi.fn(),
-  getEntitiesFn: vi.fn(),
-}));
-vi.mock("@/domains/entities/entities.functions", () => entityReads);
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 import { TasksPage } from "@/domains/tasks/components/tasks-page";
 import { TASK_LINK_GONE } from "@/domains/tasks/hooks/use-task-deep-link";
 import { memoryTasks } from "@/testing/memory-tasks";
+import { procedureDouble } from "@/testing/orpc-client";
 import { renderIn } from "@/testing/render-in-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
 const render = renderIn(ACTIVE);
+
+// The Entity filter's reads: by id for the chip, one small page once the popover opens. The
+// board never reads the Entity list (cards carry their Entity's label).
+const entityReads = {
+  pickerPage: procedureDouble("entities.pickerPage"),
+  getMany: procedureDouble("entities.getMany"),
+};
 
 const ACME = buildEntityRecord({
   id: testId(40),
@@ -199,8 +203,8 @@ beforeEach(() => {
   for (const fn of [...Object.values(fns), ...Object.values(entityReads)]) {
     fn.mockReset();
   }
-  entityReads.getEntitiesFn.mockResolvedValue([ACME]);
-  entityReads.listEntitiesPickerPageFn.mockResolvedValue({
+  entityReads.getMany.mockResolvedValue([ACME]);
+  entityReads.pickerPage.mockResolvedValue({
     items: [ACME],
     nextCursor: null,
     total: { count: 1, isCapped: false },
@@ -340,8 +344,9 @@ describe("TasksPage", () => {
     });
     const chips = screen.getByRole("group", { name: "Active filters" });
     expect(await within(chips).findByText(/Acme Corp/)).toBeInTheDocument();
-    expect(entityReads.getEntitiesFn).toHaveBeenCalledWith({
-      data: { caseId: ACTIVE.id, ids: [ACME.id] },
+    expect(entityReads.getMany).toHaveBeenCalledWith({
+      caseId: ACTIVE.id,
+      ids: [ACME.id],
     });
 
     const query = taskList.queryOf(url);

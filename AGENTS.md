@@ -105,7 +105,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A route's search patch writer (history replace) | `apps/web/src/shared/hooks/list/use-patch-search.ts` | `usePatchSearch` |
 | The list toolbar, table, body and count | `apps/web/src/shared/ui/list/index.ts` | `ListToolbar`, `ListTable`, `ListBody`, `ListCount` |
 | A tab's count from a list's first-page `total` (never a whole read) | `apps/web/src/shared/hooks/list/use-list-count.ts` | `useListCount` |
-| A list page ServerFn double for screen tests (filters, `q`, sort, cursors, total on page one), and what the screen asked it for last; the same for a list procedure double | `apps/web/src/testing/memory-list.ts` | `memoryListPage`, `lastListRequest`, `memoryListProcedure`, `lastProcedureInput` |
+| A list page double for screen tests (filters, `q`, sort, cursors, total on page one): a ServerFn's, or a list procedure's and what the screen asked it for last | `apps/web/src/testing/memory-list.ts` | `memoryListPage`, `memoryListProcedure`, `lastProcedureInput` |
 | A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list) | `apps/web/src/shared/hooks/use-picker-source.ts` | `usePickerSource`, `useRecordsByIds` |
 | A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`) | `apps/web/src/testing/memory-picker-port.tsx` | `memoryPickerPort` |
 | Route guard: signed-out redirect to sign-in with `redirectTo`, plus the organization state (`redirectIfSignedIn` for the sign-in side) | `apps/web/src/app/require-session.ts` | `requireSession`, `redirectIfSignedIn` |
@@ -117,7 +117,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
 | Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
 | Opaque id chip | `apps/web/src/shared/ui/id-chip.tsx` | `IdChip` |
-| The web app's API calls, browser and server (#725; Claims so far, other domains still use ServerFns): oRPC TanStack Query utils, `orpc.<path>.call` / `.key` / `.infiniteKey`; a Case's keys are `orpc.<domain>.key({ input: { caseId } })` | `apps/web/src/lib/orpc-client.ts` | `orpc` |
+| The web app's API calls, browser and server (#725, #726; Claims and the other Graph children so far, other domains still use ServerFns): oRPC TanStack Query utils, `orpc.<path>.call` / `.key` / `.infiniteKey`; a Case's keys are `orpc.<domain>.key({ input: { caseId } })` | `apps/web/src/lib/orpc-client.ts` | `orpc` |
 | A standard Graph child write (Claim, Connection, Event, Open Question, Identifier): procedure (`call`) or server function (`fn`), input mapping, success toast, failure verb and noun; the factory owns the Entity invalidation and failure copy (declared in `entities/<child>/mutations.ts`). A write with its own cache or UI behaviour (identifier deletion, the table and composer writes) keeps its own hook | `apps/web/src/domains/entities/hooks/use-graph-child-mutation.ts` | `defineGraphChildMutation` |
 | Query invalidation after mutation or SSE | `apps/web/src/app/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
 | Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |

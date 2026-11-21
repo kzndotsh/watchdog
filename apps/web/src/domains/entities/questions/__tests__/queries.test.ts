@@ -1,21 +1,25 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-const listQuestionsPageFn = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
-vi.mock("@/domains/entities/questions/questions.functions", () => ({
-  listQuestionsPageFn,
-}));
-
-import { questionListView } from "@/domains/entities/questions/queries";
+import {
+  questionListView,
+  questionsKeys,
+} from "@/domains/entities/questions/queries";
+import { procedureDouble } from "@/testing/orpc-client";
 import { questionList } from "@watchdog/schemas/graph";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+const listQuestions = procedureDouble("questions.list");
+
 describe("questions queries", () => {
-  it("sends one page of the view with its fixed Entity and the Case", async () => {
+  it("sends one page of the view with its fixed Entity and the Case to questions.list", async () => {
     const caseId = testCaseId(1);
-    listQuestionsPageFn.mockResolvedValue({
+    listQuestions.mockResolvedValue({
       items: [],
       nextCursor: null,
       total: { count: 0, isCapped: false },
@@ -28,16 +32,27 @@ describe("questions queries", () => {
       )
     );
     await new QueryClient().infiniteQuery(options);
-    expect(listQuestionsPageFn).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+    expect(listQuestions).toHaveBeenCalledWith(
+      expect.objectContaining({
         caseId,
         entityId: testId(2),
         q: "signs",
         sort: "created.desc",
-      }),
-    });
-    expect(listQuestionsPageFn.mock.lastCall?.[0]).not.toHaveProperty(
-      "data.cursor"
+      })
     );
+    expect(listQuestions.mock.lastCall?.[0]).not.toHaveProperty("cursor");
+  });
+
+  it("keys a view under the Case's questions key, not another Case's", () => {
+    const view = (caseId: string) =>
+      questionListView.key({ caseId }, questionList.queryOf({}, {}));
+    const client = new QueryClient();
+    client.setQueryData(view(testCaseId(1)), { pages: [], pageParams: [] });
+    client.setQueryData(view(testCaseId(2)), { pages: [], pageParams: [] });
+    const matched = client
+      .getQueryCache()
+      .findAll({ queryKey: questionsKeys.all(testCaseId(1)) })
+      .map((query) => query.queryKey);
+    expect(matched).toEqual([view(testCaseId(1))]);
   });
 });

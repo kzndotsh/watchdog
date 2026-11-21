@@ -10,30 +10,19 @@ import type {
   EdgeRecord,
 } from "@/domains/entities/edges/types";
 import {
-  lastListRequest,
+  lastProcedureInput,
   matchesChoice,
   matchesQ,
-  memoryListPage,
+  memoryListProcedure,
 } from "@/testing/memory-list";
+import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseEdgeRecord } from "@/testing/records";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const { listEdgesPageFn, getEdgesFn, getGraphEgoFn } = vi.hoisted(() => ({
-  listEdgesPageFn: vi.fn(),
-  getEdgesFn: vi.fn(),
-  getGraphEgoFn: vi.fn(),
-}));
-
-vi.mock("@/domains/entities/edges/edges.functions", () => ({
-  listEdgesPageFn,
-  getEdgesFn,
-  getGraphEgoFn,
-  getGraphSnapshotFn: vi.fn(),
-  createEdgeFn: vi.fn(),
-  updateEdgeFn: vi.fn(),
-  deleteEdgeFn: vi.fn(),
-}));
+vi.mock("@/lib/orpc-client", async () =>
+  (await import("@/testing/orpc-client")).orpcClientModuleDouble()
+);
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");
@@ -93,6 +82,10 @@ vi.mock(
 import { ConnectionsSection } from "@/domains/dossier/components/connections-section";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 
+const listEdges = procedureDouble("edges.list");
+const getEdges = procedureDouble("edges.getMany");
+const graphEgo = procedureDouble("graph.ego");
+
 const CASE_ID = testCaseId(10);
 const ENTITY = {
   id: testId(1),
@@ -127,9 +120,9 @@ function entityEdges(count: number): CaseEdgeRecord[] {
 }
 
 function serve(rows: readonly CaseEdgeRecord[], egoMax = 50) {
-  listEdgesPageFn.mockReset();
-  listEdgesPageFn.mockImplementation(
-    memoryListPage(rows, {
+  listEdges.mockReset();
+  listEdges.mockImplementation(
+    memoryListProcedure(rows, {
       pageSize: 5,
       matches: (row, data) =>
         matchesChoice(row.predicate, data.predicate) &&
@@ -139,8 +132,8 @@ function serve(rows: readonly CaseEdgeRecord[], egoMax = 50) {
         matchesQ(data, [row.notes]),
     })
   );
-  getGraphEgoFn.mockReset();
-  getGraphEgoFn.mockResolvedValue({
+  graphEgo.mockReset();
+  graphEgo.mockResolvedValue({
     edges: rows.slice(0, egoMax).map((row) => {
       const isOut = row.fromId === ENTITY.id;
       return {
@@ -161,7 +154,7 @@ function serve(rows: readonly CaseEdgeRecord[], egoMax = 50) {
   });
 }
 
-const lastRequest = () => lastListRequest(listEdgesPageFn);
+const lastRequest = () => lastProcedureInput(listEdges);
 
 function TabSection({ initial }: { initial: DossierConnectionsSearch }) {
   const [search, setSearch] = useState(initial);
@@ -292,13 +285,11 @@ describe("ConnectionsSection", () => {
     expect(await screen.findByText("Showing 5 of 6")).toBeInTheDocument();
     // The view's page; the default view's first page is the tab's count (the Dossier shell
     // reads the same key for the tab label, so it is no extra request there).
-    expect(listEdgesPageFn).toHaveBeenCalledWith({
-      data: {
-        caseId: CASE_ID,
-        entityId: ENTITY.id,
-        predicate: ["leads"],
-        sort: "predicate.desc",
-      },
+    expect(listEdges).toHaveBeenCalledWith({
+      caseId: CASE_ID,
+      entityId: ENTITY.id,
+      predicate: ["leads"],
+      sort: "predicate.desc",
     });
     expect(
       within(screen.getByRole("group", { name: "Active filters" })).getByText(
@@ -327,9 +318,10 @@ describe("ConnectionsSection", () => {
         "Showing 3 of 8 connections, the most recently updated. The list beside it has them all."
       )
     ).toBeInTheDocument();
-    expect(getGraphEgoFn).toHaveBeenCalledTimes(1);
-    expect(getGraphEgoFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, entityId: ENTITY.id },
+    expect(graphEgo).toHaveBeenCalledTimes(1);
+    expect(graphEgo).toHaveBeenCalledWith({
+      caseId: CASE_ID,
+      entityId: ENTITY.id,
     });
   });
 
@@ -340,14 +332,15 @@ describe("ConnectionsSection", () => {
     await screen.findByText("Showing 5 of 8");
     const unloaded = rows[7];
     if (unloaded === undefined) throw new Error("fixture");
-    getEdgesFn.mockResolvedValue([unloaded]);
+    getEdges.mockResolvedValue([unloaded]);
 
     await user.click(screen.getByRole("button", { name: "Edge to Peer 07" }));
     expect(
       await screen.findByRole("dialog", { name: "Connection" })
     ).toHaveTextContent("Editing Peer 07 (in)");
-    expect(getEdgesFn).toHaveBeenCalledWith({
-      data: { caseId: CASE_ID, ids: [unloaded.id] },
+    expect(getEdges).toHaveBeenCalledWith({
+      caseId: CASE_ID,
+      ids: [unloaded.id],
     });
   });
 });
