@@ -15,6 +15,8 @@ export type StopSelector =
  * source to offer wins) and interrupts the fiber; the attempt's release does the rest: one
  * settle with the cause, one activity entry and the Playbook advance. A Job that no fiber here
  * runs is left alone. Returns how many fibers it stopped.
+ *
+ * @canonical `stop`: Stop Jobs from outside a transaction (abort, timeout, access loss)
  */
 export function stop(
   selector: StopSelector,

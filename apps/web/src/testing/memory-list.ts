@@ -18,6 +18,8 @@ type MemoryListOptions<T> = {
  * (`procedureDouble("claims.list").mockImplementation(memoryListProcedure(rows, ...))`, from
  * `@/testing/orpc-client`): filters, `q` and sort on the "server", offset cursors, and the total
  * on page one only, as `listPageEffect` returns it.
+ *
+ * @canonical `memoryListProcedure`, `lastProcedureInput`: A list procedure double for screen tests (filters, `q`, sort, cursors, total on page one) and what the screen asked it for last
  */
 export function memoryListProcedure<T>(
   rows: readonly T[],

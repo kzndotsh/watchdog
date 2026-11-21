@@ -42,7 +42,7 @@ Two mechanisms describe the same facts and share no code. Measured on `main` (20
 
    Case delete is the one mutation that is not logged: the cascade would remove the row in the same transaction. Connected clients learn at their next reconnect (the visibility check returns 404); the worker's export removal stays on its direct path. Today that notify is dropped by the visibility filter anyway (Context).
 
-3. **NOTIFY is derived from the appended row by an `AFTER INSERT` trigger** that calls `pg_notify('watchdog_activity', '{"id":…,"caseId":…}')` (about 80 bytes). Postgres queues a NOTIFY issued in a transaction and delivers it at commit, in commit order, and drops it on rollback, so the "fire only after commit" convention becomes a property of the database. The payload is only a wake-up; readers fetch rows. The db repo rule "never `notifyEvent` in a repo" ([`packages/db/AGENTS.md`](../../packages/db/AGENTS.md)) becomes "only the `activity` trigger notifies".
+3. **NOTIFY is derived from the appended row by an `AFTER INSERT` trigger** that calls `pg_notify('watchdog_activity', '{"id":…,"caseId":…}')` (about 80 bytes). Postgres queues a NOTIFY issued in a transaction and delivers it at commit, in commit order, and drops it on rollback, so the "fire only after commit" convention becomes a property of the database. The payload is only a wake-up; readers fetch rows. The db repo rule "never `notifyEvent` in a repo" (`packages/db/AGENTS.md` at the time) becomes "only the `activity` trigger notifies".
 
 4. **Ordering and replay: a commit-safe cursor on `(xid, id)` (option b below).** Bare ids are not commit-ordered: a transaction that took id 41 can commit after one that took id 42, and a reader that has seen 42 and resumes at `id > 42` misses 41 for good. The reader therefore reads only rows whose transaction is older than every still-running transaction:
 
@@ -126,7 +126,7 @@ Proposed vertical slices, each shippable and green on its own. "Blocked by" name
 - **Missed append.** A new mutation that forgets to append silently has no feed row and no live update. Mitigation: the gate test over the mutation list, and appending inside the repo-facing helpers rather than at call sites.
 - **Feed semantics change.** History replaces current state, and Proposal and Job rows multiply. Mitigation: the `FEED_ACTIONS` allowlist and the 90-day retention; product to confirm the initial set.
 - **Label drift.** Snapshot labels go stale after a rename. Accepted for the feed; Job and Proposal labels are resolved at read.
-- **Trigger and Drizzle.** The trigger needs a custom migration with its journal snapshot ([`packages/db/AGENTS.md`](../../packages/db/AGENTS.md) migration rules); `check:migrations` must stay green.
+- **Trigger and Drizzle.** The trigger needs a custom migration with its journal snapshot (`packages/db` migration rules); `check:migrations` must stay green.
 - **ADR numbering.** ADR-0004 is in an open PR (#167); this file takes 0005 as requested.
 
 ## As built: S1

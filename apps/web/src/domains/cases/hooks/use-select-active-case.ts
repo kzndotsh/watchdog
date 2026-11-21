@@ -18,6 +18,8 @@ export const ACTIVE_CASE_SWITCH_ERROR = `${couldnt("switch", "Case")}.`;
  * the same screen of the new Case (the URL names the Active Case); elsewhere it becomes the last
  * Case entered, which Case-less screens follow. The sidebar switcher, command palette, Case list
  * and Case overview all call it.
+ *
+ * @canonical `useSelectActiveCase`: Active-Case switch
  */
 export function useSelectActiveCase(input: {
   /** Cases the target id is resolved against. */

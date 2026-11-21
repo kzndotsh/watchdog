@@ -22,6 +22,8 @@ export const SHARED_LAZY_LOADERS = {
  * Identifier composer row) before a test opens one, so `findBy*` never races a cold chunk on a
  * loaded CI runner. Call it in `beforeAll` of every test file that renders a shared lazy part,
  * except the one testing the lazy path itself (`list-popovers-lazy.component.test.tsx`).
+ *
+ * @canonical `preloadSharedLazyChunks`: Shared lazy chunks in web tests (list popovers, the Evidence checklist, the Identifier composer row; `beforeAll` in every test file that renders one, so `findBy*` never races a cold chunk; `shared-lazy-chunks.test.ts` fails on a shared `memoizeImport` loader it misses)
  */
 export async function preloadSharedLazyChunks(): Promise<void> {
   await Promise.all(

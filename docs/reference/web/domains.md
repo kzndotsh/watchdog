@@ -119,7 +119,7 @@ A file under `shared/` has importers in two or more places, or a written reason:
 
 | Kept in `shared/` | Why |
 | --- | --- |
-| The list machinery (`shared/lib/list/`, `shared/hooks/list/`: `useList`, `listView`, `useListCount`, `useListFirstPage`, `usePatchSearch`), `ExternalHostLink` and `urlHost`, `use-create-api-key` | Canonical helpers (AGENTS.md table) or lint-gated to `shared/`: `useInfiniteQuery` and `useMutation` are only allowed in `shared/hooks/` and domain hooks |
+| The list machinery (`shared/lib/list/`, `shared/hooks/list/`: `useList`, `listView`, `useListCount`, `useListFirstPage`, `usePatchSearch`), `ExternalHostLink` and `urlHost`, `use-create-api-key` | Tagged `@canonical` on their exports or lint-gated to `shared/`: `useInfiniteQuery` and `useMutation` are only allowed in `shared/hooks/` and domain hooks |
 | `shared/ui/skeletons/` (including `library/`), `library-shell`, `triage-detail-skeleton`, `intake/evidence-slot-skeleton`, `evidence-detail-skeleton` | The loading-state kit: a raw `Skeleton` is only importable from it (`no-restricted-imports`), so every shape skeleton lives together |
 | `collapsible-row-trigger`, `data-table/`, `identifiers/`, `graph/` | Wrapped or restyled atoms (`no-restyle` bans the restyle in `domains/**`), or used by two domains |
 | `shared/layout/` route chrome (`providers`, `root-error`, `client-error-listeners`, `auth-product-mark`), `default-route-pending-shell` | Imported by route files and `router.tsx` only: a route file is not a domain |

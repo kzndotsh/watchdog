@@ -231,6 +231,8 @@ export function recordingBlobStore(options: RecordingBlobStoreOptions = {}): {
  * Whether `key` names an object under `caseId`'s prefix: `<caseId>/`, then segments that are
  * never empty, `.` or `..`. S3 keys are flat, so nothing resolves a `..`, but a key that reads as a
  * path out of its Case is refused anyway. Check every stored key against its Case before a read.
+ *
+ * @canonical `isKeyInCase`: Whether a stored blob key is under its Case (`<caseId>/`, no empty, `.` or `..` segment): every read of a key from the database checks it; never a bare `startsWith`
  */
 export function isKeyInCase(key: string, caseId: string): boolean {
   if (!key.startsWith(`${caseId}/`)) return false;
@@ -240,7 +242,11 @@ export function isKeyInCase(key: string, caseId: string): boolean {
     .every((segment) => segment !== "" && segment !== "." && segment !== "..");
 }
 
-/** Whether an S3 error says the object is not there (a HEAD's `NotFound`, a GET's `NoSuchKey`, a bare 404). */
+/**
+ * Whether an S3 error says the object is not there (a HEAD's `NotFound`, a GET's `NoSuchKey`, a bare 404).
+ *
+ * @canonical `isMissingObject`: Whether an S3 error means the object is not there (`NotFound`, `NoSuchKey`, a bare 404)
+ */
 export function isMissingObject(error: unknown): boolean {
   if (!Predicate.isObject(error)) return false;
   if (error.name === "NotFound" || error.name === "NoSuchKey") return true;

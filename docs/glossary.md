@@ -1,5 +1,5 @@
 <!--
-Format: .agents/skills/domain-modeling/GLOSSARY-FORMAT.md, which defines only the term entry
+Format: the domain-modeling skill's GLOSSARY-FORMAT.md (installed per user), which defines only the term entry
 (**Term**, a one-line definition) and the Avoid line. This file extends it with:
   - `Detail:` link at the end of a definition, pointing at the doc that owns the term.
   - Use line  (underscore-wrapped "Use" then a colon): the replacement for a retired term.

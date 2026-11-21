@@ -317,7 +317,11 @@ function sortSentinel(value: unknown): SortSentinel {
   throw new TypeError(`Unsupported sort sentinel: ${String(value)}`);
 }
 
-/** Bind a declared list to SQL. Leaving out a declared filter, sort or search field is a type error. */
+/**
+ * Bind a declared list to SQL. Leaving out a declared filter, sort or search field is a type error.
+ *
+ * @canonical `defineListRepo`: A declared list's SQL binding (ADR-0007): filters, sorts with their key type, search columns; typed against the declaration and the table
+ */
 export function defineListRepo<
   Def extends AnyListDef,
   T extends ListTable,

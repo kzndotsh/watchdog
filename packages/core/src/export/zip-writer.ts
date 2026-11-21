@@ -15,6 +15,8 @@ export type ZipSink = {
 /**
  * A `ZipSink` over a promise-based writer (a web `WritableStream`, a test buffer): a rejection
  * is the sink's `InternalError`, with the cause kept.
+ *
+ * @canonical `zipSinkFromPromises`: A Case export zip sink over a promise-based writer (a web response body, a test buffer)
  */
 export function zipSinkFromPromises(writer: {
   readonly write: (chunk: Uint8Array) => Promise<void>;

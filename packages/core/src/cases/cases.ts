@@ -79,6 +79,8 @@ export function listCasesEffect(
  * Ids of every Case the organization can see. The live events stream filters
  * NOTIFY payloads against this set, so Case visibility is decided here, with the
  * same organization scope as every other Case read.
+ *
+ * @canonical `listVisibleCaseIdsEffect`: Case ids visible to an org
  */
 export function listVisibleCaseIdsEffect(
   organizationId: OrganizationId

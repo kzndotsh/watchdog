@@ -350,6 +350,8 @@ function guarded<A>(
  * not get it returns `ran: false` at once and never waits. The repairs run outside the lock's
  * transaction on their own connections (`outsideTransaction`), so the lock is held until the
  * whole tick ends. The worker runs it at boot and then every {@link JOB_RECONCILE_INTERVAL}.
+ *
+ * @canonical `reconcileJobsEffect`: Worker reconcile tick (stale, access-lost and undelivered Jobs, stuck Playbook runs; drifted Collect queue Cases)
  */
 export function reconcileJobsEffect(): Effect.Effect<
   JobReconcileResult,

@@ -1,7 +1,7 @@
 # Code owners. Solo repo: one global owner. Add per-path rules only when a second
 # owner exists.
 # Paths worth owning separately then: agent config (AGENTS.md, CLAUDE.md,
-# .agents/, .cursor/, .claude/, .mcp.json, skills-lock.json), CI and gates
+# .agents/, .cursor/, .claude/, .mcp.json), CI and gates
 # (.github/, scripts/, lefthook.yml), workspace and tooling config.
 
 * @kzndotsh

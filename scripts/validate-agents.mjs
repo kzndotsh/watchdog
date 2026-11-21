@@ -11,7 +11,6 @@
  * exit) but uses a real YAML parser instead of a line-by-line splitter, so
  * multi-line block scalars and nested maps parse correctly.
  */
-import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -46,64 +45,6 @@ const TRIGGER_RE = /\b(use when|use for|trigger(?:s)? on)\b/i;
 // Anthropic's skill guidance: keep SKILL.md under 500 lines, split the rest into sibling files.
 const LINE_WARN = 400;
 const LINE_FAIL = 500;
-
-/**
- * Skills named in skills-lock.json are vendored: installed by the `skills` CLI
- * and pinned by content hash, so only Agent Skills spec rules apply to them.
- * House rules (owner/sources, trigger clause, line budget, staleness) apply to
- * skills this repo owns.
- * @returns {Promise<Record<string, unknown>>} lock entries by skill name
- */
-async function readLockedSkills() {
-  const lockPath = path.join(repoRoot, "skills-lock.json");
-  if (!existsSync(lockPath)) return {};
-  const lock = asRecord(JSON.parse(await readFile(lockPath, "utf-8")));
-  return asRecord(lock.skills);
-}
-
-/**
- * Content hash of a skill folder, matching `computedHash` in skills-lock.json.
- * Same scheme as the `skills` CLI (computeSkillFolderHash, verified against all
- * 27 pinned skills): sha256 over every file under the folder (skipping `.git`
- * and `node_modules`), sorted by forward-slash relative path with
- * `String.prototype.localeCompare`, feeding each file's relative path and then
- * its raw bytes into one running hash.
- * @param {string} skillDir
- * @returns {Promise<string>}
- */
-async function computeSkillFolderHash(skillDir) {
-  /** @type {{ relativePath: string; content: Buffer }[]} */
-  const files = [];
-  /** @param {string} dir */
-  async function collect(dir) {
-    const entries = await readdir(dir, { withFileTypes: true });
-    await Promise.all(
-      entries.map(async (entry) => {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          if (entry.name === ".git" || entry.name === "node_modules") return;
-          await collect(full);
-        } else if (entry.isFile()) {
-          files.push({
-            relativePath: path
-              .relative(skillDir, full)
-              .split(path.sep)
-              .join("/"),
-            content: await readFile(full),
-          });
-        }
-      })
-    );
-  }
-  await collect(skillDir);
-  files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
-  const hash = createHash("sha256");
-  for (const file of files) {
-    hash.update(file.relativePath);
-    hash.update(file.content);
-  }
-  return hash.digest("hex");
-}
 
 const changed = resolveChangedPaths();
 
@@ -237,9 +178,8 @@ function touches(paths, rel) {
 /**
  * @param {string} skillDir
  * @param {Map<string, string[]>} namesSeen
- * @param {Record<string, unknown>} locked
  */
-async function checkSkill(skillDir, namesSeen, locked) {
+async function checkSkill(skillDir, namesSeen) {
   const folder = path.basename(skillDir);
   const rel = path.relative(repoRoot, skillDir);
   const skillMd = path.join(skillDir, "SKILL.md");
@@ -291,14 +231,12 @@ async function checkSkill(skillDir, namesSeen, locked) {
     );
   }
 
-  const isVendored = Object.hasOwn(locked, folder);
-
   const description = parsed.description;
   if (typeof description === "string" && description.trim().length > 0) {
     if (description.length > 1024) {
       note("fail", `${rel}/SKILL.md: "description" exceeds 1024 chars`);
     }
-    if (!isVendored && !TRIGGER_RE.test(description)) {
+    if (!TRIGGER_RE.test(description)) {
       note(
         "warn",
         `${rel}/SKILL.md: "description" has no trigger clause ("Use when…" / "Use for…" / "Triggers on…")`
@@ -309,17 +247,6 @@ async function checkSkill(skillDir, namesSeen, locked) {
       "fail",
       `${rel}/SKILL.md: "description" is required and must be non-empty`
     );
-  }
-
-  if (isVendored) {
-    const pin = asRecord(locked[folder]);
-    if ((await computeSkillFolderHash(skillDir)) !== pin.computedHash) {
-      note(
-        "fail",
-        `${rel}: content does not match skills-lock.json (vendored skills must not be edited by hand). Reinstall: npx skills add ${String(pin.source)} --skill ${folder}`
-      );
-    }
-    return;
   }
 
   checkMetadata(parsed.metadata, rel);
@@ -472,10 +399,7 @@ async function main() {
 
   /** @type {Map<string, string[]>} */
   const namesSeen = new Map();
-  const locked = await readLockedSkills();
-  await Promise.all(
-    skillDirs.map(async (dir) => checkSkill(dir, namesSeen, locked))
-  );
+  await Promise.all(skillDirs.map(async (dir) => checkSkill(dir, namesSeen)));
   for (const [name, dirs] of namesSeen) {
     if (dirs.length > 1) {
       note(

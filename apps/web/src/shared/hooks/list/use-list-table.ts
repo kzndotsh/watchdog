@@ -76,6 +76,8 @@ function serverColumns<Item extends RowData>(
  *   header can only offer an indexed sort. Columns outside `sortColumns` cannot sort.
  * - `getRowId` is the view's `getId` (required), and the row selection is `list.selection`.
  * - Column visibility is `display` (`useListDisplay`), shared with the Display options popover.
+ *
+ * @canonical `useListTable`: A list's table in server mode (declared sorts only, `getRowId` required)
  */
 export function useListTable<
   D extends AnyListDef,

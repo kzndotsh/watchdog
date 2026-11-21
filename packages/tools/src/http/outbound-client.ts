@@ -10,6 +10,8 @@ import {
  * The hardened outbound `fetch` (see `createOutboundTransport`) as a service. Its
  * connection pools (the undici `Agent`, the optional egress `ProxyAgent`) live exactly
  * as long as the scope of the Layer that built it.
+ *
+ * @canonical `OutboundClient`, `outboundClientLayer`: Outbound HTTP from Caps and tools (never `fetch` directly; lint-enforced): the scoped client whose pools close at shutdown
  */
 export class OutboundClient extends Context.Service<
   OutboundClient,

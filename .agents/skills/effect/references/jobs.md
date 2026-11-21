@@ -1,8 +1,7 @@
 # Effect jobs / worker
 
 Load this when: changing Cap Job execution, cancel/timeout abort, worker
-boot, boss roles, or Cap `ctx.signal` wiring. Single home for this design;
-package AGENTS.md files link here.
+boot, boss roles, or Cap `ctx.signal` wiring. Single home for this design.
 
 ## Boot
 

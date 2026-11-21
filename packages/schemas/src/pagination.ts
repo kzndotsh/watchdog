@@ -48,6 +48,8 @@ export const CREDENTIAL_SLOT_LIST_MAX = 500;
  * A list that is never paged because it is bounded by something other than data: the registry, or
  * the ids the caller sent. The maximum is part of the schema (it is in the OpenAPI document and
  * the server rejects an answer past it), so a bounded list cannot grow into an unpaged one.
+ *
+ * @canonical `boundedListSchema`: A list that is never paged (registry, rows by id): a bounded array whose maximum is in the schema and the OpenAPI document; a bare `z.array` output fails `pagination-coverage.test.ts`
  */
 export function boundedListSchema<T extends z.ZodType>(item: T, max: number) {
   return z.array(item).max(max);

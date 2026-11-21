@@ -9,6 +9,8 @@ import { ensureAppSession } from "@/auth/ensure-session";
  * sign-in carrying the page asked for as `redirectTo` (the Better Auth UI AuthProvider reads
  * it from the URL search string). Otherwise the session and the organization the user acts
  * in (`null` = none yet; the caller decides where that leads).
+ *
+ * @canonical `requireSession`, `redirectIfSignedIn`: Route guard: signed-out redirect to sign-in with `redirectTo`, plus the organization state (`redirectIfSignedIn` for the sign-in side)
  */
 export async function requireSession(
   queryClient: QueryClient,

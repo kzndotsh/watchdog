@@ -4,49 +4,6 @@ import { gateRepoFactory } from "./helpers/gate-repo";
 
 const createGateRepo = gateRepoFactory();
 
-// Fixture skill + its pin. The hash is a literal (sha256 over, per file sorted by
-// relative path with localeCompare, so agents/openai.yaml precedes SKILL.md: path then bytes) so the test does not re-derive it from the gate's logic.
-const VENDORED_SKILL = `---
-name: vendored-demo
-description: A third-party skill without a trigger clause.
-disable-model-invocation: true
-argument-hint: "[topic]"
-user-invocable: true
----
-
-# Vendored demo
-`;
-const VENDORED_AUX = "interface:\n  display_name: Vendored demo\n";
-const VENDORED_HASH =
-  "86f0836346fdc3f4c889f2455a7fb123dfda7007f14a4ae794ff42b55967a2a0";
-
-function lockfile(hash: string) {
-  return `${JSON.stringify(
-    {
-      version: 1,
-      skills: {
-        "vendored-demo": {
-          source: "example/skills",
-          sourceType: "github",
-          skillPath: "skills/vendored-demo/SKILL.md",
-          computedHash: hash,
-        },
-      },
-    },
-    null,
-    2
-  )}\n`;
-}
-
-function vendoredRepo(hash = VENDORED_HASH) {
-  const repo = createGateRepo(["validate-agents.mjs", "lib/git-range.mjs"]);
-  repo.write(".agents/skills/vendored-demo/SKILL.md", VENDORED_SKILL);
-  repo.write(".agents/skills/vendored-demo/agents/openai.yaml", VENDORED_AUX);
-  repo.write("skills-lock.json", lockfile(hash));
-  repo.commitAll("add vendored skill");
-  return repo;
-}
-
 function ownedSkill(extraFrontmatter = "", body = "# Owned demo\n") {
   return `---
 name: owned-demo
@@ -269,58 +226,19 @@ describe("validate-agents gate", () => {
         expect(result.output).toContain("no merge base with main");
       });
     });
-
-    it("never applies to vendored skills", () => {
-      const repo = vendoredRepo();
-      repo.write(".agents/skills/vendored-demo/extra.md", "x\n");
-
-      expect(repo.run("validate-agents.mjs").output).not.toContain("stale");
-    });
   });
 
-  describe("vendored skills", () => {
-    it("passes a skill whose content matches its pin and uses Claude Code keys", () => {
-      const repo = vendoredRepo();
+  it("fails a skill that has no description", () => {
+    const repo = createGateRepo(["validate-agents.mjs", "lib/git-range.mjs"]);
+    repo.write(
+      ".agents/skills/bare-demo/SKILL.md",
+      "---\nname: bare-demo\n---\n\n# Bare\n"
+    );
+    repo.commitAll("add bare skill");
 
-      const result = repo.run("validate-agents.mjs");
+    const result = repo.run("validate-agents.mjs");
 
-      expect(result.output).not.toContain("FAIL");
-      expect(result.code).toBe(0);
-    });
-
-    it("fails a pinned skill that has no description even when its hash matches", () => {
-      const repo = createGateRepo(["validate-agents.mjs", "lib/git-range.mjs"]);
-      repo.write(
-        ".agents/skills/vendored-demo/SKILL.md",
-        "---\nname: vendored-demo\n---\n\n# Bare\n"
-      );
-      repo.write(
-        "skills-lock.json",
-        lockfile(
-          "92951531d2099d9663654d4548481ce6cf17f78f9a017e7a791d1acce78cb272"
-        )
-      );
-      repo.commitAll("add bare vendored skill");
-
-      const result = repo.run("validate-agents.mjs");
-
-      expect(result.code).toBe(1);
-      expect(result.output).toContain('"description" is required');
-    });
-
-    it("fails naming the file and the reinstall command when one byte is edited", () => {
-      const repo = vendoredRepo();
-      repo.write(
-        ".agents/skills/vendored-demo/SKILL.md",
-        VENDORED_SKILL.replace("Vendored demo\n", "Vendored demp\n")
-      );
-
-      const result = repo.run("validate-agents.mjs");
-
-      expect(result.code).toBe(1);
-      expect(result.output).toContain(".agents/skills/vendored-demo");
-      expect(result.output).toContain("does not match skills-lock.json");
-      expect(result.output).toContain("npx skills");
-    });
+    expect(result.code).toBe(1);
+    expect(result.output).toContain('"description" is required');
   });
 });

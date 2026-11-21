@@ -8,7 +8,11 @@ type ExternalHostLinkProps = {
   className?: string;
 };
 
-/** External link that shows only the hostname (the full URL is its title), for a narrow column. */
+/**
+ * External link that shows only the hostname (the full URL is its title), for a narrow column.
+ *
+ * @canonical `ExternalHostLink`: External link showing only the hostname (a narrow column; `urlHost` in `shared/lib/url-host.ts`)
+ */
 export function ExternalHostLink({ href, className }: ExternalHostLinkProps) {
   return (
     <a

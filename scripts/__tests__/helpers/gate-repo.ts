@@ -78,6 +78,8 @@ function cleanEnv(extra: Record<string, string> = {}) {
  * real `scripts/` dir that get copied into the fixture's `scripts/`. Cleanup runs
  * after each test by default; `lifetime: "suite"` keeps fixtures until the file
  * finishes, for suites that build one repo in `beforeAll` and assert many times.
+ *
+ * @canonical `gateRepoFactory`: Gate-script test repo
  */
 export function gateRepoFactory({
   lifetime = "test",

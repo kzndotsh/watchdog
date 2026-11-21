@@ -40,6 +40,8 @@ function getServerSnapshot(): StoredListDisplay {
  * Per-viewer presentation state of one list, stored locally under `wd.list.<key>` (never the
  * URL: it is not part of what a shared link shows). The server and the first client render read
  * the defaults, so hydration matches; the stored choice applies right after.
+ *
+ * @canonical `useListDisplay`: A list's per-viewer columns, toggles and density
  */
 export function useListDisplay(
   key: string,

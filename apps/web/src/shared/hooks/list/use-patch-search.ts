@@ -13,6 +13,8 @@ type SearchPatch = Readonly<Record<string, unknown>>;
  *
  *   const onSearchChange = usePatchSearch();
  *   const list = useList(view, { scope, search: routeApi.useSearch(), onSearchChange });
+ *
+ * @canonical `usePatchSearch`: A route's search patch writer (history replace)
  */
 export function usePatchSearch(): (patch: SearchPatch) => void {
   const navigate = useNavigate();

@@ -120,7 +120,11 @@ export function assertCapProvider(provider: CapProvider): void {
   }
 }
 
-/** Identity helper so provider constants are checked against `CapProvider`. */
+/**
+ * Identity helper so provider constants are checked against `CapProvider`.
+ *
+ * @canonical `defineProvider`: A Cap's data provider and its terms (required `provider`; `unknown` when the terms are unclear, never a guess; shared constants in `packages/caps/src/providers/`)
+ */
 export function defineProvider(provider: CapProvider): CapProvider {
   assertCapProvider(provider);
   return provider;

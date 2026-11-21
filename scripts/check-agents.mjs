@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 /**
- * Gate for package/app AGENTS.md hygiene. Checks only:
- *   - AGENTS.md presence in every `packages/*` and `apps/*` directory
- *   - size budget (bytes and lines)
- *   - required sections: root `Quick reference`/`Commands`; nested `> Scope:` blurb + `## Commands`
+ * Gate for agent guidance. Checks only:
+ *   - nested AGENTS.md files exist only in `NESTED_GUIDES` (server code, Caps, web), and each
+ *     of those directories has one
+ *   - size budget (bytes and lines): the root guide is at most 120 lines
+ *   - required sections: root `Quick reference`/`Commands`; nested `> Scope:` blurb
  *   - relative markdown links in AGENTS.md files resolve
  *   - banned mid-build terms, read from the `_Banned_:` lines of docs/glossary.md (required)
- *   - optional `## Canonical helpers` table (see `checkCanonicalHelpers`): each row's module exists
- *     and exports the named identifier
+ *   - `@canonical` JSDoc tags (see `checkCanonicalTags`): each tag sits on the export it names,
+ *     and every other name it lists is exported by the same module
  *   - CLAUDE.md bridges to @AGENTS.md
  *
  * Every finding is a failure. `--strict` (or CHECK_AGENTS_STRICT=1) makes the
  * process exit 1 on any finding; without it the findings print and exit is 0.
  *
  * Docs-tree link and length checks belong to `scripts/check-docs.mjs`, not here.
- * Link *count* is deliberately not checked: a hub file that indexes many docs is
- * legitimate and a count threshold carried no signal.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -26,8 +26,19 @@ const strict =
   process.argv.includes("--strict") || process.env.CHECK_AGENTS_STRICT === "1";
 
 const MAX_BYTES = 32 * 1024;
-const MAX_ROOT_LINES = 200;
-const MAX_NESTED_LINES = 150;
+const MAX_ROOT_LINES = 120;
+const MAX_NESTED_LINES = 100;
+
+/**
+ * The only directories with a nested guide: server-side code (`packages/core` covers core,
+ * api, db, auth, policy, tools, log, env, schemas, the test harnesses and the worker), Caps
+ * and web. Everything else an agent learns from the code, the root guide or a gate message.
+ */
+const NESTED_GUIDES = ["packages/core", "packages/caps", "apps/web"];
+
+/** Source files that may carry an `@canonical` tag. */
+const CANONICAL_SOURCE = /^(apps|packages|scripts)\/.*\.(ts|tsx|mts|mjs)$/;
+const CANONICAL_TAG = /^\s*(?:\/\*\*|\*)\s*@canonical\b(.*?)(?:\*\/)?\s*$/;
 
 const BANNED_LINE = /^_Banned_:\s*(.+)$/;
 
@@ -78,15 +89,6 @@ async function listPackageAppDirs() {
     })
   );
   return perTop.flat();
-}
-
-/** @param {string[]} dirs */
-function collectInScopeAgents(dirs) {
-  const files = [
-    path.join(repoRoot, "AGENTS.md"),
-    ...dirs.map((rel) => path.join(repoRoot, rel, "AGENTS.md")),
-  ];
-  return files.filter((f) => existsSync(f));
 }
 
 /**
@@ -182,9 +184,6 @@ async function checkFile(absPath, banned) {
     if (!/^>\s*Scope:/m.test(text)) {
       fail(`${rel}: missing Scope blurb ("> Scope: ...")`);
     }
-    if (!/##\s*Commands\b/i.test(text)) {
-      fail(`${rel}: missing ## Commands section`);
-    }
   }
 
   for (const m of text.matchAll(MD_LINK)) {
@@ -198,16 +197,14 @@ async function checkFile(absPath, banned) {
   }
 
   checkBanned(rel, text, banned);
-  checkCanonicalHelpers(rel, text);
 }
 
 /**
  * Does `source` export `name`? A pragmatic text match, not a parse. Counts:
  * `export [declare] [async] function|const|let|var|class|abstract class|type|interface|enum NAME`,
  * and `export [type] { a, b as NAME }` with or without `from` (so a name re-exported
- * from another module by name counts: a barrel is a valid place to point at).
- * `export * from` does NOT count: it hides what is exported, so name the module
- * that declares the helper or list it with `export { NAME } from`.
+ * from another module by name counts). `export * from` does NOT count: it hides what is
+ * exported.
  * @param {string} source
  * @param {string} name
  */
@@ -219,74 +216,104 @@ function exportsName(source, name) {
   );
   if (declared.test(source)) return true;
   for (const m of source.matchAll(/^\s*export\s+(?:type\s+)?\{([^}]*)\}/gm)) {
-    const names = (m[1] ?? "").split(",").map((part) =>
-      part
-        .trim()
-        .replace(/^type\s+/, "")
-        .split(/\s+as\s+/)
-        .pop()
-    );
-    if (names.includes(name)) return true;
+    if (listedNames(m[1] ?? "").includes(name)) return true;
   }
   return false;
 }
 
+/** @param {string} list the inside of `export { ... }` */
+function listedNames(list) {
+  return list.split(",").map((part) =>
+    part
+      .trim()
+      .replace(/^type\s+/, "")
+      .split(/\s+as\s+/)
+      .pop()
+  );
+}
+
+/** Tracked and untracked (not ignored) files: the canonical-tag scan's input. */
+function listSourceFiles() {
+  const out = execFileSync(
+    "git",
+    ["ls-files", "--cached", "--others", "--exclude-standard"],
+    { cwd: repoRoot, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 }
+  );
+  return [...new Set(out.split("\n"))].filter((f) => CANONICAL_SOURCE.test(f));
+}
+
 /**
- * Optional check. A `## Canonical helpers` heading followed by a markdown table
- * `| Concern | Module | Export |` is verified row by row: Module is a repo-relative
- * path in backticks, Export one or more identifiers in backticks. The module file
- * must exist and export each identifier (see `exportsName`). No such heading, no check.
- * @param {string} rel
- * @param {string} text
+ * The reusable kit is marked in the code: a JSDoc block carrying
+ * `@canonical \`name\`[, \`other\`]: when to use it` sits directly above the export of `name`
+ * (lint-disable comment lines may sit between). The other names are exported by the same
+ * module. `git grep -n '@canonical'` lists the kit; this check keeps every tag attached.
  */
-function checkCanonicalHelpers(rel, text) {
-  const lines = text.split("\n");
-  const start = lines.findIndex((l) => /^##\s+Canonical helpers\s*$/i.test(l));
-  if (start === -1) return;
-  let headerSeen = false;
-  for (let i = start + 1; i < lines.length; i += 1) {
-    const line = (lines[i] ?? "").trim();
-    if (/^#{1,6}\s/.test(line)) break;
-    if (!line.startsWith("|")) continue;
-    const cells = line
-      .replaceAll(/^\||\|$/g, "")
-      .split("|")
-      .map((c) => c.trim());
-    if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
-    if (!headerSeen) {
-      headerSeen = true;
-      continue;
-    }
-    const mod = /^`([^`]+)`$/.exec(cells[1] ?? "")?.[1];
-    const names = [...(cells[2] ?? "").matchAll(/`([^`]+)`/g)].map(
-      (m) => m[1] ?? ""
-    );
-    if (cells.length !== 3 || !mod || names.length === 0) {
-      fail(
-        `${rel}:${i + 1}: malformed Canonical helpers row (need | concern | \`module path\` | \`Export\` |)`
+async function checkCanonicalTags() {
+  const files = listSourceFiles();
+  const texts = await Promise.all(
+    files.map(async (rel) => {
+      const abs = path.join(repoRoot, rel);
+      return existsSync(abs) ? readFile(abs, "utf-8") : "";
+    })
+  );
+  for (const [k, rel] of files.entries()) {
+    const source = texts[k] ?? "";
+    if (!source.includes("@canonical")) continue;
+    const lines = source.split("\n");
+    for (let i = 0; i < lines.length; i += 1) {
+      const tag = CANONICAL_TAG.exec(lines[i] ?? "");
+      if (!tag) continue;
+      const where = `${rel}:${i + 1}: @canonical`;
+      const head = /^\s+((?:`[\w$]+`\s*,\s*)*`[\w$]+`)\s*:\s*\S/.exec(
+        tag[1] ?? ""
       );
-      continue;
-    }
-    const where = `${rel}:${i + 1}: Canonical helpers row "${cells[0]}"`;
-    const abs = path.join(repoRoot, mod);
-    if (!existsSync(abs)) {
-      fail(`${where}: module not found: ${mod}`);
-      continue;
-    }
-    const source = readFileSync(abs, "utf-8");
-    for (const name of names) {
-      if (!exportsName(source, name)) {
-        fail(`${where}: ${mod} does not export \`${name}\``);
+      if (!head) {
+        fail(
+          `${where} tag must read \`@canonical \`name\`[, \`other\`]: when to use it\``
+        );
+        continue;
+      }
+      const names = [...(head[1] ?? "").matchAll(/`([\w$]+)`/g)].map(
+        (m) => m[1] ?? ""
+      );
+      const first = names[0] ?? "";
+      let j = i;
+      while (j < lines.length && !(lines[j] ?? "").includes("*/")) j += 1;
+      j += 1;
+      while (
+        j < lines.length &&
+        /^\s*\/\/\s*(oxlint|eslint)-/.test(lines[j] ?? "")
+      )
+        j += 1;
+      const target = lines[j] ?? "";
+      const attached =
+        exportsName(target, first) ||
+        (/^\s*export\s+(?:type\s+)?\{/.test(target) &&
+          exportsName(lines.slice(j, j + 40).join("\n"), first));
+      if (!attached) {
+        fail(
+          `${where} \`${first}\` must tag the JSDoc directly above \`export ... ${first}\``
+        );
+      }
+      for (const name of names.slice(1)) {
+        if (!exportsName(source, name)) {
+          fail(`${where} ${rel} does not export \`${name}\``);
+        }
       }
     }
   }
 }
 
 /** @param {string[]} dirs */
-function checkPresence(dirs) {
+function checkNestedPlacement(dirs) {
   for (const rel of dirs) {
-    if (!existsSync(path.join(repoRoot, rel, "AGENTS.md"))) {
-      fail(`missing ${rel}/AGENTS.md`);
+    const has = existsSync(path.join(repoRoot, rel, "AGENTS.md"));
+    const allowed = NESTED_GUIDES.includes(rel);
+    if (allowed && !has) fail(`missing ${rel}/AGENTS.md`);
+    if (!allowed && has) {
+      fail(
+        `${rel}/AGENTS.md: nested guides live only in ${NESTED_GUIDES.join(", ")}; fold what the code and gates cannot say into one of them`
+      );
     }
   }
 }
@@ -305,12 +332,15 @@ async function checkClaude() {
 
 async function main() {
   const dirs = await listPackageAppDirs();
-  checkPresence(dirs);
+  checkNestedPlacement(dirs);
   await checkClaude();
   const banned = (await loadBanned()) ?? [];
-  await Promise.all(
-    collectInScopeAgents(dirs).map(async (f) => checkFile(f, banned))
-  );
+  const guides = [
+    path.join(repoRoot, "AGENTS.md"),
+    ...NESTED_GUIDES.map((rel) => path.join(repoRoot, rel, "AGENTS.md")),
+  ].filter((f) => existsSync(f));
+  await Promise.all(guides.map(async (f) => checkFile(f, banned)));
+  await checkCanonicalTags();
 
   for (const msg of findings) console.error(`FAIL  ${msg}`);
   console.log(

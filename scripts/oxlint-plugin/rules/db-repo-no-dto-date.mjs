@@ -5,5 +5,5 @@ export const dbRepoNoDtoDate = bansNode({
   type: "CallExpression",
   test: (node) => memberName(node.callee) === "toISOString",
   description: "Ban .toISOString() in packages/db repos.",
-  message: `Repos return rows, not DTOs: return the Date and format it in the service (${REPO_CONTRACT} rule 1).`,
+  message: `Repos return rows, not DTOs: return the Date and format it in the service (${REPO_CONTRACT}).`,
 });

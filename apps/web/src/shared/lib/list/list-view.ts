@@ -241,6 +241,9 @@ function listSource<D extends AnyListDef, Scope, Item, Input>(
   };
 }
 
+/**
+ * @canonical `listView`: A declared list's web view: keys under the domain root, pages to `LIST_MAX_PAGES`, throttled refresh (built in the domain's `queries.ts`)
+ */
 export function listView<D extends AnyListDef, Scope, Item, Input = never>(
   def: D,
   opts: ListViewOptions<D, Scope, Item, Input>

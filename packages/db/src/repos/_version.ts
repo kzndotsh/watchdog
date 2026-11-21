@@ -56,6 +56,8 @@ export type VersionedInCaseTable<
  * matches. Returns the row, or `null` for a bad id, a refused patch, a row outside the Case or a
  * stale version; core's graph mutation runner tells those apart. The version and `updated_at` are
  * set by the database triggers.
+ *
+ * @canonical `updateVersionedInCase`: A Graph repo's version-checked UPDATE in its Case (Entities, Claims, Edges, Events, Questions, Identifiers; a new versioned Graph repo calls it, never hand-writes the scoped update): table, id and version columns, returning columns, Case-scope predicate, optional patch rewrite that can refuse
  */
 export async function updateVersionedInCase<
   T extends PgTable,

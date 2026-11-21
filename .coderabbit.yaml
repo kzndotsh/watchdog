@@ -27,7 +27,6 @@ reviews:
   # Generated, vendored or lock files: reviewing them is pure noise.
   path_filters:
     - "!pnpm-lock.yaml"
-    - "!skills-lock.json"
     - "!apps/web/src/routeTree.gen.ts"
     - "!packages/caps/capabilities.gen.json"
     - "!packages/db/drizzle/meta/**"
@@ -39,8 +38,8 @@ reviews:
       instructions: |
         Formatting, import order and anything oxlint or `pnpm check:*` gates enforce is already
         covered by CI; do not comment on it. Focus on correctness, custody rules and reuse:
-        flag a new util, constant or predicate that duplicates one in the "Canonical helpers"
-        table of the root AGENTS.md.
+        flag a new util, constant or predicate that duplicates an export tagged `@canonical`
+        (`git grep -n '@canonical'`).
     - path: "packages/{api,core}/src/**/*.ts"
       instructions: |
         A server-side failure must be `InternalError` (500, fixed message); `InvalidError` is
@@ -101,7 +100,7 @@ chat:
 knowledge_base:
   code_guidelines:
     filePatterns:
-      - files: "docs/reference/platform/conventions.md"
+      - files: "AGENTS.md"
         applyTo: "**"
       - files: "docs/glossary.md"
         applyTo: "**"

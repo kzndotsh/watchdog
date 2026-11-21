@@ -361,7 +361,11 @@ type Checked<D extends ListDecl> = {
   };
 };
 
-/** Declare a list. `const` inference keeps keys, values and sort strings literal. */
+/**
+ * Declare a list. `const` inference keeps keys, values and sort strings literal.
+ *
+ * @canonical `defineList`, `opsOf`: A declared list: filters, sorts, search and the one canonical query (key, URL, cursor fingerprint); generic code calls it through `opsOf`
+ */
 export function defineList<const D extends ListDecl>(
   decl: D & Checked<D>
 ): ListDef<D> {

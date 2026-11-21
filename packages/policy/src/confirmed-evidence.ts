@@ -17,7 +17,11 @@ export type ConfirmedEvidenceInput = {
   readonly evidenceCount: number;
 };
 
-/** True when the write must be refused: confirmed with fewer than one piece of Evidence. */
+/**
+ * True when the write must be refused: confirmed with fewer than one piece of Evidence.
+ *
+ * @canonical `confirmedNeedsEvidence`, `confirmedEvidenceViolation`, `CONFIRMED_REQUIRES_EVIDENCE`: Confirmed requires evidence (rule and message; retyping the text fails `watchdog/no-reimplemented-custody-message`)
+ */
 export function confirmedNeedsEvidence(input: ConfirmedEvidenceInput): boolean {
   if (input.confidence !== "confirmed") return false;
   return !(input.evidenceCount >= 1);

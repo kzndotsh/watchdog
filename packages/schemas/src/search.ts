@@ -13,6 +13,9 @@ import { jsonObjectSchema } from "./json-wire";
 import { NAME_MAX } from "./limits";
 import { uuidSchema } from "./primitives";
 
+/**
+ * @canonical `SEARCH_MIN_QUERY_LENGTH`: Search minimum query length
+ */
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export const searchCaseInputSchema = z.object({

@@ -643,7 +643,7 @@ describe("db repo rules (oxlint.config.ts)", () => {
   it("states the fix and where the rule lives", () => {
     const [hit] = hits("throw-new", "db-repo-no-throw");
     expect(hit?.message).toContain("return null");
-    expect(hit?.message).toContain("packages/db/AGENTS.md");
+    expect(hit?.message).toContain("packages/core/AGENTS.md");
     const [status] = hits("status-set", "db-repo-no-job-status-set");
     expect(status?.message).toContain("OPEN_JOB_STATUSES");
   });

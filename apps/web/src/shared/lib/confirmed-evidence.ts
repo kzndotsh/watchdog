@@ -8,6 +8,8 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
  * Web adapter over the shared rule: counts a form's evidence ids (or takes a
  * precomputed count) and asks `@watchdog/policy/confirmed-evidence`. The
  * threshold and message live there, not here.
+ *
+ * @canonical `isConfirmedBlocked`: Confirmed-blocked check over a web form's evidence ids
  */
 export function isConfirmedBlocked(
   confidence: ConfidenceTier,

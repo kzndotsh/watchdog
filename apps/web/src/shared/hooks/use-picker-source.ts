@@ -133,6 +133,8 @@ export function useRecordsByIds<T extends { readonly id: string }>(
  * The port's identity does not matter: every read is keyed on the values the port was built
  * from (Case, `q`, kinds, ids), and no state or effect here depends on the port object, so a
  * caller that rebuilds an equal port each render keeps its typed text and its in-flight search.
+ *
+ * @canonical `usePickerSource`, `useRecordsByIds`: A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list)
  */
 export function usePickerSource<T extends { readonly id: string }>(
   port: PickerPort<T>,

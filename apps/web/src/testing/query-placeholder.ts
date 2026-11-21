@@ -5,6 +5,8 @@ import { QueryClient, type Query, type QueryKey } from "@tanstack/react-query";
  * given the key of the previous query it would keep (`previousQueryKey`; `undefined`: no
  * placeholder). Runs the real option over a real Query, so a test asserts the keep-previous-data
  * rule (same Case only) without a fake Query object. The QueryClient is cleared before return.
+ *
+ * @canonical `placeholderFor`: What a query option's `placeholderData` keeps for another key (real Query, no fake)
  */
 export function placeholderFor<TData>(
   options: { placeholderData?: unknown },

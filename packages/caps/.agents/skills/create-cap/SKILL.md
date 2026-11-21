@@ -47,7 +47,7 @@ provider is new. Does not touch other Caps,
    and follows `<category>.<axis>.<method>`. Nothing enforces the format and
    one shipped id (`evidence.harvest`) has two segments, so match the
    existing ids in the same category.
-4. Scaffold the Cap folder per the `packages/caps/AGENTS.md` Gotchas layout;
+4. Scaffold the Cap folder per the `packages/caps/AGENTS.md` layout rules;
    reuse shared helpers (`evidence/lib/`, `lib/collect/`) instead of
    duplicating them.
 5. Run the authoring checklist: interpret target, named source, credential

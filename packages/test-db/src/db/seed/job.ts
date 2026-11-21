@@ -122,6 +122,8 @@ export async function seedJob(
  * Backdate `updated_at` (and optionally `started_at`) on a seeded Job so stale
  * reclaim tests can age it. Production code cannot set `updated_at`, so
  * `jobsRepo.update` does not accept it; this writes the column directly.
+ *
+ * @canonical `backdateJob`: Age a seeded Job in tests
  */
 export async function backdateJob(
   exec: DbExec,

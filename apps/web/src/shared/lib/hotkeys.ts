@@ -46,6 +46,8 @@ export type HotkeyDef = {
  * The only definition of a keyboard shortcut. The Shortcuts dialog, palette
  * and menu chords (`AppAction.hotkey`), `hotkeyBindings`, `hotkeyAttrs` and
  * the queue keys all read from here.
+ *
+ * @canonical `HOTKEYS`, `modKeyLabel`: Hotkey registry and mod-key label
  */
 export const HOTKEYS = [
   {

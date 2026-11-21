@@ -73,6 +73,9 @@ const changesetsRepoFx = repoFx(() => changesetsRepo);
 export const changesetsRepoFxDb = repoFxDb(changesetsRepoFx);
 export const identifiersRepoFx = repoFx(() => identifiersRepo);
 export const identifiersRepoFxDb = repoFxDb(identifiersRepoFx);
+/**
+ * @canonical `jobsRepoFx`, `jobsRepoFxDb`: A repo call in an Effect, through the `xRepoFx` / `xRepoFxDb` pair of its repo in this module (this pair is the example; all of core, #444/#445; a repo call is never wrapped in `tryDb`/`tryDbWith` unless it passes `opts`: `watchdog/no-repo-wrapper`): `xRepoFx.m(exec, ...)` with an explicit handle, `xRepoFxDb.m(...)` on the pool (`R = Db`)
+ */
 export const jobsRepoFx = repoFx(() => jobsRepo);
 export const jobsRepoFxDb = repoFxDb(jobsRepoFx);
 export const jobStartCountersRepoFx = repoFx(() => jobStartCountersRepo);

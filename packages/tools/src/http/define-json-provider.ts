@@ -164,6 +164,8 @@ function runJsonProvider<
  * `fetchJsonObjectEffect`; a lookup that needs two calls or a multi-step flow stays hand-written.
  *
  * Returns `(raw, key, signal, options)` when `key` is declared, else `(raw, signal, options)`.
+ *
+ * @canonical `defineJsonProvider`: A JSON-object provider in tools (service, subject normalizer, request, key placement, not-found statuses, snapshot schema + mapping; fetching and the 429 policy stay in `fetchJsonObjectEffect`; a two-call or multi-step lookup stays hand-written)
  */
 export function defineJsonProvider<
   S extends string | { value: string },

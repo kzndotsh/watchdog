@@ -208,6 +208,9 @@ function entityChangedKeys(
   ];
 }
 
+/**
+ * @canonical `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation`: Query invalidation after mutation or SSE
+ */
 export async function invalidateAfterEntityChanged(
   client: QueryClient,
   caseId: string,

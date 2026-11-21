@@ -13,7 +13,7 @@ The server boundary, auth layering, and oRPC wiring of the TanStack Start app. V
 
 ## Auth layers
 
-Server core is [`@watchdog/auth`](../../../packages/auth/AGENTS.md) (`createAuth`: Better Auth + Drizzle adapter, invite signup, instance admin); web appends `tanstackStartCookies()` in `src/auth/server.ts`. The client and Better Auth UI views are in `src/auth/`. API keys use `@better-auth/api-key`, sent as `Authorization: Bearer <key>` or `x-api-key`. Solo signup is gated by `BETTER_AUTH_ALLOW_SIGNUP`.
+Server core is `@watchdog/auth` (`createAuth`: Better Auth + Drizzle adapter, invite signup, instance admin); web appends `tanstackStartCookies()` in `src/auth/server.ts`. The client and Better Auth UI views are in `src/auth/`. API keys use `@better-auth/api-key`, sent as `Authorization: Bearer <key>` or `x-api-key`. Solo signup is gated by `BETTER_AUTH_ALLOW_SIGNUP`.
 
 | Layer | Job |
 | --- | --- |

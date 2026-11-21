@@ -20,6 +20,8 @@ type DebounceState<T> = {
  * the wait again; the pending timer is cancelled on change and on unmount. `waitMs` is read
  * at each change, so it can depend on the input (`0` commits on the next tick). Take the
  * delay from `@/shared/lib/debounce`.
+ *
+ * @canonical `useDebouncedValue`: Typing debounce (named delays in `shared/lib/debounce.ts`)
  */
 export function useDebouncedValue<T>(
   input: T,

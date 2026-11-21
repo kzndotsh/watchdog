@@ -11,6 +11,8 @@ import { RouteCaseProvider } from "@/testing/route-case";
  * A picker port over in-memory rows for shared-UI tests (#559): `search(q)` answers one page
  * (`limit`) of the rows `matches` keeps, or the first rows when `q` is null; `byIds` answers the
  * rows with those ids. Both are spies, so a test asserts what the picker asked the server for.
+ *
+ * @canonical `memoryPickerPort`: A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`)
  */
 export function memoryPickerPort<T extends { readonly id: string }>(
   rows: readonly T[],

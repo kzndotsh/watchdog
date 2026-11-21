@@ -205,7 +205,7 @@ describe("Effect run* edge ban (oxlint.config.ts)", () => {
     expect(hit?.line).toBe(2);
     expect(hit?.message).toContain("Effect.runPromise");
     expect(hit?.message).toContain("runDomain");
-    expect(hit?.message).toContain("conventions.md");
+    expect(hit?.message).toContain("sanctioned-edge list");
   });
 });
 
@@ -230,7 +230,7 @@ describe("Effect try/tryPromise catch requirement (oxlint.config.ts)", () => {
     const [hit] = hitsFor(`${PROBE}/try/bare-try-promise.ts`, TRY);
     expect(hit?.line).toBe(2);
     expect(hit?.message).toContain("{ try, catch }");
-    expect(hit?.message).toContain("conventions.md");
+    expect(hit?.message).toContain("keeps a tag");
   });
 });
 

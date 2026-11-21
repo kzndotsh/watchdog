@@ -2,7 +2,7 @@
 
 Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that matches the question. One tree under `docs/`; platform, web and contracts are namespaces under `reference/`. Design direction and taste rules live in [`DESIGN.md`](../DESIGN.md) at the repo root. Local plans (untracked `.cursor/plans/`) are not contracts: durable contracts live here.
 
-Policy: every stated convention is enforced by a lint rule or gate, labeled guidance, or deleted; the one table is [`reference/platform/conventions.md`](reference/platform/conventions.md).
+Policy: a rule is enforced by a lint rule or gate whose message states it, kept as a short judgement rule in [`AGENTS.md`](../AGENTS.md), or deleted.
 
 ## Start by role
 
@@ -47,7 +47,6 @@ Policy: every stated convention is enforced by a lint rule or gate, labeled guid
 | [`reference/platform/configuration.md`](reference/platform/configuration.md) | Every environment variable: default, required, secret, entrypoint (generated) |
 | [`reference/platform/types.md`](reference/platform/types.md) | Schema / vocab ownership, Zod rules |
 | [`reference/platform/collect-queue.md`](reference/platform/collect-queue.md) | Collect's queue projection: triggers, flush, repair |
-| [`reference/platform/conventions.md`](reference/platform/conventions.md) | Every convention, what enforces it, or `guidance` |
 
 ## Reference: web
 

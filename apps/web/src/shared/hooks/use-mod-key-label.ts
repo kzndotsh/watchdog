@@ -14,7 +14,11 @@ function getServerSnapshot() {
   return "Ctrl";
 }
 
-/** Mod key label (⌘ on Apple, Ctrl elsewhere), safe to render during SSR + hydration. */
+/**
+ * Mod key label (⌘ on Apple, Ctrl elsewhere), safe to render during SSR + hydration.
+ *
+ * @canonical `useModKeyLabel`: Mod-key label in components
+ */
 export function useModKeyLabel(): string {
   return useSyncExternalStore(subscribe, modKeyLabel, getServerSnapshot);
 }

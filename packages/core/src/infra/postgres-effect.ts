@@ -63,6 +63,8 @@ export function mapPostgresCatch(
  * ...)` (`repos-fx.ts`) is the same seam (`repoFx` calls this), and `watchdog/no-repo-wrapper`
  * rejects the wrapper. What stays is a non-repo driver call, or a repo call that needs `opts`
  * (the conflict mapping reads the raw driver error).
+ *
+ * @canonical `tryDb`: DB call into the domain error channel: a non-repo driver call, or a repo call with `opts` (a repo call without them is `xRepoFx`, below)
  */
 export function tryDb<A>(
   tryFn: () => Promise<A>,
@@ -80,6 +82,8 @@ export function tryDb<A>(
  * module-global `db`. Same error mapping as `tryDb`. A repo call never goes through it:
  * `xRepoFxDb.m(...)` (`repos-fx.ts`); what remains is a non-repo driver call, or a repo call
  * that needs `opts`. A transaction body keeps its explicit `tx`.
+ *
+ * @canonical `tryDbWith`: `tryDb` with the client from the `Db` service, for the same cases (module `db` import is banned in core)
  */
 export function tryDbWith<A>(
   tryFn: (exec: DbExec) => Promise<A>,
@@ -104,6 +108,8 @@ function isWritten<A>(value: A): value is Written<A> {
  * `Failed to <what>`; the API sends a fixed 500 message instead (a Job failure still stores the
  * reason on the Job row). Use `NotFoundError({ entity, id })` instead when the caller named a
  * row that legitimately may not exist (update/delete by id).
+ *
+ * @canonical `requireWritten`: A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it
  */
 export function requireWritten(what: string) {
   return <A, E, R>(

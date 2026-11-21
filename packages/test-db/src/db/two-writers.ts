@@ -144,6 +144,8 @@ async function settle<T>(
  * no-op after A commits; a missing guard lets B finish inside A's window and the test sees the
  * lost update. The wrapped methods
  * are restored when `run` returns.
+ *
+ * @canonical `twoWriters`: Two-writer race with controlled interleaving (writer A runs to a named point, B runs or blocks on A's lock, A continues; read the activity log with `listAllActivity`, never the commit-safe `drain`)
  */
 export function twoWriters(options: TwoWritersOptions): TwoWriters {
   const exec = options.exec ?? db;

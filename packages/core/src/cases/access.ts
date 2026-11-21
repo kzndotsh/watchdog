@@ -63,7 +63,11 @@ export function assertCaseExistsUncheckedEffect(
   });
 }
 
-/** Org-scoped case gate for API / actor-facing entrypoints. Returns trimmed case id. */
+/**
+ * Org-scoped case gate for API / actor-facing entrypoints. Returns trimmed case id.
+ *
+ * @canonical `assertCaseInOrgEffect`: Case in caller's org (guard)
+ */
 export function assertCaseInOrgEffect(
   caseId: CaseId,
   organizationId: OrganizationId,

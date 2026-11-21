@@ -42,6 +42,8 @@ type GraphChildMutationSpec<V extends EntityScope, Input, Result> = {
  *
  * A write with extra behaviour (a cache seed, optimistic state) is its own `useMutation` and calls
  * `invalidateAfterEntityChanged` itself; the factory takes no flag for it.
+ *
+ * @canonical `defineGraphChildMutation`: A standard Graph child write (Claim, Connection, Event, Open Question, Identifier): procedure (`call`), input mapping, success toast, failure verb and noun; the factory owns the Entity invalidation and failure copy (declared in `entities/<child>/mutations.ts`). A write with its own cache or UI behaviour (identifier deletion, the table and composer writes) keeps its own hook
  */
 export function defineGraphChildMutation<V extends EntityScope, Input, Result>({
   call,

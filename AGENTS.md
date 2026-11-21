@@ -2,156 +2,86 @@
 
 Watchdog platform monorepo: Postgres + TypeScript under `apps/` · `packages/`. Investigation content (corpus, entity notes, vault vocabulary) lives in a separate private repo and never enters this one.
 
-Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine and narrative: [`docs/explanation/product.md`](docs/explanation/product.md); layout: [`docs/agents/domain.md`](docs/agents/domain.md)). Platform/UI contracts → [`docs/`](docs/README.md) and [`docs/reference/web/`](docs/reference/web/README.md). Design values → [`DESIGN.md`](DESIGN.md), where the CSS in `apps/web/src/styles/` wins. Hooks and CI gates: [`docs/contributing/ci-gates.md`](docs/contributing/ci-gates.md).
+Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine: [`docs/explanation/product.md`](docs/explanation/product.md)). Platform and UI contracts → [`docs/`](docs/README.md) and [`docs/reference/web/`](docs/reference/web/README.md). Design values → [`DESIGN.md`](DESIGN.md) (its tokens are generated from `apps/web/src/styles/`).
 
 ## Quick reference
 
 | Task | Command |
 | --- | --- |
-| Toolchain | `nix develop` (installs lefthook) |
+| Toolchain | `nix develop` (installs lefthook) · pnpm only |
 | Local infra (Postgres + S3 + migrate) | `just up` · `just docker-up` (containers only) |
-| Wipe case data | `just wipe` · `just wipe yes` (keeps auth incl. organizations, and vault) |
-| Screenshot seed | `just seed-demo` · `just seed-demo --force` |
-| Perf baseline (scratch DB at audit scale, query stats) | `just perf-seed` · `just perf-seed-drop` ([`perf-baseline`](docs/how-to/perf-baseline.md)) |
-| Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Local `.env` · first admin · vault key | `just env` (generated secrets) · `just admin --email you@example.com` (no signup) · `WD_MASTER_VAULT_KEY_OLD=... just vault-rekey` (rotate) |
-| Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
-| Lint / fix | `pnpm check` · `pnpm fix` |
-| Verify (done?) | `pnpm verify` (lint and format on changed files, static gates, typecheck, tests of affected packages; the agent stop hook runs it) · `pnpm verify --full` (what the CI `gates` job runs) · `pnpm changed` (affected packages, with dependents) |
-| Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:tagged-errors:strict` · `pnpm lint:design` · `pnpm check:size` · `pnpm check:bundle` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` · `pnpm check:env` · `pnpm check:licenses` · `pnpm check:notices` |
-| Container images (web, worker) | `docker build --target web .` · `docker build --target worker .` · prod stack: [`self-host`](docs/how-to/self-host.md) · smoke: `docker/smoke.sh` |
-| Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
-| Regenerate | `pnpm generate:caps` · `pnpm generate:client` (gitignored; install, `typecheck` and `build:cli` run it) · `pnpm generate:env` (`env.example`, configuration reference) · `pnpm generate:design` (`DESIGN.md` tokens from the CSS) |
-| Desloppify (local, advisory) | `pnpm desloppify:bootstrap` · `:scan` · `:status` · `:next` |
+| Local `.env` · first admin · vault key | `just env` · `just admin --email you@example.com` · `WD_MASTER_VAULT_KEY_OLD=... just vault-rekey` |
+| Wipe case data · screenshot seed · perf seed | `just wipe yes` (keeps auth, organizations, vault) · `just seed-demo` · `just perf-seed` ([`perf-baseline`](docs/how-to/perf-baseline.md)) |
+| Install · migrate · new migration | `pnpm install` · `pnpm db:migrate` · `pnpm db:generate --name=<what_changed>` |
+| Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
+| Done? | `pnpm verify` (changed files and affected packages; the stop hook runs it) · `pnpm verify --full` (the CI merge gate) |
+| Lint · typecheck · tests | `pnpm check` · `pnpm fix` · `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` (`just test-db` first) · `pnpm test:e2e:smoke` |
+| Regenerate (never hand-edit the output) | `pnpm generate:caps` · `pnpm generate:client` · `pnpm generate:env` · `pnpm generate:design` · `pnpm generate-routes` |
+| Vendored shadcn (`packages/ui`, never edited) | `pnpm ui:add <name>` · `pnpm ui:sync` |
+| Container images | `docker build --target web .` · `--target worker` · [`self-host`](docs/how-to/self-host.md) |
 
-Package manager: **pnpm** only. Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` (first account is the instance admin; see [`auth-setup`](docs/how-to/auth-setup.md)). Vitest projects share workers: tests must restore any `process.env`, `globalThis`, timers, or DOM they change ([`standards.md`](docs/contributing/testing/standards.md)).
+Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` (the first account is the instance admin; [`auth-setup`](docs/how-to/auth-setup.md)).
+
+## Custody invariants
+
+These hold everywhere. The structure enforces most of them; never route around it.
+
+- Postgres holds the Case Graph, the source of truth. The Case Export is a projection: never hand-edit it.
+- Ingress: Collect → Evidence · Cap `interpret` → Proposal · Triage Accept → Graph · the Dossier is a human Graph edit. Caps and machine Jobs never write the Graph or set `confirmed` ([`custody`](docs/reference/contracts/custody.md)).
+- Agents and the CLI propose by default. A direct Graph write needs `userOverride`, lands `unverified` and is recorded by its `agent_write` changeset ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)).
+- Organization isolation is row-level security keyed on the organization: a Case-scoped read runs in the caller's organization, and a foreign or missing Case is `not_found`, never a distinct signal.
+- Secrets live in the vault and reach a Cap through `ctx.getCredential`: never in env, `Job.input`, the Export or a log.
+- Process logs go through `@watchdog/log`, never with secrets or Evidence bodies. evlog is not Graph audit: `Job.logs`, `changesets` and `graph_history` are ([`evlog`](docs/reference/contracts/evlog.md)).
+- Never claim without evidence; cite everything; disclose uncertainty. A breach hit proves a record exists in a dump, not control of the account.
+
+## Judgement rules
+
+No tool checks these; review does.
+
+- Reuse before you write. The kit is tagged in the code: `git grep -n '@canonical'` lists every shared helper, hook, test double and record builder with when to use it. A second copy is the most common AI-authored defect. A new shared helper gets an `@canonical` tag on its export.
+- A server-side failure is `InternalError` (500, fixed message); `InvalidError` is only for input the caller can fix ([error taxonomy](docs/reference/contracts/README.md#which-tag-to-raise)).
+- Nobody uses Watchdog yet: replace a format outright. No compatibility shims, upgraders, data migrations or dual paths.
+- The Zod schema is the source of a type (`z.infer`, no twin interfaces; `z.enum(CONST)`, not copied literals). Web, API and CLI share one input schema per create, update or delete shape; wire objects are named, and no database row or Drizzle type reaches the wire.
+- Services own transactions, pass `exec` first to repos, and normalize display fields (trim, slugify, `InvalidError`) before a repo write.
+- Never silence a test type error with a cast or `@ts-expect-error`; fix the types.
+- Tests: `describe(subject)` + `it("rejects X when Y")`, arrange-act-assert, one behaviour, no sleeps, no trivially true assertions or expected values re-derived from the source ([`standards`](docs/contributing/testing/standards.md)). Vitest projects share workers: restore any `process.env`, `globalThis`, timers or DOM a test changes. Mock HTTP through `@watchdog/test-kit/http`, never `msw` directly; Effect tests use `it.effect`.
+- Gate freeze: until the custody, hardening and shippable specs (#288, #289, #290) are done, a new lint rule or gate lands only when the PR names a real regression it would have caught. Deletions are welcome. A lint message states its rule's reason; there is no prose copy of a rule elsewhere.
+- Hooks: skip locally through `lefthook-local.yml`, never `--no-verify`. Claude Code project settings keep commit and PR attribution off.
+- Outside contributors sign the CLA by comment on their first PR; the maintainer checks it before merging.
+
+## Nested guides
+
+Read the nested guide before editing its tree, as an explicit step: auto-attachment is not reliable. There are three:
+
+- [`packages/core/AGENTS.md`](packages/core/AGENTS.md): every server-side package (`core`, `api`, `db`, `auth`, `policy`, `tools`, `log`, `env`, `schemas`, `ai`, `test-db`, `test-kit`) and `apps/worker`.
+- [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md): Caps, Playbooks and the Cap SDK.
+- [`apps/web/AGENTS.md`](apps/web/AGENTS.md): the web app (UI contracts: [`docs/reference/web/`](docs/reference/web/README.md)).
+
+The rest of the tree has none:
+
+- `apps/cli` (`wd`) reaches the API only through `@watchdog/client`. Its stdout is the agent contract: compact JSON, failures as `{ ok: false, error: { code, message } }`, exit 1 on error and 3 on a server failure ([`agent-cli`](docs/how-to/agent-cli.md)). It and `@watchdog/client` never depend on `@watchdog/log`.
+- `packages/client`'s `src/generated/` is gitignored build output of `pnpm generate:client` (install, `typecheck` and `build:cli` run it). Never hand-roll an `/api/v1` path.
+- `apps/site` is a static Astro page with no `@watchdog/*` runtime dependency; its tokens are copied from `apps/web/src/styles/`, and its copy comes from `README.md` and `docs/explanation/product.md`.
+- `packages/ui` is the shadcn CLI's output, hashed by `pnpm check:vendor`. Change a token or wrap the primitive in `apps/web/src/shared/ui/primitives/`.
 
 ## Effect
 
-Before writing Effect code, read `node_modules/effect/AGENTS.md` completely, then search `node_modules/effect/src` for APIs it skips. Watchdog runtime conventions (`run*` edges, `JobFibers`, Cap `run`, browser policy) live in the `/effect` skill. One deliberate departure: boundary schemas are Zod, not Effect Schema ([ADR-0001](docs/adr/0001-zod-at-the-boundary.md)). `repos/effect` is an optional gitignored clone: never import from it.
+Before writing Effect code, read `node_modules/effect/AGENTS.md` completely, then search `node_modules/effect/src` for APIs it skips. Watchdog runtime conventions (`run*` edges, `JobFibers`, Cap `run`, browser policy) live in the `/effect` skill. Boundary schemas are Zod, not Effect Schema ([ADR-0001](docs/adr/0001-zod-at-the-boundary.md)). `repos/effect` is an optional gitignored clone: never import from it.
 
-## Nested AGENTS.md
+## Skills
 
-Read the nested `AGENTS.md` before editing its tree, as an explicit step: auto-attachment of nested files is not reliable. One exists in each of `apps/{cli,site,web,worker}` and `packages/{ai,api,auth,caps,client,core,db,env,log,policy,schemas,test-db,test-kit,tools,ui}`.
-
-## Agent skills
-
-Workflows live in [`.agents/skills/`](.agents/skills/) (and per package, e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)); `.claude/skills` symlinks to the root set. Load them by name: `/audit-contract`, `/check-gates`, `/finalize`, `/create-cap`, `/effect`. Vendored skills are pinned in `skills-lock.json` and read `docs/agents/` (issue tracker, triage labels, domain docs).
-
-## Boundaries
-
-Every convention is enforced by a lint rule or gate, labeled guidance, or deleted: [`docs/reference/platform/conventions.md`](docs/reference/platform/conventions.md) is the table (add a rule's row in the same change as the rule).
-
-Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.md). Package import boundaries (declared dependency, public `exports` entry, no app imports) are enforced by `pnpm check:boundaries`, plus `no-restricted-imports` in `oxlint.config.ts` for named bans; the matrix is not restated here.
-
-| Do | Don’t | Enforced by |
-| --- | --- | --- |
-| Postgres = Case Graph SoT; Export is a projection | Hand-edit Export as a second SoT | guidance ([`ingress`](docs/reference/contracts/ingress.md)) |
-| Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | `@watchdog/policy` gates at runtime; caps has no db dep ([`custody`](docs/reference/contracts/custody.md)) |
-| Agents/CLI default to propose; a graph write needs `userOverride` and lands `unverified` + an `agent_write` changeset | Silent machine Graph writes | policy gates + `apps/cli/src/custody.ts` ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)) |
-| Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | guidance |
-| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | `watchdog/no-banned-surface-name` for the first three; `*Panel` is guidance ([ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
-| Process logs via `@watchdog/log` | Secrets/Evidence bodies in logs; treating evlog as Graph audit | guidance ([`evlog`](docs/reference/contracts/evlog.md)) |
-
-Ingress: Collect → Evidence · Caps → artifacts + Proposal · Triage Accept → Graph · Dossier = human Graph edit. Accept tiers and breach caveats: [`custody`](docs/reference/contracts/custody.md).
-
-## House rules
-
-The rules agents break most. The full set, with enforcers, is the [conventions table](docs/reference/platform/conventions.md); the graph-write, nested-`AGENTS.md` and test-isolation rules are above.
-
-- Reuse before you write: check [Canonical helpers](#canonical-helpers) for an existing util, constant or predicate. A second copy is the most common AI-authored defect. Guidance; the table's entries are verified by `check:agents:strict`.
-- A server-side failure is `InternalError` (500, fixed message), never `InvalidError`, which is only for caller input. The mapping is tested in `packages/api/src/__tests__/map-domain-error.test.ts`; choosing the right error is guidance.
-- Never silence a test type error with a cast or `@ts-expect-error`; fix the types. Guidance (`pnpm typecheck` covers tests).
-- Tracked `src` files stay at most 600 lines: `check:size`.
+Repo workflows live in [`.agents/skills/`](.agents/skills/) (`.claude/skills` links to it) and [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/): `/audit-contract`, `/check-gates`, `/finalize`, `/effect`, `/create-cap`. Generic skills are installed per user, not vendored here; [`docs/agents/`](docs/agents/) holds the issue-tracker, triage-label and domain settings they read.
 
 ## Gotchas
 
-- `pnpm test` runs the unit, web-unit, e2e-parser, property and gate projects in one vitest invocation and reports every failing project; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` checks each package once on `tsconfig.test.json` (source and tests, incremental cache in `node_modules/.cache`), plus `scripts/` and `e2e/`, with the test-coverage guard in parallel: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error, not a typecheck one.
-- Pre-commit only formats the staged files (`oxfmt`); lint and every other gate run in `pnpm verify` and CI. The formatter ignores `docs/glossary.md`, `.agents/`, `.cursor/` and `.claude/`. `.mjs` scripts and `e2e/` lint correctly by path (`scripts/tsconfig.json` and `e2e/tsconfig.json` give them type context; they are lint programs, never typechecked or emitted), so `pnpm verify` lints only the changed files.
-- A dependency declared by two or more packages (root included) takes its version from the default `catalog:` in `pnpm-workspace.yaml` (`"effect": "catalog:"`); a literal range there fails `pnpm check:workspace`. Peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
-- `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value). It ignores `.claude/worktrees/`.
-
-## Canonical helpers
-
-Verified by `check:agents:strict`: each module exists and exports the name. Add a row when a helper lands.
-
-| Concern | Module | Export |
-| --- | --- | --- |
-| DB call into the domain error channel: a non-repo driver call, or a repo call with `opts` (a repo call without them is `xRepoFx`, below) | `packages/core/src/infra/postgres-effect.ts` | `tryDb` |
-| `tryDb` with the client from the `Db` service, for the same cases (module `db` import is banned in core) | `packages/core/src/infra/postgres-effect.ts` | `tryDbWith` |
-| The Postgres pool's one owner per process (`Db.owned`, scoped: release ends the client; `Db.layer` borrows it; production code never imports the global `db` / `client`) | `packages/core/src/infra/db-service.ts` | `Db` |
-| A repo call in an Effect (all of core, #444/#445; a repo call is never wrapped in `tryDb`/`tryDbWith` unless it passes `opts`: `watchdog/no-repo-wrapper`): `xRepoFx.m(exec, ...)` with an explicit handle, `xRepoFxDb.m(...)` on the pool (`R = Db`) | `packages/core/src/infra/repos-fx.ts` | `jobsRepoFx`, `jobsRepoFxDb` |
-| Row-level security scope: run an Effect in an organization (every exported core Effect that takes an `organizationId` wraps its body), or in a trusted Case's own organization | `packages/core/src/infra/organization-scope.ts` | `inOrganization`, `inCaseOrganizationUnchecked`, `forEachOrganization` |
-| A helper whose handle is optional (a caller's `tx`, else the pool): `onExec(exec, (h) => xRepoFx.m(h, ...))` | `packages/core/src/infra/repo-fx.ts` | `onExec` |
-| A Graph repo's version-checked UPDATE in its Case (Entities, Claims, Edges, Events, Questions, Identifiers; a new versioned Graph repo calls it, never hand-writes the scoped update): table, id and version columns, returning columns, Case-scope predicate, optional patch rewrite that can refuse | `packages/db/src/repos/_version.ts` | `updateVersionedInCase` |
-| A declared list's SQL binding (ADR-0007): filters, sorts with their key type, search columns; typed against the declaration and the table | `packages/db/src/repos/_list-query.ts` | `defineListRepo` |
-| A declared list's service body: cursor v2, page, capped total; rows by id | `packages/core/src/infra/list-page.ts` | `listPageEffect`, `listByIdsEffect` |
-| A byte stream read into memory up to a limit (`null` past it; the source is closed early): never a hand-written `for await` byte counter | `packages/core/src/infra/read-bounded.ts` | `readBoundedEffect` |
-| Whether an S3 error means the object is not there (`NotFound`, `NoSuchKey`, a bare 404) | `packages/core/src/infra/blob-store.ts` | `isMissingObject` |
-| Whether a stored blob key is under its Case (`<caseId>/`, no empty, `.` or `..` segment): every read of a key from the database checks it; never a bare `startsWith` | `packages/core/src/infra/blob-store.ts` | `isKeyInCase` |
-| A Case export zip sink over a promise-based writer (a web response body, a test buffer) | `packages/core/src/export/zip-writer.ts` | `zipSinkFromPromises` |
-| A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
-| Outbound HTTP from Caps and tools (never `fetch` directly; lint-enforced): the scoped client whose pools close at shutdown | `packages/tools/src/http/outbound-client.ts` | `OutboundClient`, `outboundClientLayer` |
-| A JSON-object provider in tools (service, subject normalizer, request, key placement, not-found statuses, snapshot schema + mapping; fetching and the 429 policy stay in `fetchJsonObjectEffect`; a two-call or multi-step lookup stays hand-written) | `packages/tools/src/http/define-json-provider.ts` | `defineJsonProvider` |
-| Cap HTTP user agent (caps only; never hard-code one; `defineCollectCap` hands it to `fetch(ctx, { userAgent })`, lint-enforced; a tool takes `userAgent` as a required option) | `packages/caps/src/sdk/user-agent.ts` | `watchdogUserAgent` |
-| A Cap's data provider and its terms (required `provider`; `unknown` when the terms are unclear, never a guess; shared constants in `packages/caps/src/providers/`) | `packages/caps/src/sdk/provider.ts` | `defineProvider` |
-| Web failure copy (`Couldn't <verb> <noun>`) | `apps/web/src/lib/utils.ts` | `couldnt`, `errMessage`, `serverFailureMessage`, `isServerFailure` |
-| Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result) | `apps/web/src/shared/hooks/use-unsaved-guard.ts` | `useUnsavedGuard` |
-| Typing debounce (named delays in `shared/lib/debounce.ts`) | `apps/web/src/shared/hooks/use-debounced-value.ts` | `useDebouncedValue` |
-| External link showing only the hostname (a narrow column; `urlHost` in `shared/lib/url-host.ts`) | `apps/web/src/shared/ui/external-host-link.tsx` | `ExternalHostLink` |
-| A declared list's web view: keys under the domain root, pages to `LIST_MAX_PAGES`, throttled refresh (built in the domain's `queries.ts`) | `apps/web/src/shared/lib/list/list-view.ts` | `listView` |
-| A list screen's state (URL view, search draft, status, count, Load more, selection; never per-screen filter state) | `apps/web/src/shared/hooks/list/use-list.ts` | `useList` |
-| A list's table in server mode (declared sorts only, `getRowId` required) | `apps/web/src/shared/hooks/list/use-list-table.ts` | `useListTable` |
-| A list's per-viewer columns, toggles and density | `apps/web/src/shared/hooks/list/use-list-display.ts` | `useListDisplay` |
-| A route's search patch writer (history replace) | `apps/web/src/shared/hooks/list/use-patch-search.ts` | `usePatchSearch` |
-| The list toolbar, table, body and count | `apps/web/src/shared/ui/list/index.ts` | `ListToolbar`, `ListTable`, `ListBody`, `ListCount` |
-| A tab's count from a list's first-page `total` (never a whole read) | `apps/web/src/shared/hooks/list/use-list-count.ts` | `useListCount` |
-| A list procedure double for screen tests (filters, `q`, sort, cursors, total on page one) and what the screen asked it for last | `apps/web/src/testing/memory-list.ts` | `memoryListProcedure`, `lastProcedureInput` |
-| A server-searched picker's state: one small page by `q` (recent when empty), selected values by id; linked-row titles by id (never a whole list) | `apps/web/src/shared/hooks/use-picker-source.ts` | `usePickerSource`, `useRecordsByIds` |
-| A picker port over in-memory rows for shared-UI tests (spied `search` / `byIds`) | `apps/web/src/testing/memory-picker-port.tsx` | `memoryPickerPort` |
-| Route guard: signed-out redirect to sign-in with `redirectTo`, plus the organization state (`redirectIfSignedIn` for the sign-in side) | `apps/web/src/app/require-session.ts` | `requireSession`, `redirectIfSignedIn` |
-| Hard navigation into the new organization after an organization change (invalidates the organization state first; the organization hooks call it themselves) | `apps/web/src/domains/organization/hooks/use-reload-into-organization.ts` | `useReloadIntoOrganization` |
-| A lazy dialog or drawer (mounts on first open and stays mounted; optional prefetch after `OVERLAY_PREFETCH_MS`; never hand-write the `lazy` + `isMounted` + timer) | `apps/web/src/shared/lib/lazy-overlay.ts` | `lazyOverlay` |
-| Copy text to the clipboard with the copied state and toasts (never call `navigator.clipboard.writeText` in a component; `route-error.tsx` keeps its own because its copied state never resets): `useCopyText` for a control with a copied state, `copyText` for a one-shot | `apps/web/src/shared/hooks/use-copy-text.ts` | `useCopyText`, `copyText` |
-| Identifier type facts (canonicalizer, validator, paste recogniser per type; never a `switch` over the type; a type without an entry fails to compile) | `packages/schemas/src/identifier-types.ts` | `IDENTIFIER_TYPE_TABLE`, `identifierTypeEntry` |
-| Class merging | `apps/web/src/lib/utils.ts` | `cn` |
-| Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
-| Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
-| Opaque id chip | `apps/web/src/shared/ui/id-chip.tsx` | `IdChip` |
-| The web app's API calls, browser and server (there are no server functions): oRPC TanStack Query utils, `orpc.<path>.call` / `.key` / `.infiniteKey`; a Case's keys are `orpc.<domain>.key({ input: { caseId } })` | `apps/web/src/lib/orpc-client.ts` | `orpc` |
-| A standard Graph child write (Claim, Connection, Event, Open Question, Identifier): procedure (`call`), input mapping, success toast, failure verb and noun; the factory owns the Entity invalidation and failure copy (declared in `entities/<child>/mutations.ts`). A write with its own cache or UI behaviour (identifier deletion, the table and composer writes) keeps its own hook | `apps/web/src/domains/entities/hooks/use-graph-child-mutation.ts` | `defineGraphChildMutation` |
-| Query invalidation after mutation or SSE | `apps/web/src/app/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
-| Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |
-| Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
-| A declared list: filters, sorts, search and the one canonical query (key, URL, cursor fingerprint); generic code calls it through `opsOf` | `packages/schemas/src/lists/define-list.ts` | `defineList`, `opsOf` |
-| A list that is never paged (registry, rows by id): a bounded array whose maximum is in the schema and the OpenAPI document; a bare `z.array` output fails `pagination-coverage.test.ts` | `packages/schemas/src/pagination.ts` | `boundedListSchema` |
-| Search minimum query length | `packages/schemas/src/search.ts` | `SEARCH_MIN_QUERY_LENGTH` |
-| Accept gate | `apps/web/src/domains/triage/lib/accept-gate.ts` | `acceptGate` |
-| Confirmed requires evidence (rule and message; retyping the text fails `watchdog/no-reimplemented-custody-message`) | `packages/policy/src/confirmed-evidence.ts` | `confirmedNeedsEvidence`, `confirmedEvidenceViolation`, `CONFIRMED_REQUIRES_EVIDENCE` |
-| Confirmed-blocked check over a web form's evidence ids | `apps/web/src/shared/lib/confirmed-evidence.ts` | `isConfirmedBlocked` |
-| Active-Case switch | `apps/web/src/domains/cases/hooks/use-select-active-case.ts` | `useSelectActiveCase` |
-| The Active Case of a screen whose URL names no Case: the last Case this browser entered (`localStorage`, never a cookie or server state), else the first visible one | `apps/web/src/domains/cases/lib/active-case.ts` | `rememberLastCase`, `readLastCaseId`, `pickDefaultCase` |
-| Case in caller's org (guard) | `packages/core/src/cases/access.ts` | `assertCaseInOrgEffect` |
-| Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
-| Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |
-| Who writes the Graph and the transaction's changeset (#724), for `graph_history` and `created_by` / `updated_by` (first statement of every Graph write transaction; the database triggers do the rest) | `packages/core/src/activity/graph-activity.ts` | `setHistoryContextEffect` |
-| Job status change (the only writer; a lint rule bans others): claim, finish, fail, cancel, reclaim | `packages/core/src/jobs/lifecycle/settle.ts` | `settleJobEffect` |
-| Cancel Jobs inside the caller's transaction (API cancel, Case delete; `afterCommit` aborts fibers and advances runs) | `packages/core/src/jobs/lifecycle/cancel.ts` | `cancelWithin` |
-| Stop Jobs from outside a transaction (abort, timeout, access loss) | `packages/core/src/jobs/lifecycle/stop.ts` | `stop` |
-| The worker's one Job settle (claim, preflight, Cap body, release from the Exit) | `packages/core/src/jobs/lifecycle/run.ts` | `run` |
-| Worker reconcile tick (stale, access-lost and undelivered Jobs, stuck Playbook runs; drifted Collect queue Cases) | `packages/core/src/jobs/lifecycle/reconcile.ts` | `reconcileJobsEffect` |
-| Two-writer race with controlled interleaving (writer A runs to a named point, B runs or blocks on A's lock, A continues; read the activity log with `listAllActivity`, never the commit-safe `drain`) | `packages/test-db/src/db/two-writers.ts` | `twoWriters` |
-| Collect's queue projection in a rolled-back test (runs the flush the COMMIT would; the `seed*` helpers call it) | `packages/test-db/src/db/collect-queue.ts` | `flushCollectQueue` |
-| Collect's queue rules in TypeScript (the oracle for the SQL projection, held to it by the 12-case fixture and the stateful model) and the 12-case fixture | `packages/schemas/src/testing/collect-queue-reference.ts` | `collectQueueReference` |
-| Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
-| `@/auth/server` in web tests (registered for every web test by a setup file; never copy `vi.mock("@/auth/server", ...)`) | `apps/web/src/testing/auth-server-double.ts` | `authServerDouble` |
-| Shared lazy chunks in web tests (list popovers, the Evidence checklist, the Identifier composer row; `beforeAll` in every test file that renders one, so `findBy*` never races a cold chunk; `shared-lazy-chunks.test.ts` fails on a shared `memoizeImport` loader it misses) | `apps/web/src/testing/shared-lazy-chunks.ts` | `preloadSharedLazyChunks` |
-| `@/shared/ui/toast` spies in web tests | `apps/web/src/testing/toast-double.ts` | `toastModuleDouble` |
-| A screen or hook test of a domain on the oRPC client: the real client and Query utils over one `vi.fn` per procedure path (`vi.mock("@/lib/orpc-client", ...)` with `orpcClientModuleDouble`; `procedureDouble("claims.list")` receives the input; `sessionInOrganization` answers `auth.whoami`) | `apps/web/src/testing/orpc-client.ts` | `orpcClientModuleDouble`, `procedureDouble`, `sessionInOrganization` |
-| What a query option's `placeholderData` keeps for another key (real Query, no fake) | `apps/web/src/testing/query-placeholder.ts` | `placeholderFor` |
-| Web test records (Evidence, Entity, Entity, Identifier and Connection list rows, Claim, Event, Question, Job, Proposal, Task board card, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory) | `apps/web/src/testing/records.ts` | `buildEvidenceRecord`, `buildEntityRecord`, `buildEntityListItem`, `buildEntityListConnection`, `buildCaseIdentifierRecord`, `buildCaseEdgeRecord`, `buildClaimRecord`, `buildEventRecord`, `buildQuestionRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildProposalQueueItem`, `buildTaskListItem`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList` |
+- `pnpm test` runs the unit, web-unit, e2e-parser, property and gate projects in one vitest run. The gate tests (`scripts/__tests__/*.gate.test.ts`) run real scripts in throwaway git repos.
+- `pnpm typecheck` checks each package on its `tsconfig.test.json` (source and tests), plus `scripts/` and `e2e/`: a new test file missing from its `tsconfig.test.json` fails. Production code importing test-only code or a `.ts` path is a lint error.
+- Pre-commit only formats staged files. The formatter ignores `docs/glossary.md`, `.agents/`, `.cursor/` and `.claude/`.
+- A dependency declared by two or more packages takes its version from the default `catalog:` in `pnpm-workspace.yaml`; peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
+- Tracked `src` files stay at most 600 lines (`check:size`).
+- `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value).
+- Postgres `53300` (too many clients) in dev is usually HMR leaking pools: restart vite and the worker.
 
 ## Where to look
 
-[`docs/README.md`](docs/README.md) (platform) · [`docs/reference/web/README.md`](docs/reference/web/README.md) (UI, Query, domains) · [`caps-lexicon`](docs/reference/platform/caps-lexicon.md) (Caps, playbooks) · [`docs/roadmap.md`](docs/roadmap.md) · [`README.md`](README.md) (run the app).
+[`docs/README.md`](docs/README.md) (platform) · [`docs/reference/web/README.md`](docs/reference/web/README.md) (UI, Query, domains) · [`caps-lexicon`](docs/reference/platform/caps-lexicon.md) (Caps, Playbooks) · [`ci-gates`](docs/contributing/ci-gates.md) (what each gate checks) · [`docs/roadmap.md`](docs/roadmap.md) · [`README.md`](README.md) (run the app).

@@ -2,8 +2,9 @@ import { booleanPrefix } from "./rules/boolean-prefix.mjs";
 /**
  * Local oxlint JS plugin `watchdog`: house rules oxlint has no built-in for (it ships
  * no `no-restricted-syntax`). Loaded from `oxlint.config.ts` `jsPlugins`. One module
- * per rule under `rules/`, shared helpers under `lib/`; the recipe for adding a rule
- * is in docs/reference/platform/conventions.md.
+ * per rule under `rules/`, shared helpers under `lib/`. A rule's message states the rule
+ * and its reason (there is no prose copy elsewhere); its gate test lives in
+ * `scripts/__tests__/oxlint-<rule>.gate.test.ts`.
  */
 import { boundedInputSchema } from "./rules/bounded-input-schema.mjs";
 import { cacheWritesInHooks } from "./rules/cache-writes-only-in-hooks.mjs";

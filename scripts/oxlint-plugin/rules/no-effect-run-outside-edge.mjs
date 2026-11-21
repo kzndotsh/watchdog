@@ -68,7 +68,7 @@ export const noEffectRunOutsideEdge = {
       if (label === null) return;
       context.report({
         node,
-        message: `${label} starts an Effect outside a sanctioned run edge: keep the program an Effect and let the caller run it (API handlers through runApp, core tests through runDomain, Cap run through runCap). A new production edge goes in the sanctioned-edge list in oxlint.config.ts with its reason in the nearest AGENTS.md (docs/reference/platform/conventions.md, Effect row).`,
+        message: `${label} starts an Effect outside a sanctioned run edge: keep the program an Effect and let the caller run it (API handlers through runApp, core tests through runDomain, Cap run through runCap). A new production edge goes in the sanctioned-edge list in oxlint.config.ts with its reason in a comment beside its entry (the /effect skill lists the edges).`,
       });
     };
     return {

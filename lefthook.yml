@@ -44,6 +44,5 @@ pre-push:
         - "packages/db/scripts/**"
         - "lefthook.yml"
         - ".github/workflows/**"
-        - "skills-lock.json"
         - "vitest.config.ts"
       run: pnpm test:gate

@@ -75,7 +75,7 @@ const LINTABLE = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs|json|jsonc|ya?ml|md)$/;
 
 /** A change here can break a gate test (they read scripts, hooks and CI config as data). */
 const GATE_TEST_INPUT =
-  /^(scripts\/|packages\/db\/scripts\/|\.cursor\/hooks\/|\.github\/workflows\/|lefthook\.yml$|skills-lock\.json$|vitest\.config\.ts$)/;
+  /^(scripts\/|packages\/db\/scripts\/|\.cursor\/hooks\/|\.github\/workflows\/|lefthook\.yml$|vitest\.config\.ts$)/;
 
 const ZERO_SHA = /^0+$/;
 

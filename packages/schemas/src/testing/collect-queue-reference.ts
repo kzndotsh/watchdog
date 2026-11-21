@@ -206,6 +206,8 @@ function push<K, V>(map: Map<K, V[]>, key: K, value: V): void {
 /**
  * The queue rows of one Case, sorted by id: every Evidence row (hidden ones included, with no
  * members), every run with an unattached step, and every unattached Job with no run.
+ *
+ * @canonical `collectQueueReference`: Collect's queue rules in TypeScript (the oracle for the SQL projection, held to it by the 12-case fixture and the stateful model) and the 12-case fixture
  */
 export function collectQueueReference(
   source: CollectSource

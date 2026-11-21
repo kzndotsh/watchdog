@@ -119,6 +119,9 @@ export const buildDeletedCaseRecord = (
   ...overrides,
 });
 
+/**
+ * @canonical `buildEvidenceRecord`, `buildEntityRecord`, `buildEntityListItem`, `buildEntityListConnection`, `buildCaseIdentifierRecord`, `buildCaseEdgeRecord`, `buildClaimRecord`, `buildEventRecord`, `buildQuestionRecord`, `buildJobListRecord`, `buildJobRecord`, `buildProposalRecord`, `buildProposalQueueItem`, `buildTaskListItem`, `buildCapListItem`, `buildPlaybookListItem`, `buildProviderCallRecord`, `buildProviderCallList`: Web test records (Evidence, Entity, Entity, Identifier and Connection list rows, Claim, Event, Question, Job, Proposal, Task board card, provider call, Cap and Playbook catalog entries; never a local `evidence()` / `job()` factory)
+ */
 export const buildEvidenceRecord = (
   overrides: Partial<EvidenceRecord> = {}
 ): EvidenceRecord => ({

@@ -6,4 +6,7 @@ export { ListCount } from "./list-count";
 export { ListFilterChips } from "./list-filter-chips";
 export { ListFiltersButton } from "./list-filters-button";
 export { ListTable } from "./list-table";
+/**
+ * @canonical `ListToolbar`, `ListTable`, `ListBody`, `ListCount`: The list toolbar, table, body and count
+ */
 export { ListToolbar } from "./list-toolbar";

@@ -22,6 +22,8 @@ function blockEveryNavigation() {
  * Pass what the user would lose, not "was ever edited": a form that was typed in and
  * put back to its defaults is clean, and a save in flight is not dirty (the write is
  * already on its way).
+ *
+ * @canonical `useUnsavedGuard`: Unsaved-changes guard (router blocker + `beforeunload` while a form or editor is dirty; render `UnsavedChangesDialog` with the result)
  */
 export function useUnsavedGuard(isDirty: boolean): UnsavedGuard {
   const resolver = useBlocker({
