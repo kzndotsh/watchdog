@@ -2,7 +2,7 @@
 
 > Scope: the server workspace `packages/server` (`core`, `api`, `db`, `auth`, `env`, `log`, `test-db`, `worker`) and the server-facing parts of `packages/domain` (`schemas`, `policy`, `test-kit`). Inherits the root [AGENTS.md](../../AGENTS.md).
 
-Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema and repos: the only SQL) → `core` (Effect services) → `api` (oRPC procedures) and `worker` (the Job runner). `policy` is pure custody rules, `tools` is fetch and parse with no Graph, `auth` is server identity, `env` the boot config, `log` process logging. Inside the workspace a folder imports another through the package's subpath imports (`#db`, `#core/jobs`); other workspaces use `@watchdog/server/<folder>/...`. `pnpm check:boundaries` holds the deny list and the public subpaths; reference: [`docs/reference/platform/`](../../docs/reference/platform/README.md).
+Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema and repos: the only SQL) → `core` (Effect services) → `api` (oRPC procedures) and `worker` (the Job runner). `policy` (in domain) is pure custody rules, `auth` is server identity, `env` the boot config, `log` process logging. Inside the workspace a folder imports another through the package's subpath imports (`#db`, `#core/jobs`); other workspaces use `@watchdog/server/<folder>/...`. `pnpm check:boundaries` holds the deny list and the public subpaths; reference: [`docs/reference/platform/`](../../docs/reference/platform/README.md).
 
 ## Database (`packages/server/db`)
 
@@ -54,5 +54,5 @@ Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema an
 
 - Integration: `withTestTx` when the code under test takes `tx` (it always rolls back); `resetTestDb()` when a test must commit; `resetE2eDb()` from Playwright only. Seed through the `seed*` helpers (real repos); a direct Graph write in a test runs in `withSystemHistoryContext` / `withSystemTestTx`.
 - Races use `twoWriters`, never a sleep. Count activity with `listAllActivity()`, never `activityLogRepo.drain` (commit-safe: it hides rows behind open transactions). Read Collect's queue after `flushCollectQueue(tx)`.
-- `test-kit` imports no workspace package. Branded id fixtures (`testCaseId`, `TEST_ORGANIZATION_ID`, `testActor`, `untrusted*`) live in `@watchdog/domain/schemas/testing`, the one tree exempt from `watchdog/no-brand-cast`.
+- `test-kit` imports no workspace code (deny list). Branded id fixtures (`testCaseId`, `TEST_ORGANIZATION_ID`, `testActor`, `untrusted*`) live in `@watchdog/domain/schemas/testing`, the one tree exempt from `watchdog/no-brand-cast`.
 - Core tests never import `drizzle-orm`; generic padded-UUID trimming is tested once in its owners, not again per service.
