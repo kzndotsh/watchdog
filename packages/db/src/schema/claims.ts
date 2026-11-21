@@ -47,6 +47,8 @@ export const claims = pgTable(
     organizationId: text("organization_id")
       .$type<OrganizationId>()
       .notNull()
+      // Deliberate: NOT NULL in the table (and drizzle-kit's snapshot), optional in the insert type;
+      // Drizzle sends NULL and the BEFORE INSERT trigger fills the Case's organization first.
       .$defaultFn(() => sql`null`),
     class: text("class").$type<ClaimClass>().notNull().default("observation"),
     text: text("text").notNull(),

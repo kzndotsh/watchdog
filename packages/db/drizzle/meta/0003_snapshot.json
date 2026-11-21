@@ -1,5 +1,5 @@
 {
-  "id": "56e77a4c-9cfa-4a31-bca6-3b7969be76b4",
+  "id": "f98c324d-cb36-41da-b400-202f849df3de",
   "prevId": "cb4b5ed5-dc68-4ca0-9eed-c4a25cdde9a1",
   "version": "7",
   "dialect": "postgresql",
@@ -1151,6 +1151,16 @@
           "notNull": true,
           "default": "'{\"local\",\"target\"}'"
         },
+        "local_only": {
+          "name": "local_only",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "allowed_egress = ARRAY['local']::text[]",
+            "type": "stored"
+          }
+        },
         "deleted_at": {
           "name": "deleted_at",
           "type": "timestamp with time zone",
@@ -1324,8 +1334,8 @@
           "method": "btree",
           "with": {}
         },
-        "cases_organization_egress_name_idx": {
-          "name": "cases_organization_egress_name_idx",
+        "cases_organization_local_name_idx": {
+          "name": "cases_organization_local_name_idx",
           "columns": [
             {
               "expression": "organization_id",
@@ -1334,7 +1344,7 @@
               "nulls": "last"
             },
             {
-              "expression": "allowed_egress",
+              "expression": "local_only",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

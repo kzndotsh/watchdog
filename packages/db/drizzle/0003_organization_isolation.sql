@@ -6,15 +6,21 @@
 -- `src/schema/cases.ts` and `src/schema/claims.ts` (the snapshot `meta/0003_snapshot.json` matches
 -- them). `claims.organization_id` is a copy of the Case's organization, held to it by the
 -- composite foreign key, so the policy compares a column of the row (a lookup through `cases`
--- took the paged Claim list off its index order on the perf seed). Added with NOT NULL and no
+-- took the paged Claim list off its index order on the perf seed). `cases.local_only` (stored,
+-- generated from `allowed_egress`) replaces the array comparison of the Case list's `localOnly`
+-- filter: under row-level security only a leakproof comparison can be an index condition, and
+-- array equality is not one. Added with NOT NULL and no
 -- backfill: nobody uses Watchdog yet, local data is wiped. Hand-added after the generated part:
 -- `case_organization_id` and the trigger that fills `claims.organization_id`, which drizzle does
 -- not model. Policies apply `TO public` without FORCE: the table owner (migrations, `just wipe`,
 -- repair) is not subject to them, every other role is.
 ALTER TABLE "cases" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
 ALTER TABLE "claims" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+DROP INDEX "cases_organization_egress_name_idx";--> statement-breakpoint
+ALTER TABLE "cases" ADD COLUMN "local_only" boolean GENERATED ALWAYS AS (allowed_egress = ARRAY['local']::text[]) STORED;--> statement-breakpoint
 ALTER TABLE "claims" ADD COLUMN "organization_id" text NOT NULL;--> statement-breakpoint
 ALTER TABLE "claims" ADD CONSTRAINT "claims_case_organization_fk" FOREIGN KEY ("case_id","organization_id") REFERENCES "public"."cases"("id","organization_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "cases_organization_local_name_idx" ON "cases" USING btree ("organization_id","local_only","name","id") WHERE "cases"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE POLICY "cases_organization_isolation" ON "cases" AS PERMISSIVE FOR ALL TO public USING ("cases"."organization_id" = (select public.graph_history_setting('watchdog.org_id'))) WITH CHECK ("cases"."organization_id" = (select public.graph_history_setting('watchdog.org_id')));--> statement-breakpoint
 CREATE POLICY "claims_organization_isolation" ON "claims" AS PERMISSIVE FOR ALL TO public USING ("claims"."organization_id" = (select public.graph_history_setting('watchdog.org_id'))) WITH CHECK ("claims"."organization_id" = (select public.graph_history_setting('watchdog.org_id')));--> statement-breakpoint
 -- The organization of a Case, for trusted paths that hold a Case id from a Job or a child row and

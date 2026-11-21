@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   index,
   pgPolicy,
@@ -44,6 +45,15 @@ export const cases = pgTable(
       .$type<EgressClass[]>()
       .notNull()
       .default([...DEFAULT_ALLOWED_EGRESS]),
+    /**
+     * The Case allows nothing beyond the install (`allowed_egress` is exactly `{local}`): the Case
+     * list's `localOnly` filter. A stored boolean, so the filter compares with `booleq`, which is
+     * leakproof: under row-level security (#718) Postgres only uses a leakproof comparison in an
+     * index condition, and array equality is not one, which took the filter off its index.
+     */
+    localOnly: boolean("local_only").generatedAlwaysAs(
+      sql`allowed_egress = ARRAY['local']::text[]`
+    ),
     /**
      * Tombstone (#304). A deleted Case keeps its row, Graph, Evidence and files until it is
      * restored or purged; every read goes through `visibleCase` (`repos/_visible-case.ts`) and
@@ -98,8 +108,8 @@ export const cases = pgTable(
       .on(t.organizationId, t.updatedAt, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
     // The Case list's `localOnly` filter in the default (name) sort.
-    index("cases_organization_egress_name_idx")
-      .on(t.organizationId, t.allowedEgress, t.name, t.id)
+    index("cases_organization_local_name_idx")
+      .on(t.organizationId, t.localOnly, t.name, t.id)
       .where(sql`${t.deletedAt} IS NULL`),
     index("cases_name_trgm_idx")
       .using("gin", t.name.op("gin_trgm_ops"))
