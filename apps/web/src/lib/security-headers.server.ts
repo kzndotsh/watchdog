@@ -104,11 +104,15 @@ function directives(entries: Record<string, readonly string[]>): string {
  *   lets Shiki's regex engine compile its WebAssembly module (Evidence code
  *   highlighting); it does not allow `eval()` or inline script.
  * - `style-src`: same-origin sheets plus the nonce for `<style>` elements (TanStack
- *   Start, Base UI). `style-src-attr 'unsafe-inline'` stays because server-rendered
- *   `style="..."` attributes carry computed layout (sidebar width, split-view and
- *   graph positions, table column widths); a style attribute cannot run script.
- *   Development uses `'unsafe-inline'` for `<style>` too, because Vite injects CSS
- *   at runtime without a nonce.
+ *   Start, Base UI). Development uses `'unsafe-inline'` for `<style>` too, because
+ *   Vite injects CSS at runtime without a nonce.
+ * - `style-src-attr 'none'`: no inline `style="..."` attribute from markup, an HTML
+ *   string or `setAttribute("style")`. With SSR off the server renders only the
+ *   document shell, which has none, and React applies the `style` prop through the
+ *   CSSOM, which the directive does not govern (computed layout: sidebar width,
+ *   split-view and graph positions). The same in development, so a library that
+ *   writes a style attribute fails locally and in e2e (every spec fails on a
+ *   violation), not first in production.
  * - `connect-src` / `img-src`: the app itself plus the object store, which the
  *   browser uploads to and reads previews from with presigned URLs.
  */
@@ -123,7 +127,7 @@ export function contentSecurityPolicy(
     "style-src": config.isProduction
       ? ["'self'", `'nonce-${nonce}'`]
       : ["'self'", "'unsafe-inline'"],
-    "style-src-attr": ["'unsafe-inline'"],
+    "style-src-attr": ["'none'"],
     "img-src": ["'self'", "data:", "blob:", ...store],
     "font-src": ["'self'", "data:"],
     "media-src": ["'none'"],

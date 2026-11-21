@@ -126,7 +126,7 @@ describe("contentSecurityPolicy", () => {
       "'self'",
       `'nonce-${NONCE}'`,
     ]);
-    expect(directiveOf(policy, "style-src-attr")).toEqual(["'unsafe-inline'"]);
+    expect(directiveOf(policy, "style-src-attr")).toEqual(["'none'"]);
   });
 
   it("lets the browser reach the object store for uploads and previews and nothing else", () => {
