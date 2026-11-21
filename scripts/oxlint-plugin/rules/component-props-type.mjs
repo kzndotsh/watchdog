@@ -67,7 +67,7 @@ export const componentPropsType = withBaseline("component-props-type", {
       reported.add(component.fn);
       context.report({
         node,
-        message: `${component.name} types ${literal.members.length} props inline: extract \`type ${component.name}Props = { ... }\` directly above the component and annotate the parameter with it (conventions: a named XProps type when a component has more than two props)`,
+        message: `${component.name} types ${literal.members.length} props inline: extract \`type ${component.name}Props = { ... }\` directly above the component and annotate the parameter with it (a named XProps type when a component has more than two props)`,
       });
     };
     return {

@@ -40,7 +40,7 @@ const OS_MODULE =
 const JUSTIFICATION = /^[\s*]*public:\s*\S/;
 
 const FIX =
-  "build the procedure from `authed` (or `graphChildWrite`), or justify a public one with an adjacent `// public: <reason>` comment directly above its statement (conventions: API procedures are guarded unless justified public)";
+  "build the procedure from `authed` (or `graphChildWrite`), or justify a public one with an adjacent `// public: <reason>` comment directly above its statement (API procedures are guarded unless justified public)";
 
 /**
  * Name read by a member access: `a.pub` or `a["pub"]`.

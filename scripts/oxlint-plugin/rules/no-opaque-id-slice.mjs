@@ -91,7 +91,7 @@ export const noOpaqueIdSlice = {
         if (name === null || !OPAQUE_NAMES.has(name)) return;
         context.report({
           node,
-          message: `${name}.slice(0, N) truncates an opaque id or hash, which collides and cannot be searched: render it with IdChip (JSX) or formatOpaqueId (strings) from apps/web/src/shared/ui (conventions: opaque ids render via IdChip / formatOpaqueId)`,
+          message: `${name}.slice(0, N) truncates an opaque id or hash, which collides and cannot be searched: render it with IdChip (JSX) or formatOpaqueId (strings) from apps/web/src/shared/ui (opaque ids render via IdChip / formatOpaqueId)`,
         });
       },
     };

@@ -47,7 +47,7 @@ function revalidateSessionOnUnauthorized(
   })();
 }
 
-/** Fresh QueryClient per router instance (SSR-safe). Not a module singleton. */
+/** Fresh QueryClient per router instance. Not a module singleton. */
 export function createAppQueryClient(): QueryClient {
   const client: QueryClient = new QueryClient({
     defaultOptions: {

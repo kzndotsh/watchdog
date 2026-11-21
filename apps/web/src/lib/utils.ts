@@ -50,7 +50,7 @@ const SERVER_FAILURE_MESSAGE = "Internal server error";
 
 /**
  * True for an oRPC `INTERNAL_SERVER_ERROR` / HTTP 500. Duck-typed because the
- * error can cross a server-function boundary and lose its `ORPCError` class;
+ * error can reach a caller as a plain object or `Error` without its `ORPCError` class;
  * the API's fixed 500 message is the last-resort signal.
  */
 export function isServerFailure(err: unknown): boolean {

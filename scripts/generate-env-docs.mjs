@@ -8,7 +8,7 @@
  *
  *   node scripts/generate-env-docs.mjs [--check] [--source <packages/server/env/src>]
  *
- * `--source` points at the env package source (default: next to this script's repo root); the
+ * `--source` points at the env source (default: next to this script's repo root); the
  * gate test uses it to run against a fixture repo while the schema's dependencies resolve from
  * the real install.
  */

@@ -17,7 +17,7 @@ const HANDLE_NAME = /^handle[A-Z]/;
 const ON_NAME = /^on[A-Z]/;
 const TYPE_DEPTH = 4;
 const CONVENTION =
-  "conventions: props are `onX`, their implementations inside the component are `handleX`, and no `handleX` names in props";
+  "props are `onX`, their implementations inside the component are `handleX`, and no `handleX` names in props";
 
 /**
  * `handleSave` -> `onSave`, `onSave` -> `handleSave`.

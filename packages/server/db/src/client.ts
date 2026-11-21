@@ -45,7 +45,7 @@ export function createPool(connectionString: string): Pool {
 /**
  * The process's one pool, opened on first use (postgres.js connects on the first
  * query). Production code never calls this: the `Db` owner Layer in
- * `#core` does (`pnpm lint` bans the import elsewhere).
+ * `#core` does (`pnpm check` bans the import elsewhere).
  */
 export function acquirePool(): Pool {
   globalForDb.__watchdogPool ??= createPool(env.DATABASE_URL);

@@ -1,8 +1,8 @@
 # Platform architecture
 
-Package layout, jobs/oRPC, and Caps. Leaves are SoT; this page only routes.
+Workspace layout, jobs/oRPC, and Caps. Leaves are SoT; this page only routes.
 
-- [`packages.md`](packages.md): package list and import-direction matrix.
+- [`packages.md`](packages.md): the workspaces, their folders, `#` imports and `exports`, and the import deny list.
 - [`jobs-orpc.md`](jobs-orpc.md): Cap job path, oRPC/OpenAPI boundary, where evlog is installed.
 - [`caps-boundary.md`](caps-boundary.md): Cap SPI, credentials, Intake, Export.
 - [`caps-lexicon.md`](caps-lexicon.md): Cap id/title/kind, D1-D5, ship gates.

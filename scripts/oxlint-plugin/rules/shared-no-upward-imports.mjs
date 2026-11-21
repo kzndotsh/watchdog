@@ -33,7 +33,7 @@ export const sharedNoUpwardImports = {
       if (layer === undefined) return;
       context.report({
         node,
-        message: `shared/ imports ${layer}/ code (${specifier}): shared/ sits below domains and the app/ composition root, so move what it needs into shared/ or @watchdog/domain/schemas, move this file into its domain (single-domain code) or into app/ (cross-domain wiring), or pass data in through props (conventions: shared imports no domain, app or route)`,
+        message: `shared/ imports ${layer}/ code (${specifier}): shared/ sits below domains and the app/ composition root, so move what it needs into shared/ or @watchdog/domain/schemas, move this file into its domain (single-domain code) or into app/ (cross-domain wiring), or pass data in through props (shared imports no domain, app or route)`,
       });
     });
   },

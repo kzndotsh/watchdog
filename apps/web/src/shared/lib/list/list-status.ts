@@ -3,12 +3,12 @@ import type { ListStatus } from "./list-types";
 /** Stable `data.code` the API sends for a list cursor issued for another view (ADR-0007). */
 const STALE_CURSOR_CODE = "cursor_stale";
 
-/** The tail of `StaleCursorError`'s message: the signal left when a ServerFn drops `data`. */
+/** The tail of `StaleCursorError`'s message: the signal left when an error arrives without `data`. */
 const STALE_CURSOR_MESSAGE_TAIL = "start again from the first page";
 
 /**
  * True for the API's `cursor_stale` 400. Duck-typed like `isStaleVersionError`: the error can
- * cross a server-function boundary and lose its `ORPCError` class and `data`.
+ * reach a caller without its `ORPCError` class and `data`.
  */
 export function isStaleCursorError(err: unknown): boolean {
   if (err === null || typeof err !== "object") return false;

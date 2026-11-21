@@ -9,8 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/domain/test-kit";
 
-// Only the network boundary is faked: the settings `*.functions` module, the oRPC client and the Markdown
-// export request. The menu, the hook, the dialog and the settings query run for real
+// Only the network boundary is faked: the oRPC client and the Markdown export request. The menu, the hook, the dialog and the settings query run for real
 // under a real QueryClient (docs/contributing/testing/standards.md Mock policy).
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

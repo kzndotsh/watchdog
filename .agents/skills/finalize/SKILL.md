@@ -40,5 +40,5 @@ May edit the docs that describe the dirty code, nested `AGENTS.md`, tests for th
 
 ## Gotchas
 
-- Mapped docs travel in the same commit as the code that affects them.
+- Docs travel in the same commit as the code they describe.
 - Do not start this while implementation is still in progress, and do not run a repo-wide docs or desloppify pass: stay on the dirty set.

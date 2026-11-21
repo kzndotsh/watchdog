@@ -39,7 +39,7 @@ export const noTsExtensionImport = {
       if (!TS_EXTENSION.test(specifier) || isTypeOnly(node)) return;
       context.report({
         node,
-        message: `import path ends in a TypeScript extension (${specifier}): drop the extension, this package's tsconfig.json does not set allowImportingTsExtensions and the typecheck runs on the test config (conventions: production source imports without .ts)`,
+        message: `import path ends in a TypeScript extension (${specifier}): drop the extension, this package's tsconfig.json does not set allowImportingTsExtensions and the typecheck runs on the test config (production source imports without .ts)`,
       });
     });
   },

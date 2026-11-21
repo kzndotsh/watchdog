@@ -151,7 +151,7 @@ export const noReimplementedCustodyMessage = {
   /** @param {RuleContext} context */
   create(context) {
     const message =
-      "the custody evidence message is typed here, a second copy that drifts from the rule: import CONFIRMED_REQUIRES_EVIDENCE (or call confirmedEvidenceViolation) from @watchdog/domain/policy in server code and from @watchdog/domain/policy/confirmed-evidence in browser code, never the @watchdog/domain/policy root; web forms ask isConfirmedBlocked in apps/web/src/shared/lib/confirmed-evidence.ts (conventions: one source per domain rule)";
+      "the custody evidence message is typed here, a second copy that drifts from the rule: import CONFIRMED_REQUIRES_EVIDENCE (or call confirmedEvidenceViolation) from @watchdog/domain/policy in server code and from @watchdog/domain/policy/confirmed-evidence in browser code, never the @watchdog/domain/policy root; web forms ask isConfirmedBlocked in apps/web/src/shared/lib/confirmed-evidence.ts (one source per domain rule)";
 
     /** Names written after their declaration anywhere in the file (`x = ...`, `x += ...`, `x++`, `[x] = ...`). */
     const written = new Set();

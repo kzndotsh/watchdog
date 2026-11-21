@@ -34,7 +34,7 @@ export const mutationOnlyInHooks = withBaseline("mutation-only-in-hooks", {
         context.report({
           node,
           message:
-            "useMutation outside a hook: move the mutation into a `use-*` hook under `domains/<domain>/hooks/` (or `shared/hooks/`) and have the component call that hook, so one mutation machine owns each noun and its invalidation (conventions: mutations and invalidation only in domain hooks)",
+            "useMutation outside a hook: move the mutation into a `use-*` hook under `domains/<domain>/hooks/` (or `shared/hooks/`) and have the component call that hook, so one mutation machine owns each noun and its invalidation (mutations and invalidation only in domain hooks)",
         });
       },
     };

@@ -35,7 +35,7 @@ export interface CreateApiKeyDialogProps {
 }
 
 /**
- * Create a key with the chosen scopes. The server function sets the scopes and the
+ * Create a key with the chosen scopes. The server sets the scopes and the
  * organization (the session's active one); Better Auth's browser create endpoint is closed.
  */
 export function CreateApiKeyDialog({

@@ -118,7 +118,7 @@ const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
 
 /**
  * Last item is the current page. The Case crumb comes from the Case in the URL
- * (`/cases/$caseSlug/...`), never from the cookie.
+ * (`/cases/$caseSlug/...`), never from the last Case entered.
  */
 export function buildPageTrail(input: PageTrailInput): TrailItem[] {
   const segs = pathSegments(input.pathname);

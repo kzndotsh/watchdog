@@ -20,4 +20,4 @@ Set `PUBLIC_APP_URL` in root `.env` (default local: `http://127.0.0.1:3000`) so 
 
 Marketing-only primitives: pill `PrimaryButton` inverted on the primary variant (accent reserved for small highlights, not CTA fill). No shadcn / React islands in v1.
 
-Contracts and product nouns: [`docs/`](../../docs/README.md) · [`AGENTS.md`](AGENTS.md)
+Contracts and product nouns: [`docs/`](../../docs/README.md) · [`AGENTS.md`](../../AGENTS.md)

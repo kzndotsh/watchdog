@@ -45,7 +45,7 @@ An organization with no live Case (a Deleted Case in its restore window does not
 
 ## Session cookie cache and the revocation window
 
-Better Auth's `session.cookieCache` is on (`packages/server/auth/src/session-cache.ts`): a signed `better-auth.session_data` cookie lets a request skip the session read for **60 seconds**. Every server function and `/api/v1` call otherwise read the session and user rows before its own query.
+Better Auth's `session.cookieCache` is on (`packages/server/auth/src/session-cache.ts`): a signed `better-auth.session_data` cookie lets a request skip the session read for **60 seconds**. Every `/api/rpc` and `/api/v1` call otherwise reads the session and user rows before its own query.
 
 | Question | Answer |
 | --- | --- |
@@ -77,7 +77,7 @@ Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated). The
 ## Gotchas
 
 - **Session cache:** `_protected` seeds BA UI's `authQueryKeys.session` via `ensureAppSession` (in the browser: SSR is off). Use `useSession(authClient)` from `@better-auth-ui/react`, not `authClient.useSession()`. The post-sign-in return param is **`redirectTo`** (BA UI), not `redirect`. Sign out via `/auth/sign-out` (clears the cookie and the whole query cache, so the next account on the tab never sees this one's data); raw `authClient.signOut()` leaves a stale cache and bounces you back in.
-- **Versions:** `better-auth`, `@better-auth/core`, `@better-auth/api-key` and `@better-auth/drizzle-adapter` move together, and the forked `@better-auth-ui/{core,react}` are pinned exact (no caret); the `pnpm-workspace.yaml` catalog pins `better-auth` and `@better-auth/api-key` once for every package, and `better-auth` pulls its matching `@better-auth/core`. API keys are user-owned and carry the active organization in `metadata.organizationId`; do not enable organization-owned keys (`referenceId`) until `createApiContext` maps `referenceId` without stamping an org id onto `actor.userId`. Password sign-in matches `auth.account.issuer` (`local:credential`); pre-1.7 rows need that column (migration `0011`; `pnpm db:migrate`).
+- **Versions:** `better-auth`, `@better-auth/core`, `@better-auth/api-key` and `@better-auth/drizzle-adapter` move together, and the forked `@better-auth-ui/{core,react}` are pinned exact (no caret); the `pnpm-workspace.yaml` catalog pins `better-auth` and `@better-auth/api-key` once for every package, and `better-auth` pulls its matching `@better-auth/core`. API keys are user-owned and carry the active organization in `metadata.organizationId`; do not enable organization-owned keys (`referenceId`) until `createApiContext` maps `referenceId` without stamping an org id onto `actor.userId`. Password sign-in matches `auth.account.issuer` (`local:credential`, the column default in the baseline migration).
 - **Route auth is UX, API auth is the gate:** `_protected` redirects for UX; the data is gated by the router (`authed` in `@watchdog/server/api`). There are no server functions. The route guard's organization answer is `auth.whoami` (`organizationStateQuery`): a session in no organization gets its bare `FORBIDDEN`, which sends the user to onboarding. A lost session shows up as oRPC `UNAUTHORIZED` (`isUnauthorizedFailure`, `auth/unauthorized-error.ts`), which revalidates the session query.
 - **CSRF:** `/api/rpc` requires the `x-csrf-token` header (`SimpleCsrfProtectionHandlerPlugin`; the client sends it); Better Auth checks the origin on its own POSTs. `start.ts` installs no CSRF middleware of its own.
 

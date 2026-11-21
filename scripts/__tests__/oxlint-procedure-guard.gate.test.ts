@@ -139,11 +139,13 @@ describe("procedure-must-be-guarded (oxlint.config.ts)", () => {
   it("does not apply to the folder's tests", () => {
     expect(hits(`${DIR}/__tests__/probe.test.ts`)).toHaveLength(0);
   });
-  it("reports the fix and the conventions entry at the use site", () => {
+  it("reports the fix and the rule at the use site", () => {
     const [hit] = hits(`${DIR}/pub-bare.ts`);
     expect(hit?.message).toContain("authed");
     expect(hit?.message).toContain("// public:");
-    expect(hit?.message).toContain("conventions");
+    expect(hit?.message).toContain(
+      "(API procedures are guarded unless justified public)"
+    );
     expect(hit?.line).toBe(3);
   });
   it("reports once per statement when a name is tracked twice", () => {

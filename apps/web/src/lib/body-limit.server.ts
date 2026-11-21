@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
 /**
  * Request body limit for every route that reads a body (the `/api/v1` OpenAPI handler,
- * Better Auth, server functions). One definition, `REQUEST_BODY_MAX_BYTES` in
+ * `/api/rpc`, Better Auth). One definition, `REQUEST_BODY_MAX_BYTES` in
  * `@watchdog/domain/schemas`; `server.ts` applies it before the Start handler, and
  * `scripts/serve.mjs` hands the same number to srvx as a backstop for the container.
  *

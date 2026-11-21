@@ -12,7 +12,7 @@ Canonical gates: [`custody`](../reference/contracts/custody.md) and [`agent-ingr
 - Claim `class` is kept as proposed (default `observation`); edit it later in the Dossier. No bulk class editor on Accept.
 - Reject drops the patch, keeps already-captured Evidence, takes an optional reason, and leaves the row in history (Rejected filter).
 - Identifier collision (a proposed `type+value` already on another Entity in the Case): Triage shows a warn Alert and a per-op chip. Warn, don't block. Caps stay Case-blind; this check is core/Triage.
-- Invalid Identifier values (`validateIdentifierWrite`): Triage chips the op and disables Accept, and core hard-fails the transaction. Reject or rewrite the Proposal; there is no partial Accept.
+- Invalid Identifier values (`validateIdentifierWrite`): Triage chips the op and disables Accept while it is ticked, and core hard-fails the transaction. Untick the op (a partial Accept applies the rest) or Reject the Proposal.
 
 ## Empty, error, success
 

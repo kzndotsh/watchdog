@@ -111,6 +111,13 @@ async function snapshotA() {
  * Runs attacks one at a time. After each, organization A's data is compared with `before`,
  * so a denied write that still changed something is named, not just detected at the end.
  */
+/**
+ * A test that runs the whole matrix calls every procedure and snapshots org A's data after each
+ * one, so its time grows with the router; the default 5 s is easy to exceed when the suite loads
+ * the CPU (see the testing standards on tests that need their own timeout).
+ */
+const MATRIX_TIMEOUT_MS = 30_000;
+
 async function runAttacks(attacks: Attack[], before: string) {
   const outcomes: Record<string, string> = {};
   const changed: string[] = [];
@@ -232,22 +239,26 @@ describe("organization isolation matrix", () => {
     ).id;
   });
 
-  it("denies every foreign-case call with not_found and changes nothing", async () => {
-    const before = await snapshotA();
-    const { outcomes, changed } = await runAttacks(
-      foreignCaseAttacks(b, ids),
-      before
-    );
-    const leaks = Object.entries(outcomes).filter(
-      ([, code]) => code !== "NOT_FOUND"
-    );
-    expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
-    expect(
-      changed,
-      `denied but changed A's data: ${changed.join(", ")}`
-    ).toEqual([]);
-    expect(await snapshotA()).toBe(before);
-  });
+  it(
+    "denies every foreign-case call with not_found and changes nothing",
+    { timeout: MATRIX_TIMEOUT_MS },
+    async () => {
+      const before = await snapshotA();
+      const { outcomes, changed } = await runAttacks(
+        foreignCaseAttacks(b, ids),
+        before
+      );
+      const leaks = Object.entries(outcomes).filter(
+        ([, code]) => code !== "NOT_FOUND"
+      );
+      expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
+      expect(
+        changed,
+        `denied but changed A's data: ${changed.join(", ")}`
+      ).toEqual([]);
+      expect(await snapshotA()).toBe(before);
+    }
+  );
 
   it("answers a foreign-organization Case exactly like a missing one", async () => {
     async function failureOf(caseId: string) {
@@ -279,23 +290,29 @@ describe("organization isolation matrix", () => {
     expect(payload(missing)).toEqual(expected(missingId));
   });
 
-  it("denies foreign child ids smuggled into an own case, and changes nothing", async () => {
-    const before = await snapshotA();
-    const { outcomes, changed } = await runAttacks(
-      foreignChildAttacks(b, ids),
-      before
-    );
-    const allowed = new Set(["NOT_FOUND", "BAD_REQUEST", "CONFLICT"]);
-    const leaks = Object.entries(outcomes).filter(
-      ([, code]) => !allowed.has(code)
-    );
-    expect(leaks, `unexpected outcomes: ${JSON.stringify(leaks)}`).toEqual([]);
-    expect(
-      changed,
-      `denied but changed A's data: ${changed.join(", ")}`
-    ).toEqual([]);
-    expect(await snapshotA()).toBe(before);
-  });
+  it(
+    "denies foreign child ids smuggled into an own case, and changes nothing",
+    { timeout: MATRIX_TIMEOUT_MS },
+    async () => {
+      const before = await snapshotA();
+      const { outcomes, changed } = await runAttacks(
+        foreignChildAttacks(b, ids),
+        before
+      );
+      const allowed = new Set(["NOT_FOUND", "BAD_REQUEST", "CONFLICT"]);
+      const leaks = Object.entries(outcomes).filter(
+        ([, code]) => !allowed.has(code)
+      );
+      expect(leaks, `unexpected outcomes: ${JSON.stringify(leaks)}`).toEqual(
+        []
+      );
+      expect(
+        changed,
+        `denied but changed A's data: ${changed.join(", ")}`
+      ).toEqual([]);
+      expect(await snapshotA()).toBe(before);
+    }
+  );
 
   it("reads none of A's rows when B filters or fetches by A's ids in its own Case", async () => {
     // A list filter or a fetch by id is not a lookup that must fail: an id outside the Case
@@ -468,63 +485,67 @@ describe("organization isolation matrix", () => {
     ).resolves.toBe(ids.caseA);
   });
 
-  it("answers every procedure about a deleted Case like a missing one, then serves it again after a restore", async () => {
-    const before = await snapshotA();
-    const activityBefore = (await a.activity.listRecent({})).items;
-    expect(activityBefore.length).toBeGreaterThan(0);
-    await a.cases.delete({ caseId: ids.caseA });
+  it(
+    "answers every procedure about a deleted Case like a missing one, then serves it again after a restore",
+    { timeout: MATRIX_TIMEOUT_MS },
+    async () => {
+      const before = await snapshotA();
+      const activityBefore = (await a.activity.listRecent({})).items;
+      expect(activityBefore.length).toBeGreaterThan(0);
+      await a.cases.delete({ caseId: ids.caseA });
 
-    // The owner of the organization asks about its own, now deleted, Case.
-    const attacks = foreignCaseAttacks(a, ids).filter(
-      ([name]) => !TOMBSTONE_AWARE_PROCEDURES.has(procedureOf(name))
-    );
-    const outcomes: Record<string, string> = {};
-    for (const [name, run] of attacks) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- one at a time so a leak is attributable
-      outcomes[name] = await codeOf(run);
+      // The owner of the organization asks about its own, now deleted, Case.
+      const attacks = foreignCaseAttacks(a, ids).filter(
+        ([name]) => !TOMBSTONE_AWARE_PROCEDURES.has(procedureOf(name))
+      );
+      const outcomes: Record<string, string> = {};
+      for (const [name, run] of attacks) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- one at a time so a leak is attributable
+        outcomes[name] = await codeOf(run);
+      }
+      const leaks = Object.entries(outcomes).filter(
+        ([, code]) => code !== "NOT_FOUND"
+      );
+      expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
+
+      // The case-less readers skip it too.
+      expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([]);
+      expect(
+        (await a.activity.listRecent({})).items.filter(
+          (entry) => entry.caseId === ids.caseA
+        )
+      ).toEqual([]);
+      await expect(runDomain(listVisibleCaseIdsEffect(ORG_A))).resolves.toEqual(
+        []
+      );
+      await expect(
+        runDomain(assertCaseInOrgEffect(ids.caseA, ORG_A))
+      ).rejects.toSatisfy(
+        (error: unknown) => isDomainTag(error) && error.code === "not_found"
+      );
+      // Exactly like a Case that never existed.
+      const missing = await codeOf(async () =>
+        a.cases.get({ caseId: testCaseId(998) })
+      );
+      expect(missing).toBe("NOT_FOUND");
+
+      // Nothing was lost: restored, A's data is what it was. The one change is the Case's
+      // queued Job, which the delete cancelled and a restore does not resume.
+      await a.cases.restore({ caseId: ids.caseA });
+      const withoutJobs = (snapshot: string): unknown => {
+        const parsed: Record<string, unknown> = JSON.parse(snapshot);
+        return { ...parsed, jobs: undefined };
+      };
+      expect(withoutJobs(await snapshotA())).toEqual(withoutJobs(before));
+      const jobs = (await a.jobs.listForCase({ caseId: ids.caseA })).items;
+      expect(jobs.map((job) => [job.id, job.status])).toEqual([
+        [ids.jobA, "cancelled"],
+      ]);
+      expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([
+        ids.caseA,
+      ]);
     }
-    const leaks = Object.entries(outcomes).filter(
-      ([, code]) => code !== "NOT_FOUND"
-    );
-    expect(leaks, `not NOT_FOUND: ${JSON.stringify(leaks)}`).toEqual([]);
-
-    // The case-less readers skip it too.
-    expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([]);
-    expect(
-      (await a.activity.listRecent({})).items.filter(
-        (entry) => entry.caseId === ids.caseA
-      )
-    ).toEqual([]);
-    await expect(runDomain(listVisibleCaseIdsEffect(ORG_A))).resolves.toEqual(
-      []
-    );
-    await expect(
-      runDomain(assertCaseInOrgEffect(ids.caseA, ORG_A))
-    ).rejects.toSatisfy(
-      (error: unknown) => isDomainTag(error) && error.code === "not_found"
-    );
-    // Exactly like a Case that never existed.
-    const missing = await codeOf(async () =>
-      a.cases.get({ caseId: testCaseId(998) })
-    );
-    expect(missing).toBe("NOT_FOUND");
-
-    // Nothing was lost: restored, A's data is what it was. The one change is the Case's
-    // queued Job, which the delete cancelled and a restore does not resume.
-    await a.cases.restore({ caseId: ids.caseA });
-    const withoutJobs = (snapshot: string): unknown => {
-      const parsed: Record<string, unknown> = JSON.parse(snapshot);
-      return { ...parsed, jobs: undefined };
-    };
-    expect(withoutJobs(await snapshotA())).toEqual(withoutJobs(before));
-    const jobs = (await a.jobs.listForCase({ caseId: ids.caseA })).items;
-    expect(jobs.map((job) => [job.id, job.status])).toEqual([
-      [ids.jobA, "cancelled"],
-    ]);
-    expect((await a.cases.list({})).items.map((row) => row.id)).toEqual([
-      ids.caseA,
-    ]);
-  });
+  );
 
   it("lists deleted Cases only for managers of the caller's own organization", async () => {
     await a.cases.delete({ caseId: ids.caseA });

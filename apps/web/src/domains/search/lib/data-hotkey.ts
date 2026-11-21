@@ -1,4 +1,4 @@
-/** Pure helpers behind `useDataHotkeys` (`shared/hooks/use-data-hotkeys.ts`). */
+/** Pure helpers behind `useDataHotkeys` (`domains/search/hooks/use-data-hotkeys.ts`). */
 
 const DATA_HOTKEY_ATTR = "data-hotkey";
 

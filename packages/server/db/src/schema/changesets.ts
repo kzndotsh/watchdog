@@ -39,7 +39,7 @@ import { proposals } from "./proposals";
  * inserts it as the first statement of the transaction; a write with no changeset of its Case
  * (the owner role, a seed) gets one from the history trigger, with the settings it finds.
  *
- * An agent graph write (`agent_write`, the old `graph_writes` row) also carries the request's
+ * An agent graph write (`agent_write`) also carries the request's
  * `patch`, the `confidence` it landed at and an idempotency key. Append-only: the app role may
  * INSERT and SELECT (`AUDIT_TABLES`); rows leave only with their Case.
  */

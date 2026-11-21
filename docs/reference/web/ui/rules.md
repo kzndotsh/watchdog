@@ -23,7 +23,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Router keeps `scrollRestoration: false`, `defaultPendingMs` 400, `defaultPendingMinMs` 500, `defaultPreloadStaleTime` 0 | [`page-shell.md`](page-shell.md), [`loading.md`](loading.md) | test `apps/web/src/__tests__/router.test.ts` |
 | No effect that syncs a prop into state or resets state when a prop changes; no effect that copies a loader or query result into state (`guidance`); reset a form by `key`, not `form.reset` in an effect | [`effects.md`](effects.md) | `oxlint` `react-doctor/no-adjust-state-on-prop-change`, `react-doctor/no-mirror-prop-effect`, `react-doctor/no-reset-all-state-on-prop-change`, `react-doctor/no-derived-state-effect` (no baseline); the query-sourced half and the `key` reset are `guidance` |
 | No server read in an effect: a `useQuery` keyed by all its inputs (debounce only what needs it) | [`effects.md`](effects.md) | `oxlint` `react-doctor/no-fetch-in-effect` (`fetch` only); the rest is `guidance` |
-| One QueryClient per request via `createAppQueryClient()`; no module singleton | [`data.md`](../data.md) | `guidance` |
+| One QueryClient per router via `createAppQueryClient()` in `getRouter()`; no module singleton | [`data.md`](../data.md) | `guidance` |
 | Loaders await identity only; lists via `void prefetchQuery` in `warm*Queries` | [`loading.md`](loading.md) | `guidance` |
 | `<Navigate>` is a sibling in the returned JSX, never an early return | [`loading.md`](loading.md) | `guidance` |
 | `animate-pulse` and `aria-busy` only inside `shared/ui` | [`loading.md`](loading.md) | `guidance` |

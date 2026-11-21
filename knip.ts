@@ -8,7 +8,7 @@ const config: KnipConfig = {
   },
   // psql: the migration test runs the perf seed with it (the CI integration job installs it).
   ignoreBinaries: ["check", "desloppify", "openssl", "psql"],
-  // _legacy-v2: local frozen tree, untracked (AGENTS.md); keep knip out of it when present.
+  // _legacy-v2: local frozen tree, untracked; keep knip out of it when present.
   ignore: ["_legacy-v2/**", ".claude/worktrees/**"],
   ignoreIssues: {
     // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
@@ -17,12 +17,11 @@ const config: KnipConfig = {
     "apps/web/src/domains/**/types.ts": ["types"],
     "apps/web/src/domains/**/*.server.ts": ["types"],
     "apps/web/src/auth/server.ts": ["types"],
-    // WD UI + domain helpers exported for /ui gallery, COMPONENTS.md, and tests.
+    // WD UI + domain helpers exported for the /ui gallery and tests.
     "apps/web/src/shared/ui/active-tab-body.tsx": ["exports"],
     "apps/web/src/shared/ui/graph/index.ts": ["exports"],
     "apps/web/src/shared/ui/graph/graph-bezier.ts": ["exports"],
     "apps/web/src/shared/ui/graph/graph-canvas-background.tsx": ["exports"],
-    "apps/web/src/shared/ui/graph/graph-canvas-skeleton.tsx": ["exports"],
     "apps/web/src/shared/ui/graph/types.ts": ["types"],
     "apps/web/src/shared/ui/vocab/index.ts": ["exports"],
     "apps/web/src/shared/ui/vocab/status.lib.ts": ["exports"],
