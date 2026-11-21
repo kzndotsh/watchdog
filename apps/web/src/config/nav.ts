@@ -107,7 +107,7 @@ export function workHref(
       };
 }
 
-/** Why a Work item is inactive while there is no Active Case. The context heals to the first visible Case (`resolveActiveCaseEffect`), so no Active Case means the organization has no Cases. */
+/** Why a Work item is inactive while there is no Active Case. A Case-less screen defaults to the first visible Case, so no Active Case means the organization has no Cases. */
 export const NO_CASE_REASON = "Create a Case first";
 
 export function pathActive(pathname: string, to: string): boolean {

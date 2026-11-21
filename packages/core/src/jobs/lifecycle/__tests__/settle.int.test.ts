@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import {
   JOB_STATUSES,
   TERMINAL_JOB_STATUSES,
@@ -14,6 +14,7 @@ import {
   resetTestDb,
   seedCase,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { failJobEffect } from "../../stages/helpers.ts";

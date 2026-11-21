@@ -16,11 +16,11 @@ import {
   seedEntity,
   withSystemHistoryContext,
   withTestTx,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { APP_ROLE } from "../app-role.ts";
-import { db } from "../client.ts";
 import { setGraphHistoryContext } from "../history-context.ts";
 
 /**

@@ -16,10 +16,9 @@ import {
   updateEntityFieldsEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
-import { db } from "@watchdog/db";
 import { questionList } from "@watchdog/schemas/graph";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 describe("createEntity", () => {
   beforeEach(async () => {

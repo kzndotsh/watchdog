@@ -17,10 +17,10 @@ import {
   seedPlaybookRun,
   seedProposal,
   withTestTx,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
-import { db } from "../../client.ts";
 import { ACTIVITY_CHANNEL, listenOnChannel } from "../../events.ts";
 import { activity } from "../../schema/activity.ts";
 import { activityListRepo } from "../activity-list.repo.ts";

@@ -2,7 +2,7 @@ import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
-import { db, jobsRepo, tryLockJobReconcile } from "@watchdog/db";
+import { jobsRepo, tryLockJobReconcile } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   backdateJob,
@@ -17,6 +17,7 @@ import {
   seedOrganizationMember,
   seedPlaybookRun,
   setJobDeliveryState,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

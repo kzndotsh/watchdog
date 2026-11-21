@@ -15,6 +15,10 @@ import { BlobStore, type BlobStoreApi } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
 import { instanceCredentialFingerprint } from "../infra/credential-fingerprint";
 import type { Db } from "../infra/db-service";
+import {
+  inCaseOrganizationUnchecked,
+  inOrganization,
+} from "../infra/organization-scope";
 import { readBoundedEffect } from "../infra/read-bounded";
 import {
   casesRepoFxDb,
@@ -115,7 +119,7 @@ export function measureCaseExportEffect(
   settings: CaseExportSettings = caseExportSettings(),
   options: CaseExportOptions = NO_OPT_INS
 ): Effect.Effect<CaseExportMeasure, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* measureCaseExportGen() {
+  const program = Effect.gen(function* measureCaseExportGen() {
     const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))
     );
@@ -163,6 +167,7 @@ export function measureCaseExportEffect(
       overLimit: evidenceBytes + rawBodyBytes > settings.inlineMaxBytes,
     };
   });
+  return inOrganization(organizationId, program);
 }
 
 type EvidencePart =
@@ -444,7 +449,7 @@ export function writeCaseExportZipEffect(
   settings: CaseExportSettings = caseExportSettings(),
   options: CaseExportOptions = NO_OPT_INS
 ): Effect.Effect<CaseExportStats, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* writeCaseExportZipGen() {
+  const program = Effect.gen(function* writeCaseExportZipGen() {
     const store = yield* BlobStore;
     const caseRow = yield* casesRepoFxDb.getByIdUnchecked(caseId);
     if (caseRow === null) {
@@ -554,4 +559,5 @@ export function writeCaseExportZipEffect(
       ...provenance,
     };
   });
+  return inCaseOrganizationUnchecked(caseId, program);
 }

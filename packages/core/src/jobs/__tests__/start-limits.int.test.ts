@@ -15,7 +15,7 @@ import {
 } from "@watchdog/core/jobs";
 import { getJobStartLimitsEffect } from "@watchdog/core/organization";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, jobStartLimitsRepo } from "@watchdog/db";
+import { jobStartLimitsRepo } from "@watchdog/db";
 import {
   EGRESS_CLASSES,
   type CaseId,
@@ -33,6 +33,7 @@ import {
   seedCase,
   seedEvidence,
   seedOrganizationMember,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

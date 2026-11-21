@@ -11,13 +11,12 @@ import { createTaskEffect } from "@watchdog/core/tasks";
 import {
   activityCursorsRepo,
   activityLogRepo,
-  db,
   type ActivityRow,
 } from "@watchdog/db";
 import type { ActivityCursor, ActivityEntry } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 const CONSUMER = "test-consumer";
 

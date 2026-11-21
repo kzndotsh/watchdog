@@ -33,7 +33,9 @@ import { runDomainWith } from "../run-domain";
  * audit-scale perf seed, is `list-conformance-plans.scale.int.test.ts`.
  */
 
-const run = runDomainWith(Db.layer);
+// The lists' scope is `TEST_ORGANIZATION_ID`'s: row-level security (#718) shows its Cases and Claims
+// to `testDb` only (the services scope themselves; `listPageEffect` is called bare here).
+const run = runDomainWith(Db.layerOf(testDb));
 const rowsOf = (rows: readonly ListRow[]) => Effect.succeed(rows);
 
 type Entry = {

@@ -12,13 +12,14 @@ import {
 import { deleteCaseEffect } from "@watchdog/core/case-deletion";
 import { createCaseEffect } from "@watchdog/core/cases";
 import { InternalError } from "@watchdog/core/errors";
-import { casesRepo, db } from "@watchdog/db";
+import { casesRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedOrganizationMember,
   testDb,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

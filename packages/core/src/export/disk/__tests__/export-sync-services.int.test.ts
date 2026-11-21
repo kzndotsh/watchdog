@@ -1,14 +1,15 @@
 import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { casesRepo, db } from "@watchdog/db";
+import { casesRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { asCaseId } from "@watchdog/schemas/shared";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 import { readArtifactBytesEffect } from "../../../infra/blob";
 import { BlobStore, recordingBlobStore } from "../../../infra/blob-store";
 import { Db } from "../../../infra/db-service";
+import { inCaseOrganizationUnchecked } from "../../../infra/organization-scope";
 import { tryDbWith } from "../../../infra/postgres-effect";
 import { transact } from "../../../infra/postgres-tx";
 import { runDomainWith } from "../../../infra/run-domain";
@@ -30,7 +31,11 @@ describe("detached export write services", () => {
     const row = await seedCase(db, { name: "Exported" });
     const seen: string[] = [];
     const writeExport = (id: CaseId) =>
-      tryDbWith((exec) => casesRepo.getByIdUnchecked(exec, id)).pipe(
+      // In the Case's own organization, as the real export write is (row-level security, #718).
+      inCaseOrganizationUnchecked(
+        id,
+        tryDbWith((exec) => casesRepo.getByIdUnchecked(exec, id))
+      ).pipe(
         Effect.tap((found) =>
           Effect.sync(() => {
             seen.push(found?.id ?? "missing");

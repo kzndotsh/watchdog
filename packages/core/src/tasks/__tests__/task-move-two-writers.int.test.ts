@@ -7,7 +7,7 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { casesRepo, db, tasksRepo } from "@watchdog/db";
+import { casesRepo, tasksRepo } from "@watchdog/db";
 import type { TaskStatus } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -15,6 +15,7 @@ import {
   resetTestDb,
   seedCase,
   twoWriters,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

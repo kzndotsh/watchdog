@@ -18,6 +18,7 @@ import {
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inCaseOrganizationIfFound } from "../infra/organization-scope";
 import { onExec } from "../infra/repo-fx";
 import {
   identifiersRepoFx,
@@ -177,7 +178,7 @@ export function suppressKnownFindingsEffect(
     return Effect.succeed({ kept: [], suppressed: 0 });
   }
 
-  return Effect.gen(function* suppressKnownFindingsGen() {
+  const program = Effect.gen(function* suppressKnownFindingsGen() {
     const fps = patch.map((op) => ({
       op,
       fp: fingerprintPatchOp(op),
@@ -221,6 +222,11 @@ export function suppressKnownFindingsEffect(
     }
     return { kept, suppressed };
   });
+  // A caller's `exec` is already in the Case's scope; on the pool, take the Case's own (row-level
+  // security, #718: the existing Claims are read).
+  return exec === undefined
+    ? inCaseOrganizationIfFound(caseId, program)
+    : program;
 }
 
 export function recordRejectedFingerprintsEffect(input: {

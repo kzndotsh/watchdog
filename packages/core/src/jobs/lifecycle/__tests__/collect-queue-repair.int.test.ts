@@ -2,7 +2,7 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { createLogger } from "@watchdog/log";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -18,6 +18,7 @@ import {
   seedOrganizationMember,
   withCollectQueueCaseFault,
   withCollectQueueFault,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

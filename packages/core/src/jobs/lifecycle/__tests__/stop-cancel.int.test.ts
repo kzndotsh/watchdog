@@ -10,7 +10,7 @@ import {
 } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -22,6 +22,7 @@ import {
   seedJob,
   seedOrganizationMember,
   seedPlaybookRun,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

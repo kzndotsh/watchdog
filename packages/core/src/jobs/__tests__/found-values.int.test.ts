@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { db, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -16,6 +16,7 @@ import {
   seedEntity,
   seedIdentifier,
   seedJob,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

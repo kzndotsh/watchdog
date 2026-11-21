@@ -37,6 +37,10 @@ export { listCaseEvidence } from "./db/evidence-rows.ts";
 export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";
 export {
+  withCaseOrganizationScope,
+  withOrganizationScope,
+} from "./db/organization-scope.ts";
+export {
   resetE2eDb,
   resetTestDb,
   withSystemTestTx,

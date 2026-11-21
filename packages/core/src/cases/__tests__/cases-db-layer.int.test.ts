@@ -45,6 +45,8 @@ describe("listCasesEffect through the Db Layer", () => {
       )
     );
     expect(listed).toHaveLength(1);
-    expect(touched).toContain("select");
+    // `listCasesEffect` scopes the provided client to the organization (row-level security, #718):
+    // the scoped handle is built over that client's own `$client`, never the module global.
+    expect(touched).toContain("$client");
   });
 });

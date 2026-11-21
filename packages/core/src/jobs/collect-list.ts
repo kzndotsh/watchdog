@@ -33,6 +33,7 @@ import type { DomainTag } from "../errors/tagged-errors";
 import { toEvidenceRecord } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { tryDbWith } from "../infra/postgres-effect";
 import { toJobListRecord } from "./start-job";
 
@@ -156,7 +157,7 @@ export function listCollectEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof collectList>
 ): Effect.Effect<ListPage<CollectQueueItem>, DomainTag, Db> {
-  return Effect.gen(function* listCollectGen() {
+  const program = Effect.gen(function* listCollectGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: collectList,
@@ -166,6 +167,7 @@ export function listCollectEffect(
       toItems: (rows) => collectItems(scopedCaseId, rows),
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -178,7 +180,7 @@ export function getCollectItemEffect(
   organizationId: OrganizationId,
   input: Pick<LocateCollectInput, "id" | "hidden">
 ): Effect.Effect<CollectLocatedItem, DomainTag, Db> {
-  return Effect.gen(function* getCollectItemGen() {
+  const program = Effect.gen(function* getCollectItemGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const found = yield* tryDbWith((exec) =>
       locateCollectRow(exec, scopedCaseId, input.id, input.hidden === true)
@@ -193,8 +195,12 @@ export function getCollectItemEffect(
             toItems: (rows) => collectItems(scopedCaseId, rows),
           });
     if (found === null || item === undefined) {
-      return yield* new NotFoundError({ entity: "Collect item", id: input.id });
+      return yield* new NotFoundError({
+        entity: "Collect item",
+        id: input.id,
+      });
     }
     return { item, focusJobId: found.focusJobId };
   });
+  return inOrganization(organizationId, program);
 }

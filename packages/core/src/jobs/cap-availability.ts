@@ -20,6 +20,7 @@ import {
 } from "../caps/breach-caps";
 import { ForbiddenError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inCaseOrganizationIfFound } from "../infra/organization-scope";
 import { casesRepoFxDb } from "../infra/repos-fx";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
 
@@ -82,7 +83,7 @@ export function evaluateCapAvailabilityEffect(input: {
   const specs = desc.credentials ?? [];
   const names = credentialNames(specs);
 
-  return Effect.gen(function* evaluateCapAvailabilityGen() {
+  const program = Effect.gen(function* evaluateCapAvailabilityGen() {
     const present = new Set<string>();
     yield* Effect.forEach(
       names,
@@ -123,6 +124,7 @@ export function evaluateCapAvailabilityEffect(input: {
       ),
     };
   });
+  return inCaseOrganizationIfFound(input.caseId, program);
 }
 
 /** Fail closed before enqueue — same predicate as playbooks / worker preflight. */

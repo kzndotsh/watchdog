@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { recordingBlobStore } from "@watchdog/core/blob";
 import { startJobEffect } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { asOrganizationId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -19,6 +19,7 @@ import {
   seedOrganizationMember,
   seedPlaybookRun,
   updateApiKey,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";

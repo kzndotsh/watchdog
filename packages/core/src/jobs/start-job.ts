@@ -41,6 +41,7 @@ import {
 import { assertEvidenceIdsInCaseEffect } from "../graph/graph-evidence";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { jobsRepoFx, jobsRepoFxDb } from "../infra/repos-fx";
@@ -136,7 +137,7 @@ export function toJobRecord(
 export function startJobEffect(
   input: StartJobInput
 ): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
-  return Effect.gen(function* startJobGen() {
+  const program = Effect.gen(function* startJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -225,6 +226,7 @@ export function startJobEffect(
       users
     );
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export type RetryJobInput = {
@@ -246,7 +248,7 @@ export type RetryJobInput = {
 export function retryJobEffect(
   input: RetryJobInput
 ): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
-  return Effect.gen(function* retryJobGen() {
+  const program = Effect.gen(function* retryJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -282,6 +284,7 @@ export function retryJobEffect(
           }),
     });
   });
+  return inOrganization(input.organizationId, program);
 }
 
 /**
@@ -294,7 +297,7 @@ export function listJobsForCaseEffect(
   organizationId: OrganizationId,
   input?: ListInput<typeof jobList>
 ): Effect.Effect<ListPage<JobListRecord>, DomainTag, Db> {
-  return Effect.gen(function* listJobsGen() {
+  const program = Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: jobList,
@@ -320,6 +323,7 @@ export function listJobsForCaseEffect(
         }),
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 export function getJobForCaseEffect(
@@ -327,7 +331,7 @@ export function getJobForCaseEffect(
   organizationId: OrganizationId,
   jobId: string
 ): Effect.Effect<JobRecord, DomainTag, Db> {
-  return Effect.gen(function* getJobForCaseGen() {
+  const program = Effect.gen(function* getJobForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
     const row = yield* jobsRepoFxDb.getInCase(scopedCaseId, normalizedJobId);
@@ -337,4 +341,5 @@ export function getJobForCaseEffect(
     const users = yield* loadActorUsersEffect([row.job.actorId]);
     return toJobRecord(row.job, row, users);
   });
+  return inOrganization(organizationId, program);
 }

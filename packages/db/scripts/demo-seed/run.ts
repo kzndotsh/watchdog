@@ -23,6 +23,7 @@ import {
   member,
   organization,
   setGraphHistoryContext,
+  setOrganizationContext,
   user,
 } from "@watchdog/db";
 
@@ -162,6 +163,9 @@ async function main(): Promise<void> {
   await db.transaction(async (tx) => {
     // The app role may not write the Graph with no history context (#352); the demo is the system.
     await setGraphHistoryContext(tx, { channel: "system" });
+    // Row-level security (#718): the app role sees and writes the Cases of the transaction's
+    // organization only.
+    await setOrganizationContext(tx, actor.organizationId);
     const existing = await tx
       .select({
         id: cases.id,

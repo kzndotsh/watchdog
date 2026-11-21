@@ -7,6 +7,8 @@ import {
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type { CaseId } from "@watchdog/schemas/shared";
 
+import { withCaseOrganizationScope } from "../organization-scope.ts";
+
 export async function seedProposal(
   exec: DbExec,
   caseId: CaseId,
@@ -40,15 +42,17 @@ export async function seedProposal(
       : (["created"] as const);
   for (const action of actions) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
-    const entry = await activityLogRepo.append(exec, {
-      caseId,
-      kind: "proposal",
-      action,
-      subjectId: created.id,
-      actorId: action === "created" ? overridesResolved.createdBy : undefined,
-      fromValue: action === "created" ? null : "pending",
-      toValue: action === "created" ? null : action,
-    });
+    const entry = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+      activityLogRepo.append(tx, {
+        caseId,
+        kind: "proposal",
+        action,
+        subjectId: created.id,
+        actorId: action === "created" ? overridesResolved.createdBy : undefined,
+        fromValue: action === "created" ? null : "pending",
+        toValue: action === "created" ? null : action,
+      })
+    );
     if (!entry) {
       throw new Error("seedProposal activity failed");
     }

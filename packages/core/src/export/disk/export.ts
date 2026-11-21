@@ -23,6 +23,7 @@ import {
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowIsoStringEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
+import { inCaseOrganizationUnchecked } from "../../infra/organization-scope";
 import {
   entitiesRepoFxDb,
   claimsRepoFxDb,
@@ -143,7 +144,7 @@ type CaseExportResult = {
 export function renderCaseExportEffect(
   caseId: CaseId
 ): Effect.Effect<CaseExportResult, DomainTag, Db> {
-  return Effect.gen(function* renderCaseExportGen() {
+  const program = Effect.gen(function* renderCaseExportGen() {
     const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
     if (normalizedCaseId === undefined) {
       return {
@@ -206,4 +207,5 @@ export function renderCaseExportEffect(
         : null,
     };
   });
+  return inCaseOrganizationUnchecked(caseId, program);
 }

@@ -1,4 +1,4 @@
-import { activity, cases, type DbExec } from "@watchdog/db";
+import { activity, type DbExec } from "@watchdog/db";
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import {
   asCaseId,
@@ -11,6 +11,7 @@ import {
 } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
+import { insertCasesInScope } from "../organization-scope.ts";
 import { at } from "./types.ts";
 import type { ListConformance } from "./types.ts";
 
@@ -115,7 +116,7 @@ export const activityConformance: ListConformance = {
     facts: { caseId: caseOf(row) },
   })),
   async seed(exec: DbExec) {
-    await exec.insert(cases).values([
+    await insertCasesInScope(exec, [
       caseValues(CASE_1, TEST_ORGANIZATION_ID, 1),
       caseValues(CASE_2, TEST_ORGANIZATION_ID, 2),
       caseValues(FOREIGN, TEST_OTHER_ORGANIZATION_ID, 4),

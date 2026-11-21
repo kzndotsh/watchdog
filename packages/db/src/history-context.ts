@@ -24,6 +24,17 @@ export type NewChangeset = {
   patch?: readonly PatchOp[] | null;
 };
 
+/**
+ * The organization a transaction acts for: the fifth transaction-local setting of the context,
+ * read by the row-level security policies on `cases` and `claims` (through the same
+ * `graph_history_setting` reader, which maps the empty string a reused pooled connection holds to
+ * NULL, so an unset organization matches no row). Its one writer is the organization-scoped handle
+ * (`organizationScopedDb`, `setOrganizationContext` in `organization-scope.ts`), which sets it at
+ * the start of every transaction and statement, reads included; the history context below is set
+ * inside such a transaction and does not repeat it.
+ */
+export const ORGANIZATION_SETTING = "watchdog.org_id";
+
 /** Who is writing the Graph in this transaction, and through which door. */
 export type GraphHistoryContext = GraphActor & {
   channel: GraphHistoryChannel;

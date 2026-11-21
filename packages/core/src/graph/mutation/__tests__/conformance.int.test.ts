@@ -1,6 +1,5 @@
 import {
   claimsRepo,
-  db,
   edgesRepo,
   entitiesRepo,
   eventsRepo,
@@ -26,7 +25,7 @@ import {
 } from "@watchdog/db";
 import type { EdgePredicate } from "@watchdog/schemas/shared";
 import { slugifyName } from "@watchdog/schemas/shared";
-import { seedEntity, seedEvidence } from "@watchdog/test-db";
+import { seedEntity, seedEvidence, testDb as db } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import {

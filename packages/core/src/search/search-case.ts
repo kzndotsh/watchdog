@@ -39,6 +39,7 @@ import {
 } from "../display/entity-display";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import {
   entitiesRepoFxDb,
   identifiersRepoFxDb,
@@ -242,7 +243,7 @@ function entityIdsForSearchHits(
 export function searchCaseEffect(
   opts: SearchCaseOpts
 ): Effect.Effect<SearchCaseResult, DomainTag, Db> {
-  return Effect.gen(function* searchCaseGen() {
+  const program = Effect.gen(function* searchCaseGen() {
     const q = opts.q.trim();
     if (q.length < SEARCH_MIN_QUERY_LENGTH) {
       return emptyResult(q);
@@ -358,4 +359,5 @@ export function searchCaseEffect(
       entityLabels,
     };
   });
+  return inOrganization(opts.organizationId, program);
 }

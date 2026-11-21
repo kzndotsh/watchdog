@@ -19,6 +19,7 @@ import {
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -46,7 +47,7 @@ import type {
 export function presignUploadEffect(
   input: PresignUploadInput
 ): Effect.Effect<PresignedPut, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* presignUploadGen() {
+  const program = Effect.gen(function* presignUploadGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -71,6 +72,7 @@ export function presignUploadEffect(
       .pipe(requireWritten("record the presigned upload"));
     return put;
   });
+  return inOrganization(input.organizationId, program);
 }
 
 function declaresSame(
@@ -115,7 +117,7 @@ export function confirmFileUploadEffect(
   actorId: string,
   actorLabel?: string | null
 ): Effect.Effect<EvidenceRecord, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* confirmFileUploadGen() {
+  const program = Effect.gen(function* confirmFileUploadGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -191,4 +193,5 @@ export function confirmFileUploadEffect(
       reason: "Upload changed or expired: upload the file again",
     });
   });
+  return inOrganization(input.organizationId, program);
 }

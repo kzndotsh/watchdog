@@ -3,12 +3,17 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createEntityEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
-import { activity, db } from "@watchdog/db";
+import { activity } from "@watchdog/db";
 import {
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
-import { listAllGraphHistory, resetTestDb, seedCase } from "@watchdog/test-db";
+import {
+  listAllGraphHistory,
+  resetTestDb,
+  seedCase,
+  testDb as db,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const KEY_ID = "key-366";

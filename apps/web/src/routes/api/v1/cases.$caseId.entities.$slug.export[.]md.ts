@@ -13,7 +13,7 @@ import { getCaseByIdEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
 import { renderEntityMarkdownEffect } from "@watchdog/core/export";
 import { getEntityByCaseSlugEffect } from "@watchdog/core/graph";
-import type { Db } from "@watchdog/core/infra";
+import { inOrganization, type Db } from "@watchdog/core/infra";
 import {
   type CaseId,
   type OrganizationId,
@@ -30,7 +30,9 @@ function entityExportMdEffect(
   slug: string,
   organizationId: OrganizationId
 ): Effect.Effect<EntityExportMdResult, DomainTag, Db> {
-  return Effect.gen(function* entityExportMdGen() {
+  // The whole read in the caller's organization (row-level security): the rendering reads the
+  // Entity's Claims, which only a scoped statement sees.
+  const program = Effect.gen(function* entityExportMdGen() {
     const scopedCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))
     );
@@ -52,6 +54,7 @@ function entityExportMdEffect(
     }
     return { kind: "ok" as const, markdown: exported.markdown };
   });
+  return inOrganization(organizationId, program);
 }
 
 export const Route = createFileRoute(

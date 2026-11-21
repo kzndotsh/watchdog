@@ -15,6 +15,7 @@ import {
   type NotFoundEntity,
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { onExec } from "../infra/repo-fx";
 import { casesRepoFx, entitiesRepoFx, evidenceRepoFx } from "../infra/repos-fx";
 
@@ -68,7 +69,7 @@ export function assertCaseInOrgEffect(
   organizationId: OrganizationId,
   exec?: DbExec
 ): Effect.Effect<CaseId, DomainTag, Db> {
-  return Effect.gen(function* assertCaseInOrgGen() {
+  const program = Effect.gen(function* assertCaseInOrgGen() {
     const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const row = yield* onExec(exec, (handle) =>
       casesRepoFx.getById(handle, trimmedCaseId, organizationId)
@@ -78,6 +79,7 @@ export function assertCaseInOrgEffect(
     }
     return trimmedCaseId;
   });
+  return inOrganization(organizationId, program);
 }
 
 export function assertEntityInCaseEffect(

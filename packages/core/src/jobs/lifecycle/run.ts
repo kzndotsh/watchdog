@@ -12,6 +12,7 @@ import { capCacheKey } from "../cap-cache";
 import { logJobFailureCause } from "../failure-cause";
 import { JobFibers } from "../job-fibers";
 import { createJobLog, type JobLog, withLogFlusher } from "../job-log";
+import { inJobOrganization } from "../job-organization";
 import type { JobQueue } from "../job-queue";
 import { outcomeFromStopStatus, type JobRunOutcome } from "../run-outcome";
 import type { CollectResult } from "../stages/collect";
@@ -402,15 +403,7 @@ function settleAttemptEffect(
   });
 }
 
-/**
- * Run one attempt at a Job on the worker: claim and preflight it (acquire), run the Cap body
- * (use), settle it from how that ended (release). Release is uninterruptible and runs once
- * whatever happened, so an interrupt from the Cap timer, the pg-boss signal or a cancel
- * leaves one terminal status, one activity entry and one Playbook advance, the same as a finish.
- * The stop slot of the attempt (`JobFibers.attemptFor`) holds the cause of the first source that
- * stopped it; the settle stores it in `error_code`.
- */
-export function run<R, S>(
+function runAttempt<R, S>(
   jobId: string,
   bodies: JobBodies<R, S>
 ): Effect.Effect<
@@ -479,4 +472,23 @@ export function run<R, S>(
       }
     );
   });
+}
+
+/**
+ * Run one attempt at a Job on the worker: claim and preflight it (acquire), run the Cap body
+ * (use), settle it from how that ended (release). Release is uninterruptible and runs once
+ * whatever happened, so an interrupt from the Cap timer, the pg-boss signal or a cancel
+ * leaves one terminal status, one activity entry and one Playbook advance, the same as a finish.
+ * The stop slot of the attempt (`JobFibers.attemptFor`) holds the cause of the first source that
+ * stopped it; the settle stores it in `error_code`.
+ */
+export function run<R, S>(
+  jobId: string,
+  bodies: JobBodies<R, S>
+): Effect.Effect<
+  JobRunOutcome,
+  never,
+  R | S | Db | Vault | JobQueue | JobFibers
+> {
+  return inJobOrganization(jobId, runAttempt(jobId, bodies));
 }

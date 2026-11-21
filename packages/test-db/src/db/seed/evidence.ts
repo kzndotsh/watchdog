@@ -13,6 +13,7 @@ import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue";
+import { withCaseOrganizationScope } from "../organization-scope.ts";
 
 const DEFAULT_EVIDENCE: Omit<NewEvidence, "caseId"> = {
   entityId: null,
@@ -41,15 +42,17 @@ export async function seedEvidence(
     throw new Error("seedEvidence failed");
   }
   // The entry the write path appends, so a seeded row shows in Recent activity.
-  const entry = await activityLogRepo.append(exec, {
-    caseId,
-    kind: "evidence",
-    action: "captured",
-    subjectId: created.id,
-    label: evidenceDisplayLabel(created),
-    actorId: created.actorId,
-    actorLabel: created.actorLabel,
-  });
+  const entry = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+    activityLogRepo.append(tx, {
+      caseId,
+      kind: "evidence",
+      action: "captured",
+      subjectId: created.id,
+      label: evidenceDisplayLabel(created),
+      actorId: created.actorId,
+      actorLabel: created.actorLabel,
+    })
+  );
   if (!entry) {
     throw new Error("seedEvidence activity failed");
   }

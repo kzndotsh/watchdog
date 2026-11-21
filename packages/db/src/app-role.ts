@@ -58,13 +58,16 @@ const INTERNAL_TABLES = [
 ] as const;
 
 /**
- * Collect's callable SECURITY DEFINER functions (the flush, a Case's rebuild, the drift check):
- * revoked from PUBLIC by their migration, so the application role is the only caller.
+ * Callable SECURITY DEFINER functions (Collect's flush, a Case's rebuild and the drift check; a
+ * Case's organization): revoked from PUBLIC by their migration, so the application role is the
+ * only caller.
  */
 const APP_FUNCTIONS = [
   "collect_queue_flush()",
   "collect_queue_rebuild(uuid)",
   "collect_queue_find_drift(integer)",
+  // A Case's organization for the worker's trusted paths (row-level security, #718).
+  "case_organization_id(uuid)",
 ] as const;
 
 const TABLE_PRIVILEGES = "SELECT, INSERT, UPDATE, DELETE";

@@ -12,6 +12,7 @@ import { listAllActivity, listAllGraphHistory } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../../activity/graph-activity";
+import { inOrganization } from "../../../infra/organization-scope";
 import { transact } from "../../../infra/postgres-tx";
 import { isRemovable, type GraphTable } from "../graph-table";
 import {
@@ -131,23 +132,26 @@ export function makeHarness<
     if (entry === "own") {
       return runGraphMutation({ ...ctx, actor: ACTOR, channel }, body);
     }
-    return transact((tx) =>
-      Effect.gen(function* joinedGen() {
-        yield* setHistoryContextEffect(tx, {
-          ...ACTOR,
-          channel,
-          changeset: {
-            caseId: ctx.caseId,
-            confidence: "unverified",
-            patch: [],
-          },
-        });
-        return yield* runGraphMutationInTx(
-          tx,
-          { caseId: ctx.caseId, actor: ACTOR },
-          body
-        );
-      })
+    return inOrganization(
+      ctx.organizationId,
+      transact((tx) =>
+        Effect.gen(function* joinedGen() {
+          yield* setHistoryContextEffect(tx, {
+            ...ACTOR,
+            channel,
+            changeset: {
+              caseId: ctx.caseId,
+              confidence: "unverified",
+              patch: [],
+            },
+          });
+          return yield* runGraphMutationInTx(
+            tx,
+            { caseId: ctx.caseId, actor: ACTOR },
+            body
+          );
+        })
+      )
     );
   };
   /** The module's own entry, whose writer returns settled records. */

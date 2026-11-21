@@ -1,5 +1,11 @@
-// oxlint-disable-next-line unicorn/prefer-export-from -- a binding on purpose: `export ... from` of another workspace package is banned (check:workspace-reexports)
-import { db } from "@watchdog/db";
+import { db, organizationScopedDb } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
-/** The shared test connection: tests import it from here so api and caps never depend on `@watchdog/db`. A binding, not a re-export of the db module. */
-export const testDb = db;
+/**
+ * The shared test connection: tests import it from here so api and caps never depend on
+ * `@watchdog/db`. It is the application role in `TEST_ORGANIZATION_ID`'s row-level security scope
+ * (#718), so a test reads and seeds its default organization's Cases and Claims directly; another
+ * organization's rows need `withOrganizationScope`. Code under test never runs on it: core reads
+ * the unscoped pool through `Db.layer` and scopes itself (`inOrganization`).
+ */
+export const testDb = organizationScopedDb(db, TEST_ORGANIZATION_ID);

@@ -31,6 +31,7 @@ import {
   type VersionedEntity,
 } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";
+import { inOrganization } from "../../infra/organization-scope";
 import {
   requireWritten,
   tryDb,
@@ -422,7 +423,7 @@ export function runGraphMutation<A, E extends DomainTag, R>(
   scope: GraphMutationScope,
   body: (w: GraphWriter) => Effect.Effect<A, E, R>
 ): Effect.Effect<A, E | DomainTag, R | Db> {
-  return Effect.gen(function* runGraphMutationGen() {
+  const mutation = Effect.gen(function* runGraphMutationGen() {
     const caseId = yield* assertCaseInOrgEffect(
       scope.caseId,
       scope.organizationId
@@ -438,6 +439,7 @@ export function runGraphMutation<A, E extends DomainTag, R>(
       })
     );
   });
+  return inOrganization(scope.organizationId, mutation);
 }
 
 /** What a joined mutation needs: the Case the caller already scoped, and who writes. */

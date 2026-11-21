@@ -2,13 +2,12 @@ import { sql } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseId } from "@watchdog/schemas/shared";
-import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 import {
   createActivityTailer,
   type ActivityTailer,
 } from "../activity-tailer.ts";
-import { db } from "../client.ts";
 import {
   activityLogRepo,
   type ActivityRow,

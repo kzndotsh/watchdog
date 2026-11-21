@@ -66,6 +66,7 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
 import {
   entitiesRepoFxDb,
@@ -238,7 +239,7 @@ export function listProposalsForCaseEffect(
   organizationId: OrganizationId,
   input?: ListInput<typeof proposalList>
 ): Effect.Effect<ListPage<ProposalRecord>, DomainTag, Db> {
-  return Effect.gen(function* listProposalsForCaseGen() {
+  const program = Effect.gen(function* listProposalsForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: proposalList,
@@ -248,6 +249,7 @@ export function listProposalsForCaseEffect(
       toItems: (rows) => proposalItems(scopedCaseId, rows),
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** What a queue row shows of a Proposal: never its patch (the Detail reads that by id). */
@@ -288,7 +290,7 @@ export function listProposalQueueEffect(
   organizationId: OrganizationId,
   input: ListInput<typeof proposalList>
 ): Effect.Effect<ListPage<ProposalQueueItem>, DomainTag, Db> {
-  return Effect.gen(function* listProposalQueueGen() {
+  const program = Effect.gen(function* listProposalQueueGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: proposalList,
@@ -298,6 +300,7 @@ export function listProposalQueueEffect(
       toItems: queueItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -309,7 +312,7 @@ export function getProposalEffect(
   organizationId: OrganizationId,
   proposalId: string
 ): Effect.Effect<ProposalRecord, DomainTag, Db> {
-  return Effect.gen(function* getProposalGen() {
+  const program = Effect.gen(function* getProposalGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const [item] = yield* listByIdsEffect({
       repo: proposalListRepo,
@@ -322,6 +325,7 @@ export function getProposalEffect(
     }
     return item;
   });
+  return inOrganization(organizationId, program);
 }
 
 export function getProposalForCaseEffect(
@@ -359,7 +363,7 @@ export function acceptProposalEffect(input: {
   /** The ops not applied: `left` (default) or fingerprinted as `rejected`. */
   untickedAs?: UntickedOpOutcome;
 }): Effect.Effect<ProposalRecord, DomainTag, Db> {
-  return Effect.gen(function* acceptProposalGen() {
+  const program = Effect.gen(function* acceptProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const actor: GraphActor = { actorId };
     const scopedCaseId = yield* assertCaseInOrgEffect(
@@ -488,6 +492,7 @@ export function acceptProposalEffect(input: {
     );
     return yield* enrichProposalRecordEffect(updated);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function rejectProposalEffect(input: {
@@ -497,7 +502,7 @@ export function rejectProposalEffect(input: {
   actorId: string;
   reason?: string;
 }): Effect.Effect<ProposalRecord, DomainTag, Db> {
-  return Effect.gen(function* rejectProposalGen() {
+  const program = Effect.gen(function* rejectProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -560,4 +565,5 @@ export function rejectProposalEffect(input: {
     );
     return yield* enrichProposalRecordEffect(rejected);
   });
+  return inOrganization(input.organizationId, program);
 }

@@ -23,6 +23,7 @@ import {
 import { readArtifactBytesEffect, sha256Hex } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import {
   evidenceRepoFxDb,
   jobsRepoFxDb,
@@ -161,7 +162,7 @@ export function listJobProviderCallsEffect(
   organizationId: OrganizationId,
   jobId: string
 ): Effect.Effect<ProviderCallList, DomainTag, Db> {
-  return Effect.gen(function* listJobProviderCallsGen() {
+  const program = Effect.gen(function* listJobProviderCallsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
     const job = yield* jobsRepoFxDb.getInCase(scopedCaseId, normalizedJobId);
@@ -188,6 +189,7 @@ export function listJobProviderCallsEffect(
       cacheHits,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -199,7 +201,7 @@ export function listEvidenceProviderCallsEffect(
   organizationId: OrganizationId,
   evidenceId: string
 ): Effect.Effect<ProviderCallList, DomainTag, Db> {
-  return Effect.gen(function* listEvidenceProviderCallsGen() {
+  const program = Effect.gen(function* listEvidenceProviderCallsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
@@ -234,6 +236,7 @@ export function listEvidenceProviderCallsEffect(
     );
     return toList({ rows, originals, hasGap, cacheHits });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** A stored raw response, ready to be served as an attachment. */
@@ -310,7 +313,7 @@ export function getProviderCallResponseEffect(
   organizationId: OrganizationId,
   callId: string
 ): Effect.Effect<ProviderCallResponse, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* getProviderCallResponseGen() {
+  const program = Effect.gen(function* getProviderCallResponseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedCallId = yield* requireTrimmedGraphId(
       callId,
@@ -328,4 +331,5 @@ export function getProviderCallResponseEffect(
     }
     return yield* readStoredResponseEffect(scopedCaseId, row, callId);
   });
+  return inOrganization(organizationId, program);
 }

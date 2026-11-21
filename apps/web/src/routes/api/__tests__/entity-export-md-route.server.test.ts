@@ -32,6 +32,16 @@ vi.mock("@watchdog/api", () => ({
   runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
 
+// The route scopes its reads to the caller's organization (row-level security, #718); the
+// database is not part of this test, so the scope passes the Effect through.
+vi.mock("@watchdog/core/infra", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/infra")>();
+  return {
+    ...actual,
+    inOrganization: (_organizationId: string, effect: unknown) => effect,
+  };
+});
+
 vi.mock("@watchdog/core/cases", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/cases")>();
   return {

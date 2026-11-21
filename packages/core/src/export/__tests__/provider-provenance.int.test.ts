@@ -5,7 +5,6 @@ import { strFromU8, unzipSync } from "fflate";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  db,
   evidenceRepo,
   providerCallsRepo,
   type EvidenceRow,
@@ -22,6 +21,7 @@ import {
   seedJob,
   seedOrganizationMember,
   seedProviderCall,
+  testDb as db,
 } from "@watchdog/test-db";
 
 import { recordingBlobStore } from "../../infra/blob-store";

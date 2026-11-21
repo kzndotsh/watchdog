@@ -52,6 +52,7 @@ import {
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listCappedEffect, listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { tasksRepoFxDb, tasksRepoFx, casesRepoFx } from "../infra/repos-fx";
@@ -189,7 +190,7 @@ export function listTasksForCaseEffect(
   organizationId: OrganizationId,
   input?: ListInput<typeof taskList>
 ): Effect.Effect<ListPage<TaskListItem>, DomainTag, Db> {
-  return Effect.gen(function* listTasksGen() {
+  const program = Effect.gen(function* listTasksGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     return yield* listPageEffect({
       def: taskList,
@@ -199,6 +200,7 @@ export function listTasksForCaseEffect(
       toItems: toListItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /**
@@ -212,7 +214,7 @@ export function getTaskBoardEffect(
   organizationId: OrganizationId,
   input: Omit<TaskBoardInput, "caseId">
 ): Effect.Effect<TaskBoardRecord, DomainTag, Db> {
-  return Effect.gen(function* getTaskBoardGen() {
+  const program = Effect.gen(function* getTaskBoardGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const query = taskList.queryOf({
       ...(input.entityId === undefined ? {} : { entityId: input.entityId }),
@@ -230,6 +232,7 @@ export function getTaskBoardEffect(
       toItems: toListItems,
     });
   });
+  return inOrganization(organizationId, program);
 }
 
 /** `tasks.due`: the first open Tasks due soon or overdue, and how many there are (capped). */
@@ -249,7 +252,7 @@ export function listDueTasksEffect(
   organizationId: OrganizationId,
   opts: { readonly dayStart?: Date } = {}
 ): Effect.Effect<DueTasksRecord, DomainTag, Db> {
-  return Effect.gen(function* listDueTasksGen() {
+  const program = Effect.gen(function* listDueTasksGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const { soonEnd } = yield* taskDueWindowEffect(opts.dayStart);
     const rows = yield* tasksRepoFxDb.listDue(scopedCaseId, {
@@ -269,6 +272,7 @@ export function listDueTasksEffect(
           : { count, isCapped: false },
     };
   });
+  return inOrganization(organizationId, program);
 }
 
 export function getTaskInCaseEffect(
@@ -276,21 +280,25 @@ export function getTaskInCaseEffect(
   organizationId: OrganizationId,
   taskId: string
 ): Effect.Effect<TaskRecord, DomainTag, Db> {
-  return Effect.gen(function* getTaskInCaseGen() {
+  const program = Effect.gen(function* getTaskInCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
     const row = yield* tasksRepoFxDb.getInCase(scopedCaseId, normalizedTaskId);
     if (!row) {
-      return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
+      return yield* new NotFoundError({
+        entity: "Task",
+        id: normalizedTaskId,
+      });
     }
     return toRecord(row);
   });
+  return inOrganization(organizationId, program);
 }
 
 export function createTaskEffect(
   input: CreateTaskInput
 ): Effect.Effect<TaskRecord, DomainTag, Db> {
-  return Effect.gen(function* createTaskGen() {
+  const program = Effect.gen(function* createTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -313,7 +321,10 @@ export function createTaskEffect(
       Effect.gen(function* createTaskTx() {
         const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
-          return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
+          return yield* new NotFoundError({
+            entity: "Case",
+            id: scopedCaseId,
+          });
         }
         // The Case lock comes before the history context: the changeset insert takes a key-share
         // lock on the Case, which would deadlock two writers waiting for the Case lock.
@@ -345,12 +356,13 @@ export function createTaskEffect(
 
     return toRecord(created);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function updateTaskEffect(
   input: UpdateTaskInput
 ): Effect.Effect<TaskRecord, DomainTag, Db> {
-  return Effect.gen(function* updateTaskGen() {
+  const program = Effect.gen(function* updateTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -451,6 +463,7 @@ export function updateTaskEffect(
 
     return toRecord(updated);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 export function deleteTaskEffect(
@@ -461,7 +474,7 @@ export function deleteTaskEffect(
   actorLabel?: string,
   actorKeyId?: string
 ): Effect.Effect<void, DomainTag, Db> {
-  return Effect.gen(function* deleteTaskGen() {
+  const program = Effect.gen(function* deleteTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
     const existing = yield* tasksRepoFxDb.getInCase(
@@ -469,7 +482,10 @@ export function deleteTaskEffect(
       normalizedTaskId
     );
     if (!existing) {
-      return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
+      return yield* new NotFoundError({
+        entity: "Task",
+        id: normalizedTaskId,
+      });
     }
 
     const activityActor = optionalActorId(actorId);
@@ -503,6 +519,7 @@ export function deleteTaskEffect(
       })
     );
   });
+  return inOrganization(organizationId, program);
 }
 
 export type ReorderTasksInput = {
@@ -518,7 +535,7 @@ export type ReorderTasksInput = {
 export function reorderTasksEffect(
   input: ReorderTasksInput
 ): Effect.Effect<TaskRecord[], DomainTag, Db> {
-  return Effect.gen(function* reorderTasksGen() {
+  const program = Effect.gen(function* reorderTasksGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
@@ -534,7 +551,10 @@ export function reorderTasksEffect(
       Effect.gen(function* reorderTasksTx() {
         const locked = yield* casesRepoFx.lockById(tx, scopedCaseId);
         if (!locked) {
-          return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
+          return yield* new NotFoundError({
+            entity: "Case",
+            id: scopedCaseId,
+          });
         }
         // The Case lock comes before the history context: the changeset insert takes a key-share
         // lock on the Case, which would deadlock two writers waiting for the Case lock.
@@ -573,4 +593,5 @@ export function reorderTasksEffect(
 
     return records;
   });
+  return inOrganization(input.organizationId, program);
 }

@@ -3,6 +3,7 @@ import {
   boolean,
   foreignKey,
   index,
+  pgPolicy,
   pgTable,
   text,
   unique,
@@ -16,13 +17,16 @@ import {
 } from "@watchdog/schemas/shared";
 import type {
   CaseId,
+  OrganizationId,
   ClaimClass,
   ConfidenceTier,
   RetractKind,
 } from "@watchdog/schemas/shared";
 
 import { attribution, rowVersion, timestamps, timestamptz } from "./_helpers";
+import { currentOrganization } from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
+import { cases } from "./cases";
 import { entities } from "./entities";
 
 /** Claim — asserted statement on an Entity. Default views hide retracted. */
@@ -33,6 +37,19 @@ export const claims = pgTable(
     entityId: uuid("entity_id").notNull(),
     /** The Entity's Case, held so the foreign key below can refuse a cross-Case row. */
     caseId: uuid("case_id").$type<CaseId>().notNull(),
+    /**
+     * The Case's organization, copied for row-level security (#718): the policy compares a column
+     * of the row instead of looking the Case up, which kept the paged Claim list on its index
+     * order (measured on the perf seed). Never written by a caller: the BEFORE INSERT trigger
+     * `claims_organization_from_case` sets it from the Case (the insert sends NULL), and the
+     * composite foreign key below keeps it the Case's own.
+     */
+    organizationId: text("organization_id")
+      .$type<OrganizationId>()
+      .notNull()
+      // Deliberate: NOT NULL in the table (and drizzle-kit's snapshot), optional in the insert type;
+      // Drizzle sends NULL and the BEFORE INSERT trigger fills the Case's organization first.
+      .$defaultFn(() => sql`null`),
     class: text("class").$type<ClaimClass>().notNull().default("observation"),
     text: text("text").notNull(),
     confidence: text("confidence").$type<ConfidenceTier>().notNull(),
@@ -63,8 +80,23 @@ export const claims = pgTable(
       foreignColumns: [entities.id, entities.caseId],
     }).onDelete("cascade"),
     unique("claims_id_case_id_uq").on(t.id, t.caseId),
+    // The copied organization must be the Case's own (as `activity.organization_id`).
+    foreignKey({
+      name: "claims_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
     vocabCheck(t.class, CLAIM_CLASSES),
     vocabCheck(t.confidence, CONFIDENCE_TIERS),
     vocabCheck(t.retractKind, RETRACT_KINDS),
+    // Organization isolation (row-level security, #718): a Claim is visible and writable when its
+    // Case's organization (the copy above) is the transaction's.
+    pgPolicy("claims_organization_isolation", {
+      as: "permissive",
+      for: "all",
+      to: "public",
+      using: sql`${t.organizationId} = ${currentOrganization}`,
+      withCheck: sql`${t.organizationId} = ${currentOrganization}`,
+    }),
   ]
 );

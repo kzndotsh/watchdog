@@ -21,7 +21,6 @@ import {
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
 import { createTaskEffect } from "@watchdog/core/tasks";
-import { db } from "@watchdog/db";
 import { graphHistoryList } from "@watchdog/schemas/graph";
 import { opsOf } from "@watchdog/schemas/shared";
 import type {
@@ -43,6 +42,7 @@ import {
   seedEntity,
   seedEvidence,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

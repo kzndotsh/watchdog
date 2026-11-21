@@ -9,7 +9,6 @@ import {
   UPLOAD_SWEEP_GRACE_MS,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { db } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -17,6 +16,7 @@ import {
   listEvidenceUploadUris,
   resetTestDb,
   seedCase,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

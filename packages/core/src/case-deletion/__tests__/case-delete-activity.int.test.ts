@@ -12,13 +12,14 @@ import { isDomainTag } from "@watchdog/core/errors";
 import { createEntityEffect } from "@watchdog/core/graph";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
-import { activityLogRepo, db } from "@watchdog/db";
+import { activityLogRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedOrganizationMember,
   testDb,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

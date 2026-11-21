@@ -8,7 +8,7 @@ import {
   listProposalsForCaseEffect,
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
-import { activity, db } from "@watchdog/db";
+import { activity } from "@watchdog/db";
 import { proposalList } from "@watchdog/schemas/jobs";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -22,6 +22,7 @@ import {
   seedEntity,
   seedJob,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 

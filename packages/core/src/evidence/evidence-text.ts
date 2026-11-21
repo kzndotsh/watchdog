@@ -8,6 +8,7 @@ import { artifactTextOf } from "../infra/artifact-text";
 import { readArtifactBytesEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { evidenceRepoFxDb } from "../infra/repos-fx";
 
 /**
@@ -21,21 +22,24 @@ export function readEvidenceTextEffect(
   organizationId: OrganizationId,
   evidenceId: string
 ): Effect.Effect<{ text: string | null }, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* readEvidenceTextGen() {
-    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEvidenceId = yield* requireTrimmedGraphId(
-      evidenceId,
-      "Evidence"
-    );
-    const row = yield* evidenceRepoFxDb.getUriInCaseIncludingDeleted(
-      scopedCaseId,
-      normalizedEvidenceId
-    );
-    const uri = row?.uri;
-    if (uri === undefined || uri === null || uri === "") {
-      return { text: null };
-    }
-    const bytes = yield* readArtifactBytesEffect(uri);
-    return { text: artifactTextOf(bytes) };
-  });
+  return inOrganization(
+    organizationId,
+    Effect.gen(function* readEvidenceTextGen() {
+      const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+      const normalizedEvidenceId = yield* requireTrimmedGraphId(
+        evidenceId,
+        "Evidence"
+      );
+      const row = yield* evidenceRepoFxDb.getUriInCaseIncludingDeleted(
+        scopedCaseId,
+        normalizedEvidenceId
+      );
+      const uri = row?.uri;
+      if (uri === undefined || uri === null || uri === "") {
+        return { text: null };
+      }
+      const bytes = yield* readArtifactBytesEffect(uri);
+      return { text: artifactTextOf(bytes) };
+    })
+  );
 }

@@ -29,6 +29,7 @@ import {
 } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
 import { listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
 import { tryDbWith, requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { casesRepoFxDb, casesRepoFx } from "../infra/repos-fx";
@@ -62,13 +63,16 @@ export function listCasesEffect(
   organizationId: OrganizationId,
   input?: ListInput<typeof caseList>
 ): Effect.Effect<ListPage<CaseRecord>, DomainTag, Db> {
-  return listPageEffect({
-    def: caseList,
-    repo: caseListRepo,
-    scope: { organizationId },
-    input: input ?? { limit: PAGE_LIMIT_DEFAULT },
-    toItems: (rows) => Effect.succeed(rows.map(toRecord)),
-  });
+  return inOrganization(
+    organizationId,
+    listPageEffect({
+      def: caseList,
+      repo: caseListRepo,
+      scope: { organizationId },
+      input: input ?? { limit: PAGE_LIMIT_DEFAULT },
+      toItems: (rows) => Effect.succeed(rows.map(toRecord)),
+    })
+  );
 }
 
 /**
@@ -79,14 +83,14 @@ export function listCasesEffect(
 export function listVisibleCaseIdsEffect(
   organizationId: OrganizationId
 ): Effect.Effect<string[], DomainTag, Db> {
-  return casesRepoFxDb.listIds(organizationId);
+  return inOrganization(organizationId, casesRepoFxDb.listIds(organizationId));
 }
 
 export function getCaseByIdEffect(
   id: CaseId,
   organizationId: OrganizationId
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
-  return Effect.gen(function* getCaseByIdGen() {
+  const program = Effect.gen(function* getCaseByIdGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(id);
     const row = yield* casesRepoFxDb.getById(caseId, organizationId);
     if (!row) {
@@ -94,13 +98,14 @@ export function getCaseByIdEffect(
     }
     return toRecord(row);
   });
+  return inOrganization(organizationId, program);
 }
 
 export function getCaseBySlugEffect(
   slug: string,
   organizationId: OrganizationId
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
-  return Effect.gen(function* getCaseBySlugGen() {
+  const program = Effect.gen(function* getCaseBySlugGen() {
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
       return yield* new NotFoundError({
@@ -117,12 +122,13 @@ export function getCaseBySlugEffect(
     }
     return toRecord(row);
   });
+  return inOrganization(organizationId, program);
 }
 
 export function createCaseEffect(
   input: CreateCaseInput
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
-  return Effect.gen(function* createCaseGen() {
+  const program = Effect.gen(function* createCaseGen() {
     const name = trimmedOrUndefined(input.name);
     if (name === undefined) {
       return yield* new InvalidError({ reason: "Case name is required" });
@@ -154,6 +160,7 @@ export function createCaseEffect(
     ).pipe(requireWritten("create Case"));
     return toRecord(created);
   });
+  return inOrganization(input.organizationId, program);
 }
 
 /** The update, and the slug the Case had when it changed (`undefined` when the slug is unchanged), for the caller that keeps the disk Export in step. */
@@ -170,7 +177,7 @@ export function updateCaseWithPreviousSlugEffect(
   DomainTag,
   Db
 > {
-  return Effect.gen(function* updateCaseGen() {
+  const program = Effect.gen(function* updateCaseGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(input.id);
     const existing = yield* casesRepoFxDb.getById(caseId, input.organizationId);
     if (!existing) {
@@ -259,4 +266,5 @@ export function updateCaseWithPreviousSlugEffect(
       previousSlug: nextSlug === undefined ? undefined : existing.slug,
     };
   });
+  return inOrganization(input.organizationId, program);
 }

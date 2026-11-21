@@ -18,6 +18,7 @@ import {
 } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { graphSnapshotRepoFxDb } from "../infra/repos-fx";
 
 export type GraphSnapshotEntity = GraphSnapshot["entities"][number];
@@ -49,7 +50,7 @@ export function getGraphSnapshotEffect(
   organizationId: OrganizationId,
   caps: GraphSnapshotCaps = DEFAULT_CAPS
 ): Effect.Effect<GraphSnapshot, DomainTag, Db> {
-  return Effect.gen(function* getGraphSnapshotGen() {
+  const program = Effect.gen(function* getGraphSnapshotGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const entityRows = yield* graphSnapshotRepoFxDb.mostConnectedEntities(
       scopedCaseId,
@@ -68,6 +69,7 @@ export function getGraphSnapshotEffect(
         entityRows.length > caps.entityMax || edgeRows.length > caps.edgeMax,
     };
   });
+  return inOrganization(organizationId, program);
 }
 
 /** One of the Entity's Connections in the ego graph, with the label of its other end. */
@@ -88,7 +90,7 @@ export function getGraphEgoEffect(
   entityId: string,
   edgeMax: number = GRAPH_EGO_EDGE_MAX
 ): Effect.Effect<GraphEgo, DomainTag, Db> {
-  return Effect.gen(function* getGraphEgoGen() {
+  const program = Effect.gen(function* getGraphEgoGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const centerId = yield* assertEntityInCaseEffect(scopedCaseId, entityId);
     const rows = yield* graphSnapshotRepoFxDb.egoEdges(
@@ -101,4 +103,5 @@ export function getGraphEgoEffect(
       isTruncated: rows.length > edgeMax,
     };
   });
+  return inOrganization(organizationId, program);
 }

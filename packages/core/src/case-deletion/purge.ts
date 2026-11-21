@@ -17,6 +17,11 @@ import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import {
+  forEachOrganization,
+  inOrganization,
+  inCaseOrganizationIfFound,
+} from "../infra/organization-scope";
 import { requireWritten } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
@@ -124,7 +129,7 @@ export function purgeTombstonedCaseEffect(
   caseId: CaseId,
   actor: CaseActor
 ): Effect.Effect<PurgeOutcome, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* purgeTombstonedCaseGen() {
+  const program = Effect.gen(function* purgeTombstonedCaseGen() {
     const actorId = optionalActorId(actor.actorId);
     const actorLabel =
       actor.actorLabel ?? (actorId === undefined ? SYSTEM_LABEL : null);
@@ -209,6 +214,7 @@ export function purgeTombstonedCaseEffect(
     });
     return { kind: "purged" as const, counts };
   });
+  return inCaseOrganizationIfFound(caseId, program);
 }
 
 /**
@@ -220,7 +226,7 @@ export function purgeCaseEffect(
   id: CaseId,
   opts: CaseActor & { organizationId: OrganizationId }
 ): Effect.Effect<void, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* purgeCaseGen() {
+  const program = Effect.gen(function* purgeCaseGen() {
     yield* requireOrganizationManagerEffect({
       organizationId: opts.organizationId,
       actorId: optionalActorId(opts.actorId),
@@ -267,6 +273,7 @@ export function purgeCaseEffect(
       }
     }
   });
+  return inOrganization(opts.organizationId, program);
 }
 
 export type PurgeRunSummary = {
@@ -287,13 +294,23 @@ export function purgeExpiredCasesEffect(opts?: {
 }): Effect.Effect<PurgeRunSummary, DomainTag, Db | BlobStore> {
   return Effect.gen(function* purgeExpiredCasesGen() {
     const now = yield* nowDateEffect;
-    const due = yield* casesRepoFxDb.listDeletedPurgeDueIds({
-      now,
-      limit: opts?.limit ?? PURGE_BATCH,
-    });
+    const limit = opts?.limit ?? PURGE_BATCH;
+    // Row-level security (#718): each organization's tombstones are read, and purged, in that
+    // organization's scope; the batch limit is over all of them.
+    const perOrganization = yield* forEachOrganization((organizationId) =>
+      casesRepoFxDb
+        .listDeletedPurgeDueIds({ now, limit })
+        .pipe(
+          Effect.map((ids) => ids.map((caseId) => ({ caseId, organizationId })))
+        )
+    );
+    const due = perOrganization.flat().slice(0, limit);
     const summary: PurgeRunSummary = { purged: 0, failed: 0, skipped: 0 };
-    for (const caseId of due) {
-      const outcome = yield* purgeTombstonedCaseEffect(caseId, {});
+    for (const { caseId, organizationId } of due) {
+      const outcome = yield* inOrganization(
+        organizationId,
+        purgeTombstonedCaseEffect(caseId, {})
+      );
       if (outcome.kind === "purged") summary.purged += 1;
       else if (outcome.kind === "failed") summary.failed += 1;
       else summary.skipped += 1;
@@ -312,7 +329,7 @@ export function deleteOrganizationCasesEffect(
   organizationId: OrganizationId,
   opts?: { actorId?: string }
 ): Effect.Effect<number, DomainTag, Db | BlobStore | JobQueue> {
-  return Effect.gen(function* deleteOrganizationCasesGen() {
+  const program = Effect.gen(function* deleteOrganizationCasesGen() {
     const ids = yield* casesRepoFxDb.listIdsIncludingDeleted(organizationId);
     const actor: CaseActor =
       opts?.actorId === undefined ? {} : { actorId: opts.actorId };
@@ -345,4 +362,5 @@ export function deleteOrganizationCasesEffect(
     }
     return ids.length;
   });
+  return inOrganization(organizationId, program);
 }

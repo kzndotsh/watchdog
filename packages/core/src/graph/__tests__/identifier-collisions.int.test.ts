@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
 import { listProposalsForCaseEffect } from "@watchdog/core/proposals";
-import { db } from "@watchdog/db";
 import { proposalList } from "@watchdog/schemas/jobs";
 import {
   buildIdentifierCreateOp,
@@ -16,6 +15,7 @@ import {
   seedEntityBlankDisplayName,
   seedIdentifier,
   seedProposal,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { InternalError } from "@watchdog/core/errors";
 import { runDomain, transact, tryDb } from "@watchdog/core/infra";
-import { db, entitiesRepo, type NewEntity } from "@watchdog/db";
+import { entitiesRepo, type NewEntity } from "@watchdog/db";
 import {
   HISTORY_CONTEXT_MISSING_SQLSTATE,
   type CaseId,
@@ -13,6 +13,7 @@ import {
   resetTestDb,
   seedCase,
   withTestTx,
+  testDb as db,
 } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 

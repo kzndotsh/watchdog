@@ -8,6 +8,7 @@ import { artifactTextOf } from "../infra/artifact-text";
 import { readArtifactBytesEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
 import { getJobForCaseEffect } from "./start-job";
 
 /**
@@ -23,17 +24,20 @@ export function readJobArtifactTextEffect(
   jobId: string,
   sha256: string
 ): Effect.Effect<{ text: string | null }, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* readJobArtifactTextGen() {
-    const job = yield* getJobForCaseEffect(caseId, organizationId, jobId);
-    const artifact = job.output?.find((row) => row.sha256 === sha256);
-    if (
-      artifact === undefined ||
-      !isTextMime(artifact.mime) ||
-      !artifact.uri.startsWith(`${job.caseId}/`)
-    ) {
-      return { text: null };
-    }
-    const bytes = yield* readArtifactBytesEffect(artifact.uri);
-    return { text: artifactTextOf(bytes) };
-  });
+  return inOrganization(
+    organizationId,
+    Effect.gen(function* readJobArtifactTextGen() {
+      const job = yield* getJobForCaseEffect(caseId, organizationId, jobId);
+      const artifact = job.output?.find((row) => row.sha256 === sha256);
+      if (
+        artifact === undefined ||
+        !isTextMime(artifact.mime) ||
+        !artifact.uri.startsWith(`${job.caseId}/`)
+      ) {
+        return { text: null };
+      }
+      const bytes = yield* readArtifactBytesEffect(artifact.uri);
+      return { text: artifactTextOf(bytes) };
+    })
+  );
 }

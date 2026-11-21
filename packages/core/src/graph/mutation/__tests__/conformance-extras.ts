@@ -6,6 +6,7 @@ import { listAllActivity, listAllGraphHistory } from "@watchdog/test-db";
 import { rendezvous, testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../../activity/graph-activity";
+import { inOrganization } from "../../../infra/organization-scope";
 import { transact } from "../../../infra/postgres-tx";
 import { runGraphMutationInTx } from "../run-graph-mutation";
 import {
@@ -64,26 +65,29 @@ export function defineLinkedConformance<
         }
         const outside = testId(9998);
         const joined = (evidenceIds: string[], cites: string[]) =>
-          transact((tx) =>
-            Effect.gen(function* joinedGen() {
-              yield* setHistoryContextEffect(tx, {
-                ...ACTOR,
-                channel: "agent_write",
-                changeset: {
-                  caseId: ctx.caseId,
-                  confidence: "unverified",
-                  patch: [],
-                },
-              });
-              return yield* runGraphMutationInTx(
-                tx,
-                { caseId: ctx.caseId, actor: ACTOR, evidenceIds },
-                (w) =>
-                  w.insert(table, spec.values(ctx, "inserted"), {
-                    evidence: cites,
-                  })
-              );
-            })
+          inOrganization(
+            ctx.organizationId,
+            transact((tx) =>
+              Effect.gen(function* joinedGen() {
+                yield* setHistoryContextEffect(tx, {
+                  ...ACTOR,
+                  channel: "agent_write",
+                  changeset: {
+                    caseId: ctx.caseId,
+                    confidence: "unverified",
+                    patch: [],
+                  },
+                });
+                return yield* runGraphMutationInTx(
+                  tx,
+                  { caseId: ctx.caseId, actor: ACTOR, evidenceIds },
+                  (w) =>
+                    w.insert(table, spec.values(ctx, "inserted"), {
+                      evidence: cites,
+                    })
+                );
+              })
+            )
           );
         const before = await totals();
         const rows = await spec.countRows(ctx);

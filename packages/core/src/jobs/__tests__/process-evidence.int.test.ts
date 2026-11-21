@@ -12,7 +12,7 @@ import {
   recordingJobQueue,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { db, evidenceRepo } from "@watchdog/db";
+import { evidenceRepo } from "@watchdog/db";
 import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
@@ -25,6 +25,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
+  testDb as db,
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 

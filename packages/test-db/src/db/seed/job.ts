@@ -14,6 +14,7 @@ import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue";
+import { withCaseOrganizationScope } from "../organization-scope.ts";
 
 type SeedJobOverrides = Partial<NewJob> &
   Partial<Pick<JobPatch, "resultSummary">> & {
@@ -46,19 +47,22 @@ async function seedJobActivity(
   const actions = transitions.filter((action) =>
     (ACTIVITY_ENTRY_ACTIONS.job as readonly string[]).includes(action)
   );
-  for (const action of actions) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
-    const row = await activityLogRepo.append(exec, {
-      caseId: job.caseId,
-      kind: "job",
-      action,
-      subjectId: job.id,
-      groupId: job.playbookRunId,
-      actorId: job.actorId,
-      toValue: action,
-    });
-    if (!row) throw new Error("seedJob activity failed");
-  }
+  // The log copies the Case's organization, which row-level security shows only in its scope.
+  await withCaseOrganizationScope(exec, job.caseId, async (tx) => {
+    for (const action of actions) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
+      const row = await activityLogRepo.append(tx, {
+        caseId: job.caseId,
+        kind: "job",
+        action,
+        subjectId: job.id,
+        groupId: job.playbookRunId,
+        actorId: job.actorId,
+        toValue: action,
+      });
+      if (!row) throw new Error("seedJob activity failed");
+    }
+  });
 }
 
 export async function seedJob(

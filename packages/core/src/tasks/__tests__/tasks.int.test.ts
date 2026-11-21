@@ -11,11 +11,16 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { activityListRepo, db, taskListRepo } from "@watchdog/db";
+import { activityListRepo, taskListRepo } from "@watchdog/db";
 import { activityList, taskList } from "@watchdog/schemas/feed";
 import { opsOf, type CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  seedEntity,
+  testDb as db,
+} from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 /** The Case's task entries in Recent activity, newest first: every page, so other kinds never hide one. */
