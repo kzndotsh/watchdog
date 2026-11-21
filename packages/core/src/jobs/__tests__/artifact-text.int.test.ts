@@ -33,6 +33,7 @@ const run = runDomainWith(Layer.mergeAll(Db.layer, store.layer));
 const TEXT_SHA = "a".repeat(64);
 const BINARY_SHA = "b".repeat(64);
 const STRAY_SHA = "c".repeat(64);
+const CLIMB_SHA = "e".repeat(64);
 
 let caseId: CaseId;
 let jobId: string;
@@ -64,6 +65,12 @@ beforeEach(async () => {
         uri: "another-case/stray.txt",
         sha256: STRAY_SHA,
       },
+      {
+        name: "climb.txt",
+        mime: "text/plain",
+        uri: `${caseId}/../another-case/stray.txt`,
+        sha256: CLIMB_SHA,
+      },
     ],
   });
   jobId = job.id;
@@ -81,14 +88,19 @@ describe("readJobArtifactTextEffect", () => {
     ).resolves.toEqual({ text: "key: value" });
   });
 
-  it("answers null for a binary artifact, one outside the Case and an unknown hash, without reading them", async () => {
+  it("answers null for a binary artifact, one outside the Case (or climbing out of it) and an unknown hash, without reading them", async () => {
     store.calls.length = 0;
     const answers = await Promise.all(
-      [BINARY_SHA, STRAY_SHA, "d".repeat(64)].map(async (sha) =>
+      [BINARY_SHA, STRAY_SHA, CLIMB_SHA, "d".repeat(64)].map(async (sha) =>
         run(readJobArtifactTextEffect(caseId, TEST_ORGANIZATION_ID, jobId, sha))
       )
     );
-    expect(answers).toEqual([{ text: null }, { text: null }, { text: null }]);
+    expect(answers).toEqual([
+      { text: null },
+      { text: null },
+      { text: null },
+      { text: null },
+    ]);
     expect(store.calls).toEqual([]);
   });
 
@@ -133,6 +145,19 @@ describe("readEvidenceTextEffect", () => {
     await expect(
       run(readEvidenceTextEffect(caseId, TEST_ORGANIZATION_ID, inline.id))
     ).resolves.toEqual({ text: null });
+  });
+
+  it("answers null for a stored uri outside the Case, without reading it", async () => {
+    const stray = await seedEvidence(db, caseId, {
+      text: null,
+      uri: "another-case/stray.txt",
+      mime: "text/plain",
+    });
+    store.calls.length = 0;
+    await expect(
+      run(readEvidenceTextEffect(caseId, TEST_ORGANIZATION_ID, stray.id))
+    ).resolves.toEqual({ text: null });
+    expect(store.calls).toEqual([]);
   });
 
   it("is not found for another organization", async () => {

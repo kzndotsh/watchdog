@@ -6,7 +6,7 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import type { DomainTag } from "../errors/tagged-errors";
 import { artifactTextOf } from "../infra/artifact-text";
 import { readArtifactBytesEffect } from "../infra/blob";
-import type { BlobStore } from "../infra/blob-store";
+import { isKeyInCase, type BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { inOrganization } from "../infra/organization-scope";
 import { getJobForCaseEffect } from "./start-job";
@@ -14,7 +14,7 @@ import { getJobForCaseEffect } from "./start-job";
 /**
  * The text of one of a Job's output artifacts (by its sha256), for the Job Detail's preview:
  * null when the Job has no such artifact, its type is not text (`isTextMime` on the artifact's
- * own mime), or its stored object is outside the Case's prefix. The Job is read in the caller's
+ * own mime), or its stored key is outside the Case (`isKeyInCase`). The Job is read in the caller's
  * organization, so a foreign or missing Job or Case is `NotFoundError`. Cut at
  * `ARTIFACT_TEXT_MAX_CHARS`.
  */
@@ -32,7 +32,7 @@ export function readJobArtifactTextEffect(
       if (
         artifact === undefined ||
         !isTextMime(artifact.mime) ||
-        !artifact.uri.startsWith(`${job.caseId}/`)
+        !isKeyInCase(artifact.uri, job.caseId)
       ) {
         return { text: null };
       }

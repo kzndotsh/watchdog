@@ -14,6 +14,9 @@ export const CASES_CHANGED_EVENT = "watchdog:cases-changed";
 
 const listeners = new Set<() => void>();
 
+/** The unsubscribe of a server-side subscribe, which has nothing to listen to. */
+const noop = (): void => undefined;
+
 /** What this tab last wrote, for when storage is unavailable (private mode, blocked site data). */
 let fallback: string | null = null;
 
@@ -37,6 +40,7 @@ export function readServerLastCaseId(): null {
 /** Notifies on this tab's changes and on other tabs' `storage` events. */
 // oxlint-disable-next-line promise/prefer-await-to-callbacks -- useSyncExternalStore subscribe contract requires a sync callback
 export function subscribeToLastCase(callback: () => void): () => void {
+  if (typeof window === "undefined") return noop;
   window.addEventListener("storage", callback);
   listeners.add(callback);
   return () => {

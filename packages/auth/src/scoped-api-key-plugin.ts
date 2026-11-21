@@ -31,6 +31,9 @@ export function scopedApiKeyPlugin(db: DbExec) {
   let api: ScopedKeyAuth | undefined;
   return {
     bind: (instanceApi: object) => {
+      if (api !== undefined) {
+        throw new Error("scopedApiKeyPlugin is already bound");
+      }
       if (!hasCreateApiKey(instanceApi)) {
         throw new Error("scopedApiKeyPlugin needs the api-key plugin");
       }

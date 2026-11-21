@@ -89,6 +89,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | A declared list's service body: cursor v2, page, capped total; rows by id | `packages/core/src/infra/list-page.ts` | `listPageEffect`, `listByIdsEffect` |
 | A byte stream read into memory up to a limit (`null` past it; the source is closed early): never a hand-written `for await` byte counter | `packages/core/src/infra/read-bounded.ts` | `readBoundedEffect` |
 | Whether an S3 error means the object is not there (`NotFound`, `NoSuchKey`, a bare 404) | `packages/core/src/infra/blob-store.ts` | `isMissingObject` |
+| Whether a stored blob key is under its Case (`<caseId>/`, no empty, `.` or `..` segment): every read of a key from the database checks it; never a bare `startsWith` | `packages/core/src/infra/blob-store.ts` | `isKeyInCase` |
 | A Case export zip sink over a promise-based writer (a web response body, a test buffer) | `packages/core/src/export/zip-writer.ts` | `zipSinkFromPromises` |
 | A write that must return a row (or `true`, for link writes): a miss is `InternalError` (`Failed to <what>`); never hand-write it | `packages/core/src/infra/postgres-effect.ts` | `requireWritten` |
 | Outbound HTTP from Caps and tools (never `fetch` directly; lint-enforced): the scoped client whose pools close at shutdown | `packages/tools/src/http/outbound-client.ts` | `OutboundClient`, `outboundClientLayer` |
