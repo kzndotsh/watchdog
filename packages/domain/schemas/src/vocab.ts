@@ -517,7 +517,7 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const TASK_PRIORITIES = ["low", "medium", "high"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
-/** Channels for graph_writes audit rows (agent write today; Accept/Dossier later). */
+/** The channel of an agent write changeset: the Graph write log (`graphWriteList`) lists only these. */
 export const GRAPH_WRITE_CHANNELS = ["agent_write"] as const;
 export type GraphWriteChannel = (typeof GRAPH_WRITE_CHANNELS)[number];
 

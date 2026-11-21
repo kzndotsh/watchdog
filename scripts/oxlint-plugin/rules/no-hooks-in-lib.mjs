@@ -42,7 +42,7 @@ export const noHooksInLib = withBaseline("no-hooks-in-lib", {
       }
       context.report({
         node,
-        message: `${id.name} is a hook defined in lib/: lib/ holds pure helpers, so move the hook to the domain's hooks/ folder (shared/hooks/ for cross-domain hooks) and keep the pure parts in lib/ (conventions: lib/ holds pure helpers, hooks live in hooks/)`,
+        message: `${id.name} is a hook defined in lib/: lib/ holds pure helpers, so move the hook to the domain's hooks/ folder (shared/hooks/ for cross-domain hooks) and keep the pure parts in lib/ (lib/ holds pure helpers, hooks live in hooks/)`,
       });
     };
     return {

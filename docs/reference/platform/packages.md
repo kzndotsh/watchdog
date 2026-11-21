@@ -1,6 +1,6 @@
 # Platform workspaces
 
-**What this is:** the five workspaces, the folders inside them, and the import-direction rules between them.  
+**What this is:** the five workspaces (plus the standalone `apps/site`), the folders inside them, and the import-direction rules between them.  
 **What this is not:** Cap SPI ([`caps-boundary.md`](caps-boundary.md)), jobs/oRPC ([`jobs-orpc.md`](jobs-orpc.md)), web Start/Query ([`../web/architecture.md`](../web/architecture.md)).
 
 ## Layout
@@ -10,7 +10,7 @@
 | `packages/domain` (`@watchdog/domain`) | `schemas`, `policy`, `test-kit` | Pure types and vocabulary, custody rules, the test harness every workspace's tests share. No workspace dependency |
 | `packages/caps` (`@watchdog/caps`) | `src` (Caps, Playbooks, SDK), `tools`, `ai` | Caps and the provider tools and model calls they use. Depends on domain only |
 | `packages/server` (`@watchdog/server`) | `core`, `api`, `db`, `auth`, `env`, `log`, `test-db`, `worker` | The services, the oRPC router, the schema and repos, identity, boot config, logging and the Job runner. Depends on domain and caps |
-| `apps/web` (`@watchdog/web`) | `src`, `ui` (vendored shadcn) | The web app and its HTTP entry. Depends on domain, caps and server |
+| `apps/web` (`@watchdog/web`) | `src`, `ui` (vendored shadcn) | The web app and its HTTP entry. Depends on domain and server |
 | `apps/cli` (`@watchdog/cli`) | `src`, `client` (generated API client) | `wd`. Depends on domain only; talks HTTP |
 
 `apps/site` is the static Astro page and depends on no workspace. A feature usually touches one or two workspaces: the server folder that owns it and the web screen that shows it.
@@ -44,4 +44,4 @@ A folder imports another folder of its own workspace through the workspace's sub
 
 ## Where shared contracts live
 
-`PatchOp`, `patchOpSchema` and `EvidenceSnapshot` live in **`@watchdog/domain/schemas`** so Caps never depend on Drizzle. Accept/apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/domain/policy`**: pure, DB-free; import policy and schemas directly, do not re-export through core. Browser code imports `@watchdog/domain/policy/patch-needs-confidence`, not the barrel ([`../contracts/custody.md`](../contracts/custody.md)). Full ownership map: [`types.md`](types.md).
+`PatchOp`, `patchOpSchema` and `EvidenceSnapshot` live in **`packages/domain/schemas`** (imported from `@watchdog/domain/schemas/graph` and `@watchdog/domain/schemas/evidence`; there is no schemas root export) so Caps never depend on Drizzle. Accept/apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/domain/policy`**: pure, DB-free; import policy and schemas directly, do not re-export through core. Browser code imports `@watchdog/domain/policy/patch-needs-confidence`, not the barrel ([`../contracts/custody.md`](../contracts/custody.md)). Full ownership map: [`types.md`](types.md).

@@ -506,9 +506,7 @@ describe("one exported component per file (one-component-per-file)", () => {
     expect(hit?.message).toContain("A is the first");
     expect(hit?.message).toContain("its own file");
     expect(hit?.message).toContain("index.ts barrel");
-    expect(hit?.message).toContain(
-      "conventions: one exported component per .tsx file"
-    );
+    expect(hit?.message).toContain("one exported component per .tsx file");
   });
 
   it("reports every component after the first, not one per file", () => {

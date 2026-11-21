@@ -9,7 +9,7 @@ Today the domain code reaches infrastructure through module-level singletons:
 - 23 core files import the global `db` from `@watchdog/server/db` and hand it to repos as `exec: DbExec`; there are about 635 `(db, …)` / `(tx, …)` call sites.
 - `transact` (21 call sites in 14 files) calls `db.transaction` on that global and runs the body in a nested `Effect.runPromise`. The body therefore cannot use services, interruption does not reach the transaction, and tagged errors are converted to `DomainError` and back.
 - The S3 client (`blob.ts`) and the pg-boss queue (`boss.ts`) are module-level `let` singletons; the worker wires startup and shutdown by hand. (The queue and the S3 client are now the scoped `JobQueue` and `BlobStore` services; see the phase 3 note.)
-- `packages/server/api/src/runtime.ts` builds a `ManagedRuntime` from `Layer.empty`, and the `/effect` skill and `packages/server/api/AGENTS.md` say not to introduce Layers. That policy was forced by the `transact` limitation above, not chosen on its merits.
+- `packages/server/api/src/runtime.ts` builds a `ManagedRuntime` from `Layer.empty`, and the `/effect` skill and `packages/server/AGENTS.md` say not to introduce Layers. That policy was forced by the `transact` limitation above, not chosen on its merits.
 
 Consequences: tests swap infrastructure by mocking modules, resource lifetimes are implicit, and a service the body of a transaction needs cannot be provided.
 
@@ -34,7 +34,7 @@ The transaction handle stays an **explicit parameter**: repos and services keep 
 
 ## Consequences
 
-- The "no Layers" lines in `.agents/skills/effect/SKILL.md`, `packages/server/api/AGENTS.md` and `packages/server/api/src/runtime.ts` describe the phase state: the `Db` Layer is live; do not add ad-hoc Layers outside the phases (the `JobQueue` role Layers, the `BlobStore` Layer and the `Vault` Layer are live).
+- The "no Layers" lines in `.agents/skills/effect/SKILL.md`, `packages/server/AGENTS.md` and `packages/server/api/src/runtime.ts` describe the phase state: the `Db` Layer is live; do not add ad-hoc Layers outside the phases (the `JobQueue` role Layers, the `BlobStore` Layer and the `Vault` Layer are live).
 - Phase 2 changes how tests obtain the database; `@watchdog/server/test-db` provides the Layer.
 - The ~635 `exec` call sites do not change, which is the main reason the handle stays explicit.
 

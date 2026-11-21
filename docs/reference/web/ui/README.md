@@ -33,7 +33,7 @@ Name the **layout kind**, then the **parts**. These are component and layout wor
 | **Detail** | `{Domain}Detail`, `DetailContextHeader`, `DetailFooter`, `DetailEmpty` |
 | **Section** | `DossierSection`, `FormSection`, `SectionHeaderBar` |
 | **Dialog** | `Dialog` (forms) and `AlertDialog` (confirm); choice rule in [`DESIGN.md`](../../../../DESIGN.md#components) |
-| **Toolbar** | `PageToolbar`, `{Domain}QueueToolbar` |
+| **Toolbar** | `PageToolbar`, `ListToolbar` |
 
 **Bar** appears only in compounds (`SectionHeaderBar`).
 

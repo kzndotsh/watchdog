@@ -98,7 +98,7 @@ export const noInternalModuleMock = withBaseline("no-internal-module-mock", {
         }
         context.report({
           node,
-          message: `vi.mock of the internal module "${specifier}": run the real module and fake the boundary it calls (\`@/lib/orpc-client\`, the network through MSW, the clock), or lift the test a tier (conventions: mock boundaries, not internal modules; docs/contributing/testing/standards.md Mock policy)`,
+          message: `vi.mock of the internal module "${specifier}": run the real module and fake the boundary it calls (\`@/lib/orpc-client\`, the network through MSW, the clock), or lift the test a tier (mock boundaries, not internal modules; docs/contributing/testing/standards.md Mock policy)`,
         });
       },
     };

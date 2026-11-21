@@ -1,7 +1,7 @@
 /**
  * Server entry: the stock TanStack Start handler behind the request body limit
  * (`lib/body-limit.server.ts`). An oversized body is answered 413 here, before routing,
- * so it never reaches a route, a server function or Better Auth; the refusal still
+ * so it never reaches a route or Better Auth; the refusal still
  * carries the security headers (and CORS for `/api/v1`) and is logged.
  *
  * `BODY_LIMIT_BYTES` (the same number) is exported for `scripts/serve.mjs`, which passes it to

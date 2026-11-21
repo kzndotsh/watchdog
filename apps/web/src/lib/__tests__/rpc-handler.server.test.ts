@@ -5,7 +5,7 @@ import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const createApiContext = vi.hoisted(() => vi.fn());
 
-// Who is calling is resolved by the auth package (session cookie or API key); the handler,
+// Who is calling is resolved by `@watchdog/server/auth` (session cookie or API key); the handler,
 // its plugins and the router run for real.
 vi.mock("@watchdog/server/auth/server", () => ({ createApiContext }));
 

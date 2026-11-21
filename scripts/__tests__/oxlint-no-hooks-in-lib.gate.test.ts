@@ -98,7 +98,7 @@ describe("no hooks in lib/ (no-hooks-in-lib)", () => {
     expect(hit?.message).toContain("useThing");
     expect(hit?.message).toContain("hooks/");
     expect(hit?.message).toContain(
-      "conventions: lib/ holds pure helpers, hooks live in hooks/"
+      "lib/ holds pure helpers, hooks live in hooks/"
     );
     expect(hit?.line).toBe(1);
   });

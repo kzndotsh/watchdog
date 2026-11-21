@@ -287,7 +287,7 @@ describe("boolean prefix (boolean-prefix)", () => {
     expect(hit?.message).toContain("Boolean prop `busy`");
     expect(hit?.message).toContain("`isBusy`");
     expect(hit?.message).toContain(
-      "conventions: boolean props and variables are prefixed is/has/can/should"
+      "boolean props and variables are prefixed is/has/can/should"
     );
   });
 

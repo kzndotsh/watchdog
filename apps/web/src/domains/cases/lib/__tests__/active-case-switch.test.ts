@@ -19,8 +19,7 @@ describe("caseRouteScreen", () => {
   });
 
   it("treats an unknown segment under a Case as the Overview, so a switch from a 404 still lands", () => {
-    // `null` would leave the switch where it is, and the Case route's heal would snap the
-    // cookie back to the Case still in the URL.
+    // `null` would leave the switch where it is, with the old Case still in the URL.
     expect(caseRouteScreen("/cases/ada-lovelace/not-a-screen")).toBe(
       "overview"
     );
@@ -71,7 +70,7 @@ describe("navigateAfterActiveCaseSwitch", () => {
   });
 
   it.each(["/", "/cases", "/settings"])(
-    "leaves %s alone: it follows the cookie",
+    "leaves %s alone: it follows the last Case entered",
     async (pathname) => {
       const navigate = vi.fn();
       await navigateAfterActiveCaseSwitch({ next, pathname, navigate });

@@ -6,7 +6,7 @@ import { useWorkCase } from "@/shared/hooks/use-route-case";
  * The Case of a Work screen: the one in the URL, read live from the cases list (an edit
  * such as the egress switch refetches it; the route's own row can be older) with the
  * route's row as the fallback. It throws outside a Case route and never falls back to
- * the cookie: a Work screen belongs to the Case in its URL.
+ * the last Case entered: a Work screen belongs to the Case in its URL.
  */
 export function useLiveWorkCase(): CaseRecord {
   const routeCase = useWorkCase();

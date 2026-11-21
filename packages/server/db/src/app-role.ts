@@ -1,7 +1,8 @@
 import type postgres from "postgres";
 
 /**
- * The application role: the login the web app and worker connect as. It owns nothing, has no DDL
+ * The application role: the login the web app connects as (and the worker without
+ * `DATABASE_URL_WORKER`). It owns nothing, has no DDL
  * and no CREATE anywhere, and gets only data privileges, so an application bug or a compromised
  * process cannot alter or drop a table or switch off a trigger. The owner role (the one that runs
  * migrations, the first-admin command and vault rotation) creates and owns every object. The role

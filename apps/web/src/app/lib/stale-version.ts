@@ -9,7 +9,7 @@ function readProp(obj: object, key: string): unknown {
 
 /**
  * True when an edit lost to another writer: the API's `stale_version` conflict. Duck-typed like
- * `isServerFailure`: the error can cross a server-function boundary and lose its `ORPCError`
+ * `isServerFailure`: the error can reach a caller without its `ORPCError`
  * class and `data`, so the fixed message tail (`<Entity> changed since you opened it`) is the
  * fallback signal.
  */

@@ -43,8 +43,7 @@ export const Route = createFileRoute("/_protected/")({
     activityCase: optionalCaseIdSchema,
   }),
   loader: async ({ context: { queryClient } }) => {
-    // The Case the Dashboard shows: the last one entered (none on the server, which has no
-    // storage: the first visible Case is warmed there, the client corrects it on hydration).
+    // The Case the Dashboard shows: the last one entered, else the first visible Case.
     const active = pickDefaultCase(
       await ensureAppQueryData(queryClient, visibleCasesQuery()),
       readLastCaseId()

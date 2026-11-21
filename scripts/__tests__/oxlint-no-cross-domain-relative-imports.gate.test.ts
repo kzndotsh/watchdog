@@ -100,7 +100,7 @@ describe("cross-domain imports use the alias (no-cross-domain-relative-imports)"
     expect(hit?.message).toContain("../../entities/lib/a");
     expect(hit?.message).toContain("@/domains/entities/lib/a");
     expect(hit?.message).toContain(
-      "conventions: imports that leave a domain use the @/ alias"
+      "imports that leave a domain use the @/ alias"
     );
     expect(hit?.line).toBe(1);
   });

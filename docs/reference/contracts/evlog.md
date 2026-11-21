@@ -3,7 +3,7 @@
 **What this is:** process logging rules for `@watchdog/server/log` / evlog.  
 **What this is not:** Graph audit SoT (`Job.logs` / `changesets` / `graph_history`). Wiring (where the logger is installed): [`../platform/jobs-orpc.md`](../platform/jobs-orpc.md).
 
-Package: `@watchdog/server/log` (`packages/server/log`). Do not depend on it from `apps/cli` or `apps/cli/client` (stdout is the agent contract). Enforced: oxlint `no-restricted-imports` for `apps/cli` (`oxlint.config.ts`); `client` declares no dependency.
+Package: `@watchdog/server/log` (`packages/server/log`). Do not depend on it from `apps/cli` or `apps/cli/client` (stdout is the agent contract). Enforced: oxlint `no-restricted-imports` for `apps/cli/src` (`oxlint.config.ts`), and the `apps/cli` workspace does not declare `@watchdog/server`.
 
 ## Rules
 
@@ -26,7 +26,7 @@ Types: `RequestTimingLogFields` and `DbLogFields` in `packages/server/log/src/fi
 
 **Counts and times only.** The timing fields are numbers: never SQL text, parameters, rows, request or response bodies, or Evidence content. Do not add any of those to the request event when extending it. Tested in `apps/web/src/__tests__/start-timing.test.ts` (the event's keys) and `packages/server/core/src/infra/__tests__/request-timing.int.test.ts` (the count against the statement log).
 
-`Server-Timing`: in dev and test, API responses and server-function responses also carry `Server-Timing: db;dur=<db.ms>, app;dur=<durationMs>`. It is sent only when the validated `NODE_ENV` (`@watchdog/server/env`) is `development` or `test` (an allowlist, so never in production); the log fields are not gated. There is no production opt-in.
+`Server-Timing`: in dev and test, API responses also carry `Server-Timing: db;dur=<db.ms>, app;dur=<durationMs>`. It is sent only when the validated `NODE_ENV` (`@watchdog/server/env`) is `development` or `test` (an allowlist, so never in production); the log fields are not gated. There is no production opt-in.
 
 ## Edge request event
 

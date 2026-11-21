@@ -31,7 +31,7 @@ export const noDecorativeClass = {
     const report = (node, token) => {
       context.report({
         node,
-        message: `${token} is on the refuse list (gradient / gradient text / glass): use a flat token surface (DESIGN.md Do's and Don'ts). For functional blur add \`// ds:allow-decorative - reason\` on the line above (conventions: no gradients, glass or backdrop blur)`,
+        message: `${token} is on the refuse list (gradient / gradient text / glass): use a flat token surface (DESIGN.md Do's and Don'ts). For functional blur add \`// ds:allow-decorative - reason\` on the line above (no gradients, glass or backdrop blur)`,
       });
     };
     /**

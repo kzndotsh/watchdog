@@ -17,7 +17,7 @@ describe("isStaleVersionError", () => {
     ).toBe(true);
   });
 
-  it("recognises the fixed message when the data did not survive a server function", () => {
+  it("recognises the fixed message when the error carries no data", () => {
     expect(
       isStaleVersionError(new Error("Entity changed since you opened it"))
     ).toBe(true);

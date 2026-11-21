@@ -20,7 +20,6 @@
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Sign-in 401, log `User not found`, account exists | Missing `auth.account.issuer` after Better Auth 1.7 | `pnpm db:migrate` (adds `local:credential` on credential rows) |
 | Invitee cannot register | Public sign-up is closed on purpose | Use the invitation link `/auth/accept-invitation/{id}`, not `/auth/sign-up` |
 | Invitation email missing | SMTP unset | Copy the link from Settings → Organization → Members → Pending invitations (the URL is never logged; the log has the invitation id and a masked address) |
 | Signed out but UI still "in" | Stale session cache | Sign out via `/auth/sign-out`, not raw `authClient.signOut()` |
@@ -38,7 +37,7 @@
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| **Accept** disabled | Invalid Identifier op in the patch | Fix the value or Reject ([`custody.md`](../reference/contracts/custody.md)) |
+| **Accept** disabled | Invalid Identifier op in the patch | Untick the op (a partial Accept), or Reject ([`custody.md`](../reference/contracts/custody.md)) |
 | **confirmed** blocked | No evidence linked | Add evidence links or lower the tier |
 
 Collision warnings are warn-only; Accept still works ([`custody.md`](../reference/contracts/custody.md)).

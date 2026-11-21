@@ -21,7 +21,7 @@ From the October 2026 audit. The custody and hardening specs ([#288](https://git
 - **Playbooks:** linear chains only; no branching, no visual DAG. A failed step skips only the steps that read its output, and a run finishes `succeeded`, `partial` or `failed`.
 - **URL dump → Evidence:** Enrich is a separate verb (UI + `wd evidence enrich`); the URL row carries no hash.
 - **Partial Accept:** a reviewer applies some of a Proposal's ops and leaves or rejects the rest, in one transaction; there is no later Accept of the left ops from the same Proposal (a new run proposes them again).
-- **Hardened multi-tenancy:** orgs, invites, an automated isolation matrix and a non-owner application database role and per-organization and per-key Job start limits ship; no billing and no external adversarial-tenant review. Self-host first is the deployment target.
+- **Hardened multi-tenancy:** orgs, invites, an automated isolation matrix, organization-scoped row-level security on every Case-scoped table, non-owner application and worker database roles, and per-organization and per-key Job start limits ship; no billing and no external adversarial-tenant review. Self-host first is the deployment target.
 - **Scrape UX, vault import, corpus, LE packs:** not built; earned later.
 
 ## Phase 2: scale when it hurts

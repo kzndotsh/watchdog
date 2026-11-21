@@ -2,7 +2,7 @@ import type { EnvFieldMeta } from "./meta";
 
 /**
  * Variables read outside `#env/server`: the container entrypoint and
- * migrator, the `wd` CLI, the marketing site, the log package and the
+ * migrator, the `wd` CLI, the marketing site, `#log` and the
  * production compose file. They have no Zod field, so their metadata is
  * written out here; the generated `env.example` and configuration reference
  * list them next to the validated fields.
@@ -174,7 +174,7 @@ export const processVariables: readonly ProcessVariable[] = [
     name: "POSTGRES_APP_PASSWORD",
     group: COMPOSE,
     description:
-      "Password of the application role watchdog_app, which the web app and worker use (DATABASE_URL). The Postgres container creates the role with it when the volume is first made. Letters and digits only, and different from POSTGRES_PASSWORD (openssl rand -hex 24).",
+      "Password of the application role watchdog_app, which the web app uses (DATABASE_URL). The Postgres container creates the role with it when the volume is first made. Letters and digits only, and different from POSTGRES_PASSWORD (openssl rand -hex 24).",
     sensitive: true,
     required: true,
     usedBy: [],

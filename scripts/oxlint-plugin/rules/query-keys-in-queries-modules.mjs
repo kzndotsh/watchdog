@@ -7,7 +7,7 @@ import { staticKeyName } from "../lib/react-query.mjs";
  */
 
 const MESSAGE =
-  "Query key built outside a queries module: define the key factory in the domain's `queries.ts` (or its `*-queries.ts` / `*-keys.ts` module, or a shared queries module) and import it here, so invalidation and the query agree on one key (conventions: query keys only in queries modules)";
+  "Query key built outside a queries module: define the key factory in the domain's `queries.ts` (or its `*-queries.ts` / `*-keys.ts` module, or a shared queries module) and import it here, so invalidation and the query agree on one key (query keys only in queries modules)";
 
 /** `[ "entities", id ]`-style names and `*Keys` factory objects. */
 const KEY_ARRAY_NAME = /(?:[qQ]ueryKey|_QUERY_KEY|_KEY)$/;

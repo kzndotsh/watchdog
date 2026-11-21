@@ -123,8 +123,8 @@ describe("session cookie cache", () => {
     await expectQueries(0, async () => auth.api.getSession({ headers }));
   });
 
-  it("budgets a whole authenticated server-function call: getSession plus the membership check", async () => {
-    // What `requireAuth` does before every server function (apps/web/src/auth/middleware.ts).
+  it("budgets a whole authenticated API call: getSession plus the membership check", async () => {
+    // What `createApiContext` does for a session caller before every API call (src/api-context.ts).
     async function authenticatedCall(headers: Headers) {
       const current = await auth.api.getSession({ headers });
       return resolveActorOrganizationId(

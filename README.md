@@ -78,26 +78,28 @@ Each Cap is a folder under `packages/caps/src/` named for its id, such as `netwo
 
 ```
 apps/
-├── web/                  TanStack Start UI + oRPC handlers (RPC + OpenAPI)
-├── site/                 Static marketing landing (Astro 7 + Tailwind 4) → `watchdog.com`
-├── worker/               pg-boss consumer that executes Cap jobs
-└── cli/                  The `wd` binary (compiled to dist/), every noun the API exposes
+├── web/                  TanStack Start: React UI (SSR off), serves the oRPC API (RPC + OpenAPI), auth and SSE
+│   └── ui/               Generated shadcn (base-mira) primitives, locked via vendor.json
+├── cli/                  The `wd` binary (compiled to dist/), every noun the API exposes
+│   └── client/           Typed SDK for /api/v1 + the generated OpenAPI contract
+└── site/                 Static marketing landing (Astro 7 + Tailwind 4), standalone → `watchdog.com`
 packages/
-├── env/                  T3 Env boot secrets, depends on nothing
-├── schemas/              Zod contracts, PatchOp, vocabulary
-├── policy/               Accept gates and custody rules, pure and DB-free
-├── db/                   Drizzle schema + repos (the only SQL)
-├── core/                 Effect domain layer: jobs, graph, evidence, export sync
-├── caps/                 Cap implementations + playbooks; Cap SPI in `caps/sdk`
-├── tools/                Dumb fetch/parse helpers, no Graph types
-├── api/                  oRPC router, Zod procedures
-├── client/               Typed SDK for /api/v1 + the generated OpenAPI contract
-├── ai/                   LLM providers + structuredExtract, never writes Graph
-├── log/                  evlog process logging, NDJSON + stdout
-├── auth/                 Better Auth server core: createAuth, createApiContext, invite signup, instance admin
-├── ui/                   Generated shadcn (base-mira) primitives, locked via vendor.json
-├── test-db/              Dev-only Postgres harness + seeds
-└── test-kit/             Dev-only ids, URLs, fast-check, MSW; no workspace deps
+├── domain/               Shared, DB-free code
+│   ├── schemas/          Zod contracts, PatchOp, vocabulary
+│   ├── policy/           Accept gates and custody rules, pure
+│   └── test-kit/         Dev-only ids, URLs, fast-check, MSW; no workspace code
+├── caps/                 Cap implementations + playbooks in src/; Cap SPI in `caps/sdk`
+│   ├── tools/            Dumb fetch/parse helpers, no Graph types
+│   └── ai/               LLM providers + structuredExtract, never writes Graph
+└── server/
+    ├── env/              T3 Env boot secrets, depends on no other folder
+    ├── log/              evlog process logging, NDJSON + stdout
+    ├── db/               Drizzle schema + repos (the only SQL), migrations, database roles
+    ├── core/             Effect domain layer: jobs, graph, evidence, export sync
+    ├── api/              oRPC router, Zod procedures
+    ├── auth/             Better Auth server core: createAuth, createApiContext, invite signup, instance admin
+    ├── worker/           pg-boss consumer that executes Cap jobs (its own `watchdog_worker` role)
+    └── test-db/          Dev-only Postgres harness + seeds
 ```
 
 ## Docs

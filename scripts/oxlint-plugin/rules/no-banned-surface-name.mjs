@@ -48,7 +48,7 @@ export const noBannedSurfaceName = {
       }
       context.report({
         node: id,
-        message: `${id.name} is a banned surface name (Console / Workbench / Tape): name screens by layout kind, a Queue + Detail screen is a SplitView (docs/reference/web/ui/README.md chrome lexicon; conventions: screens are named by layout kind). Escape hatch: \`// ds:allow-surface-name - reason\` on the line above.`,
+        message: `${id.name} is a banned surface name (Console / Workbench / Tape): name screens by layout kind, a Queue + Detail screen is a SplitView (docs/reference/web/ui/README.md chrome lexicon; screens are named by layout kind). Escape hatch: \`// ds:allow-surface-name - reason\` on the line above.`,
       });
     };
     return {

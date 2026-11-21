@@ -162,7 +162,7 @@ export type ListInput<D extends ListDecl> = ShapeOrNothing<
     readonly limit: number;
   };
 
-/** Client side of `def.input`: what the oRPC client, the ServerFn and the CLI send. */
+/** Client side of `def.input`: what the oRPC client and the CLI send. */
 export type ListWireInput<D extends ListDecl> = ShapeOrNothing<
   z.input<D["scope"]>
 > &

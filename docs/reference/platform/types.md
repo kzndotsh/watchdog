@@ -1,6 +1,6 @@
 # Types & schemas
 
-Contract layer for Watchdog: shared atoms in `@watchdog/domain/schemas`, domain inputs in `domains/*/types.ts`, package wire (oRPC / Caps / patch) at the edge.
+Contract layer for Watchdog: shared atoms in `packages/domain/schemas` (imported through its `@watchdog/domain/schemas/<barrel>` subpaths: `shared`, `graph`, `evidence`, `jobs`, `caps`, `cases`, `feed`, `ip`, `egress-proxy`, `testing`), domain inputs in `domains/*/types.ts`, package wire (oRPC / Caps / patch) at the edge.
 
 **What this is not:** a copy of the vocabulary. Enums, predicates and validation rules live in code; this page says who owns what and which rules apply when you add a schema.
 
@@ -34,7 +34,7 @@ Where to find things:
 | Accept gates (rules across ops) | `@watchdog/domain/policy` (`assertPatchGates`) |
 | Patch application | `packages/server/core/src/graph/patch/apply-*-op.ts`, `parse-agent-patch.ts` |
 | Edge update validation | `packages/server/core/src/graph/edge-update.ts` |
-| Producer report shapes | `@watchdog/caps/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from a `@watchdog/caps/tools/<domain>` subpath directly (no Cap-local re-export) |
+| Producer report shapes | `@watchdog/caps/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from a `#tools/<domain>` subpath import directly (no Cap-local re-export); another workspace uses `@watchdog/caps/tools/<domain>` |
 
 ## Platform vocab is the only vocab here
 
@@ -62,7 +62,7 @@ The database enforces the vocabulary, not only the code. Every column typed from
 | `questions` | `status` |
 | `tasks` | `status`, `priority` |
 | `changesets` | `channel`, `confidence` |
-| `case_deletion_records` | `event` (`CASE_DELETION_EVENTS`: `deleted`, `restored`, `purged`) |
+| `case_deletion_records` | `event` (`CASE_DELETION_EVENTS`: `deleted`, `restored`, `purge_started`, `purge_failed`, `purged`) |
 | `provider_calls` | `transport`, `body_kind`, `request_body_state` (`PROVIDER_CALL_TRANSPORTS`, `PROVIDER_BODY_KINDS`, `PROVIDER_REQUEST_BODY_STATES`) |
 | `provider_call_outcomes` | `outcome`, `body_state`, `body_reason` (`PROVIDER_CALL_OUTCOMES`, `PROVIDER_BODY_STATES`, `PROVIDER_BODY_REASONS`) |
 | `playbook_runs` | `status`, `outcome` |
@@ -94,7 +94,7 @@ Every free-text field and array in an input schema takes a maximum from one name
 | `ARRAY_MAX` | 1000 | Items in one list input: ids, patch ops, JSON arrays |
 | `CURSOR_MAX` | 24 576 | A pagination cursor (sized for the largest sort key, an Identifier list's) |
 
-Use `requiredText(max)`, `optionalText(max)` and `nullableTextPatch(max)` (`primitives.ts`) for trimmed text fields; `httpUrlSchema`, `uuidListSchema`, `inputJsonValueSchema` and the id schemas are already bounded. The values sit above what real data needs and well under the request body limit, so one request cannot carry more than a few of them. The lint rule `watchdog/bounded-input-schema` fails a `z.string()`, `z.array()`, `z.url()` or `z.email()` with no `.max()` or `.length()` in an input schema (`packages/domain/schemas/src/*.ts`: declarations named `*Input`, `*Fields`, `*Filters` or `*Params`, plus all of `primitives.ts`, `ids.ts`, `lists/filter-kinds.ts` and `lists/build-list-api.ts`; and `.input(...)` in `packages/server/api/src/procedures`; `.output(...)` and tests are exempt; a bound belongs to the segment it follows, so `z.string().array().max(n)` still leaves the strings unbounded). `packages/domain/schemas/src/__tests__/input-limits.test.ts` proves each limit accepts its maximum and rejects one more. The limits are for INPUT only: what is stored or returned is read with unbounded schemas (`jsonValueSchema`, `jsonObjectSchema` in `json-wire.ts`, `patchOpSchema`/`patchSchema` for stored patches; the bounded twins are `inputJsonValueSchema`, `patchOpInputSchema`, `patchInputSchema`), so a row saved before a limit still reads.
+Use `requiredText(max)`, `optionalText(max)` and `nullableTextPatch(max)` (`primitives.ts`) for trimmed text fields; `httpUrlSchema`, `uuidListSchema`, `inputJsonValueSchema` and the id schemas are already bounded. The values sit above what real data needs and well under the request body limit, so one request cannot carry more than a few of them. The lint rule `watchdog/bounded-input-schema` fails a `z.string()`, `z.array()`, `z.url()` or `z.email()` with no `.max()` or `.length()` in an input schema (`packages/domain/schemas/src/*.ts`: declarations named `*Input`, `*Fields`, `*Filters` or `*Params`, plus all of `primitives.ts`, `ids.ts`, `lists/filter-kinds.ts` and `lists/build-list-api.ts`; and `.input(...)` in `packages/server/api/src/procedures`; `.output(...)` and tests are exempt; a bound belongs to the segment it follows, so `z.string().array().max(n)` still leaves the strings unbounded). `packages/domain/schemas/src/__tests__/input-limits.test.ts` proves each limit accepts its maximum and rejects one more. The limits are for INPUT only: what is stored or returned is read with unbounded schemas (`jsonValueSchema`, `jsonObjectSchema` in `json-wire.ts`, `patchOpSchema`/`patchSchema` for stored patches; the bounded twins are `inputJsonValueSchema` and `patchInputSchema`), so a row saved before a limit still reads.
 
 ## Pagination
 
@@ -123,11 +123,11 @@ Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides
 
 ### Branded ids
 
-`OrganizationId` and `CaseId` (ADR-0003) are Zod brands in `packages/domain/schemas/src/ids.ts`, so passing an organization id where a Case id is expected fails to compile. Mint them only through `asOrganizationId` / `asCaseId`, a schema parse (`caseIdSchema` in API inputs) or a typed source (a drizzle column with `.$type<Brand>()`, the session actor); a bare `as` cast is a lint error outside `packages/domain/schemas/src/testing`. Edges parse a CASE id with `parseTrimmedCaseId` / `caseIdSchema` and every other uuid (entity, job, evidence, edge, run) with `parseTrimmedUuid` (plain string); never use the case parser for another kind. Brand at the edge: route params (a bad id is a 404), `validateSearch` (`optionalCaseIdSchema`), the active-Case cookie, SSE ids, CLI `--case` (`requireCaseId`: a bad id is a `USAGE` error) and Better Auth hook ids (`createAuth` mints `asOrganizationId` before calling `beforeDeleteOrganization`) are parsed by the validating parsers, never cast. Database repos take `CaseId`, the core result records and the SSE/activity and API output schemas carry it (`z.output` is branded, `z.input` stays a plain string), so a record's Case id flows into a repo or web helper without a re-parse. Later phases brand the remaining id kinds.
+`OrganizationId` and `CaseId` (ADR-0003) are Zod brands in `packages/domain/schemas/src/ids.ts`, so passing an organization id where a Case id is expected fails to compile. Mint them only through `asOrganizationId` / `asCaseId`, a schema parse (`caseIdSchema` in API inputs) or a typed source (a drizzle column with `.$type<Brand>()`, the session actor); a bare `as` cast is a lint error outside `packages/domain/schemas/src/testing`. Edges parse a CASE id with `parseTrimmedCaseId` / `caseIdSchema` and every other uuid (entity, job, evidence, edge, run) with `parseTrimmedUuid` (plain string); never use the case parser for another kind. Brand at the edge: route params (a bad id is a 404), `validateSearch` (`optionalCaseIdSchema`), the last-Case id read back from `localStorage` (`parseOptionalTrimmedUuid`), SSE ids, CLI `--case` (`requireCaseId`: a bad id is a `USAGE` error) and Better Auth hook ids (`createAuth` mints `asOrganizationId` before calling `beforeDeleteOrganization`) are parsed by the validating parsers, never cast. Database repos take `CaseId`, the core result records and the SSE/activity and API output schemas carry it (`z.output` is branded, `z.input` stays a plain string), so a record's Case id flows into a repo or web helper without a re-parse. Later phases brand the remaining id kinds.
 
 ### Zod package rules
 
-- `@watchdog/domain/schemas` lists `zod` as a **peerDependency** (+ devDependency for typecheck); consumers depend on `zod` themselves.
+- `@watchdog/domain` lists `zod` as a **peerDependency** (+ devDependency for typecheck); consumers depend on `zod` themselves.
 - One Zod version workspace-wide (dual instances break `instanceof` / registry).
 - Author with `import { z } from "zod"` (Classic), not `zod/v4/core`.
 - Naming: `fooSchema` + `Foo` / `FooInput`; const arrays `SCREAMING_SNAKE`.
@@ -152,7 +152,7 @@ Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `
 - Freestyle confidence/predicate strings in dossier pickers
 - Re-exporting product vocab from domain `types.ts`
 - Dumping every procedure DTO into `@watchdog/domain/schemas` (atoms only)
-- A second Zod copy inside `@watchdog/domain/schemas` `dependencies`
+- A second Zod copy inside `@watchdog/domain` `dependencies`
 - Duplicating Collect Cap report shapes as TS interfaces when tools already exports the producer Zod
 - Syncing vault `probable` into the platform without an explicit product decision
 
@@ -164,18 +164,20 @@ Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `
 // packages/domain/schemas/src/claim-create.ts
 import { z } from "zod";
 
+import { NOTES_MAX } from "./limits";
+import { requiredText } from "./primitives";
+// inside the domain workspace a schema imports its siblings by relative path
 import {
   claimClassSchema,
   confidenceTierSchema,
-  nonEmptyTrimmed,
   uuidListSchema,
   uuidSchema,
-} from "@watchdog/domain/schemas/shared";
+} from "./shared";
 
 export const createClaimInputSchema = z.object({
   caseId: uuidSchema,
   entityId: uuidSchema,
-  text: nonEmptyTrimmed,
+  text: requiredText(NOTES_MAX),
   confidence: confidenceTierSchema,
   class: claimClassSchema.default("observation"),
   evidenceIds: uuidListSchema.optional(),

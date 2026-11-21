@@ -164,7 +164,7 @@ export const booleanPrefix = withBaseline("boolean-prefix", {
       }
       context.report({
         node,
-        message: `Boolean ${kind} \`${name}\` should be prefixed is/has/can/should (e.g. \`is${name.charAt(0).toUpperCase()}${name.slice(1)}\`): a boolean reads as a predicate (conventions: boolean props and variables are prefixed is/has/can/should)`,
+        message: `Boolean ${kind} \`${name}\` should be prefixed is/has/can/should (e.g. \`is${name.charAt(0).toUpperCase()}${name.slice(1)}\`): a boolean reads as a predicate (boolean props and variables are prefixed is/has/can/should)`,
       });
     };
     /** @param {Record<string, unknown>} fn */
