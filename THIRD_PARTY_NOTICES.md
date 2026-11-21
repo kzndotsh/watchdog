@@ -4,7 +4,7 @@ Watchdog is licensed under AGPL-3.0-only (see [LICENSE](LICENSE)). Its productio
 
 Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, lightningcss and similar) are omitted because the set depends on the machine. Their licenses are checked by `pnpm check:licenses`. `@img/sharp-libvips-*` is LGPL-3.0-or-later.
 
-805 packages.
+803 packages.
 
 ## (AFL-2.1 OR BSD-3-Clause) (1)
 
@@ -150,7 +150,7 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - yaml 2.9.1 (<https://eemeli.org/yaml/>)
 - yargs-parser 22.0.0 (<https://github.com/yargs/yargs-parser#readme>)
 
-## MIT (683)
+## MIT (681)
 
 - @astrojs/compiler-binding 0.5.1, 0.5.3 (<https://astro.build>)
 - @astrojs/compiler-rs 0.5.1, 0.5.3 (<https://astro.build>)
@@ -339,7 +339,6 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - @tanstack/react-pacer 0.24.1 (<https://tanstack.com/pacer>)
 - @tanstack/react-query 5.108.0 (<https://tanstack.com/query>)
 - @tanstack/react-router 1.170.46 (<https://tanstack.com/router>)
-- @tanstack/react-router-ssr-query 1.167.3 (<https://tanstack.com/router>)
 - @tanstack/react-start 1.169.5 (<https://tanstack.com/start>)
 - @tanstack/react-start-client 1.168.45 (<https://tanstack.com/start>)
 - @tanstack/react-start-rsc 0.1.66 (<https://tanstack.com/start>)
@@ -349,7 +348,6 @@ Prebuilt per-platform native binaries (esbuild, sharp and its libvips, rollup, l
 - @tanstack/router-core 1.171.39 (<https://tanstack.com/router>)
 - @tanstack/router-generator 1.168.0 (<https://tanstack.com/router>)
 - @tanstack/router-plugin 1.169.0 (<https://tanstack.com/router>)
-- @tanstack/router-ssr-query-core 1.169.3 (<https://tanstack.com/router>)
 - @tanstack/router-utils 1.163.0 (<https://tanstack.com/router>)
 - @tanstack/start-client-core 1.170.39 (<https://tanstack.com/start>)
 - @tanstack/start-fn-stubs 1.162.0 (<https://tanstack.com/start>)

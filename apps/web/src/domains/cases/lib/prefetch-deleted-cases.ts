@@ -4,7 +4,7 @@ import {
   deletedCaseListView,
   deletionPolicyQuery,
 } from "@/domains/cases/queries";
-import { ensureAppQueryData, isServerRuntime } from "@/shared/lib/warm-query";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { deletedCaseList } from "@watchdog/schemas/cases";
 import type { ListSearch } from "@watchdog/schemas/shared";
 
@@ -18,7 +18,6 @@ export async function warmDeletedCases(
   queryClient: QueryClient,
   search: ListSearch<typeof deletedCaseList>
 ): Promise<void> {
-  if (isServerRuntime()) return;
   try {
     const policy = await ensureAppQueryData(queryClient, deletionPolicyQuery());
     if (policy.canManage) {

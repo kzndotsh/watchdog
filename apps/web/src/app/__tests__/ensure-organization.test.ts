@@ -23,7 +23,6 @@ afterEach(() => {
 
 describe("ensureOrganizationState", () => {
   it("client: the session's active organization answers a first lookup without a request", async () => {
-    vi.stubGlobal("window", {});
     const client = new QueryClient();
 
     await expect(ensureOrganizationState(client, session)).resolves.toEqual({
@@ -36,7 +35,6 @@ describe("ensureOrganizationState", () => {
   });
 
   it("client: asks the server when the session names no organization", async () => {
-    vi.stubGlobal("window", {});
     whoami.mockImplementation(sessionInOrganization("org-db"));
 
     await expect(
@@ -49,7 +47,6 @@ describe("ensureOrganizationState", () => {
   });
 
   it("client: an invalidated answer is asked again, never re-seeded from the session", async () => {
-    vi.stubGlobal("window", {});
     whoami.mockImplementation(sessionInOrganization("org-db"));
     const client = new QueryClient();
     await ensureOrganizationState(client, session);
@@ -65,7 +62,6 @@ describe("ensureOrganizationState", () => {
   });
 
   it("client: a failed answer is asked again rather than hidden by the session's name", async () => {
-    vi.stubGlobal("window", {});
     whoami.mockRejectedValueOnce(new Error("boom"));
     whoami.mockImplementation(sessionInOrganization(null));
     const client = new QueryClient();
@@ -83,18 +79,7 @@ describe("ensureOrganizationState", () => {
     expect(whoami).toHaveBeenCalledTimes(2);
   });
 
-  it("server: always asks the database, whatever the session names", async () => {
-    vi.stubGlobal("window", undefined);
-    whoami.mockImplementation(sessionInOrganization(null));
-
-    await expect(
-      ensureOrganizationState(new QueryClient(), session)
-    ).resolves.toEqual({ organizationId: null });
-    expect(whoami).toHaveBeenCalledOnce();
-  });
-
   it("keeps one user's answer away from another user", async () => {
-    vi.stubGlobal("window", {});
     const client = new QueryClient();
     await ensureOrganizationState(client, session);
 

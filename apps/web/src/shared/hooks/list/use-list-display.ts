@@ -2,7 +2,6 @@ import type { ColumnVisibilityState } from "@tanstack/react-table";
 import { useCallback, useSyncExternalStore } from "react";
 
 import {
-  DEFAULT_LIST_DISPLAY,
   readListDisplay,
   subscribeListDisplay,
   writeListDisplay,
@@ -32,14 +31,9 @@ export type ListDisplay = {
   readonly setDensity: (density: ListDensity) => void;
 };
 
-function getServerSnapshot(): StoredListDisplay {
-  return DEFAULT_LIST_DISPLAY;
-}
-
 /**
  * Per-viewer presentation state of one list, stored locally under `wd.list.<key>` (never the
- * URL: it is not part of what a shared link shows). The server and the first client render read
- * the defaults, so hydration matches; the stored choice applies right after.
+ * URL: it is not part of what a shared link shows).
  */
 export function useListDisplay(
   key: string,
@@ -50,11 +44,7 @@ export function useListDisplay(
     [key]
   );
   const getSnapshot = useCallback(() => readListDisplay(key), [key]);
-  const stored = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
+  const stored = useSyncExternalStore(subscribe, getSnapshot);
 
   /** Every change is built from the latest stored value, so two in one tick both land. */
   const write = (

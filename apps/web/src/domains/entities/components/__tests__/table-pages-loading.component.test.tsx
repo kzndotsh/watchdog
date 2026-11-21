@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderToString } from "react-dom/server";
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { identifierListView } from "@/domains/entities/identifiers/queries";
@@ -28,19 +28,23 @@ vi.mock("@/lib/orpc-client", async () =>
 import { EntityTable } from "@/domains/entities/components/entity-table";
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
 
-// These pages render on the server first (a refresh). Nothing is fetched there, so a list
-// that has not settled must paint its skeleton: the empty text is for a settled, empty list.
+// The first paint of a list that has not settled is its skeleton: the empty text is for a
+// settled, empty list.
 
 const CASE = buildCaseRecord();
 const EMPTY_ENTITIES = /no entities yet/i;
 const EMPTY_IDENTIFIERS = /no identifiers yet/i;
 
-function serverRender(client: QueryClient, page: React.ReactNode): string {
-  return renderToString(
+/** The markup of the first render, before any fetch settles. */
+function firstPaint(client: QueryClient, page: React.ReactNode): string {
+  const { container, unmount } = render(
     <QueryClientProvider client={client}>
       <RouteCaseProvider routeCase={CASE}>{page}</RouteCaseProvider>
     </QueryClientProvider>
   );
+  const html = container.innerHTML;
+  unmount();
+  return html;
 }
 
 function newClient(): QueryClient {
@@ -48,8 +52,8 @@ function newClient(): QueryClient {
 }
 
 describe("Entities page loading", () => {
-  it("server-renders the table skeleton, not the empty text, while pending", () => {
-    const html = serverRender(
+  it("paints the table skeleton, not the empty text, while pending", () => {
+    const html = firstPaint(
       newClient(),
       <EntityTable search={{}} onSearchChange={vi.fn()} />
     );
@@ -70,7 +74,7 @@ describe("Entities page loading", () => {
       }
     );
 
-    const html = serverRender(
+    const html = firstPaint(
       client,
       <EntityTable search={{}} onSearchChange={vi.fn()} />
     );
@@ -81,8 +85,8 @@ describe("Entities page loading", () => {
 });
 
 describe("Identifiers page loading", () => {
-  it("server-renders the table skeleton, not the empty text, while pending", () => {
-    const html = serverRender(
+  it("paints the table skeleton, not the empty text, while pending", () => {
+    const html = firstPaint(
       newClient(),
       <IdentifiersPage search={{}} onSearchChange={vi.fn()} />
     );
@@ -103,7 +107,7 @@ describe("Identifiers page loading", () => {
       }
     );
 
-    const html = serverRender(
+    const html = firstPaint(
       client,
       <IdentifiersPage search={{}} onSearchChange={vi.fn()} />
     );

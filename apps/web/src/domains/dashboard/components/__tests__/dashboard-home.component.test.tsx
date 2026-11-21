@@ -28,8 +28,14 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-vi.mock("@/shared/hooks/use-hydrated", () => ({
-  useHydrated: () => false,
+vi.mock("@watchdog/ui/components/resizable", () => ({
+  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ResizablePanel: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ResizableHandle: () => <div />,
 }));
 
 vi.mock("@/app/lib/query-invalidation", () => ({

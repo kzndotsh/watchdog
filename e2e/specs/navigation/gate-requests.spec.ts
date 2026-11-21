@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test } from "../../fixtures/test";
-import { clickHydrated, waitForPageHydrated } from "../../support/hydration";
+import { waitForPageHydrated } from "../../support/hydration";
 import { primaryRoutes } from "../../support/navigation-routes";
 import { recordGateRequests } from "../../support/request-counts";
 
@@ -33,7 +33,7 @@ async function visit(
 ): Promise<void> {
   const link = sidebarLink(page, stop.label);
   await link.hover();
-  await clickHydrated(link);
+  await link.click();
   await expect(page).toHaveURL(
     new RegExp(`/cases/[^/]+/${stop.screen}(\\?.*)?$`)
   );

@@ -2,7 +2,6 @@ import { ChevronLeftIcon } from "lucide-react";
 import { useState, type MouseEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { useHydrated } from "@/shared/hooks/use-hydrated";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -155,10 +154,9 @@ function SplitViewPanes({
   backLabel = "Back",
   className,
 }: Omit<SplitViewProps, "shouldBleed">) {
-  const hydrated = useHydrated();
   const narrow = useIsMobile();
 
-  if (hydrated && narrow && !middle) {
+  if (narrow && !middle) {
     return (
       <StackedSplit
         list={list}
@@ -174,44 +172,6 @@ function SplitViewPanes({
     isBordered && "border-border rounded-md border",
     className
   );
-
-  // Before JS hydrates, render a plain flex layout at the correct sizes
-  // so there's no jump when react-resizable-panels takes over.
-  if (!hydrated) {
-    const listPct = pct(listDefaultSize);
-    const detailPct = 100 - listPct;
-    return (
-      <div
-        className={cn(
-          "flex min-h-0 flex-1 overflow-hidden",
-          isBordered && "border-border rounded-md border",
-          className
-        )}
-      >
-        <div
-          style={{
-            flexBasis: `${listPct}%`,
-            flexShrink: 0,
-            overflow: "hidden",
-          }}
-          className="flex min-h-0 flex-col"
-        >
-          <ColumnShell>{list}</ColumnShell>
-        </div>
-        <div className="bg-border w-px shrink-0" />
-        <div
-          style={{
-            flexBasis: `${detailPct}%`,
-            flexGrow: 1,
-            overflow: "hidden",
-          }}
-          className="flex min-h-0 flex-col"
-        >
-          <ColumnShell>{detail}</ColumnShell>
-        </div>
-      </div>
-    );
-  }
 
   const detailDefault = middle
     ? String(100 - pct(listDefaultSize) - pct(middleDefaultSize))

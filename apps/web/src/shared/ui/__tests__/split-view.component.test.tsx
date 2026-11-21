@@ -1,10 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/hooks/use-hydrated", () => ({
-  useHydrated: () => true,
-}));
-
 const narrow = vi.hoisted(() => ({ value: false }));
 vi.mock("@watchdog/ui/hooks/use-mobile", () => ({
   useIsMobile: () => narrow.value,
@@ -24,7 +20,7 @@ import { QueueRow } from "@/shared/ui/queue-row";
 import { SplitView } from "@/shared/ui/split-view";
 
 describe("SplitView", () => {
-  it("renders list and detail columns when hydrated", () => {
+  it("renders list and detail columns", () => {
     render(<SplitView list={<div>Queue</div>} detail={<div>Detail</div>} />);
 
     expect(screen.getByTestId("split-group")).toBeInTheDocument();

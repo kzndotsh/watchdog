@@ -4,7 +4,6 @@ import { useSyncExternalStore } from "react";
 import {
   pickDefaultCase,
   readLastCaseId,
-  readServerLastCaseId,
   subscribeToLastCase,
 } from "@/domains/cases/lib/active-case";
 import { visibleCasesQuery } from "@/domains/cases/queries";
@@ -19,13 +18,9 @@ type UseCasesContextOptions = {
   silentError?: boolean;
 };
 
-/** The last Case this browser entered; `null` while hydrating a server render. */
+/** The last Case this browser entered. */
 export function useLastCaseId(): string | null {
-  return useSyncExternalStore(
-    subscribeToLastCase,
-    readLastCaseId,
-    readServerLastCaseId
-  );
+  return useSyncExternalStore(subscribeToLastCase, readLastCaseId);
 }
 
 /**
