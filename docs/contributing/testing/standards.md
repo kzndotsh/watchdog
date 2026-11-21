@@ -177,7 +177,7 @@ Playwright specs live under `e2e/specs/` grouped by product area (`auth/`, `case
 | --- | --- | --- |
 | Support | `e2e/support/` | env, globalSetup (env seed), hydration, db-reset, route smoke table, `request-counts` (records auth and organization-state requests) |
 | API | `e2e/api/` | typed `/api/v1` client + response parsers |
-| Fixtures | `e2e/fixtures/` | `test.extend`: auto `_resetDb`, `api`, `authenticatedCase`, page fixtures |
+| Fixtures | `e2e/fixtures/` | `test.extend`: auto `_resetDb`, auto `_cspViolations` (a spec fails on any Content Security Policy violation), `api`, `authenticatedCase`, page fixtures |
 | Pages | `e2e/pages/` | role-based page objects (actions only; assert in specs) |
 
 Two readiness flags on `<html>`: `data-hydrated` (root providers mounted, set in `providers.tsx`) and `data-page-hydrated` (the route's `Page` frame committed, set by `Page` and cleared when it unmounts). SSR is off, so route content is rendered by React in the browser and takes clicks as soon as it is on screen: click and fill with plain Playwright actions. `BasePage.goto` waits for both flags (`waitForPageHydrated`) so a spec starts on a committed page; auth routes have no `Page` and use `waitForHydrated`. Await the outcome through the API (`waitForPendingProposal` names the case's Jobs on timeout) rather than a bare count poll.
