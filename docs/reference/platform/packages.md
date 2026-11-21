@@ -27,9 +27,9 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | `@watchdog/server/auth` | api, core, caps, apps, `@tanstack/*`. Depends on db (Better Auth adapter), env, log, schemas |
 | `@watchdog/server/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); callers import per-domain subpaths (`@watchdog/server/core/cases`, `/graph`, `/jobs`, ...); the worker imports the same entry points and `/maintenance` |
 | `@watchdog/server/api` | apps, **db**, drizzle-orm (goes through core) |
-| `@watchdog/client` | api, apps, db, caps, core, log (generated JSON in `src/generated`; the `app-router` type entry aliases the live `AppRouter` in-monorepo only) |
+| `apps/cli/client` | api, apps, db, caps, core, log (generated JSON in `src/generated`; the `app-router` type entry aliases the live `AppRouter` in-monorepo only) |
 | `@watchdog/domain/test-kit`, `@watchdog/server/test-db` | dev only: never imported from production code |
-| `apps/cli` | core, db, api, env, log (talks HTTP via `@watchdog/client` + schemas) |
+| `apps/cli` | core, db, api, env, log (talks HTTP via `apps/cli/client` + schemas) |
 | `apps/web` | **db** (auth's db access is `@watchdog/server/auth`; the SSE route uses core) |
 | `packages/server/worker` | declares only core, env, log, schemas, tools |
 | `apps/site` | any `@watchdog/*` runtime package, `apps/web/src` (tokens are copied, not imported) |

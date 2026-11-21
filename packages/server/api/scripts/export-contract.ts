@@ -1,7 +1,7 @@
 /**
  * Generate the minified oRPC contract, the OpenAPI document and the AppRouter
- * type entry into `packages/client/src/generated/` (gitignored build output).
- * Run: `pnpm generate:client`. Also runs on `pnpm install` (`@watchdog/client`
+ * type entry into `apps/cli/client/src/generated/` (gitignored build output).
+ * Run: `pnpm generate:client`. Also runs on `pnpm install` (`@watchdog/cli`
  * `prepare`), before `pnpm typecheck` and before `pnpm build:cli`.
  */
 import { writeFileSync } from "node:fs";
@@ -13,7 +13,7 @@ process.env.SKIP_ENV_VALIDATION = "1";
 const { exportContract } = await import("../src/export-contract.ts");
 
 const here = import.meta.dirname;
-const outDir = path.join(here, "../../../client/src/generated");
+const outDir = path.join(here, "../../../../apps/cli/client/src/generated");
 await exportContract(outDir);
 
 const appRouterEntry = `/**
@@ -22,11 +22,11 @@ const appRouterEntry = `/**
  *
  * Client-facing AppRouter alias. Procedure I/O types still come from the live
  * API router (minify strips Zod from JSON). This file is the only AppRouter
- * export for \`@watchdog/client\` so that package has no \`@watchdog/server\`
+ * export for \`apps/cli/client\` so that package has no \`@watchdog/server\`
  * dependency. Relative path stays monorepo-local until a contract-first router
  * becomes the type SoT.
  */
-export type { AppRouter } from "../../../server/api/src/router.ts";
+export type { AppRouter } from "../../../../../packages/server/api/src/router.ts";
 `;
 writeFileSync(path.join(outDir, "app-router.ts"), appRouterEntry);
 

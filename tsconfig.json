@@ -24,8 +24,8 @@
 
       "@watchdog/cli/*": ["./apps/cli/src/*"],
 
-      "@watchdog/client": ["./packages/client/src/index.ts"],
-      "@watchdog/client/*": ["./packages/client/src/*"],
+      "@watchdog/cli/client": ["./apps/cli/client/src/index.ts"],
+      "@watchdog/cli/client/*": ["./apps/cli/client/src/*"],
 
       "@watchdog/server/core/blob": [
         "./packages/server/core/src/infra/blob.ts"

@@ -3,7 +3,7 @@
 **What this is:** process logging rules for `@watchdog/server/log` / evlog.  
 **What this is not:** Graph audit SoT (`Job.logs` / `changesets` / `graph_history`). Wiring (where the logger is installed): [`../platform/jobs-orpc.md`](../platform/jobs-orpc.md).
 
-Package: `@watchdog/server/log` (`packages/server/log`). Do not depend on it from `apps/cli` or `@watchdog/client` (stdout is the agent contract). Enforced: oxlint `no-restricted-imports` for `apps/cli` (`oxlint.config.ts`); `client` declares no dependency.
+Package: `@watchdog/server/log` (`packages/server/log`). Do not depend on it from `apps/cli` or `apps/cli/client` (stdout is the agent contract). Enforced: oxlint `no-restricted-imports` for `apps/cli` (`oxlint.config.ts`); `client` declares no dependency.
 
 ## Rules
 

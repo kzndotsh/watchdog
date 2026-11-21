@@ -34,8 +34,7 @@ export function openApiSpecGenerateOptions(
           type: "apiKey",
           in: "header",
           name: "x-api-key",
-          description:
-            "Better Auth API key (preferred by @watchdog/client / wd)",
+          description: "Better Auth API key (preferred by wd, the CLI)",
         },
         cookieAuth: {
           type: "apiKey",

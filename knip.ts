@@ -126,7 +126,7 @@ const config: KnipConfig = {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/client": {
+    "apps/cli/client": {
       entry: ["src/index.ts"],
       project: ["src/**/*.ts", "!src/generated/**"],
     },

@@ -236,9 +236,15 @@ importers:
 
   apps/cli:
     dependencies:
-      '@watchdog/client':
-        specifier: workspace:*
-        version: link:../../packages/client
+      '@orpc/client':
+        specifier: 'catalog:'
+        version: 1.16.3(@opentelemetry/api@1.9.1)
+      '@orpc/contract':
+        specifier: 'catalog:'
+        version: 1.16.3(@opentelemetry/api@1.9.1)
+      '@orpc/openapi-client':
+        specifier: ^1.16.3
+        version: 1.16.3(@opentelemetry/api@1.9.1)
       '@watchdog/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -522,25 +528,6 @@ importers:
       oxc-parser:
         specifier: 'catalog:'
         version: 0.159.0
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-
-  packages/client:
-    dependencies:
-      '@orpc/client':
-        specifier: 'catalog:'
-        version: 1.16.3(@opentelemetry/api@1.9.1)
-      '@orpc/contract':
-        specifier: 'catalog:'
-        version: 1.16.3(@opentelemetry/api@1.9.1)
-      '@orpc/openapi-client':
-        specifier: ^1.16.3
-        version: 1.16.3(@opentelemetry/api@1.9.1)
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.6
       typescript:
         specifier: 'catalog:'
         version: 7.0.2

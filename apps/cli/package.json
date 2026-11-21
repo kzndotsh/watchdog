@@ -10,17 +10,23 @@
     "dist"
   ],
   "type": "module",
+  "imports": {
+    "#client": "./client/src/index.ts"
+  },
   "scripts": {
     "build": "node ./scripts/build.mjs",
     "dev": "tsx src/main.ts",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo",
-    "prepare": "node ./scripts/build.mjs",
+    "prepare": "pnpm run client:generate && node ./scripts/build.mjs",
     "prepack": "node ./scripts/build.mjs",
-    "pack:smoke": "node ./scripts/pack-smoke.mjs"
+    "pack:smoke": "node ./scripts/pack-smoke.mjs",
+    "client:generate": "pnpm --filter @watchdog/server api:export-contract"
   },
   "dependencies": {
-    "@watchdog/client": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi-client": "^1.16.3",
     "@watchdog/domain": "workspace:*",
     "citty": "^0.2.2",
     "dotenv": "catalog:",

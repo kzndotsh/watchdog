@@ -59,8 +59,8 @@ Read the nested guide before editing its tree, as an explicit step: auto-attachm
 
 The rest of the tree has none:
 
-- `apps/cli` (`wd`) reaches the API only through `@watchdog/client`. Its stdout is the agent contract: compact JSON, failures as `{ ok: false, error: { code, message } }`, exit 1 on error and 3 on a server failure ([`agent-cli`](docs/how-to/agent-cli.md)). It and `@watchdog/client` never depend on `@watchdog/server/log`.
-- `packages/client`'s `src/generated/` is gitignored build output of `pnpm generate:client` (install, `typecheck` and `build:cli` run it). Never hand-roll an `/api/v1` path.
+- `apps/cli` (`wd`) reaches the API only through `apps/cli/client`. Its stdout is the agent contract: compact JSON, failures as `{ ok: false, error: { code, message } }`, exit 1 on error and 3 on a server failure ([`agent-cli`](docs/how-to/agent-cli.md)). It and `apps/cli/client` never depend on `@watchdog/server/log`.
+- `apps/cli/client`'s `src/generated/` is gitignored build output of `pnpm generate:client` (install, `typecheck` and `build:cli` run it). Never hand-roll an `/api/v1` path.
 - `apps/site` is a static Astro page with no `@watchdog/*` runtime dependency; its tokens are copied from `apps/web/src/styles/`, and its copy comes from `README.md` and `docs/explanation/product.md`.
 - `apps/web/ui` is the shadcn CLI's output, hashed by `pnpm check:vendor`. Change a token or wrap the primitive in `apps/web/src/shared/ui/primitives/`.
 

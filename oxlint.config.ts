@@ -143,7 +143,7 @@ const watchdogIgnores = [
   "reports/**",
   "templates/**",
   "**/routeTree.gen.ts",
-  "packages/client/src/generated/**",
+  "apps/cli/client/src/generated/**",
   "packages/caps/capabilities.gen.json",
   "packages/server/db/drizzle/**",
   "**/dist/**",
@@ -894,7 +894,7 @@ export default defineConfig({
         "packages/domain/schemas/src/**/*.{ts,tsx}",
         "packages/domain/test-kit/src/**/*.{ts,tsx}",
         "packages/server/test-db/src/**/*.{ts,tsx}",
-        "packages/client/src/**/*.{ts,tsx}",
+        "apps/cli/client/src/**/*.{ts,tsx}",
         "packages/server/api/src/**/*.{ts,tsx}",
         "packages/server/auth/src/**/*.{ts,tsx}",
         "apps/**/*.{ts,tsx,mjs}",
@@ -1311,21 +1311,25 @@ export default defineConfig({
                   "@watchdog/server/db/*",
                   "@watchdog/server/api/*",
                 ],
-                message: "CLI talks HTTP via @watchdog/client only.",
+                message:
+                  "CLI talks HTTP via its client (apps/cli/client) only.",
               },
             ],
             paths: [
               {
                 name: "@watchdog/server/core",
-                message: "CLI talks HTTP via @watchdog/client only.",
+                message:
+                  "CLI talks HTTP via its client (apps/cli/client) only.",
               },
               {
                 name: "@watchdog/server/db",
-                message: "CLI talks HTTP via @watchdog/client only.",
+                message:
+                  "CLI talks HTTP via its client (apps/cli/client) only.",
               },
               {
                 name: "@watchdog/server/api",
-                message: "CLI talks HTTP via @watchdog/client only.",
+                message:
+                  "CLI talks HTTP via its client (apps/cli/client) only.",
               },
               {
                 name: "@watchdog/server/log",

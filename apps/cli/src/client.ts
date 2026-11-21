@@ -1,4 +1,4 @@
-import { createWatchdogClient, type WatchdogClient } from "@watchdog/client";
+import { createWatchdogClient, type WatchdogClient } from "#client";
 
 import { loadCliEnv } from "./env";
 

@@ -125,7 +125,7 @@ jobs:
               - 'docs/reference/platform/cap-register.md'
             api:
               - 'packages/server/api/**'
-              - 'packages/client/**'
+              - 'apps/cli/client/**'
               - 'packages/server/core/**'
             web:
               - 'apps/web/**'

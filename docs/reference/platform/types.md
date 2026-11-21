@@ -19,7 +19,7 @@ Contract layer for Watchdog: shared atoms in `@watchdog/domain/schemas`, domain 
 @watchdog/caps      Cap implementations + registry; Zod inputs; capabilities.gen.json
 @watchdog/server/core      parsePatch / tryParsePatch; EvidenceSnapshot packing; run-job; apply-patch
 @watchdog/server/api       oRPC procedure I/O (composes schemas atoms)
-@watchdog/client    generated OpenAPI + minified router JSON + createWatchdogClient
+apps/cli/client     generated OpenAPI + minified router JSON + createWatchdogClient
 apps/web domains    types.ts: domain mutation Zod + DTOs (import atoms; do not re-export vocab)
 ```
 
