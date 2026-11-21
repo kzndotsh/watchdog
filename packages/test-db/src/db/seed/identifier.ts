@@ -30,11 +30,14 @@ export async function seedIdentifier(
   entityId: string,
   overrides: Partial<NewIdentifier> & Pick<NewIdentifier, "type" | "value">
 ): Promise<IdentifierRow> {
-  // An Identifier carries its Entity's Case (same-Case foreign key), so read it from the Entity:
-  // in `exec`'s scope, else as the owner, for an Entity of another organization (#719).
+  // An Identifier carries its Entity's Case (same-Case foreign key). Pass `overrides.caseId` for an
+  // Entity of another organization seeded in an uncommitted transaction, which neither lookup
+  // below can see. Otherwise it is read from the Entity: in `exec`'s scope, else as the owner (#719).
   const entity =
-    (await entitiesRepo.getById(exec, entityId)) ??
-    (await entityCaseAsOwner(entityId));
+    overrides.caseId === undefined
+      ? ((await entitiesRepo.getById(exec, entityId)) ??
+        (await entityCaseAsOwner(entityId)))
+      : { caseId: overrides.caseId };
   if (!entity) {
     throw new Error("seedIdentifier: no such Entity");
   }

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import type { DomainTag } from "../errors/tagged-errors";
-import { DAY_MS } from "../infra/clock";
+import { DAY_MS, nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { forEachOrganization } from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
@@ -88,22 +88,22 @@ function pruneInScopeEffect(
 export function pruneActivityEffect(
   opts: PruneActivityOpts = {}
 ): Effect.Effect<PruneActivityResult, DomainTag, Db> {
-  const now = opts.now ?? new Date();
-  const before = new Date(
-    now.getTime() - (opts.retentionDays ?? ACTIVITY_RETENTION_DAYS) * DAY_MS
-  );
   const keepPerCase = opts.keepPerCase ?? ACTIVITY_KEEP_PER_CASE;
   const batchSize = opts.batchSize ?? ACTIVITY_PRUNE_BATCH;
   // Row-level security (#719): each organization's entries are pruned in its own scope. The floor
   // is raised to the newest position deleted in any of them, so every deleted entry stays at or
   // below it (a cursor below the floor resyncs, which is all the floor promises).
-  return Effect.map(
-    forEachOrganization(() =>
+  return Effect.gen(function* pruneActivityGen() {
+    const now = opts.now ?? (yield* nowDateEffect);
+    const before = new Date(
+      now.getTime() - (opts.retentionDays ?? ACTIVITY_RETENTION_DAYS) * DAY_MS
+    );
+    const perOrganization = yield* forEachOrganization(() =>
       pruneInScopeEffect(before, keepPerCase, batchSize)
-    ),
-    (perOrganization) => ({
+    );
+    return {
       pruned: perOrganization.reduce((sum, r) => sum + r.pruned, 0),
       batches: perOrganization.reduce((sum, r) => sum + r.batches, 0),
-    })
-  );
+    };
+  });
 }

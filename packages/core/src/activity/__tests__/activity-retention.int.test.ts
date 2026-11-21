@@ -1,4 +1,5 @@
 import { Effect, Fiber } from "effect";
+import { TestClock } from "effect/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -104,6 +105,22 @@ describe("pruneActivityEffect", () => {
     const result = await prune();
     expect(result.pruned).toBe(2);
     expect(await labels()).toEqual(["edge", "fresh"]);
+  });
+
+  it("measures the window from Effect's clock when no time is given", async () => {
+    const cased = await seedCase(db);
+    await append(cased.id, "old", 91);
+    await append(cased.id, "fresh", 1);
+    // The clock stands 100 days before NOW, so by it neither entry is old; the host time (later
+    // than NOW) would prune "old".
+    const result = await Effect.runPromise(
+      Effect.gen(function* pruneByClockGen() {
+        yield* TestClock.setTime(NOW.getTime() - 100 * DAY_MS);
+        return yield* pruneActivityEffect({ keepPerCase: 0 });
+      }).pipe(Effect.provide(Db.layerOf(db)), Effect.provide(TestClock.layer()))
+    );
+    expect(result.pruned).toBe(0);
+    expect(await labels()).toEqual(["old", "fresh"]);
   });
 
   it("never prunes below the newest N entries of a Case, however old", async () => {
