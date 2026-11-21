@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@watchdog/ui/components/card";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Card, CardContent } from "#ui/components/card";
+import { Skeleton } from "#ui/components/skeleton";
 
 export function ApiKeySkeleton() {
   return (

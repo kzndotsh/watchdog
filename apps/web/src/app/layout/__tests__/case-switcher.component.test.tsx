@@ -41,7 +41,7 @@ vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCaseSwitch: vi.fn(),
 }));
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -66,7 +66,7 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   useSidebar: () => ({ state: "expanded", isMobile: false }),
 }));
 
-vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
+vi.mock("#ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

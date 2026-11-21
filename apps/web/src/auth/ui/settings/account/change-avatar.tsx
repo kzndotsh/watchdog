@@ -3,13 +3,13 @@ import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { Camera, Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 
+import { Field } from "#ui/components/field";
+import { Label } from "#ui/components/label";
+import { Spinner } from "#ui/components/spinner";
 import { UserAvatar } from "@/auth/ui/user/user-avatar";
 import { cn, couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
-import { Field } from "@watchdog/ui/components/field";
-import { Label } from "@watchdog/ui/components/label";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 export interface ChangeAvatarProps {
   className?: string;

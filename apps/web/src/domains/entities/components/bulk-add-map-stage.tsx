@@ -1,3 +1,4 @@
+import { Field, FieldLabel } from "#ui/components/field";
 import { BulkAddColumnMapper } from "@/domains/entities/components/bulk-add-column-mapper";
 import { BulkAddIdentifiersPreviewTable } from "@/domains/entities/components/bulk-add-identifiers-preview-table";
 import type {
@@ -13,7 +14,6 @@ import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { IDENTIFIER_PLATFORM_OPTIONS } from "@/shared/ui/vocab";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 type BulkAddMapStageProps = {
   table: IdentifierPasteTable;

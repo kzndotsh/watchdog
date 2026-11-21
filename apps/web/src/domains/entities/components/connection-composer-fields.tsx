@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+import { Field, FieldGroup, FieldLabel } from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import type { ConnectionComposerValues } from "@/domains/entities/lib/connection-composer";
 import { entityPickerPort } from "@/domains/entities/queries";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
@@ -19,8 +21,6 @@ import {
   parseOptionalTrimmedUuid,
 } from "@watchdog/domain/schemas/shared";
 import type { EntityKind } from "@watchdog/domain/schemas/shared";
-import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 type Props = {
   /** The Case whose Entities the peer picker searches (one small page, #559). */

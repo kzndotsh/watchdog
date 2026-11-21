@@ -29,6 +29,7 @@ vi.mock("@/shared/ui/toast", async () => {
   return toastModuleDouble();
 });
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import { DeletedCasesView } from "@/domains/cases/components/deleted-cases-view";
 import { procedureDouble } from "@/testing/orpc-client";
 import {
@@ -36,7 +37,6 @@ import {
   destroyTestRouter,
   testRouterWrapper,
 } from "@/testing/test-router";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const fns = {
   listDeletedCasesPageFn: procedureDouble("cases.listDeleted"),

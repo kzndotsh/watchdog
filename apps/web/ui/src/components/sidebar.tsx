@@ -6,23 +6,23 @@ import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
-import { useIsMobile } from "@watchdog/ui/hooks/use-mobile"
-import { Button } from "@watchdog/ui/components/button"
-import { Input } from "@watchdog/ui/components/input"
-import { Separator } from "@watchdog/ui/components/separator"
+import { useIsMobile } from "#ui/hooks/use-mobile"
+import { Button } from "#ui/components/button"
+import { Input } from "#ui/components/input"
+import { Separator } from "#ui/components/separator"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@watchdog/ui/components/sheet"
-import { Skeleton } from "@watchdog/ui/components/skeleton"
+} from "#ui/components/sheet"
+import { Skeleton } from "#ui/components/skeleton"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@watchdog/ui/components/tooltip"
+} from "#ui/components/tooltip"
 import { PanelLeftIcon } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"

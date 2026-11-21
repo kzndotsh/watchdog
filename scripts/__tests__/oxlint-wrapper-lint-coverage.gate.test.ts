@@ -68,7 +68,7 @@ beforeAll(() => {
   ]) {
     fixture.repo.copyFromRepo(rel);
   }
-  // The wrappers import `@watchdog/ui`, a workspace link under apps/web/node_modules.
+  // The wrappers import `#ui`, a workspace link under apps/web/node_modules.
   symlinkSync(
     path.join(repoRoot, "apps/web/node_modules"),
     path.join(fixture.repo.dir, "apps/web/node_modules"),

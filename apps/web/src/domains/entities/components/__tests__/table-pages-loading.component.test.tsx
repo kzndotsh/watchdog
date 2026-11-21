@@ -8,7 +8,7 @@ import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
 import { entityList, identifierList } from "@watchdog/domain/schemas/graph";
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 

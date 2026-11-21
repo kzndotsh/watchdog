@@ -2,6 +2,10 @@ import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
 import { Key } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
 
+import { Field, FieldError } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Label } from "#ui/components/label";
+import { Spinner } from "#ui/components/spinner";
 import { authClient as appAuthClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { couldnt, errMessage } from "@/lib/utils";
@@ -18,10 +22,6 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
 import { SCOPE_PRESETS, type Scope } from "@watchdog/domain/schemas/shared";
-import { Field, FieldError } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Label } from "@watchdog/ui/components/label";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 import { formString } from "../form-data";
 import { NewApiKeyDialog } from "./new-api-key-dialog";

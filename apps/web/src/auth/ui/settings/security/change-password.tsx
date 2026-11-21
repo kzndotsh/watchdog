@@ -9,21 +9,21 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
 
-import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
-import { FormSection } from "@/shared/ui/form-section";
-import { Button } from "@/shared/ui/primitives/button";
-import { toast } from "@/shared/ui/toast";
-import { Field, FieldError } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
+import { Field, FieldError } from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@watchdog/ui/components/input-group";
-import { Label } from "@watchdog/ui/components/label";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
-import { Spinner } from "@watchdog/ui/components/spinner";
+} from "#ui/components/input-group";
+import { Label } from "#ui/components/label";
+import { Skeleton } from "#ui/components/skeleton";
+import { Spinner } from "#ui/components/spinner";
+import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
+import { FormSection } from "@/shared/ui/form-section";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
 
 import { PasswordStrengthMeter } from "../../password-strength-meter";
 

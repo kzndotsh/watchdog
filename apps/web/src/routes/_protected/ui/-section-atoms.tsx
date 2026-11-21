@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "#ui/components/dropdown-menu";
+import { FieldError } from "#ui/components/field";
+import {
   CONTROL_ATOMS,
   type AtomEntry,
 } from "@/routes/_protected/ui/-atoms-controls";
@@ -47,12 +53,6 @@ import {
   StatusInk,
 } from "@/shared/ui/vocab";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
-import { FieldError } from "@watchdog/ui/components/field";
 
 const DEMO_EXTERNAL_HREF = ["https", "://example.com/evidence"].join("");
 const SAMPLE_ID = "8680fa38-0c1d-4e2f-9a3b-595335c1d2e3";

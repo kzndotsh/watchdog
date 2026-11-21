@@ -2,12 +2,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import {
   createTestRouter,
   destroyTestRouter,
   testRouterWrapper,
 } from "@/testing/test-router";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");

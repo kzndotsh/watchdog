@@ -11,5 +11,5 @@ env.example linguist-generated=true
 docs/reference/platform/configuration.md linguist-generated=true
 
 # Vendored shadcn primitives, generated and locked by `pnpm ui:sync`.
-packages/ui/src/components/** linguist-vendored=true
-packages/ui/src/hooks/** linguist-vendored=true
+apps/web/ui/src/components/** linguist-vendored=true
+apps/web/ui/src/hooks/** linguist-vendored=true

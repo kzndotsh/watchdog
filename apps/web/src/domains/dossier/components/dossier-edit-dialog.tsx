@@ -1,6 +1,13 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import type { EntityRecord } from "@/domains/entities/types";
 import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { FieldSelect } from "@/shared/ui/field-select";
@@ -19,13 +26,6 @@ import {
   trimmedEntityKindSchema,
   type EntityKind,
 } from "@watchdog/domain/schemas/shared";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 export type DossierEditFormValues = {
   name: string;

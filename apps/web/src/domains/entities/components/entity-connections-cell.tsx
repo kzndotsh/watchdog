@@ -2,6 +2,12 @@ import { Link } from "@tanstack/react-router";
 import { ArrowDownLeftIcon, ArrowUpRightIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "#ui/components/popover";
 import {
   loadConnectionComposerFields,
   warmConnectionComposerFields,
@@ -36,12 +42,6 @@ import {
   parseEdgePhraseValue,
 } from "@watchdog/domain/schemas/shared";
 import type { EdgeOrientation } from "@watchdog/domain/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
 
 // The fields (comboboxes, the peer picker) open on a click, so they load then, warmed on hover.
 const LazyComposerFields = lazy(async () => {

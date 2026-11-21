@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+import { Checkbox } from "#ui/components/checkbox";
+import { Input } from "#ui/components/input";
 import { cn, couldnt } from "@/lib/utils";
 import type { PickerSource } from "@/shared/hooks/use-picker-source";
 import { Eyebrow } from "@/shared/ui/eyebrow";
@@ -10,8 +12,6 @@ import {
 import { Button } from "@/shared/ui/primitives/button";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { LIST_SEARCH_MIN_LENGTH } from "@watchdog/domain/schemas/shared";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import { Input } from "@watchdog/ui/components/input";
 
 type EvidenceChecklistProps = {
   source: PickerSource<EvidenceOption>;

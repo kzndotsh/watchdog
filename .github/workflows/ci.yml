@@ -73,7 +73,7 @@ jobs:
             # tests run the gate scripts and their tests); `config_core` does not, so a
             # scripts-only change does not start Integration or test (e2e).
             config_core: &config_core
-              - 'packages/ui/vendor.json'
+              - 'apps/web/ui/vendor.json'
               # Any workspace manifest (root, apps/*, packages/*): a dependency, script or
               # export edit there changes what every dependent job installs and runs.
               - '**/package.json'

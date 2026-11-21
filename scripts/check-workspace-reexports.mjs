@@ -7,7 +7,7 @@
  *   export * from "@watchdog/x"           export * as ns from "@watchdog/x"
  *   import { X } from "@watchdog/x"; export { X }   (also `export type { X }`)
  *
- * Exempt: tests; and `@watchdog/ui/components/*` specifiers (only those) under
+ * Exempt: tests; and `@watchdog/web/ui/components/*` specifiers (only those) under
  * apps/web/src/shared/ui/primitives/ and in exactly apps/web/src/shared/ui/toast.tsx, the web
  * wrappers that re-export a ui component module beside their override.
  *
@@ -25,10 +25,10 @@ const ROOTS = ["apps", "packages"];
 const SKIP_DIRS = new Set(["node_modules", "dist", "__tests__"]);
 const PRIMITIVES_DIR = "apps/web/src/shared/ui/primitives/";
 const TOAST_FILE = "apps/web/src/shared/ui/toast.tsx";
-const UI_COMPONENT = "@watchdog/ui/components/";
+const UI_COMPONENT = "@watchdog/web/ui/components/";
 
 /**
- * The two web wrapper layers over @watchdog/ui may re-export a `@watchdog/ui/components/*`
+ * The two web wrapper layers over @watchdog/web/ui may re-export a `@watchdog/web/ui/components/*`
  * module (and nothing else) beside their override.
  * @param {string} rel
  * @param {string} spec

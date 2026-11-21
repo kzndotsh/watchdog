@@ -28,7 +28,7 @@ vi.mock("@/shared/ui/toast", () => ({
   Toaster: () => null,
 }));
 
-vi.mock("@watchdog/ui/components/tooltip", () => ({
+vi.mock("#ui/components/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 

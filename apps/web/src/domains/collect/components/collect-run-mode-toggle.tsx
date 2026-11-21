@@ -1,7 +1,4 @@
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@watchdog/ui/components/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "#ui/components/toggle-group";
 
 const RUN_MODES = [
   { value: "cap", label: "Cap" },

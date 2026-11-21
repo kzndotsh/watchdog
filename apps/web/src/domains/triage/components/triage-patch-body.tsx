@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "#ui/components/alert";
 import { LazyEvidencePreviewDrawer } from "@/domains/triage/components/evidence-preview-drawer-lazy";
 import {
   PatchOpList,
@@ -26,11 +27,6 @@ import {
 } from "@watchdog/domain/schemas/graph";
 import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 import type { ProposalRecord } from "@watchdog/server/core/proposals";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@watchdog/ui/components/alert";
 
 function summaryIsRedundant(proposal: ProposalRecord): boolean {
   const summary = proposal.summary?.trim();

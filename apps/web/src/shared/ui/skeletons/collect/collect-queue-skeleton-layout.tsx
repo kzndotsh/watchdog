@@ -1,10 +1,10 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import { QueueRowMeta } from "@/shared/ui/queue-row-meta";
 import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { COLLECT_QUEUE_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons/constants";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function splitCollectQueueRowsByDay(rows: number): number[] {
   if (rows <= 4) return [rows];

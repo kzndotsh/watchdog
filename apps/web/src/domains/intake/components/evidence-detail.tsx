@@ -1,6 +1,7 @@
 import { DownloadIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { Tabs, TabsContent } from "#ui/components/tabs";
 import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
 import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
 import { EvidenceOutputTab } from "@/domains/intake/components/evidence-output-tab";
@@ -59,7 +60,6 @@ import {
   type EgressClass,
 } from "@watchdog/domain/schemas/shared";
 import type { JobListRecord } from "@watchdog/server/core/jobs";
-import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
 type DetailTab = "content" | "output" | "jobs" | "found" | "calls";
 

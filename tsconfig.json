@@ -61,7 +61,7 @@
 
       "@watchdog/caps/tools/*": ["./packages/caps/tools/src/*"],
 
-      "@watchdog/ui/*": ["./packages/ui/src/*"]
+      "@watchdog/web/ui/*": ["./apps/web/ui/src/*"]
     }
   }
 }

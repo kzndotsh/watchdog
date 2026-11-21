@@ -1,5 +1,5 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { StackBodySkeletonLayout } from "@/shared/ui/skeletons/bodies/stack-body-skeleton-layout";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 export function RoutePendingSkeletonLayout() {
   return (

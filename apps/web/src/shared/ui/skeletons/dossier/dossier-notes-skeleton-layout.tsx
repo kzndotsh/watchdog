@@ -1,5 +1,5 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { DossierSectionBlockSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-section-block-skeleton";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Dossier Notes tab — full-height rich text editor. */
 export function DossierNotesSkeletonLayout() {

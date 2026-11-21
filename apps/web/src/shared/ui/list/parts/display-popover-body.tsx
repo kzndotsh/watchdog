@@ -1,13 +1,10 @@
 import { useId, type ReactNode } from "react";
 
+import { Checkbox } from "#ui/components/checkbox";
+import { RadioGroup, RadioGroupItem } from "#ui/components/radio-group";
+import { Switch } from "#ui/components/switch";
 import type { ListDisplay } from "@/shared/hooks/list/use-list-display";
 import { Button } from "@/shared/ui/primitives/button";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@watchdog/ui/components/radio-group";
-import { Switch } from "@watchdog/ui/components/switch";
 
 export type DisplayPopoverBodyProps = {
   readonly display: ListDisplay;

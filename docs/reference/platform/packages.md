@@ -9,7 +9,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 
 - **Declared `dependencies`** are the matrix: pnpm's strict `node_modules` means an undeclared `@watchdog/*` import does not resolve (`pnpm typecheck` fails). Declaring a forbidden dependency fails nothing, so the rows below are guidance unless another bullet names a gate.
 - **`pnpm check:boundaries`** (`scripts/check-boundaries.mjs`, `pnpm verify` and CI): an import of `@watchdog/*` must name a workspace package the importer declares, through a path its `exports` map lists; the failure names the public entry points. Packages and apps never import an app. Its `DENIED_IMPORTS` list fails an import whatever the package declares: caps imports no `@watchdog/server/db`, `drizzle-orm`, `postgres` or `pg`; api no `@watchdog/server/db` or `drizzle-orm`; core no `drizzle-orm`.
-- **oxlint `no-restricted-imports`** (`oxlint.config.ts`): `apps/web` may not import `@watchdog/server/db` or unwrapped primitives; `apps/cli` may not import `core`, `db`, `api`, `log` or `env`; `packages/ui` wrappers may not import `db`.
+- **oxlint `no-restricted-imports`** (`oxlint.config.ts`): `apps/web` may not import `@watchdog/server/db` or unwrapped primitives; `apps/cli` may not import `core`, `db`, `api`, `log` or `env`; `apps/web/ui` wrappers may not import `db`.
 - **`import/no-cycle: error`** across the workspace.
 - **oxlint `watchdog/db-repo-*` rules** (`scripts/oxlint-plugin/`, scoped to `packages/server/db/src/repos/*.repo.ts` in `oxlint.config.ts`, so `pnpm check`) enforce the repos rules: no `SQL` type, no transaction, no throw, no notify, `exec: DbExec` first, no `.toISOString()` (its only DTO check), no `trimmedOrNull`, `trimmedOrUndefined` only in lookup methods, no job status set literal, no zod import, and no raw `sql` fragment (baselined).
 - Everything else in the "Must not import" column is guidance backed only by the dependency declarations.
@@ -18,7 +18,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 
 | Package | Must not import |
 | --- | --- |
-| `@watchdog/server/env`, `@watchdog/domain/schemas`, `@watchdog/ui`, `@watchdog/server/log` | any other `@watchdog/*` (leaf packages) |
+| `@watchdog/server/env`, `@watchdog/domain/schemas`, `@watchdog/web/ui`, `@watchdog/server/log` | any other `@watchdog/*` (leaf packages) |
 | `@watchdog/domain/policy` | db, caps, core, api, apps, tools, ai |
 | `@watchdog/server/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle (db's integration tests use the harness; db never imports it outside tests) |
 | `@watchdog/caps/ai` | db, caps, core |

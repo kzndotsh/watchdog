@@ -30,8 +30,8 @@ reviews:
     - "!apps/web/src/routeTree.gen.ts"
     - "!packages/caps/capabilities.gen.json"
     - "!packages/server/db/drizzle/meta/**"
-    - "!packages/ui/src/components/**"
-    - "!packages/ui/src/hooks/**"
+    - "!apps/web/ui/src/components/**"
+    - "!apps/web/ui/src/hooks/**"
 
   path_instructions:
     - path: "**/*.{ts,tsx,mjs}"

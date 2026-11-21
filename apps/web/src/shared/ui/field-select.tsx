@@ -1,15 +1,15 @@
-import { cn } from "@/lib/utils";
-import {
-  CONTROL_TRIGGER,
-  resolveSelectValue,
-} from "@/shared/ui/control-chrome";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@watchdog/ui/components/select";
+} from "#ui/components/select";
+import { cn } from "@/lib/utils";
+import {
+  CONTROL_TRIGGER,
+  resolveSelectValue,
+} from "@/shared/ui/control-chrome";
 
 /** Sentinel — Base UI Select disallows empty-string item values. */
 const EMPTY_VALUE = "__wd_empty__";

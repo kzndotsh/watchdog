@@ -1,5 +1,7 @@
 import { ChevronDownIcon } from "lucide-react";
 
+import { Collapsible, CollapsibleContent } from "#ui/components/collapsible";
+import { FieldError } from "#ui/components/field";
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import {
@@ -14,11 +16,6 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
 import { isLiveJobStatus } from "@watchdog/domain/schemas/shared";
 import type { JobListRecord } from "@watchdog/server/core/jobs";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@watchdog/ui/components/collapsible";
-import { FieldError } from "@watchdog/ui/components/field";
 
 function processRunIsLive(job: JobListRecord): boolean {
   return isLiveJobStatus(job.status);

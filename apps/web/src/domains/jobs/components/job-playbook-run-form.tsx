@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { SubmitEvent } from "react";
 import { useEffect } from "react";
 
+import { FieldError } from "#ui/components/field";
 import type { CaseEgress } from "@/domains/cases/types";
 import { EgressBlockNotice } from "@/domains/jobs/components/egress-block-notice";
 import {
@@ -21,7 +22,6 @@ import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { ListFilterChips, ListFiltersButton } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { FieldError } from "@watchdog/ui/components/field";
 
 /** The Playbook filters have no `ref` or `tags` filter, so they need no option source. */
 const NO_SOURCES = {};

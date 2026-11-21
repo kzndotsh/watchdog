@@ -2,6 +2,14 @@ import { useForm, useSelector } from "@tanstack/react-form";
 import { Eye, EyeOff, KeyRoundIcon } from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 
+import { Field, FieldError, FieldLabel } from "#ui/components/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "#ui/components/input-group";
+import { Spinner } from "#ui/components/spinner";
 import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
@@ -22,14 +30,6 @@ import { StatusDot } from "@/shared/ui/status-dot";
 import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import { putCredentialInputSchema } from "@watchdog/domain/schemas/caps";
 import type { CredentialSlot } from "@watchdog/server/core/vault";
-import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@watchdog/ui/components/input-group";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 function secretFieldValidator({ value }: { value: string }) {
   return value.trim() ? undefined : "Enter a secret before saving";

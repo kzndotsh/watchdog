@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
 import {
   ClaimActionForm,
   type ActionState,
@@ -56,7 +57,6 @@ import {
 } from "@/shared/ui/vocab";
 import type { claimList } from "@watchdog/domain/schemas/graph";
 import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
 
 function evidenceTitleOf(
   titles: ReadonlyMap<string, EvidenceOption>,

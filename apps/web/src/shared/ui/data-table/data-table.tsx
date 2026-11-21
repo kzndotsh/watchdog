@@ -18,12 +18,7 @@ import type {
  * Optional `getRowActions` wraps body rows in a ContextMenu (editables skipped).
  */
 
-import { cn } from "@/lib/utils";
-import type { AppAction } from "@/shared/lib/app-action";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
-import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Skeleton } from "#ui/components/skeleton";
 import {
   Table,
   TableBody,
@@ -31,7 +26,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@watchdog/ui/components/table";
+} from "#ui/components/table";
+import { cn } from "@/lib/utils";
+import type { AppAction } from "@/shared/lib/app-action";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
+import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
 
 import { ColumnSortContext } from "./column-sort-context";
 import type { ServerTableFeatures } from "./server-table-features";

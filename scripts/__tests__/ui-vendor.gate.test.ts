@@ -11,7 +11,7 @@ const createGateRepo = gateRepoFactory();
 // must-pass case follows a deliberate bump while still failing on any lock/script drift.
 const realLock: { shadcn?: string } = JSON.parse(
   readFileSync(
-    path.resolve(import.meta.dirname, "../../packages/ui/vendor.json"),
+    path.resolve(import.meta.dirname, "../../apps/web/ui/vendor.json"),
     "utf-8"
   )
 );
@@ -20,7 +20,7 @@ const PINNED = realLock.shadcn ?? "";
 function vendorRepo(lock: Record<string, unknown>) {
   const repo = createGateRepo(["ui-vendor.mjs"]);
   repo.write(
-    "packages/ui/vendor.json",
+    "apps/web/ui/vendor.json",
     `${JSON.stringify({ style: "base-mira", components: [], files: {}, ...lock }, null, 2)}\n`
   );
   repo.commitAll("lock");

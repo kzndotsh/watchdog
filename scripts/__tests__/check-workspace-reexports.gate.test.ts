@@ -43,7 +43,7 @@ describe("check-workspace-reexports gate", () => {
   it("fails on export-star from a workspace subpath", () => {
     const res = repoWith({
       "apps/web/src/bad.ts":
-        'export * from "@watchdog/ui/components/dialog";\n',
+        'export * from "@watchdog/web/ui/components/dialog";\n',
     }).run(GATE);
 
     expect(res.code).toBe(1);
@@ -80,7 +80,7 @@ describe("check-workspace-reexports gate", () => {
   it("allows the documented web wrapper layer and ignores tests", () => {
     const res = repoWith({
       "apps/web/src/shared/ui/primitives/button.tsx":
-        'export * from "@watchdog/ui/components/button";\n',
+        'export * from "@watchdog/web/ui/components/button";\n',
       "packages/server/core/src/__tests__/x.test.ts":
         'export { a } from "@watchdog/server/db";\n',
     }).run(GATE);
@@ -116,7 +116,7 @@ describe("check-workspace-reexports gate", () => {
     expect(res.code).toBe(0);
   });
 
-  it("limits the web wrapper exemption to @watchdog/ui/components specifiers", () => {
+  it("limits the web wrapper exemption to @watchdog/web/ui/components specifiers", () => {
     const res = repoWith({
       "apps/web/src/shared/ui/primitives/bad.tsx":
         'export * from "@watchdog/domain/schemas";\n',
@@ -129,13 +129,13 @@ describe("check-workspace-reexports gate", () => {
   it("allows toast.tsx exactly and not files that merely share its prefix", () => {
     const ok = repoWith({
       "apps/web/src/shared/ui/toast.tsx":
-        'export * from "@watchdog/ui/components/sonner";\n',
+        'export * from "@watchdog/web/ui/components/sonner";\n',
     }).run(GATE);
     expect(ok.code).toBe(0);
 
     const bad = repoWith({
       "apps/web/src/shared/ui/toast.tsx.extra.tsx":
-        'export * from "@watchdog/ui/components/sonner";\n',
+        'export * from "@watchdog/web/ui/components/sonner";\n',
     }).run(GATE);
     expect(bad.code).toBe(1);
   });

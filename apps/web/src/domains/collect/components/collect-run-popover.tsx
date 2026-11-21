@@ -2,18 +2,18 @@ import { PlayIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
-  CollectRunModeToggle,
-  type CollectRunMode,
-} from "@/domains/collect/components/collect-run-mode-toggle";
-import { Button } from "@/shared/ui/primitives/button";
-import {
   Popover,
   PopoverContent,
   PopoverDescription,
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@watchdog/ui/components/popover";
+} from "#ui/components/popover";
+import {
+  CollectRunModeToggle,
+  type CollectRunMode,
+} from "@/domains/collect/components/collect-run-mode-toggle";
+import { Button } from "@/shared/ui/primitives/button";
 
 type CollectRunPopoverProps = {
   runMode: CollectRunMode;

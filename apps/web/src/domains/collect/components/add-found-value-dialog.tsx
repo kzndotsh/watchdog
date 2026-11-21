@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Field, FieldError, FieldLabel } from "#ui/components/field";
 import { useAddFoundValue } from "@/domains/collect/hooks/use-add-found-value";
 import { entityPickerPort } from "@/domains/entities/queries";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
@@ -15,7 +16,6 @@ import {
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 import { IDENTIFIER_TYPE_LABELS } from "@watchdog/domain/schemas/shared";
-import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
 type AddFoundValueDialogProps = {
   caseId: string;

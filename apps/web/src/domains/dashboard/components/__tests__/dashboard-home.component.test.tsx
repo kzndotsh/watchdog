@@ -24,11 +24,11 @@ vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,
 }));
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-vi.mock("@watchdog/ui/components/resizable", () => ({
+vi.mock("#ui/components/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

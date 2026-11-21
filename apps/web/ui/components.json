@@ -13,11 +13,11 @@
   "iconLibrary": "lucide",
   "rtl": false,
   "aliases": {
-    "components": "@watchdog/ui/components",
-    "utils": "@watchdog/ui/lib/utils",
-    "ui": "@watchdog/ui/components",
-    "lib": "@watchdog/ui/lib",
-    "hooks": "@watchdog/ui/hooks"
+    "components": "#ui/components",
+    "utils": "#ui/lib/utils",
+    "ui": "#ui/components",
+    "lib": "#ui/lib",
+    "hooks": "#ui/hooks"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

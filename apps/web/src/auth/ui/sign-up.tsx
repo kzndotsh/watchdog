@@ -8,30 +8,25 @@ import { useIsMutating } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import { type SyntheticEvent, useState } from "react";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/primitives/button";
-import { toast } from "@/shared/ui/toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@watchdog/ui/components/card";
+import { Card, CardContent, CardHeader, CardTitle } from "#ui/components/card";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@watchdog/ui/components/input-group";
-import { Label } from "@watchdog/ui/components/label";
-import { Spinner } from "@watchdog/ui/components/spinner";
+} from "#ui/components/input-group";
+import { Label } from "#ui/components/label";
+import { Spinner } from "#ui/components/spinner";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
 
 import { formString } from "./form-data";
 import { PasswordStrengthMeter } from "./password-strength-meter";

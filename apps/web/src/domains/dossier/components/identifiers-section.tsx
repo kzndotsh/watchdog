@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { IdentifierTypeGroupTable } from "@/domains/dossier/components/identifier-type-group-table";
@@ -59,7 +60,6 @@ import {
   type identifierList,
 } from "@watchdog/domain/schemas/graph";
 import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
 
 /** The Identifiers tab's view in the route's URL (the Overview's nest keeps its own). */
 export type IdentifiersSectionView = SectionListView<

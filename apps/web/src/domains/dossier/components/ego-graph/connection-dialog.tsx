@@ -2,6 +2,13 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useMemo, useState, type SubmitEvent } from "react";
 
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import type {
   ConnectionFormValues,
   EdgeRecord,
@@ -42,13 +49,6 @@ import {
   edgePhraseValue,
   parseEdgePhraseValue,
 } from "@watchdog/domain/schemas/shared";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 /** The peer the form names: picked from the server-searched picker, or the edited edge's. */
 type ConnectionPeer = {

@@ -5,6 +5,7 @@ import type {
 } from "@tanstack/react-table";
 import { useId, useState } from "react";
 
+import { Switch } from "#ui/components/switch";
 import { GuideSection } from "@/routes/_protected/ui/-guide-chrome";
 import {
   DEMO_ENTITIES,
@@ -38,7 +39,6 @@ import {
   IDENTIFIER_TYPE_LABELS,
   type ListSearch,
 } from "@watchdog/domain/schemas/shared";
-import { Switch } from "@watchdog/ui/components/switch";
 
 /* The list standard on in-memory data: the real declarations, `useList`, the toolbar, chips,
  * footer and both empty states, as a table (Identifiers) and as a queue body (Evidence). The

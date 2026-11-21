@@ -1,3 +1,4 @@
+import { FieldError } from "#ui/components/field";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { RowHistory } from "@/domains/dossier/components/row-history";
 import { useEntityProseFields } from "@/domains/dossier/hooks/use-entity-prose-fields";
@@ -6,7 +7,6 @@ import { useUnsavedGuard } from "@/shared/hooks/use-unsaved-guard";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type SummarySectionProps = {
   caseId: string;

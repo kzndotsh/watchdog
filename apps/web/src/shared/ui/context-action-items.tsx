@@ -1,6 +1,11 @@
 import { Fragment } from "react";
 
 import {
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+} from "#ui/components/context-menu";
+import {
   actionChord,
   filterActionsForSurface,
   shouldSeparateActions,
@@ -11,11 +16,6 @@ import {
   ActionShortcutChord,
   MENU_KBD_CLASS,
 } from "@/shared/ui/action-shortcut-chord";
-import {
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-} from "@watchdog/ui/components/context-menu";
 
 /** Presentational: AppAction[] → ContextMenu items. */
 export function ContextActionItems({

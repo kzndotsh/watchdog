@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect } from "react";
 import { z } from "zod";
 
+import { Spinner } from "#ui/components/spinner";
 import { authClient } from "@/auth/client";
 import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
@@ -40,7 +41,6 @@ import { RouteError } from "@/shared/layout/route-error";
 import { tabSearchParam } from "@/shared/lib/tab-search";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 import { isInstanceAdminRole } from "@watchdog/domain/schemas/shared";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");
 

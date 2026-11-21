@@ -1,3 +1,4 @@
+import { FieldError } from "#ui/components/field";
 import { TaskFormFields } from "@/domains/tasks/components/task-form-dialog-fields";
 /* oxlint-disable react/only-export-components -- dialog + form helpers re-export */
 import { TaskFormDialogFooter } from "@/domains/tasks/components/task-form-dialog-footer";
@@ -11,7 +12,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 import type { TaskStatus } from "@watchdog/domain/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type BaseProps = {
   open: boolean;

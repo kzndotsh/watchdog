@@ -1,9 +1,9 @@
+import { Spinner } from "#ui/components/spinner";
 import type { latestEnrichOutput } from "@/domains/intake/lib/evidence";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { IdChip } from "@/shared/ui/id-chip";
 import { ENRICHED_MD_ARTIFACT } from "@watchdog/domain/schemas/jobs";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 type EvidenceOutputTabProps = {
   caseId: string;

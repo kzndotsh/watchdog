@@ -1,5 +1,5 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons/constants";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Activity feed rows — mirrors RecentActivity list items. */
 export function DashboardActivitySkeletonLayout({

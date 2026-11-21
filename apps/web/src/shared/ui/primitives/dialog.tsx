@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react";
 
+import { DialogContent as BaseDialogContent } from "#ui/components/dialog";
 import { handleDialogEnter } from "@/shared/lib/dialog-default-action";
-import { DialogContent as BaseDialogContent } from "@watchdog/ui/components/dialog";
 
-export * from "@watchdog/ui/components/dialog";
+export * from "#ui/components/dialog";
 
 /** Upstream DialogContent + Enter confirms the default action (see dialog-default-action.ts). */
 export function DialogContent({

@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import type { ReactNode, SubmitEvent } from "react";
 
+import { Textarea } from "#ui/components/textarea";
 import { ClaimComposerActions } from "@/domains/dossier/components/claim-composer-actions";
 import { ClaimClassSelect } from "@/domains/dossier/components/graph-field-selects";
 import {
@@ -18,7 +19,6 @@ import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
-import { Textarea } from "@watchdog/ui/components/textarea";
 
 /* The Dossier's Claim composer: create (bordered composer) and a row's inline edit. */
 

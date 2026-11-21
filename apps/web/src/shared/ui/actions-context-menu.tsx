@@ -1,13 +1,13 @@
 import type { ReactElement, ReactNode } from "react";
 
-import type { AppAction } from "@/shared/lib/app-action";
-import { skipEditableContextMenu } from "@/shared/lib/skip-editable-context-menu";
-import { ContextActionItems } from "@/shared/ui/context-action-items";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
-} from "@watchdog/ui/components/context-menu";
+} from "#ui/components/context-menu";
+import type { AppAction } from "@/shared/lib/app-action";
+import { skipEditableContextMenu } from "@/shared/lib/skip-editable-context-menu";
+import { ContextActionItems } from "@/shared/ui/context-action-items";
 
 type ActionsContextMenuProps = {
   actions: readonly AppAction[];

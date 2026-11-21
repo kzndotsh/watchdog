@@ -1,18 +1,18 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
-import { MetricTilesSkeletonLayout } from "@/shared/ui/skeletons/dashboard/metric-tiles-skeleton-layout";
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
-import { Switch } from "@watchdog/ui/components/switch";
-import { Textarea } from "@watchdog/ui/components/textarea";
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Skeleton } from "#ui/components/skeleton";
+import { Switch } from "#ui/components/switch";
+import { Textarea } from "#ui/components/textarea";
+import { cn } from "@/lib/utils";
+import { MetricTilesSkeletonLayout } from "@/shared/ui/skeletons/dashboard/metric-tiles-skeleton-layout";
 
 type GhostSizedSkeletonProps = {
   children: ReactNode;

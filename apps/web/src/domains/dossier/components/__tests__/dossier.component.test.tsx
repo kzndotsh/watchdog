@@ -27,7 +27,7 @@ import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 

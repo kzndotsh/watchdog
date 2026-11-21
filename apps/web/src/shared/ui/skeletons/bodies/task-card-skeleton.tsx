@@ -1,5 +1,5 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Task card layout — mirrors TaskCard / TaskCardPreview shell. */
 export function TaskCardSkeleton({

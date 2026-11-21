@@ -2,6 +2,14 @@ import { useSelector } from "@tanstack/react-form";
 import { LinkIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "#ui/components/popover";
+import { TableCell } from "#ui/components/table";
 import { cn } from "@/lib/utils";
 import {
   useRecordsByIds,
@@ -51,14 +59,6 @@ import {
   normalizeIdentifierPlatform,
   type IdentifierType,
 } from "@watchdog/domain/schemas/shared";
-import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
-import { TableCell } from "@watchdog/ui/components/table";
 
 function identifierWriteError(
   type: IdentifierType,

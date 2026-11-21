@@ -4,7 +4,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@watchdog/ui/components/tooltip";
+} from "#ui/components/tooltip";
 
 type TooltipSide = ComponentProps<typeof TooltipContent>["side"];
 

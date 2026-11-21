@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { Alert, AlertDescription } from "#ui/components/alert";
 import { DeletedCasesView } from "@/domains/cases/components/deleted-cases-view";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import { Page } from "@/shared/layout/page";
@@ -10,7 +11,6 @@ import type {
   ListSearch,
   ListSearchPatch,
 } from "@watchdog/domain/schemas/shared";
-import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 
 type DeletedCasesPageProps = {
   search: ListSearch<typeof deletedCaseList>;

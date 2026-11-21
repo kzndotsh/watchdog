@@ -19,8 +19,8 @@ const watchdogIgnores = [
   "node_modules/**",
   "pnpm-lock.yaml",
   // Vendored shadcn primitives — do not reformat
-  "packages/ui/src/components/**",
-  "packages/ui/src/hooks/**",
+  "apps/web/ui/src/components/**",
+  "apps/web/ui/src/hooks/**",
   ".cursor/**",
   "**/.agents/**",
   ".claude/**",

@@ -12,7 +12,7 @@ import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
 import type { CollectQueueItem } from "@watchdog/server/core/jobs";
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 

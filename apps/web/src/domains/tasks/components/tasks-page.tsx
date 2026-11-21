@@ -1,6 +1,7 @@
 import { PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { useEntityRefSource } from "@/domains/entities/hooks/use-entity-ref-source";
@@ -30,7 +31,6 @@ import { ListToolbar } from "@/shared/ui/list/list-toolbar";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type Props = {
   /** The route's view (`entityId`, `priority`, `q`, `sort`) and `taskId`. */

@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import { visibleCasesQuery } from "@/domains/cases/queries";
 import {
   capabilitiesListQuery,
@@ -12,7 +13,6 @@ import { LibraryPlaybookDetail } from "@/domains/library/components/library-play
 import { buildLibraryEntries } from "@/domains/library/lib/library-entries";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { buildCapListItem, buildPlaybookListItem } from "@/testing/records";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),

@@ -3,6 +3,11 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
+  "imports": {
+    "#ui/components/*": "./ui/src/components/*.tsx",
+    "#ui/hooks/*": "./ui/src/hooks/*.ts",
+    "#ui/styles/*": "./ui/src/styles/*"
+  },
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
@@ -40,9 +45,10 @@
     "@tanstack/react-table": "^9.3.1",
     "@watchdog/domain": "workspace:*",
     "@watchdog/server": "workspace:*",
-    "@watchdog/ui": "workspace:*",
     "better-auth": "catalog:",
     "bowser": "^2.15.0",
+    "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
     "cn": "catalog:",
     "date-fns": "catalog:",
     "evlog": "catalog:",
@@ -50,7 +56,9 @@
     "lucide-react": "catalog:",
     "platejs": "^53.5.2",
     "react": "catalog:",
+    "react-day-picker": "^10.0.2",
     "react-dom": "catalog:",
+    "react-resizable-panels": "^4.24.1",
     "remark-gfm": "^4.0.1",
     "shadcn": "^4.23.0",
     "shiki": "^4.6.0",
@@ -77,5 +85,9 @@
     "playwright": "^1.65.1",
     "typescript": "catalog:",
     "vite": "^8.3.8"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

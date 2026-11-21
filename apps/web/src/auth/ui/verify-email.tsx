@@ -3,17 +3,12 @@
 import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "#ui/components/card";
+import { FieldDescription } from "#ui/components/field";
+import { Spinner } from "#ui/components/spinner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@watchdog/ui/components/card";
-import { FieldDescription } from "@watchdog/ui/components/field";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 import { OpenEmailButton } from "./open-email-button";
 

@@ -12,7 +12,7 @@ const config: KnipConfig = {
   ignore: ["_legacy-v2/**", ".claude/worktrees/**"],
   ignoreIssues: {
     // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
-    "packages/ui/src/**": ["exports", "types"],
+    "apps/web/ui/src/**": ["exports", "types"],
     "apps/web/src/shared/ui/primitives/**": ["exports", "types"],
     "apps/web/src/domains/**/types.ts": ["types"],
     "apps/web/src/domains/**/*.server.ts": ["types"],

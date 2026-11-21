@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/tabs";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import { FoundValuesSection } from "@/domains/jobs/components/found-values/found-values-section";
 import { JobAttempts } from "@/domains/jobs/components/job-attempts";
@@ -43,13 +45,6 @@ import type {
   PlaybookRunView,
 } from "@watchdog/domain/schemas/jobs";
 import type { JobListRecord, JobRecord } from "@watchdog/server/core/jobs";
-import { FieldError } from "@watchdog/ui/components/field";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@watchdog/ui/components/tabs";
 
 const EMPTY_RUN_SIBLINGS: JobListRecord[] = [];
 

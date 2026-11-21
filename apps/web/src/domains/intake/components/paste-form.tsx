@@ -1,16 +1,16 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
-import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
-import { Button } from "@/shared/ui/primitives/button";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Textarea } from "@watchdog/ui/components/textarea";
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Textarea } from "#ui/components/textarea";
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
+import { Button } from "@/shared/ui/primitives/button";
 
 export type PasteFormProps = {
   disabled: boolean;

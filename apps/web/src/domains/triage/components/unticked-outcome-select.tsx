@@ -1,16 +1,16 @@
-import { cn } from "@/lib/utils";
-import {
-  CONTROL_TRIGGER,
-  resolveSelectValue,
-} from "@/shared/ui/control-chrome";
-import type { UntickedOpOutcome } from "@watchdog/domain/schemas/jobs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@watchdog/ui/components/select";
+} from "#ui/components/select";
+import { cn } from "@/lib/utils";
+import {
+  CONTROL_TRIGGER,
+  resolveSelectValue,
+} from "@/shared/ui/control-chrome";
+import type { UntickedOpOutcome } from "@watchdog/domain/schemas/jobs";
 
 const OUTCOME_LABELS: Record<UntickedOpOutcome, string> = {
   left: "Leave the rest",

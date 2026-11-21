@@ -1,3 +1,4 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import {
   LIBRARY_BANNER_CLASS,
@@ -6,7 +7,6 @@ import {
   LIBRARY_GROUP_HEADING_CLASS,
 } from "@/shared/ui/library-shell";
 import { LIBRARY_CARD_SKELETON_SLOT_COUNT } from "@/shared/ui/skeletons/constants";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 const QUICK_PICK_WIDTHS = ["w-16", "w-20", "w-10", "w-24", "w-10"];
 

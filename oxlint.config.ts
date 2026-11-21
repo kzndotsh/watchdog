@@ -121,7 +121,7 @@ const effectRunEdges = [
 
 /**
  * Same-name Watchdog wrappers over shadcn primitives (apps/web/src/shared/ui/primitives).
- * Their vanilla `@watchdog/ui/components/<name>` path is banned in app code so nobody
+ * Their vanilla `#ui/components/<name>` path is banned in app code so nobody
  * silently skips the wrapper; the list follows the folder, so adding a wrapper bans its twin.
  */
 /* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- root config files sit outside every tsconfig project, so per-file (staged) lint cannot resolve node types */
@@ -129,7 +129,7 @@ const wrappedImportBans: string[] = readdirSync(
   new URL("apps/web/src/shared/ui/primitives/", import.meta.url)
 )
   .filter((f) => f.endsWith(".tsx"))
-  .map((f) => `@watchdog/ui/components/${f.replace(/\.tsx$/, "")}`);
+  .map((f) => `#ui/components/${f.replace(/\.tsx$/, "")}`);
 /* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return */
 
 const watchdogIgnores = [
@@ -148,9 +148,9 @@ const watchdogIgnores = [
   "packages/server/db/drizzle/**",
   "**/dist/**",
   "node_modules/**",
-  // Vendored shadcn primitives (@watchdog/ui): byte-identical to the CLI output, never linted.
-  "packages/ui/src/components/**",
-  "packages/ui/src/hooks/**",
+  // Vendored shadcn primitives (#ui): byte-identical to the CLI output, never linted.
+  "apps/web/ui/src/components/**",
+  "apps/web/ui/src/hooks/**",
   ".cursor/**",
   ".agents/**",
   ".claude/**",
@@ -227,7 +227,7 @@ const webImportRestrictions = (
     },
     {
       // Wrapper kept in shared/ui (no className surface, so not under primitives/).
-      group: ["@watchdog/ui/components/toast"],
+      group: ["#ui/components/toast"],
       message:
         "Import toast and Toaster from @/shared/ui/toast: the Watchdog wrapper adds toast.success/error/warning/info/loading.",
     },
@@ -238,7 +238,7 @@ const webImportRestrictions = (
 /** Extra patterns of the domain and route trees (loading doctrine). */
 const domainImportRestrictions = [
   {
-    group: ["@watchdog/ui/components/skeleton"],
+    group: ["#ui/components/skeleton"],
     message:
       "Use the shape skeletons in @/shared/ui/skeletons (they own layout parity), not a raw Skeleton.",
   },
@@ -544,7 +544,7 @@ export default defineConfig({
     },
     {
       // Web must not import @watchdog/server/db except auth adapter + SSE listen, and must use the
-      // Watchdog wrapper (not the vanilla @watchdog/ui primitive) wherever one exists.
+      // Watchdog wrapper (not the vanilla #ui primitive) wherever one exists.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-restricted-imports": ["error", webImportRestrictions([])],

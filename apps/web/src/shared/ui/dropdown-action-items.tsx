@@ -1,6 +1,11 @@
 import { Fragment } from "react";
 
 import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+} from "#ui/components/dropdown-menu";
+import {
   actionChord,
   filterActionsForSurface,
   shouldSeparateActions,
@@ -11,11 +16,6 @@ import {
   ActionShortcutChord,
   MENU_KBD_CLASS,
 } from "@/shared/ui/action-shortcut-chord";
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-} from "@watchdog/ui/components/dropdown-menu";
 
 /** Presentational: AppAction[] → DropdownMenu items. */
 export function DropdownActionItems({

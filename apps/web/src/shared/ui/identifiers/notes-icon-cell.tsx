@@ -1,16 +1,16 @@
 import { StickyNoteIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/primitives/button";
-import { preloadRichTextEditor, RichTextEditor } from "@/shared/ui/rich-text";
-import { Separator } from "@watchdog/ui/components/separator";
+import { Separator } from "#ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@watchdog/ui/components/sheet";
+} from "#ui/components/sheet";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import { preloadRichTextEditor, RichTextEditor } from "@/shared/ui/rich-text";
 
 function notesPresent(notes: string | null | undefined): boolean {
   return (notes ?? "").trim() !== "";

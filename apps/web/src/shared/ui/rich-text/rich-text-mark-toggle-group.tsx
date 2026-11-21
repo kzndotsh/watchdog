@@ -1,14 +1,11 @@
 import { BoldIcon, ItalicIcon, UnderlineIcon } from "lucide-react";
 import type { PlateEditor } from "platejs/react";
 
+import { ToggleGroup, ToggleGroupItem } from "#ui/components/toggle-group";
 import {
   applyMarkChange,
   type MarkValue,
 } from "@/shared/ui/rich-text/rich-text-toolbar-controls.lib";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@watchdog/ui/components/toggle-group";
 
 type RichTextMarkToggleGroupProps = {
   editor: PlateEditor;

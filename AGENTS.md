@@ -17,7 +17,7 @@ Authority: product nouns → [`docs/glossary.md`](docs/glossary.md) (doctrine: [
 | Done? | `pnpm verify` (changed files and affected packages; the stop hook runs it) · `pnpm verify --full` (the CI merge gate) |
 | Lint · typecheck · tests | `pnpm check` · `pnpm fix` · `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` (`just test-db` first) · `pnpm test:e2e:smoke` |
 | Regenerate (never hand-edit the output) | `pnpm generate:caps` · `pnpm generate:client` · `pnpm generate:env` · `pnpm generate:design` · `pnpm generate-routes` |
-| Vendored shadcn (`packages/ui`, never edited) | `pnpm ui:add <name>` · `pnpm ui:sync` |
+| Vendored shadcn (`apps/web/ui`, never edited) | `pnpm ui:add <name>` · `pnpm ui:sync` |
 | Container images | `docker build --target web .` · `--target worker` · [`self-host`](docs/how-to/self-host.md) |
 
 Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` (the first account is the instance admin; [`auth-setup`](docs/how-to/auth-setup.md)).
@@ -62,7 +62,7 @@ The rest of the tree has none:
 - `apps/cli` (`wd`) reaches the API only through `@watchdog/client`. Its stdout is the agent contract: compact JSON, failures as `{ ok: false, error: { code, message } }`, exit 1 on error and 3 on a server failure ([`agent-cli`](docs/how-to/agent-cli.md)). It and `@watchdog/client` never depend on `@watchdog/server/log`.
 - `packages/client`'s `src/generated/` is gitignored build output of `pnpm generate:client` (install, `typecheck` and `build:cli` run it). Never hand-roll an `/api/v1` path.
 - `apps/site` is a static Astro page with no `@watchdog/*` runtime dependency; its tokens are copied from `apps/web/src/styles/`, and its copy comes from `README.md` and `docs/explanation/product.md`.
-- `packages/ui` is the shadcn CLI's output, hashed by `pnpm check:vendor`. Change a token or wrap the primitive in `apps/web/src/shared/ui/primitives/`.
+- `apps/web/ui` is the shadcn CLI's output, hashed by `pnpm check:vendor`. Change a token or wrap the primitive in `apps/web/src/shared/ui/primitives/`.
 
 ## Effect
 

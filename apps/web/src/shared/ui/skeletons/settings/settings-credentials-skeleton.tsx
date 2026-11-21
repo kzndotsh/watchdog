@@ -1,11 +1,11 @@
+import { Separator } from "#ui/components/separator";
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import {
   SETTINGS_CREDENTIALS_SKELETON_CONNECTED_ROWS,
   SETTINGS_CREDENTIALS_SKELETON_DISCONNECTED_ROWS,
 } from "@/shared/ui/skeletons/constants";
-import { Separator } from "@watchdog/ui/components/separator";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 type RowProps = {
   /** Connected rows show an `Updated …` line and a second (Remove) button. */

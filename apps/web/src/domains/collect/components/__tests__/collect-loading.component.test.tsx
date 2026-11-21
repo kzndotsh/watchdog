@@ -13,12 +13,12 @@ vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import { Collect } from "@/domains/collect/components/collect";
 import { collectListView } from "@/domains/collect/queries";
 import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
 import { collectList } from "@watchdog/domain/schemas/jobs";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 // The first paint of a queue that has not settled is its skeleton; "no items" is for a
 // settled, empty queue.

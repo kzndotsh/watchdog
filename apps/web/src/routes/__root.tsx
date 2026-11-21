@@ -8,12 +8,12 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 
+import { TooltipProvider } from "#ui/components/tooltip";
 import { ClientErrorListeners } from "@/shared/layout/client-error-listeners";
 import { Providers } from "@/shared/layout/providers";
 import { RootError } from "@/shared/layout/root-error";
 import { Button } from "@/shared/ui/primitives/button";
 import { Toaster } from "@/shared/ui/toast";
-import { TooltipProvider } from "@watchdog/ui/components/tooltip";
 
 import appCss from "../styles.css?url";
 

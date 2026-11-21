@@ -107,7 +107,7 @@ Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/U
 
 Import `fc` from `@watchdog/domain/test-kit/fc` (and `testId` from `@watchdog/domain/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/server/test-db` (`testDb`, seeds). Row-level security ([`custody`](../../reference/contracts/custody.md#organization-isolation)) shows the application role no row of a Case-scoped table without an organization: `testDb` and `withTestTx` are in `TEST_ORGANIZATION_ID`'s scope, another organization's rows need `withOrganizationScope`, `withCaseOrganizationScope`, `withJobOrganizationScope` or `insertCasesInScope` (the seeds scope themselves to their Case's organization; `listAllActivity` and `listAllGraphHistory` read every organization as the owner), a core stage called directly (not through its Job run) needs a scoped pool (`Db.layerOf(testDb)`), and the raw `db` from `@watchdog/server/db` is unscoped (it sees nothing, like a path that forgot its scope). Do not import `@watchdog/server/db` from `@watchdog/server/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
-Do not add tests for generated client JSON, `packages/ui` (generated primitives), pass-through query wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
+Do not add tests for generated client JSON, `apps/web/ui` (generated primitives), pass-through query wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
 
 ## Query-count budgets and plan assertions
 

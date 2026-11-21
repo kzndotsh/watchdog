@@ -1,5 +1,8 @@
 import { useMemo } from "react";
 
+import { Field, FieldGroup, FieldLabel } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Textarea } from "#ui/components/textarea";
 import { entityPickerPort } from "@/domains/entities/queries";
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
 import { FieldSelect } from "@/shared/ui/field-select";
@@ -9,9 +12,6 @@ import {
   trimmedTaskPrioritySchema,
   trimmedTaskStatusSchema,
 } from "@watchdog/domain/schemas/shared";
-import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Textarea } from "@watchdog/ui/components/textarea";
 
 type TaskFormFieldsProps = {
   form: TaskDialogForm;

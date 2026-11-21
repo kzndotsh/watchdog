@@ -1,3 +1,4 @@
+import { TabsList, TabsTrigger } from "#ui/components/tabs";
 import { EvidenceEntityMeta } from "@/domains/intake/components/evidence-entity-meta";
 import {
   evidenceTitle,
@@ -13,7 +14,6 @@ import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/server/core/jobs";
-import { TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
 type EvidenceDetailHeaderProps = {
   evidence: EvidenceRecord;

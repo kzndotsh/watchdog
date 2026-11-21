@@ -12,7 +12,7 @@
 
     /* web includes its tests in this config, so it needs the .ts import extension itself */
     "allowImportingTsExtensions": true
-    /* noUnusedLocals stays off (the default): upstream primitives in @watchdog/ui, imported
+    /* noUnusedLocals stays off (the default): upstream primitives in #ui, imported
        into this program, carry unused React imports; oxlint no-unused-vars covers locals
        for our own code. */
   }

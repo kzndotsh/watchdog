@@ -10,11 +10,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@watchdog/ui/components/dialog"
+} from "#ui/components/dialog"
 import {
   InputGroup,
   InputGroupAddon,
-} from "@watchdog/ui/components/input-group"
+} from "#ui/components/input-group"
 import { SearchIcon, CheckIcon } from "lucide-react"
 
 function Command({

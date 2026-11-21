@@ -11,9 +11,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import { createAppQueryClient } from "@/app/lib/query-client";
 import type { RouterContext } from "@/routes/__root";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 /** Who is signed in: the auth boundary, set per test. */
 const accounts = vi.hoisted(() => {

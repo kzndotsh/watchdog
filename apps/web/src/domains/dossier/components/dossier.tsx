@@ -3,6 +3,8 @@ import { notFound, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
+import { FieldError } from "#ui/components/field";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/tabs";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
@@ -56,13 +58,6 @@ import {
   identifierList,
   questionList,
 } from "@watchdog/domain/schemas/graph";
-import { FieldError } from "@watchdog/ui/components/field";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@watchdog/ui/components/tabs";
 
 /** The route's search writer (`usePatchSearch`): a list tab's view and the Evidence selection. */
 type DossierSearchWriter = (patch: Readonly<Record<string, unknown>>) => void;

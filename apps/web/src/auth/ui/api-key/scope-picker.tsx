@@ -1,3 +1,11 @@
+import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "#ui/components/field";
+import { Switch } from "#ui/components/switch";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   normalizeScopes,
@@ -6,14 +14,6 @@ import {
   type Scope,
   type ScopePresetId,
 } from "@watchdog/domain/schemas/shared";
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@watchdog/ui/components/field";
-import { Switch } from "@watchdog/ui/components/switch";
 
 import { PRESET_COPY, SCOPE_COPY } from "./scope-copy";
 

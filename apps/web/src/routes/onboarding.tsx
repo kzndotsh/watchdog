@@ -5,6 +5,7 @@ import {
   redirect,
 } from "@tanstack/react-router";
 
+import { Card, CardContent, CardHeader, CardTitle } from "#ui/components/card";
 import { requireSession } from "@/app/require-session";
 import { getAllowSignup } from "@/auth/get-allow-signup";
 import { FirstCaseStep } from "@/domains/cases/components/first-case-step";
@@ -14,12 +15,6 @@ import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-relo
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { Button } from "@/shared/ui/primitives/button";
 import { isInstanceAdminRole } from "@watchdog/domain/schemas/shared";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@watchdog/ui/components/card";
 
 function readRole(user: object): string | null {
   return "role" in user && typeof user.role === "string" ? user.role : null;

@@ -37,10 +37,10 @@ vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import { AppSidebar } from "@/app/layout/app-sidebar";
 import { casesKeys } from "@/domains/cases/queries";
 import { buildCaseRecord } from "@/testing/records";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 /** A real router with one catch-all route, so any pathname is "current" and links build hrefs. */
 function routerAt(pathname: string) {

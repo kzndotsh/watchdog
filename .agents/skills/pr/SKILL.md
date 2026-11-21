@@ -66,7 +66,7 @@ submitForm
 <SessionPage> (apps/example/src/routes/session.tsx)
   useSessionEvents()
   <SessionToolbar>
-    <RunSkillButton> (packages/ui)
+    <RunSkillButton> (apps/web/ui)
 ```
 
 - Show file responsibility or a broad refactor as a shallow file tree:

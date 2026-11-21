@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Card, CardContent, CardFooter } from "#ui/components/card";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardFooter } from "@watchdog/ui/components/card";
 
 type FormSectionTone = "default" | "error" | "warning";
 

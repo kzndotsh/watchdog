@@ -11,6 +11,20 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "#ui/components/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "#ui/components/sidebar";
 import { authClient } from "@/auth/client";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
 import { OrgAvatar } from "@/domains/organization/components/org-avatar";
@@ -24,20 +38,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 import { toast } from "@/shared/ui/toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
 
 /** Sidebar control for the active organization: switch, or create another. */
 export function OrgSwitcher() {

@@ -1,16 +1,16 @@
 import { HistoryIcon } from "lucide-react";
 
-import { RowHistoryPopup } from "@/domains/dossier/components/row-history-popup";
-import { HISTORY_KIND_NOUNS } from "@/domains/dossier/lib/history-labels";
-import { Button } from "@/shared/ui/primitives/button";
-import type { GraphHistoryKind } from "@watchdog/domain/schemas/shared";
 import {
   Popover,
   PopoverContent,
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@watchdog/ui/components/popover";
+} from "#ui/components/popover";
+import { RowHistoryPopup } from "@/domains/dossier/components/row-history-popup";
+import { HISTORY_KIND_NOUNS } from "@/domains/dossier/lib/history-labels";
+import { Button } from "@/shared/ui/primitives/button";
+import type { GraphHistoryKind } from "@watchdog/domain/schemas/shared";
 
 type RowHistoryProps = {
   caseId: string;

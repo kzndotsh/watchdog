@@ -1,3 +1,4 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { TaskCardSkeleton } from "@/shared/ui/skeletons/bodies/task-card-skeleton";
 import {
@@ -5,7 +6,6 @@ import {
   BOARD_SKELETON_CARDS_PER_COLUMN,
 } from "@/shared/ui/skeletons/constants";
 import { TASK_BOARD_COLUMN_SHELL_CLASS } from "@/shared/ui/task-board-shell";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Task board column layout — matches task-board-column chrome + cards. */
 function TaskBoardColumnSkeleton({

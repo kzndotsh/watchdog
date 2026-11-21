@@ -1,9 +1,9 @@
 import type { ReactElement, ReactNode } from "react";
 
+import { SidebarTrigger } from "#ui/components/sidebar";
 import { cn } from "@/lib/utils";
 import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
 import type { CountOnTrailId } from "@/shared/layout/page-trail";
-import { SidebarTrigger } from "@watchdog/ui/components/sidebar";
 
 type PageHeaderProps = {
   current?: ReactNode;

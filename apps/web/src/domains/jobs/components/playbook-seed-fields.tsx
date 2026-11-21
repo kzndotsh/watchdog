@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { Input } from "#ui/components/input";
 import type { PlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import { cn } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
@@ -10,7 +11,6 @@ import {
   trimmedOrUndefined,
   type PlaybookSeedKind,
 } from "@watchdog/domain/schemas/shared";
-import { Input } from "@watchdog/ui/components/input";
 
 export type UrlDumpOption = {
   id: string;

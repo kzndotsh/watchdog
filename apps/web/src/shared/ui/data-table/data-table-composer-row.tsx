@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { TableRow } from "@watchdog/ui/components/table";
+import { TableRow } from "#ui/components/table";
 
 export function DataTableComposerRow({ children }: { children: ReactNode }) {
   return (

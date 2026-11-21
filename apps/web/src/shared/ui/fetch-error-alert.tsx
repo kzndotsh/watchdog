@@ -1,9 +1,5 @@
+import { Alert, AlertAction, AlertDescription } from "#ui/components/alert";
 import { Button } from "@/shared/ui/primitives/button";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-} from "@watchdog/ui/components/alert";
 
 /** Dismissible fetch error banner. Shows nothing when error is null. */
 export function FetchErrorAlert({

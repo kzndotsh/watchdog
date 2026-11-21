@@ -95,7 +95,7 @@ const config = defineConfig({
             "@watchdog/domain",
             "@watchdog/server",
             "@watchdog/caps/tools",
-            "@watchdog/ui",
+            "#ui",
           ],
   },
   server: {

@@ -15,7 +15,7 @@
   "aliases": {
     "components": "@/shared",
     "utils": "@/lib/utils",
-    "ui": "@watchdog/ui/components",
+    "ui": "#ui/components",
     "lib": "@/lib",
     "hooks": "@/shared/hooks"
   },

@@ -244,7 +244,7 @@ beforeAll(() => {
   fixture.write(`${DIR}/__tests__/bad.ts`, bad);
   fixture.write(`${DIR}/bad.test.ts`, bad);
   fixture.write(`${DIR}/bad.spec.tsx`, bad);
-  fixture.write("packages/ui/src/bad.ts", bad);
+  fixture.write("apps/web/ui/src/bad.ts", bad);
   fixture.write("apps/web/e2e/bad.ts", bad);
 
   result = fixture.lint([SRC, "packages", "apps/web/e2e"]);
@@ -309,7 +309,7 @@ describe("boolean prefix (boolean-prefix)", () => {
   });
 
   it("ignores trees outside apps/web/src", () => {
-    expect(hits("packages/ui/src/bad.ts")).toHaveLength(0);
+    expect(hits("apps/web/ui/src/bad.ts")).toHaveLength(0);
     expect(hits("apps/web/e2e/bad.ts")).toHaveLength(0);
   });
 });

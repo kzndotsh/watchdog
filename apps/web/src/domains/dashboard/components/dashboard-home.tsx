@@ -1,6 +1,11 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo, type ReactNode } from "react";
 
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "#ui/components/resizable";
 import { workHref } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { tileCount } from "@/domains/cases/lib/case-counts";
@@ -31,11 +36,6 @@ import {
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
 import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@watchdog/ui/components/resizable";
 
 const OVERVIEW_DEFAULT = "68%";
 const ACTIVITY_DEFAULT = "32%";

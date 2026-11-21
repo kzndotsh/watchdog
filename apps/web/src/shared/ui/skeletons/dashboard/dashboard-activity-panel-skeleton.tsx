@@ -1,6 +1,6 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { DashboardActivitySkeletonLayout } from "@/shared/ui/skeletons/dashboard/dashboard-activity-skeleton-layout";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Full activity column — header chrome + scrollable feed rows. */
 export function DashboardActivityPanelSkeleton({

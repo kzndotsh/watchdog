@@ -1,15 +1,15 @@
 import { SearchIcon } from "lucide-react";
 import { useContext } from "react";
 
-import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
-import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
-import { formatChord, hotkeyDef } from "@/shared/lib/hotkeys";
-import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
+} from "#ui/components/sidebar";
+import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
+import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
+import { formatChord, hotkeyDef } from "@/shared/lib/hotkeys";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 
 /**
  * Global search: an icon button in the sidebar footer next to Settings. Built from the same

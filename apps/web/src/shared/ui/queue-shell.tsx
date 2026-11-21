@@ -1,8 +1,8 @@
 import { useRef, type ReactNode } from "react";
 
+import { ScrollArea } from "#ui/components/scroll-area";
 import { cn } from "@/lib/utils";
 import { useQueueKeyboard } from "@/shared/hooks/use-queue-keyboard";
-import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 type QueueShellProps = {
   header: ReactNode;

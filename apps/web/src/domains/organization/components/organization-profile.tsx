@@ -3,6 +3,14 @@ import { useListOrganizations } from "@better-auth-ui/react/plugins/organization
 import { useQuery } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Spinner } from "#ui/components/spinner";
 import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
@@ -26,14 +34,6 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
 import { canManageTeam } from "@watchdog/domain/schemas/shared";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 function roleSentence(role: string): string {
   if (role.split(",").some((part) => part.trim() === "owner")) {

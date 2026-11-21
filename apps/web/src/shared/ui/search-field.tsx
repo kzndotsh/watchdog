@@ -1,17 +1,17 @@
 import { SearchIcon, XIcon } from "lucide-react";
 
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "#ui/components/input-group";
 import { cn } from "@/lib/utils";
 import {
   CONTROL_HEIGHT,
   CONTROL_TEXT,
   SEARCH_FIELD_WIDTH,
 } from "@/shared/ui/control-chrome";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@watchdog/ui/components/input-group";
 
 type SearchFieldProps = {
   value: string;

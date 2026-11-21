@@ -239,7 +239,7 @@ A three-step radius ladder: `rounded-sm` (3px, checkbox/tiny inset), `rounded-md
 
 ## Components
 
-- Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked ([`vendor.md`](docs/reference/web/ui/vendor.md)). Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` or in tokens; never restyle a primitive at the call site.
+- Primitives are shadcn `base-mira` (Base UI) in `apps/web/ui`, generated and locked ([`vendor.md`](docs/reference/web/ui/vendor.md)). Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` or in tokens; never restyle a primitive at the call site.
 - **Button height comes from `size`, never from `className`:** `xs` h-5, `sm` h-6, default h-7, `lg` h-8, square `icon-xs` / `icon-sm` / `icon` / `icon-lg`, and `inline` for a text link in running text. Same-role buttons are the same height across Triage, Collect and Dossier. If no size fits, add one to the wrapper; lint fails `h-*` on a Button.
 - Repeated small pieces are primitives, not copied classes: `Eyebrow` (uppercase tracked label), `TimelineDot` (timeline marker with one offset on a `TimelineSpine` that is always `ml-2 pl-4`: `ml-2` is the layout margin every timeline uses, `pl-4` is the spine padding the dot offset assumes), and named widths (a `--container-<name>` theme variable in `wd-theme.css`, used as `w-<name>`).
 - Hand-owned atoms live in `apps/web/src/shared/ui/` and never fetch, mutate, or route. Domains own I/O.

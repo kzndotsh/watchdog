@@ -1,6 +1,10 @@
 import { useForm } from "@tanstack/react-form";
 import { useRef } from "react";
 
+import { Field, FieldError, FieldLabel } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Spinner } from "#ui/components/spinner";
+import { Textarea } from "#ui/components/textarea";
 import { rememberLastCase } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { orpc } from "@/lib/orpc-client";
@@ -8,10 +12,6 @@ import { couldnt, errMessage, nextAutoSlug } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
 import { createCaseInputSchema } from "@watchdog/domain/schemas/cases";
-import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Spinner } from "@watchdog/ui/components/spinner";
-import { Textarea } from "@watchdog/ui/components/textarea";
 
 type CreateCaseFormProps = {
   /** Runs after the Case exists; a returned promise keeps the form submitting until it settles. */

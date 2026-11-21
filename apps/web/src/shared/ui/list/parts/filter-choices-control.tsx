@@ -1,13 +1,13 @@
-import { cn } from "@/lib/utils";
-import { CONTROL_TRIGGER } from "@/shared/ui/control-chrome";
-import type { ChoicesFilter } from "@watchdog/domain/schemas/shared";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@watchdog/ui/components/select";
+} from "#ui/components/select";
+import { cn } from "@/lib/utils";
+import { CONTROL_TRIGGER } from "@/shared/ui/control-chrome";
+import type { ChoicesFilter } from "@watchdog/domain/schemas/shared";
 
 type FilterChoicesControlProps = {
   readonly filter: ChoicesFilter;

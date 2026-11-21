@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 
-vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
+vi.mock("#ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),

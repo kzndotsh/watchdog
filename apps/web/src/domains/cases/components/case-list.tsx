@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 
+import { FieldError } from "#ui/components/field";
 import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
@@ -39,7 +40,6 @@ import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type CaseCardProps = {
   caseRow: CaseRecord;

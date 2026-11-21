@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { SidebarInset, SidebarProvider } from "#ui/components/sidebar";
 import { AppSidebar } from "@/app/layout/app-sidebar";
 import { PageTrailProvider } from "@/app/layout/page-trail-provider";
 import { AppInsetContextMenu } from "@/domains/search/components/app-inset-context-menu";
 import { SearchChrome } from "@/domains/search/components/search-chrome";
-import { SidebarInset, SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 type SidebarStyle = CSSProperties & { "--sidebar-width"?: string };
 

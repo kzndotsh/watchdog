@@ -2,6 +2,13 @@ import { useCreateOrganization } from "@better-auth-ui/react/plugins/organizatio
 import { useForm } from "@tanstack/react-form";
 import { useRef, useState, type SubmitEvent } from "react";
 
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
@@ -10,13 +17,6 @@ import { couldnt, errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { FieldMessage } from "@/shared/ui/field-message";
 import { Button } from "@/shared/ui/primitives/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 /** Name + URL slug; the slug follows the name until edited. Creating makes you the owner. */
 export function CreateOrganizationForm({

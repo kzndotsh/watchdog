@@ -2,6 +2,30 @@ import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "#ui/components/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "#ui/components/dropdown-menu";
+import { ScrollArea } from "#ui/components/scroll-area";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "#ui/components/sidebar";
+import { Skeleton } from "#ui/components/skeleton";
 import { CaseSwitcher } from "@/app/layout/case-switcher";
 import { authClient } from "@/auth/client";
 import {
@@ -19,34 +43,6 @@ import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 import { caseRouteScreen } from "@/shared/lib/case-path";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@watchdog/ui/components/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
-import { ScrollArea } from "@watchdog/ui/components/scroll-area";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function userDisplayName(user: {
   name?: string | null;

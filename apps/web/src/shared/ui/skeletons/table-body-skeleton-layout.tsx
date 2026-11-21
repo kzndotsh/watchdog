@@ -1,6 +1,6 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons/constants";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Flex table-row blocks for dossier tab previews — not production `DataTable`. */
 export function TableBodySkeletonLayout({

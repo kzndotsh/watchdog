@@ -20,8 +20,8 @@ patterns=(
   packages/client/src/generated
   packages/caps/capabilities.gen.json
   apps/web/src/routeTree.gen.ts
-  packages/ui/src/components
-  packages/ui/src/hooks
+  apps/web/ui/src/components
+  apps/web/ui/src/hooks
   apps/web/src/auth/ui
   coverage
   playwright-report

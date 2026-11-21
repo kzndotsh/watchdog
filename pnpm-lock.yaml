@@ -373,15 +373,18 @@ importers:
       '@watchdog/server':
         specifier: workspace:*
         version: link:../../packages/server
-      '@watchdog/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       better-auth:
         specifier: 'catalog:'
         version: 1.7.25(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.169.5(esbuild@0.28.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.19)(rollup@4.62.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.1)(postgres@4.1.1))(pg@8.23.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.14)(vitest@5.1.1)
       bowser:
         specifier: ^2.15.0
         version: 2.15.0
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      cmdk:
+        specifier: ^1.1.1
+        version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       cn:
         specifier: 'catalog:'
         version: 0.5.2
@@ -403,9 +406,15 @@ importers:
       react:
         specifier: 'catalog:'
         version: 19.3.1
+      react-day-picker:
+        specifier: ^10.0.2
+        version: 10.0.2(@types/react@19.3.0)(react@19.3.1)
       react-dom:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
+      react-resizable-panels:
+        specifier: ^4.24.1
+        version: 4.24.1(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
@@ -648,52 +657,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 5.1.1(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.1)(happy-dom@21.0.4)(jsdom@31.0.1(@noble/hashes@2.4.0))(msw@3.0.7(@types/node@26.6.6)(graphql@16.14.2)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-
-  packages/ui:
-    dependencies:
-      '@base-ui/react':
-        specifier: 'catalog:'
-        version: 1.9.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      class-variance-authority:
-        specifier: ^0.7.1
-        version: 0.7.1
-      cmdk:
-        specifier: ^1.1.1
-        version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      cn:
-        specifier: 'catalog:'
-        version: 0.5.2
-      date-fns:
-        specifier: 'catalog:'
-        version: 4.4.0
-      lucide-react:
-        specifier: 'catalog:'
-        version: 1.75.0(@types/react@19.3.0)(react@19.3.1)
-      react:
-        specifier: ^19.0.0
-        version: 19.3.1
-      react-day-picker:
-        specifier: ^10.0.2
-        version: 10.0.2(@types/react@19.3.0)(react@19.3.1)
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.3.1(react@19.3.1)
-      react-resizable-panels:
-        specifier: ^4.24.1
-        version: 4.24.1(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-    devDependencies:
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.3.0(@types/react@19.3.0)
-      tailwindcss:
-        specifier: 'catalog:'
-        version: 4.3.5
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
 
 packages:
 
@@ -5297,9 +5260,6 @@ packages:
   es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}
 
-  es-module-lexer@3.0.3:
-    resolution: {integrity: sha512-yWGe1O/j+almnV4hOYrmZo8u58JdnmXEMneRQAYkWtqSiT86yoMIEKF4rpqEDj52tbYl3xceBD3DQIBwcsC9Pw==}
-
   es-module-lexer@3.0.5:
     resolution: {integrity: sha512-RNq2lKJw53c7z9QRHeiKeA6Ez0oikOqiBGdmxQhKDxEiOX1g5QJR4IoFVwicn8uCZcRWNrXC3NZaJihgK7aEbg==}
 
@@ -6156,9 +6116,6 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  magic-string@1.4.3:
-    resolution: {integrity: sha512-z12OxmaPGE0F4xlpGdjuAUckipLpQlTAuAmyGhNoD7ODpYUzvDfvtxUbjM/jwznyP178oju/KDdyi220wNJ0RQ==}
 
   magic-string@1.4.5:
     resolution: {integrity: sha512-oLLC2+YvQUfAa+vxoufE/yc1icb87M9iXIRqAoR/2EhE/8cb3SF/+Gi0c2By1B+5Vz2e2vQtUvHiu1+63Znh+w==}
@@ -8152,7 +8109,7 @@ snapshots:
       '@astrojs/runtime': 0.1.1
       common-ancestor-path: 2.0.0
       devalue: 5.9.4
-      magic-string: 1.4.3
+      magic-string: 1.4.5
       rolldown: 1.2.19
       smol-toml: 1.9.1
       vite: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
@@ -10737,7 +10694,7 @@ snapshots:
       enhanced-resolve: 5.24.5
       jiti: 2.7.0
       lightningcss: 1.33.0
-      magic-string: 1.4.3
+      magic-string: 1.4.5
       source-map-js: 1.2.2
       tailwindcss: 4.3.5
 
@@ -11970,8 +11927,6 @@ snapshots:
 
   es-module-lexer@2.3.2: {}
 
-  es-module-lexer@3.0.3: {}
-
   es-module-lexer@3.0.5: {}
 
   esbuild@0.18.20:
@@ -12452,7 +12407,7 @@ snapshots:
   import-in-the-middle@3.5.2:
     dependencies:
       cjs-module-lexer: 2.3.0
-      es-module-lexer: 3.0.3
+      es-module-lexer: 3.0.5
       module-details-from-path: 1.0.4
 
   imurmurhash@0.1.4: {}
@@ -12789,10 +12744,6 @@ snapshots:
   lz-string@1.5.0: {}
 
   magic-string@0.30.21:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.6.0
-
-  magic-string@1.4.3:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
 

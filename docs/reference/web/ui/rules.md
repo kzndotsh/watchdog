@@ -36,8 +36,8 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 
 | Rule | Where | Enforced by |
 | --- | --- | --- |
-| `packages/ui/src/components` is never hand-edited (change via `pnpm ui:add` / `ui:sync`) | [`vendor.md`](vendor.md) | `check:vendor` (sha256 lock; `pnpm verify` and CI) |
-| A component with a Watchdog wrapper (Button, Dialog, AlertDialog, Combobox) is imported from `@/shared/ui/primitives/*`, not `@watchdog/ui` | [`vendor.md`](vendor.md) | `oxlint` `no-restricted-imports` (list follows the folder) + test `scripts/__tests__/oxlint-wrapper-lint-coverage.gate.test.ts` |
+| `apps/web/ui/src/components` is never hand-edited (change via `pnpm ui:add` / `ui:sync`) | [`vendor.md`](vendor.md) | `check:vendor` (sha256 lock; `pnpm verify` and CI) |
+| A component with a Watchdog wrapper (Button, Dialog, AlertDialog, Combobox) is imported from `@/shared/ui/primitives/*`, not `#ui` | [`vendor.md`](vendor.md) | `oxlint` `no-restricted-imports` (list follows the folder) + test `scripts/__tests__/oxlint-wrapper-lint-coverage.gate.test.ts` |
 | No raw palette hues, undeclared `--color-*`, or hex in SVG attributes | [`DESIGN.md`](../../../../DESIGN.md#colors) | `oxlint` `shadcn/no-raw-colors` |
 | No `text-[Npx]` or other off-scale arbitrary values (layout values allowed) | [`DESIGN.md`](../../../../DESIGN.md#typography) | `oxlint` `shadcn/no-arbitrary-values` |
 | Every Tailwind class must generate CSS |  | `oxlint` `shadcn/no-unknown-classes` |

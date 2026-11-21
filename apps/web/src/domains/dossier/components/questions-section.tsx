@@ -2,6 +2,8 @@ import { useForm } from "@tanstack/react-form";
 import { CheckIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
+import { FieldError } from "#ui/components/field";
+import { Textarea } from "#ui/components/textarea";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { rowHistorySlot } from "@/domains/dossier/components/row-history-slot";
@@ -46,8 +48,6 @@ import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
 import type { questionList } from "@watchdog/domain/schemas/graph";
 import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
-import { Textarea } from "@watchdog/ui/components/textarea";
 
 function qIndex(i: number): string {
   return `Q${String(i + 1).padStart(2, "0")}`;

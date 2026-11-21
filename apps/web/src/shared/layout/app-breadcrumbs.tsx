@@ -2,6 +2,15 @@ import { Link } from "@tanstack/react-router";
 import { FolderIcon } from "lucide-react";
 import { Fragment, type ReactElement, type ReactNode } from "react";
 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "#ui/components/breadcrumb";
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import type {
   CountOnTrailId,
@@ -11,15 +20,6 @@ import type {
 import { useCurrentPageTrail } from "@/shared/layout/page-trail-context";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { TabCount } from "@/shared/ui/tab-count";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@watchdog/ui/components/breadcrumb";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function CaseGlyph() {
   return (

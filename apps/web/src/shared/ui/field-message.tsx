@@ -1,5 +1,5 @@
+import { FieldError } from "#ui/components/field";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type Meta = Parameters<typeof fieldInvalid>[0];
 

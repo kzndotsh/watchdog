@@ -1,8 +1,8 @@
+import { Field } from "#ui/components/field";
+import { Label } from "#ui/components/label";
+import { Skeleton } from "#ui/components/skeleton";
 import { FormSection } from "@/shared/ui/form-section";
 import { SETTINGS_MEMBERS_SKELETON_ROWS } from "@/shared/ui/skeletons/constants";
-import { Field } from "@watchdog/ui/components/field";
-import { Label } from "@watchdog/ui/components/label";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** One member row: name line + `email · role` line, and the row actions button. */
 function MemberRowSkeleton() {

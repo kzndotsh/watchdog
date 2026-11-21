@@ -1,6 +1,8 @@
 import { PlusIcon } from "lucide-react";
 import { lazy, Suspense, useCallback } from "react";
 
+import { FieldError } from "#ui/components/field";
+import { TableCell } from "#ui/components/table";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { loadEntityIdentifiersPreview } from "@/domains/entities/components/entity-identifiers-preview-load";
@@ -25,8 +27,6 @@ import { Button } from "@/shared/ui/primitives/button";
 import { LoadingRegion, TableBodySkeletonLayout } from "@/shared/ui/skeletons";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import { trimmedEntityKindSchema } from "@watchdog/domain/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
-import { TableCell } from "@watchdog/ui/components/table";
 
 // The delete dialog opens on a click, so it loads then.
 const LoadedDeleteDialog = lazy(async () => {

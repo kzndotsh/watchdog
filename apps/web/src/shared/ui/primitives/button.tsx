@@ -1,10 +1,10 @@
 import type { ComponentProps } from "react";
 
+import { Button as BaseButton } from "#ui/components/button";
+import { Spinner } from "#ui/components/spinner";
 import { cn } from "@/lib/utils";
-import { Button as BaseButton } from "@watchdog/ui/components/button";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
-export * from "@watchdog/ui/components/button";
+export * from "#ui/components/button";
 
 type BaseSize = NonNullable<ComponentProps<typeof BaseButton>["size"]>;
 

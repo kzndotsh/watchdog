@@ -466,7 +466,7 @@ beforeAll(() => {
   fixture.write(`${SRC}/routes/_protected/ui/-gallery.tsx`, two);
   fixture.write(`${SRC}/routes/_protected/ui/sections/-more.tsx`, two);
   fixture.write(`${SRC}/shared/ui/primitives/wrapper.tsx`, two);
-  fixture.write("packages/ui/src/two.tsx", two);
+  fixture.write("apps/web/ui/src/two.tsx", two);
   fixture.write("apps/web/e2e/two.tsx", two);
   fixture.write("apps/web/two.tsx", two);
 
@@ -552,7 +552,7 @@ describe("one exported component per file (one-component-per-file)", () => {
   });
 
   it("ignores trees outside apps/web/src", () => {
-    expect(hits("packages/ui/src/two.tsx")).toHaveLength(0);
+    expect(hits("apps/web/ui/src/two.tsx")).toHaveLength(0);
     expect(hits("apps/web/e2e/two.tsx")).toHaveLength(0);
     expect(hits("apps/web/two.tsx")).toHaveLength(0);
   });

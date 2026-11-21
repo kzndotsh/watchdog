@@ -1,12 +1,12 @@
 import type { ComponentProps, ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
-import { formatFullLocalDateTime } from "@/shared/ui/relative-time.lib";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@watchdog/ui/components/tooltip";
+} from "#ui/components/tooltip";
+import { cn } from "@/lib/utils";
+import { formatFullLocalDateTime } from "@/shared/ui/relative-time.lib";
 
 type TooltipSide = ComponentProps<typeof TooltipContent>["side"];
 

@@ -5,14 +5,10 @@ import type { User } from "better-auth";
 import { User2 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "#ui/components/avatar";
+import { Skeleton } from "#ui/components/skeleton";
 import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
 import { cn, firstNonEmpty } from "@/lib/utils";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@watchdog/ui/components/avatar";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 export type UserAvatarProps = {
   className?: string;

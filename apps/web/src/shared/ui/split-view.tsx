@@ -1,13 +1,13 @@
 import { ChevronLeftIcon } from "lucide-react";
 import { useState, type MouseEvent, type ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@watchdog/ui/components/resizable";
-import { useIsMobile } from "@watchdog/ui/hooks/use-mobile";
+} from "#ui/components/resizable";
+import { useIsMobile } from "#ui/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 export type SplitViewProps = {
   /** Queue column. */

@@ -3,6 +3,12 @@
 import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
 import { Check, Copy, Key } from "lucide-react";
 
+import {
+  InputGroup,
+  InputGroupButton,
+  InputGroupInput,
+} from "#ui/components/input-group";
+import { Label } from "#ui/components/label";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
 import { useCopyText } from "@/shared/hooks/use-copy-text";
@@ -16,12 +22,6 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
-import {
-  InputGroup,
-  InputGroupButton,
-  InputGroupInput,
-} from "@watchdog/ui/components/input-group";
-import { Label } from "@watchdog/ui/components/label";
 
 export interface NewApiKeyDialogProps {
   open: boolean;

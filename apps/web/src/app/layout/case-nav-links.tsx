@@ -1,11 +1,8 @@
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import { LayoutDashboardIcon } from "lucide-react";
 
+import { SidebarMenuButton, SidebarMenuItem } from "#ui/components/sidebar";
 import { CASE_NAV_ITEMS, WORK_TO } from "@/config/nav";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
 
 export function CaseNavLinks({
   caseSlug,

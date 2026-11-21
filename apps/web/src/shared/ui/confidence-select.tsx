@@ -1,3 +1,10 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#ui/components/select";
 import { cn } from "@/lib/utils";
 import {
   CONTROL_TRIGGER,
@@ -9,13 +16,6 @@ import {
   trimmedConfidenceTierSchema,
   type ConfidenceTier,
 } from "@watchdog/domain/schemas/shared";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@watchdog/ui/components/select";
 
 type SelectProps = {
   value: ConfidenceTier;

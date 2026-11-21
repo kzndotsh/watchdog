@@ -155,8 +155,8 @@ export default defineConfig({
         "**/drizzle/**",
         "packages/client/src/generated/**",
         // Vendored shadcn primitives (ui:sync): codecov.yml ignores them too.
-        "packages/ui/src/components/**",
-        "packages/ui/src/hooks/**",
+        "apps/web/ui/src/components/**",
+        "apps/web/ui/src/hooks/**",
       ],
     },
     projects: [
