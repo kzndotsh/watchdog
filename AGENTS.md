@@ -70,7 +70,7 @@ Before writing Effect code, read `node_modules/effect/AGENTS.md` completely, the
 
 ## Skills
 
-Repo workflows live in [`.agents/skills/`](.agents/skills/) (`.claude/skills` links to it) and [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/): `/audit-contract`, `/check-gates`, `/finalize`, `/effect`, `/create-cap`. Generic skills are installed per user, not vendored here; [`docs/agents/`](docs/agents/) holds the issue-tracker, triage-label and domain settings they read.
+Repo workflows live in [`.agents/skills/`](.agents/skills/) (`.claude/skills` links to it) and [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/): `/audit-contract`, `/check-gates`, `/finalize`, `/effect`, `/create-cap`. Vendored generic skills (`/to-spec`, `/to-tickets`, `/tdd`, ...) sit beside them, pinned in `skills-lock.json`; [`docs/agents/`](docs/agents/) holds the issue-tracker, triage-label and domain settings they read.
 
 ## Gotchas
 

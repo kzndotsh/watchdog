@@ -7,7 +7,8 @@ Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema an
 ## Database (`packages/db`)
 
 - The TypeScript schema is the source. `pnpm db:generate --name=<what_changed>`, then `pnpm db:migrate`; `check:migrations` fails a schema edit without its migration. Functions, triggers and grants are hand-written SQL in `0000_baseline`: change one with a new `--custom` migration holding `CREATE OR REPLACE`.
-- Two roles: the owner (`DATABASE_URL_MIGRATE`) owns every object and migrates; the app connects as `watchdog_app` with data privileges only. A new append-only table joins `AUDIT_TABLES` (`src/app-role.ts`): its revocations cannot live in a migration, because default privileges re-grant on each new table.
+- Three roles: the owner (`DATABASE_URL_MIGRATE`) owns every object and migrates; the app connects as `watchdog_app` with data privileges only; the worker as `watchdog_worker`, the same minus Graph writes. A new append-only table joins `AUDIT_TABLES` and a new Graph table joins `GRAPH_TABLES` (`src/app-role.ts`): revocations cannot live in a migration, because default privileges re-grant on each new table.
+- An API-key request runs as `watchdog_worker` unless its procedure declares `graph:write`; a session never switches. A route outside the router passes its credential with `runAppAs`.
 - Triggers own `updated_at`, the Graph row `version`, `created_by` / `updated_by`, `graph_history`, the activity NOTIFY and the row-level security `organization_id`. Code never writes them.
 - Enums are `text().$type<T>()` with a `vocabCheck` (never `pgEnum`), JSONB columns have a concrete `$type`, there is no `relations()`, and a branded id column is `.$type<CaseId>()` / `.$type<OrganizationId>()`.
 - A child row carries `case_id` and composite foreign keys `(x_id, case_id)` to its parent; every foreign key has an index led by its column (`fk-indexes.int.test.ts`).
@@ -52,7 +53,7 @@ Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema an
 
 ## Worker (`apps/worker`)
 
-- The worker is thin: logic stays in core, and it has no `@watchdog/db` dependency. A repeated task is one entry in core's `MAINTENANCE_TASKS`.
+- The worker is thin: logic stays in core, and it has no `@watchdog/db` dependency. `main.ts` imports `@watchdog/env/worker` first, which swaps in `DATABASE_URL_WORKER`; keep it first. A repeated task is one entry in core's `MAINTENANCE_TASKS`.
 - The image runs a bundle (`dist/worker.mjs`): boot code reads no file beside the source tree. Timing comes from the Cap's `timeoutMs`, never a hard-coded timeout.
 
 ## Tests
