@@ -2,9 +2,9 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TaskListItem } from "@/domains/tasks/types";
-import { TASK_STATUSES } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { TASK_STATUSES } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 class ResizeObserverMock {
   observe() {}

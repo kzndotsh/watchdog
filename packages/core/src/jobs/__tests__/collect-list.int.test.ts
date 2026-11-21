@@ -3,13 +3,13 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import { evidenceRepo } from "@watchdog/db";
-import { collectList } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { collectList } from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   COLLECT_FIXTURE,
   COLLECT_FIXTURE_ORDER_ACTIVITY_DESC,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   captureStatements,
   resetTestDb,

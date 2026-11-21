@@ -8,11 +8,11 @@ import type {
   CollectRowKind,
   CollectRowState,
   JobStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CollectQueueRowFact,
   CollectSource,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 
 import { owner } from "./with-test-tx";
 

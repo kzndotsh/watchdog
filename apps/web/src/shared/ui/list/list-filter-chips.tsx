@@ -6,7 +6,7 @@ import { activeFilterKeys } from "@/shared/lib/list/list-filters";
 import type { AnyFilterSource, ListHandle } from "@/shared/lib/list/list-types";
 import { Chip } from "@/shared/ui/chip";
 import { Button } from "@/shared/ui/primitives/button";
-import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
+import type { AnyListDef, FilterKey } from "@watchdog/domain/schemas/shared";
 
 type ListFilterChipsProps<
   D extends AnyListDef,

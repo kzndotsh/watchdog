@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   COLLECT_FIXTURE,
   COLLECT_FIXTURE_ORDER_ACTIVITY_DESC,
@@ -10,7 +10,7 @@ import {
   COLLECT_FIXTURE_ROWS,
   collectQueueReference,
   fixtureMinute,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   collectQueueDiff,
   readCollectQueue,

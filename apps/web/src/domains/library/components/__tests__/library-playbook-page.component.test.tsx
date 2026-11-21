@@ -22,7 +22,7 @@ import {
   testCapProvider,
 } from "@/testing/records";
 import type { CredentialSlot } from "@watchdog/core/vault";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const navigate = vi.hoisted(() => vi.fn());

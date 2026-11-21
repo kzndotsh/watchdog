@@ -1,4 +1,7 @@
-import { trimmedOrUndefined, type EgressClass } from "@watchdog/schemas/shared";
+import {
+  trimmedOrUndefined,
+  type EgressClass,
+} from "@watchdog/domain/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
 import { breachDisabledReason } from "./breach-disabled";

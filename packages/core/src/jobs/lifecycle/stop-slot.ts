@@ -1,7 +1,7 @@
 import type { Effect } from "effect";
 import { Ref } from "effect";
 
-import type { JobStopCause } from "@watchdog/schemas/shared";
+import type { JobStopCause } from "@watchdog/domain/schemas/shared";
 
 import type { JobEvent } from "./table";
 

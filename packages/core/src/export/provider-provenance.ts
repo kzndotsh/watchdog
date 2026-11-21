@@ -2,7 +2,7 @@ import { Effect, Stream } from "effect";
 import { strToU8 } from "fflate";
 
 import type { ProviderCallWithOutcome } from "@watchdog/db";
-import type { CaseId, ProvenanceState } from "@watchdog/schemas/shared";
+import type { CaseId, ProvenanceState } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import {

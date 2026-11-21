@@ -2,7 +2,7 @@ import { and, type AnyColumn, eq, type SQL } from "drizzle-orm";
 import type { PgTable, SelectedFields } from "drizzle-orm/pg-core";
 import type { SelectResultFields } from "drizzle-orm/query-builders/select.types";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { trimScopedCaseIds } from "./_scoped-ids";

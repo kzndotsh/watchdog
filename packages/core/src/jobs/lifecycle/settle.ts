@@ -1,8 +1,11 @@
 import { Effect } from "effect";
 
 import type { DbTx, JobRow, JobSettlePatch } from "@watchdog/db";
-import { parseTrimmedCaseId, parseTrimmedUuid } from "@watchdog/schemas/shared";
-import type { CaseId } from "@watchdog/schemas/shared";
+import {
+  parseTrimmedCaseId,
+  parseTrimmedUuid,
+} from "@watchdog/domain/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";

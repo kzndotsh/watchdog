@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { MAX_ECHOED_ID_CHARS, NotFoundError } from "../../errors/tagged-errors";
 import { requireTrimmedCaseIdEffect, requireTrimmedGraphId } from "../access";

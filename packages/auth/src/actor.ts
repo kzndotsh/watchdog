@@ -6,7 +6,7 @@ import {
 import {
   type OrganizationId,
   organizationIdSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The organization a user acts in: their preferred (session or API-key) one, else

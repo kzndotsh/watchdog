@@ -8,7 +8,10 @@ import { coreServicesLayer, Db, inWorkerRole } from "@watchdog/core/infra";
 import type { JobQueue } from "@watchdog/core/jobs";
 import { jobQueueProducerLayer } from "@watchdog/core/jobs";
 import type { Vault } from "@watchdog/core/vault";
-import type { ApiCredential, ProcedureScope } from "@watchdog/schemas/shared";
+import type {
+  ApiCredential,
+  ProcedureScope,
+} from "@watchdog/domain/schemas/shared";
 import type { OutboundClient } from "@watchdog/tools/http";
 
 import { inWorkerRoleRequest, runAsCaller } from "./caller-role";

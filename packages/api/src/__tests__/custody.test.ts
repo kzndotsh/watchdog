@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
-import { testApiKey } from "@watchdog/schemas/testing";
+import { testApiKey } from "@watchdog/domain/schemas/testing";
 
 import {
   assertAgentChildWriteCustody,

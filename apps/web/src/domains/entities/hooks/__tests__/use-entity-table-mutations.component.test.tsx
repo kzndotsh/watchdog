@@ -12,9 +12,9 @@ import {
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { useEntityTableMutations } from "@/domains/entities/hooks/use-entity-table-mutations";
 import { procedureDouble } from "@/testing/orpc-client";
-import { edgeList } from "@watchdog/schemas/graph";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { edgeList } from "@watchdog/domain/schemas/graph";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

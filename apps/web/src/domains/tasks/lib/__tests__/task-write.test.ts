@@ -4,7 +4,7 @@ import {
   buildCreateTaskData,
   buildUpdateTaskData,
 } from "@/domains/tasks/lib/task-write";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("buildCreateTaskData", () => {
   it("trims title and clears blank description", () => {

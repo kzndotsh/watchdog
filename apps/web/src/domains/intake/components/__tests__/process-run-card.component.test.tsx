@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ProcessRunCard } from "@/domains/intake/components/process-run-card";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (

@@ -1,9 +1,9 @@
 import { Effect, Result } from "effect";
 
 import type { JobArtifact } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import type { JobPivots } from "@watchdog/schemas/shared";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import type { JobPivots } from "@watchdog/domain/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";
 
 import { errorMessage } from "../../errors/error-utils";
 import { InvalidError, isDomainTag } from "../../errors/tagged-errors";

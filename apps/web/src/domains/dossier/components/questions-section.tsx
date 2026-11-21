@@ -44,8 +44,8 @@ import { SectionLabel } from "@/shared/ui/section-label";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
-import type { questionList } from "@watchdog/schemas/graph";
-import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
+import type { questionList } from "@watchdog/domain/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 

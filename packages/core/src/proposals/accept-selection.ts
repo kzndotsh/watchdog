@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
-import { withPatchDependencies } from "@watchdog/schemas/graph";
-import type { UntickedOpOutcome } from "@watchdog/schemas/jobs";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import { withPatchDependencies } from "@watchdog/domain/schemas/graph";
+import type { UntickedOpOutcome } from "@watchdog/domain/schemas/jobs";
 
 import { InvalidError } from "../errors/tagged-errors";
 

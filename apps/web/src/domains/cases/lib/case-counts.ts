@@ -1,4 +1,4 @@
-import type { ListTotal } from "@watchdog/schemas/shared";
+import type { ListTotal } from "@watchdog/domain/schemas/shared";
 
 /** The start of the browser's calendar day, as the ISO instant the counts' "overdue" is measured from. */
 export function localDayStartIso(now: Date = new Date()): string {

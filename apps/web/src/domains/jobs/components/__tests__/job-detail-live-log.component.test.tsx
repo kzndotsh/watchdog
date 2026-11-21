@@ -11,9 +11,9 @@ vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
 
-import type { ActivityEntry } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import type { ActivityEntry } from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 type Listener = (event: Event) => void;
 

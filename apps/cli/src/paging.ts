@@ -2,8 +2,12 @@ import {
   ARRAY_MAX,
   PAGE_LIMIT_DEFAULT,
   PAGE_LIMIT_MAX,
-} from "@watchdog/schemas/shared";
-import type { ListPage, ListTotal, Page } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type {
+  ListPage,
+  ListTotal,
+  Page,
+} from "@watchdog/domain/schemas/shared";
 
 import { fail } from "./io";
 

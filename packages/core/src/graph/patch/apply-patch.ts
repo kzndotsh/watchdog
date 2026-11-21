@@ -1,15 +1,18 @@
 import { Effect } from "effect";
 
 import type { DbTx } from "@watchdog/db";
-import { type CustodyViolationError, assertPatchGates } from "@watchdog/policy";
-import type { PatchOp } from "@watchdog/schemas/graph";
+import {
+  type CustodyViolationError,
+  assertPatchGates,
+} from "@watchdog/domain/policy";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import type {
   CaseId,
   ConfidenceTier,
   GraphHistoryChannel,
   GraphActor,
-} from "@watchdog/schemas/shared";
-import { parseGraphUuidList } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { parseGraphUuidList } from "@watchdog/domain/schemas/shared";
 
 import { setHistoryContextEffect } from "../../activity/graph-activity";
 import { InvalidError, type DomainTag } from "../../errors/tagged-errors";

@@ -29,8 +29,11 @@ import {
   ComboboxSeparator,
 } from "@/shared/ui/primitives/combobox";
 import { capabilityLabel } from "@/shared/ui/vocab/capability";
-import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
-import { trimmedOrUndefined, type EgressClass } from "@watchdog/schemas/shared";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
+import {
+  trimmedOrUndefined,
+  type EgressClass,
+} from "@watchdog/domain/schemas/shared";
 
 type PlaybookSelectProps = {
   playbooks: readonly PlaybookListItem[];

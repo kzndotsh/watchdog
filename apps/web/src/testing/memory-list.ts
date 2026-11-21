@@ -1,4 +1,4 @@
-import type { ListPage } from "@watchdog/schemas/shared";
+import type { ListPage } from "@watchdog/domain/schemas/shared";
 
 /** What a list procedure receives: the view's params, the scope ids and the cursor. */
 export type ListPageData = Readonly<Record<string, unknown>> & {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { REQUEST_BODY_MAX_BYTES } from "@watchdog/schemas/shared";
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { REQUEST_BODY_MAX_BYTES } from "@watchdog/domain/schemas/shared";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const handlerFetch = vi.hoisted(() =>
   vi.fn(async (_request: Request) => new Response("handled"))

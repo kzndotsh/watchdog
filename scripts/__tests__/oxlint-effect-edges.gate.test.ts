@@ -105,8 +105,8 @@ const OUT_OF_SCOPE = [
   "packages/core/src/probe.test.ts",
   "packages/api/src/nested/__tests__/deep/probe.ts",
   "apps/web/src/probe.test.tsx",
-  "packages/schemas/src/probe.ts",
-  "packages/test-kit/src/probe.ts",
+  "packages/domain/schemas/src/probe.ts",
+  "packages/domain/test-kit/src/probe.ts",
   "scripts/probe.ts",
 ] as const;
 
@@ -120,7 +120,7 @@ const ROOTS = [
   "packages/core/src",
   "packages/api/src",
   "packages/tools/src",
-  "packages/policy/src",
+  "packages/domain/policy/src",
   "packages/caps/src",
   "packages/ai/src",
   "packages/db/src",

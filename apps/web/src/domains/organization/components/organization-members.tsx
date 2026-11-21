@@ -30,7 +30,10 @@ import {
   invitationAcceptPath,
 } from "@watchdog/auth/invitation-url";
 import { INVITE_ROLE_OPTIONS } from "@watchdog/auth/org-roles";
-import { canManageTeam, trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  canManageTeam,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Field } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";

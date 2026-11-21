@@ -26,7 +26,7 @@ import { BlockedTargetError } from "../errors/tagged-errors";
 import { normalizeHost } from "../normalize";
 import { bareHost } from "./outbound-policy";
 
-/** A declared contact; structurally the same as `CapContact` in `@watchdog/schemas/caps`. */
+/** A declared contact; structurally the same as `CapContact` in `@watchdog/domain/schemas/caps`. */
 export type PolicyContact =
   | {
       readonly kind: "provider";

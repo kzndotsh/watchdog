@@ -10,14 +10,14 @@ import {
   tryDbWith,
 } from "@watchdog/core/infra";
 import { casesRepo } from "@watchdog/db";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   createLogger,
   runWithRequestLogger,
   startRequestTiming,
   type RequestTiming,
 } from "@watchdog/log";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   captureStatements,
   resetTestDb,

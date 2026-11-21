@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { classifyPgpQuery } from "@watchdog/schemas/caps";
+import { classifyPgpQuery } from "@watchdog/domain/schemas/caps";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import {
   PGP_KEYSERVERS,

@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import { jobsRepo } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import { createLogger } from "@watchdog/log";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   clearCollectQueueStale,
   collectQueueDiff,
@@ -20,7 +21,6 @@ import {
   withCollectQueueFault,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { recordingJobQueue } from "../../job-queue.ts";
 import { reconcileJobsEffect } from "../reconcile.ts";

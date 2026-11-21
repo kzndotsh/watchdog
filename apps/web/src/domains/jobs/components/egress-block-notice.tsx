@@ -8,7 +8,7 @@ import {
   type EgressBlock,
 } from "@/domains/jobs/lib/egress-block";
 import { Button } from "@/shared/ui/primitives/button";
-import { normalizeAllowedEgress } from "@watchdog/schemas/caps";
+import { normalizeAllowedEgress } from "@watchdog/domain/schemas/caps";
 import {
   Alert,
   AlertAction,

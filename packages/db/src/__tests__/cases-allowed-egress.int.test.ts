@@ -1,7 +1,10 @@
 import { sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { EGRESS_CLASSES, type EgressClass } from "@watchdog/schemas/shared";
+import {
+  EGRESS_CLASSES,
+  type EgressClass,
+} from "@watchdog/domain/schemas/shared";
 import {
   expectPostgresRefusal,
   PG_CHECK_VIOLATION,

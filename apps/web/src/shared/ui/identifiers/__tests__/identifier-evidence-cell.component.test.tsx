@@ -12,8 +12,8 @@ import {
   pickerTestWrapper,
 } from "@/testing/memory-picker-port";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import { testId } from "@watchdog/test-kit";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
+import { testId } from "@watchdog/domain/test-kit";
 
 const EVIDENCE_A = {
   id: testId(1),

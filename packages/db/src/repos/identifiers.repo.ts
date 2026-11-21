@@ -11,7 +11,7 @@ import {
   IDENTIFIER_TYPES,
   identifierPlatformSlugsMatchingSearch,
   normalizeUuidList,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

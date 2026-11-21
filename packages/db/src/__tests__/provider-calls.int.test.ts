@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,

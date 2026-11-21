@@ -13,7 +13,8 @@ import { createEntityEffect } from "@watchdog/core/graph";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { activityLogRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -21,7 +22,6 @@ import {
   testDb,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const START = { xid: "0", id: 0 } as const;
 const runWithBlobs = runDomainWith(

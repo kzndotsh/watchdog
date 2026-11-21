@@ -2,9 +2,9 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import { proposalList } from "@watchdog/schemas/jobs";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   captureStatements,
   expectNoSeqScanOn,

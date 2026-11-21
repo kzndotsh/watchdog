@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { identifierList } from "@watchdog/schemas/graph";
+import { identifierList } from "@watchdog/domain/schemas/graph";
 
 import { entities } from "../schema/entities";
 import { identifiers } from "../schema/identifiers";

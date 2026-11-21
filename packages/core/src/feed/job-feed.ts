@@ -1,20 +1,20 @@
 import { Effect } from "effect";
 
 import type { JobActivityLabelRow, ActivityFeedRow } from "@watchdog/db";
-import type { ActivityItem } from "@watchdog/schemas/feed";
+import type { ActivityItem } from "@watchdog/domain/schemas/feed";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   JOB_STATUSES,
   parseTrimmedUuid,
   type CaseId,
   type JobStatus,
   type JsonObject,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { labelForActor } from "../actors/resolve-actor-labels";
 import { jobActivityLabel } from "../display/job-display";

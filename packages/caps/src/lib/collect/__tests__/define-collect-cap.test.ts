@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
 
 import { defineProvider, runCap } from "../../../sdk";
 import { createCapRunHarness } from "../../../testing/runs-collect-cap";

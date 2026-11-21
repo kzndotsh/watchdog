@@ -6,7 +6,8 @@ import { runDomain } from "@watchdog/core/infra";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -14,7 +15,6 @@ import {
   seedOrganizationMember,
   testDb,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import type { ApiContext } from "../../context";
 import { router } from "../../router";

@@ -5,12 +5,12 @@ import type { z } from "zod";
 
 import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
 import type { JobArtifact } from "@watchdog/db";
-import { normalizeJobInput } from "@watchdog/schemas/jobs";
+import { normalizeJobInput } from "@watchdog/domain/schemas/jobs";
 import {
   isJsonObject,
   trimmedOrNull,
   type CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import { nowDateEffect } from "../infra/clock";

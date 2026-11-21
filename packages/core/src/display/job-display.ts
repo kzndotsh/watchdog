@@ -1,6 +1,9 @@
-import { capabilityIdLabel, playbookIdLabel } from "@watchdog/schemas/caps";
-import { summarizeJobInput } from "@watchdog/schemas/jobs";
-import type { JsonObject } from "@watchdog/schemas/shared";
+import {
+  capabilityIdLabel,
+  playbookIdLabel,
+} from "@watchdog/domain/schemas/caps";
+import { summarizeJobInput } from "@watchdog/domain/schemas/jobs";
+import type { JsonObject } from "@watchdog/domain/schemas/shared";
 
 export function jobActivityLabel(opts: {
   capabilityId: string;

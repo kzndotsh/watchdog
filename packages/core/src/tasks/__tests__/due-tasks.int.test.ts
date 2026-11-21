@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { runDomain } from "@watchdog/core/infra";
 import { getTaskBoardEffect, listDueTasksEffect } from "@watchdog/core/tasks";
 import { tasks } from "@watchdog/db";
-import { TASK_BOARD_MAX, TASK_DUE_LIST_LIMIT } from "@watchdog/schemas/feed";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import {
+  TASK_BOARD_MAX,
+  TASK_DUE_LIST_LIMIT,
+} from "@watchdog/domain/schemas/feed";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   resetTestDb,
   seedCase,

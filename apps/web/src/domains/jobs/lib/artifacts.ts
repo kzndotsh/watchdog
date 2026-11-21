@@ -2,7 +2,7 @@ import {
   DERIVED_JSON_ARTIFACT,
   EVIDENCE_SNAPSHOT_ARTIFACT,
   REPORT_JSON_ARTIFACT,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 type NamedArtifact = {
   name: string;

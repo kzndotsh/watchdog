@@ -8,12 +8,12 @@ import {
   flag,
   PLAYBOOK_SEED_KIND_LABELS,
   PLAYBOOK_SEED_KINDS,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The Playbook run form's picker, as a bounded list (#573, ADR-0007): the registry
  * (`capabilities.listPlaybooks`, a handful of entries) is read whole and narrowed in the browser
- * by `matchPlaybooks`. Declared here, not in `@watchdog/schemas`, because no procedure serves it;
+ * by `matchPlaybooks`. Declared here, not in `@watchdog/domain/schemas`, because no procedure serves it;
  * the declaration gives the form the standard Filters popover and chips (`useBoundedList`), with
  * its view held in the form's state, never the URL. `egress` finds the Playbooks that need one of
  * the chosen classes.

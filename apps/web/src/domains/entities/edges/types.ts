@@ -10,12 +10,12 @@ import type {
   createEdgeInputSchema,
   edgeScopeInputSchema,
   updateEdgeInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   ConfidenceTier,
   EdgeOrientation,
   EdgePredicate,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** A Connection seen from one Entity: its peer and direction (writes return it). */
 export type EdgeRecord = CoreEdgeRecord;

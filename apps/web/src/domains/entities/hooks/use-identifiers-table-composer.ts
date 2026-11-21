@@ -15,8 +15,8 @@ import {
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
 import { toast } from "@/shared/ui/toast";
-import { HANDLE_REQUIRES_PLATFORM } from "@watchdog/schemas/graph";
-import { normalizeIdentifierPlatform } from "@watchdog/schemas/shared";
+import { HANDLE_REQUIRES_PLATFORM } from "@watchdog/domain/schemas/graph";
+import { normalizeIdentifierPlatform } from "@watchdog/domain/schemas/shared";
 
 type IdentifierCreateValues = Parameters<
   Parameters<typeof useIdentifierCreateForm>[0]

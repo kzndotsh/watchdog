@@ -2,8 +2,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import { changesets, graphHistory, type DbExec } from "@watchdog/db";
-import type { CaseId, GraphHistoryKind } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit/fixtures";
+import type { CaseId, GraphHistoryKind } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import type { ListConformance } from "./types.ts";

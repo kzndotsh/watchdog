@@ -1,7 +1,11 @@
 import { createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testApiKey } from "@watchdog/schemas/testing";
+import {
+  TEST_ORGANIZATION_ID,
+  testApiKey,
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   listAllGraphHistory,
@@ -11,7 +15,6 @@ import {
   seedOrganizationMember,
   testDb,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import type { ApiContext } from "../../context";
 import { router } from "../../router";

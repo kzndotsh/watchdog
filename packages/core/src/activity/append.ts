@@ -7,8 +7,8 @@ import {
   isActivityActionForKind,
   type ActivityEntry,
   type ActivityEntryKind,
-} from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { InternalError, type DomainTag } from "../errors/tagged-errors";

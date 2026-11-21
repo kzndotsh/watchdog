@@ -7,8 +7,8 @@ vi.mock("@/lib/orpc-client", async () =>
 
 import { activityListView } from "@/domains/activity/queries";
 import { procedureDouble } from "@/testing/orpc-client";
-import { activityList } from "@watchdog/schemas/feed";
-import { testId } from "@watchdog/test-kit";
+import { activityList } from "@watchdog/domain/schemas/feed";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listRecent = procedureDouble("activity.listRecent");
 

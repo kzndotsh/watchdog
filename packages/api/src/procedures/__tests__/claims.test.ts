@@ -18,7 +18,10 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   };
 });
 
-import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/schemas/testing";
+import {
+  TEST_ORGANIZATION_ID,
+  testActor,
+} from "@watchdog/domain/schemas/testing";
 
 import { create, list, update } from "../claims";
 

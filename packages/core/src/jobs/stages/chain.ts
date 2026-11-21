@@ -14,7 +14,7 @@ import {
   parseTrimmedUuid,
   type CaseId,
   type JsonObject,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../../activity/append";
 import type { DomainTag } from "../../errors/tagged-errors";

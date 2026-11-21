@@ -10,7 +10,7 @@ import {
   setWorkerRole,
   workerRoleDb,
 } from "@watchdog/db";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { NotFoundError, type DomainTag } from "../errors/tagged-errors";
 import { Db } from "./db-service";

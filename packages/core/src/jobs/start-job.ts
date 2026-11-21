@@ -4,8 +4,11 @@ import type { z } from "zod";
 import { requireCapability } from "@watchdog/caps";
 import { jobListRepo } from "@watchdog/db";
 import type { JobListRow, JobRow } from "@watchdog/db";
-import { evidenceIdsFromJobInputs, jobList } from "@watchdog/schemas/jobs";
-import type { jobListSchema, jobSchema } from "@watchdog/schemas/jobs";
+import {
+  evidenceIdsFromJobInputs,
+  jobList,
+} from "@watchdog/domain/schemas/jobs";
+import type { jobListSchema, jobSchema } from "@watchdog/domain/schemas/jobs";
 import {
   normalizeUuidList,
   trimmedOrUndefined,
@@ -18,7 +21,7 @@ import {
   PAGE_LIMIT_DEFAULT,
   type ListInput,
   type ListPage,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

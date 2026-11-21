@@ -10,13 +10,14 @@ import {
   formatActivityCursor,
   activityEntrySchema,
   type ActivityEntry,
-} from "@watchdog/schemas/feed";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin, testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -25,7 +26,6 @@ import {
   seedOrganizationMember,
   testDb,
 } from "@watchdog/test-db";
-import { testHttpOrigin, testId } from "@watchdog/test-kit";
 
 /**
  * Organization scoping of the two routes that sit outside oRPC, against real data.

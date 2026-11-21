@@ -4,7 +4,7 @@ import {
   apiKeyOrganizationId,
   organizationIdSchema,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { resolveUserOrganizationId } from "../auth/resolve-organization";
 import type { DbExec } from "../exec";

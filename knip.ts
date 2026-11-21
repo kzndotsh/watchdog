@@ -148,11 +148,11 @@ const config: KnipConfig = {
         "scripts/build-migrate.mjs",
       ],
     },
-    "packages/policy": {
+    "packages/domain/policy": {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/schemas": {
+    "packages/domain/schemas": {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
@@ -164,7 +164,7 @@ const config: KnipConfig = {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/test-kit": {
+    "packages/domain/test-kit": {
       entry: [
         "src/index.ts",
         "src/fc.ts",

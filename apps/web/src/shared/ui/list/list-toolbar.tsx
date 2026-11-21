@@ -13,7 +13,7 @@ import { ListDisplayButton } from "@/shared/ui/list/list-display-button";
 import { ListFilterChips } from "@/shared/ui/list/list-filter-chips";
 import { ListFiltersButton } from "@/shared/ui/list/list-filters-button";
 import { ListSearch } from "@/shared/ui/list/list-search";
-import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
+import type { AnyListDef, FilterKey } from "@watchdog/domain/schemas/shared";
 
 /** A screen's runtime options: required exactly when the list has an unfixed `ref` or `tags` filter. */
 type SourcesProp<D extends AnyListDef, K extends FilterKey<D>> = [

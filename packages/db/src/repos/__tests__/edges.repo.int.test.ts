@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { testId } from "@watchdog/domain/test-kit";
 import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,
@@ -7,7 +8,6 @@ import {
   seedEntity,
   withSystemTestTx,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { edgesRepo } from "../edges.repo.ts";
 

@@ -1,4 +1,4 @@
-import { HttpResponse } from "@watchdog/test-kit/http";
+import { HttpResponse } from "@watchdog/domain/test-kit/http";
 
 import {
   EMAIL,

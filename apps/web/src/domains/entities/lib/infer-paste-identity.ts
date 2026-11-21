@@ -1,8 +1,8 @@
-import { IDENTIFIER_TYPE_TABLE } from "@watchdog/schemas/graph";
+import { IDENTIFIER_TYPE_TABLE } from "@watchdog/domain/schemas/graph";
 import {
   IDENTIFIER_PLATFORMS,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export function cleanPasteCell(raw: string): string {
   let s = raw.trim().replaceAll("\u00A0", " ").trim();

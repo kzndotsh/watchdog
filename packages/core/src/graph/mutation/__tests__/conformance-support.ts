@@ -7,9 +7,9 @@ import type {
   GraphHistoryChannel,
   GraphHistoryKind,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import { listAllActivity, listAllGraphHistory } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../../activity/graph-activity";
 import { inOrganization } from "../../../infra/organization-scope";

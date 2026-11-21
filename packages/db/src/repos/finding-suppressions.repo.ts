@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { findingSuppressions } from "../schema/finding-suppressions";

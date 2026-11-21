@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { CAPABILITIES } from "../../registry";
 import { isBreachCapId } from "../../sdk";

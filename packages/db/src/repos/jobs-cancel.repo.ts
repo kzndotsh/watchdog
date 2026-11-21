@@ -4,7 +4,7 @@ import {
   type CaseId,
   CANCELLABLE_JOB_STATUSES,
   type JobStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { jobs } from "../schema/jobs";

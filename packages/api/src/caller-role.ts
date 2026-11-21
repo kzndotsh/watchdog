@@ -1,6 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-import type { ApiCredential, ProcedureScope } from "@watchdog/schemas/shared";
+import type {
+  ApiCredential,
+  ProcedureScope,
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * Set while an API-key request runs: `runApp` reads it and runs the Effect as the worker role

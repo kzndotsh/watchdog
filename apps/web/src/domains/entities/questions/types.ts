@@ -6,7 +6,7 @@ import type {
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 export type QuestionRecord = CoreQuestionRecord;
 

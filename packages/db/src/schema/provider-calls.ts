@@ -20,7 +20,7 @@ import {
   PROVIDER_CALL_OUTCOMES,
   PROVIDER_CALL_TRANSPORTS,
   PROVIDER_REQUEST_BODY_STATES,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ProviderBodyKind,
@@ -29,7 +29,7 @@ import type {
   ProviderCallOutcome,
   ProviderCallTransport,
   ProviderRequestBodyState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
 import { caseIsolation } from "./_organization-policy";

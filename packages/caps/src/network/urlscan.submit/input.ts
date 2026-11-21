@@ -4,7 +4,7 @@ import {
   httpUrlSchema,
   optionalUuidSchema,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 const urlscanVisibilitySchema = z.enum(["public", "unlisted", "private"]);
 

@@ -8,12 +8,16 @@ import {
   identifiersRepo,
   proposalsRepo,
 } from "@watchdog/db";
-import { fingerprintPatchOp, type PatchOp } from "@watchdog/schemas/graph";
+import {
+  fingerprintPatchOp,
+  type PatchOp,
+} from "@watchdog/domain/schemas/graph";
 import {
   buildEntityCreateOp,
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -21,7 +25,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 function fingerprints(ops: readonly PatchOp[]): string[] {
   return ops.flatMap((op) => {

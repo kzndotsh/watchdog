@@ -15,7 +15,7 @@ vi.mock("@watchdog/core/proposals", async (importOriginal) => {
   };
 });
 
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor } from "@watchdog/domain/schemas/testing";
 
 import { write } from "../graph";
 

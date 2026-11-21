@@ -4,7 +4,7 @@ import {
   parseTrimmedUuid,
   type CaseId,
   type JobStopCause,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";

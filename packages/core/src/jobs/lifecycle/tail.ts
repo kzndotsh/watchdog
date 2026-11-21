@@ -2,7 +2,7 @@ import { Cause, Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
 import type { JobRow } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { errorMessage } from "../../errors/error-utils";
 import { InvalidError } from "../../errors/tagged-errors";

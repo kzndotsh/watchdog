@@ -1,12 +1,15 @@
 import type { DbExec } from "@watchdog/db";
-import { identifyUser, peekRequestLogger } from "@watchdog/log";
-import type { AuditableLogger } from "@watchdog/log";
-import { apiKeyOrganizationId, parseKeyScopes } from "@watchdog/schemas/shared";
+import {
+  apiKeyOrganizationId,
+  parseKeyScopes,
+} from "@watchdog/domain/schemas/shared";
 import type {
   ApiActor,
   ApiCaller,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { identifyUser, peekRequestLogger } from "@watchdog/log";
+import type { AuditableLogger } from "@watchdog/log";
 
 import { isActorBanned, resolveActorOrganizationId } from "./actor";
 import type { createAuth } from "./create-auth";

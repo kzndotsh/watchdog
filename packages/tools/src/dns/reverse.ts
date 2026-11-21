@@ -3,7 +3,7 @@ import { isIP } from "node:net";
 import { Effect } from "effect";
 import { z } from "zod";
 
-import { expandIpv6 } from "@watchdog/schemas/ip";
+import { expandIpv6 } from "@watchdog/domain/schemas/ip";
 
 import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";

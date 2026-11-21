@@ -3,7 +3,7 @@ import { Effect, Stream } from "effect";
 import { strToU8 } from "fflate";
 
 import type { EvidenceRow } from "@watchdog/db";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { getCaseByIdEffect } from "../cases/cases";
 import {

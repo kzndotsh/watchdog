@@ -1,5 +1,8 @@
-import type { PatchOp } from "@watchdog/schemas/graph";
-import { parseGraphUuidList, trimmedOrNull } from "@watchdog/schemas/shared";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import {
+  parseGraphUuidList,
+  trimmedOrNull,
+} from "@watchdog/domain/schemas/shared";
 
 export type ParsedAgentPatch = {
   ok: true;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeIdentifierValue } from "@watchdog/schemas/graph";
+import { normalizeIdentifierValue } from "@watchdog/domain/schemas/graph";
 
 import { normalizeEmail } from "../email.ts";
 import { normalizeIp } from "../ip.ts";

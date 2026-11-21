@@ -1,9 +1,12 @@
 import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
-import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
-import { untrustedCaseId, testCaseId } from "@watchdog/schemas/testing";
+import type {
+  ActivityEntry,
+  ActivityEntryKind,
+} from "@watchdog/domain/schemas/feed";
+import { asCaseId, type CaseId } from "@watchdog/domain/schemas/shared";
+import { untrustedCaseId, testCaseId } from "@watchdog/domain/schemas/testing";
 
 const { claimCaseExportEffect } = vi.hoisted(() => ({
   claimCaseExportEffect: vi.fn((_caseId: string) =>

@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { claimList } from "@watchdog/schemas/graph";
+import { claimList } from "@watchdog/domain/schemas/graph";
 
 import { claims } from "../schema/claims";
 import { defineListRepo } from "./_list-query";

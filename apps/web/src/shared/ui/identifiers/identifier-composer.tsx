@@ -3,13 +3,13 @@
 import { useForm } from "@tanstack/react-form";
 
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
-import { validateIdentifierWrite } from "@watchdog/schemas/graph";
+import { validateIdentifierWrite } from "@watchdog/domain/schemas/graph";
 import {
   parseOptionalTrimmedUuid,
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const IDENTIFIER_CREATE_DEFAULTS = {
   entityId: "",

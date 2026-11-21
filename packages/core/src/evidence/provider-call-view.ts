@@ -10,8 +10,8 @@ import {
   type providerCallOriginalSchema,
   type providerCallRequestBodySchema,
   type providerCallSchema,
-} from "@watchdog/schemas/jobs";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/jobs";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import {

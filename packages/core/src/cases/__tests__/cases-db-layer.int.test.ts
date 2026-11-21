@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { listCasesEffect } from "@watchdog/core/cases";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 
 /** `listCasesEffect` is the reference migration to the `Db` service. */

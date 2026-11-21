@@ -44,18 +44,18 @@
       "@watchdog/log": ["./packages/log/src/index.ts"],
       "@watchdog/log/*": ["./packages/log/src/*"],
 
-      "@watchdog/policy": ["./packages/policy/src/index.ts"],
-      "@watchdog/policy/*": ["./packages/policy/src/*"],
+      "@watchdog/domain/policy": ["./packages/domain/policy/src/index.ts"],
+      "@watchdog/domain/policy/*": ["./packages/domain/policy/src/*"],
 
-      "@watchdog/schemas/*": ["./packages/schemas/src/*"],
+      "@watchdog/domain/schemas/*": ["./packages/domain/schemas/src/*"],
 
       "@watchdog/test-db": ["./packages/test-db/src/index.ts"],
 
-      "@watchdog/test-kit": ["./packages/test-kit/src/index.ts"],
-      "@watchdog/test-kit/http": [
-        "./packages/test-kit/src/http/mock-server.ts"
+      "@watchdog/domain/test-kit": ["./packages/domain/test-kit/src/index.ts"],
+      "@watchdog/domain/test-kit/http": [
+        "./packages/domain/test-kit/src/http/mock-server.ts"
       ],
-      "@watchdog/test-kit/*": ["./packages/test-kit/src/*"],
+      "@watchdog/domain/test-kit/*": ["./packages/domain/test-kit/src/*"],
 
       "@watchdog/tools/*": ["./packages/tools/src/*"],
 

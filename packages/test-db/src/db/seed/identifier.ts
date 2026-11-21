@@ -8,7 +8,7 @@ import {
   type IdentifierRow,
   type NewIdentifier,
 } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { withCaseOrganizationScope } from "../organization-scope.ts";
 import { withSystemHistoryContext } from "../system-history-context.ts";

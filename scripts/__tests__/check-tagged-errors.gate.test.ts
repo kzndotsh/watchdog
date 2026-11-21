@@ -93,7 +93,7 @@ describe("check-tagged-errors gate", () => {
 
   it("fails on Schema tagged errors that lack a code", () => {
     const repo = repoWith({
-      "packages/schemas/src/s.ts": [
+      "packages/domain/schemas/src/s.ts": [
         'export class WireError extends Schema.TaggedErrorClass<WireError>()("WireError", {',
         "  reason: Schema.String,",
         "}) {}",
@@ -169,7 +169,7 @@ describe("check-tagged-errors gate", () => {
 
   it("handles namespace-imported Schema.TaggedError", () => {
     const res = repoWith({
-      "packages/schemas/src/n.ts": [
+      "packages/domain/schemas/src/n.ts": [
         'export class NsError extends Schema.TaggedError<NsError>()("NsError", {}) {',
         '  readonly code = "ns" as const;',
         "}",

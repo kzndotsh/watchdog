@@ -12,7 +12,7 @@ import {
 import {
   asOrganizationId,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import { captureStatements, expectQueries } from "@watchdog/test-db";
 
 import { resolveActorOrganizationId } from "../actor";

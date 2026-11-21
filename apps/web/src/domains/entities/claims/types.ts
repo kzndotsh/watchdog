@@ -1,5 +1,8 @@
 import type { ClaimRecord as CoreClaimRecord } from "@watchdog/core/graph";
-import type { ClaimClass, ConfidenceTier } from "@watchdog/schemas/shared";
+import type {
+  ClaimClass,
+  ConfidenceTier,
+} from "@watchdog/domain/schemas/shared";
 
 export type ClaimRecord = CoreClaimRecord;
 

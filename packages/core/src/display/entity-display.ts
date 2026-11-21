@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import {
   entityTitleMapFromRows,
   patchOpRelatedEntityIds,
-} from "@watchdog/schemas/graph";
-import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { parseTrimmedUuid, type CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

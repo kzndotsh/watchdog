@@ -13,9 +13,9 @@ import {
 } from "@/domains/triage/queries";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildProposalQueueItem } from "@/testing/records";
-import { proposalList } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const CASE_ID = testCaseId(10);
 

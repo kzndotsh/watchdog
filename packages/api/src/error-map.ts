@@ -5,7 +5,7 @@ import { NOT_FOUND_ENTITIES, VERSIONED_ENTITIES } from "@watchdog/core/errors";
 import {
   jobStartLimitScopeSchema,
   scopeSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The oRPC error map every procedure declares (`os.errors(apiErrorMap)`), the

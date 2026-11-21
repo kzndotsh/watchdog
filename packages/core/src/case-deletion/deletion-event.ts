@@ -5,7 +5,7 @@ import type {
   CaseDeletionEvent,
   CaseId,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { appendGraphActivityEffect } from "../activity/graph-activity";
 import type { DomainTag } from "../errors/tagged-errors";

@@ -2,8 +2,8 @@ import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { casesRepo } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
-import { asCaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { asCaseId } from "@watchdog/domain/schemas/shared";
 import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 import { readArtifactBytesEffect } from "../../../infra/blob";

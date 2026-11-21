@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 import {

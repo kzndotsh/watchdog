@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";

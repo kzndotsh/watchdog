@@ -7,7 +7,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
+import { deleteCaseInputSchema } from "@watchdog/domain/schemas/cases";
 
 /**
  * Restore a deleted Case (owner or admin, inside the restore window). The Case is visible again

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { groupQueueByRun } from "@/domains/triage/lib/queue-run-groups";
 import { buildProposalQueueItem } from "@/testing/records";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const RUN = { id: testId(80), proposalCount: 3, pendingCount: 2 };
 

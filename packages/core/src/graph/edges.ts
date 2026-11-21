@@ -2,7 +2,10 @@ import { Effect } from "effect";
 import type { z } from "zod";
 
 import type { EdgeListRow } from "@watchdog/db";
-import type { caseEdgeSchema, edgeSchema } from "@watchdog/schemas/graph";
+import type {
+  caseEdgeSchema,
+  edgeSchema,
+} from "@watchdog/domain/schemas/graph";
 import {
   normalizeUuidList,
   parseOptionalTrimmedUuid,
@@ -12,7 +15,7 @@ import {
   type EdgePredicate,
   type OrganizationId,
   type GraphActor,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { dossierChannel } from "../activity/graph-activity";
 import { assertEntityInCaseEffect } from "../cases/access";

@@ -1,7 +1,7 @@
 import { Effect, Fiber, FiberMap, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const { failInvalidCapDeliveryEffect, forcePayloadValid } = vi.hoisted(() => ({
   failInvalidCapDeliveryEffect: vi.fn(() => Effect.void),

@@ -23,9 +23,9 @@ import {
 import { RouteCaseProvider } from "@/testing/route-case";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
-import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,

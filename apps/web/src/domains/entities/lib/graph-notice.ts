@@ -2,7 +2,7 @@ import type { CaseCounts } from "@/domains/cases/types";
 import type { GraphSnapshot } from "@/domains/entities/edges/types";
 import { compactCountLabel, fullCountLabel } from "@/shared/lib/list/list-copy";
 import type { ListCountValue } from "@/shared/lib/list/list-types";
-import type { ListTotal } from "@watchdog/schemas/shared";
+import type { ListTotal } from "@watchdog/domain/schemas/shared";
 
 const REST_HINT = "Open an Entity's Connections to see the rest.";
 

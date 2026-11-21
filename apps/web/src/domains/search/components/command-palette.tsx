@@ -34,8 +34,8 @@ import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
-} from "@watchdog/schemas/cases";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/cases";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 import {
   Command,
   CommandDialog,

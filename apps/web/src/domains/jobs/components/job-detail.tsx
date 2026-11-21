@@ -38,8 +38,11 @@ import {
   jobHeadlineLabel,
 } from "@/shared/ui/vocab";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
-import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
-import type { FoundValueRecord, PlaybookRunView } from "@watchdog/schemas/jobs";
+import { CASE_EXPORT_JOB_ID } from "@watchdog/domain/schemas/caps";
+import type {
+  FoundValueRecord,
+  PlaybookRunView,
+} from "@watchdog/domain/schemas/jobs";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,

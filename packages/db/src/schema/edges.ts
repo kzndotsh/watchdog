@@ -8,12 +8,15 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { CONFIDENCE_TIERS, EDGE_PREDICATES } from "@watchdog/schemas/shared";
+import {
+  CONFIDENCE_TIERS,
+  EDGE_PREDICATES,
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ConfidenceTier,
   EdgePredicate,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
 import {

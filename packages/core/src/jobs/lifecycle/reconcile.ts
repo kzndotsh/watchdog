@@ -7,7 +7,7 @@ import {
   rebuildCollectQueue,
   tryLockJobReconcile,
 } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas/shared";
+import { isOpenJobStatus } from "@watchdog/domain/schemas/shared";
 
 import { errorMessage } from "../../errors/error-utils";
 import type { DomainTag } from "../../errors/tagged-errors";

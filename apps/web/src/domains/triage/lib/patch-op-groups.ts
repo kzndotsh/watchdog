@@ -3,8 +3,8 @@ import {
   patchOpResource,
   patchResourceLabel,
   type PatchOp,
-} from "@watchdog/schemas/graph";
-import { IDENTIFIER_TYPE_LABELS } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { IDENTIFIER_TYPE_LABELS } from "@watchdog/domain/schemas/shared";
 
 /** A group at or under this size starts open; a bigger one starts collapsed behind its count. */
 export const PATCH_GROUP_OPEN_MAX = 8;

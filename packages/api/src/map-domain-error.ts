@@ -7,8 +7,8 @@ import {
   type NotFoundEntity,
   type VersionedEntity,
 } from "@watchdog/core/errors";
+import type { JobStartLimitScope } from "@watchdog/domain/schemas/shared";
 import { peekRequestLogger } from "@watchdog/log";
-import type { JobStartLimitScope } from "@watchdog/schemas/shared";
 
 /** Message sent to clients for every `InternalError`; the real cause is log-only. */
 const INTERNAL_ERROR_MESSAGE = "Internal server error";

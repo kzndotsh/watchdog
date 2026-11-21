@@ -1,4 +1,4 @@
-import type { IdentifierType } from "@watchdog/schemas/shared";
+import type { IdentifierType } from "@watchdog/domain/schemas/shared";
 
 import { pushClaim, pushId } from "../harvest-helpers";
 import * as P from "../harvest-patterns";

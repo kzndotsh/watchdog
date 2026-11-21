@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { JobLane } from "@watchdog/caps/sdk";
 import { jobsRepo } from "@watchdog/db";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { EGRESS_CLASSES, type CaseId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { EGRESS_CLASSES, type CaseId } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   resetActorAccess,
   resetTestDb,
@@ -14,7 +15,6 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";

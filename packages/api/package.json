@@ -16,9 +16,8 @@
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "@watchdog/core": "workspace:*",
+    "@watchdog/domain": "workspace:*",
     "@watchdog/log": "workspace:*",
-    "@watchdog/policy": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "catalog:",
     "evlog": "catalog:",
@@ -27,7 +26,6 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
-    "@watchdog/test-kit": "workspace:*",
     "tsx": "catalog:",
     "typescript": "catalog:"
   }

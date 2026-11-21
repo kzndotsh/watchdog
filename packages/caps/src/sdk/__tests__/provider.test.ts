@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   deriveEgressClasses,
   isThirdPartyEgress,
-} from "@watchdog/schemas/caps";
+} from "@watchdog/domain/schemas/caps";
 
 import { CAPABILITIES } from "../../registry";
 import { contact } from "../contacts";

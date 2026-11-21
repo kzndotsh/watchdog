@@ -70,7 +70,7 @@ const effectEdgeRoots = [
   "packages/core/src/**/*.{ts,tsx}",
   "packages/api/src/**/*.{ts,tsx}",
   "packages/tools/src/**/*.{ts,tsx}",
-  "packages/policy/src/**/*.{ts,tsx}",
+  "packages/domain/policy/src/**/*.{ts,tsx}",
   "packages/caps/src/**/*.{ts,tsx}",
   "packages/ai/src/**/*.{ts,tsx}",
   "packages/db/src/**/*.{ts,tsx}",
@@ -494,14 +494,14 @@ export default defineConfig({
         "**/__tests__/**",
         "**/*.test.{ts,tsx}",
         "packages/caps/src/testing/**",
-        "packages/schemas/src/testing/**",
+        "packages/domain/schemas/src/testing/**",
         "packages/test-db/src/**",
       ],
       rules: { "watchdog/no-untrusted-id-import": "off" },
     },
     {
       // Schemas' branded test fixtures are the one place allowed to stamp a brand (ADR-0003).
-      files: ["packages/schemas/src/testing/**/*.{ts,tsx}"],
+      files: ["packages/domain/schemas/src/testing/**/*.{ts,tsx}"],
       rules: { "watchdog/no-brand-cast": "off" },
     },
     {
@@ -567,13 +567,18 @@ export default defineConfig({
     },
     {
       // One source per domain rule: the custody evidence message is typed once, in
-      // @watchdog/policy; everywhere else imports it (conventions: one source per domain
+      // @watchdog/domain/policy; everywhere else imports it (conventions: one source per domain
       // rule). Tests are not exempt: they assert against the imported constant.
-      files: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+      files: [
+        "apps/*/src/**/*.{ts,tsx}",
+        "apps/*/*/src/**/*.{ts,tsx}",
+        "packages/*/src/**/*.{ts,tsx}",
+        "packages/*/*/src/**/*.{ts,tsx}",
+      ],
       rules: { "watchdog/no-reimplemented-custody-message": "error" },
     },
     {
-      files: ["packages/policy/**/*.{ts,tsx}"],
+      files: ["packages/domain/policy/**/*.{ts,tsx}"],
       rules: { "watchdog/no-reimplemented-custody-message": "off" },
     },
     {
@@ -587,7 +592,12 @@ export default defineConfig({
       // one program per package on tsconfig.test.json, which allows both; these rules keep
       // the restrictions tsconfig.json used to enforce (conventions: production source never
       // imports test-only code). apps/web allows the extension in its own tsconfig.
-      files: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+      files: [
+        "apps/*/src/**/*.{ts,tsx}",
+        "apps/*/*/src/**/*.{ts,tsx}",
+        "packages/*/src/**/*.{ts,tsx}",
+        "packages/*/*/src/**/*.{ts,tsx}",
+      ],
       rules: {
         "watchdog/no-test-imports-in-production": "error",
         "watchdog/no-ts-extension-import": "error",
@@ -606,7 +616,7 @@ export default defineConfig({
         "**/testing/**",
         "apps/web/src/test-setup.ts",
         "packages/test-db/**",
-        "packages/test-kit/**",
+        "packages/domain/test-kit/**",
       ],
       rules: {
         "watchdog/no-test-imports-in-production": "off",
@@ -881,8 +891,8 @@ export default defineConfig({
         "packages/ai/src/**/*.{ts,tsx}",
         "packages/env/src/**/*.{ts,tsx}",
         "packages/log/src/**/*.{ts,tsx}",
-        "packages/schemas/src/**/*.{ts,tsx}",
-        "packages/test-kit/src/**/*.{ts,tsx}",
+        "packages/domain/schemas/src/**/*.{ts,tsx}",
+        "packages/domain/test-kit/src/**/*.{ts,tsx}",
         "packages/test-db/src/**/*.{ts,tsx}",
         "packages/client/src/**/*.{ts,tsx}",
         "packages/api/src/**/*.{ts,tsx}",
@@ -1100,7 +1110,12 @@ export default defineConfig({
       // Only the Job lifecycle module changes a Job's status: `jobsRepo.settle`
       // is called from lifecycle/settle.ts alone, and `jobs-settle.repo.ts` is the one db file
       // that writes `jobs.status`. Seeds sit outside `src` (db demo-seed) or in test-db.
-      files: ["packages/*/src/**/*.{ts,tsx}", "apps/*/src/**/*.{ts,tsx}"],
+      files: [
+        "packages/*/src/**/*.{ts,tsx}",
+        "packages/*/*/src/**/*.{ts,tsx}",
+        "apps/*/src/**/*.{ts,tsx}",
+        "apps/*/*/src/**/*.{ts,tsx}",
+      ],
       rules: { "watchdog/job-status-only-in-lifecycle": "error" },
     },
     {
@@ -1130,8 +1145,8 @@ export default defineConfig({
     {
       // Input schemas carry a named maximum (limits.ts); outputs and tests are not input schemas.
       files: [
-        "packages/schemas/src/*.ts",
-        "packages/schemas/src/lists/*.ts",
+        "packages/domain/schemas/src/*.ts",
+        "packages/domain/schemas/src/lists/*.ts",
         "packages/api/src/procedures/*.ts",
       ],
       rules: { "watchdog/bounded-input-schema": "error" },
@@ -1227,10 +1242,10 @@ export default defineConfig({
     {
       // Integration helpers — intentional empty stubs in test kit.
       files: [
-        "packages/test-kit/src/**/*.{ts,tsx}",
+        "packages/domain/test-kit/src/**/*.{ts,tsx}",
         "packages/test-db/src/**/*.{ts,tsx}",
         "packages/caps/src/testing/**/*.{ts,tsx}",
-        "packages/schemas/src/testing/**/*.{ts,tsx}",
+        "packages/domain/schemas/src/testing/**/*.{ts,tsx}",
       ],
       rules: {
         "eslint/no-empty-function": "off",

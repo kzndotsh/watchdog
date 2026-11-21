@@ -13,12 +13,12 @@ import {
   useIdentifierTableActions,
 } from "@/shared/ui/identifiers/identifier-cells";
 import { ListTable } from "@/shared/ui/list";
-import type { identifierList } from "@watchdog/schemas/graph";
+import type { identifierList } from "@watchdog/domain/schemas/graph";
 import type {
   IdentifierType,
   UnfixedSearch,
   UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 type IdentifierTypeGroupTableProps = {
   readonly caseId: string;

@@ -6,8 +6,8 @@ import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import {
   graphHistoryList,
   type GraphHistoryEntry,
-} from "@watchdog/schemas/graph";
-import type { GraphHistoryKind } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import type { GraphHistoryKind } from "@watchdog/domain/schemas/shared";
 
 /** Entries per page in the Dossier's history popover (the API caps a page at 100). */
 const HISTORY_PAGE_SIZE = 8;

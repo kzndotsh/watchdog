@@ -20,7 +20,7 @@ import {
   patchOpResource,
   patchOpVerb,
   type PatchOp,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Collapsible,

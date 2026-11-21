@@ -12,8 +12,11 @@ import { JobDetail } from "@/domains/jobs/components/job-detail";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildJobRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
-import type { FoundValueRecord, JobFoundValues } from "@watchdog/schemas/jobs";
-import { testId } from "@watchdog/test-kit";
+import type {
+  FoundValueRecord,
+  JobFoundValues,
+} from "@watchdog/domain/schemas/jobs";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listJobFoundValuesFn = procedureDouble("jobs.listFound");
 

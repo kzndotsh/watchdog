@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { proposalList } from "@watchdog/schemas/jobs";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
 
 import type { DbExec } from "../exec";
 import { jobs } from "../schema/jobs";

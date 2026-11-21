@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LIST_DEFS } from "@watchdog/schemas/testing";
+import { LIST_DEFS } from "@watchdog/domain/schemas/testing";
 
 import { LIST_REPOS } from "../list-repos";
 

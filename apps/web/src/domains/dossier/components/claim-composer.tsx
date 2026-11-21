@@ -17,7 +17,7 @@ import { FieldMessage } from "@/shared/ui/field-message";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
 /* The Dossier's Claim composer: create (bordered composer) and a row's inline edit. */

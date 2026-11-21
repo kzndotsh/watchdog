@@ -3,7 +3,7 @@ import type {
   AnyListDef,
   ListKeyType,
   SortDir,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { ListCountValue } from "./list-types";
 

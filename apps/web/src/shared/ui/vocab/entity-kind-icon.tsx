@@ -7,7 +7,7 @@ import {
   ENTITY_KIND_ICONS,
   type EntityKindIconSize,
 } from "@/shared/ui/vocab/kind.lib";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 /** Kind glyph for person / org / infra. */
 export function EntityKindIcon({

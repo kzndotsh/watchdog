@@ -11,16 +11,16 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import {
   CONFIDENCE_TIERS,
   GRAPH_HISTORY_CHANNELS,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ConfidenceTier,
   GraphHistoryChannel,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { createdAt } from "./_helpers";
 import {

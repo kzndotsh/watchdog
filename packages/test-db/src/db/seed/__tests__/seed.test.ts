@@ -32,8 +32,11 @@ vi.mock("@watchdog/db", () => ({
 }));
 
 import type { DbExec } from "@watchdog/db";
-import { buildClaimCreateOp, testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+import {
+  buildClaimCreateOp,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../case";
 import { seedEntity } from "../entity";

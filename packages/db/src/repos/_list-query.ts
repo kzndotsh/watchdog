@@ -16,7 +16,7 @@ import {
   normalizeUuidList,
   opsOf,
   parseIntRowId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   AnyListDef,
   FilterKey,
@@ -25,7 +25,7 @@ import type {
   ListScope,
   QueryValue,
   SortKey,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { containsPattern } from "./_ilike";

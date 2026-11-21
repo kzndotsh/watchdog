@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { db as dbClient } from "@watchdog/db";
-import { asOrganizationId } from "@watchdog/schemas/shared";
+import { asOrganizationId } from "@watchdog/domain/schemas/shared";
 
 const resolveUserOrganizationId = vi.hoisted(() => vi.fn());
 

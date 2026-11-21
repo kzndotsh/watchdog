@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ExternalUrl } from "@/shared/ui/external-url";
-import { testHttpUrl } from "@watchdog/test-kit";
+import { testHttpUrl } from "@watchdog/domain/test-kit";
 
 describe("ExternalUrl", () => {
   it("renders an external link with safe rel attributes", () => {

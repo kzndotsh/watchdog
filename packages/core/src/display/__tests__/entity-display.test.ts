@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit";
 
 import {
   buildEntityDisplayMaps,

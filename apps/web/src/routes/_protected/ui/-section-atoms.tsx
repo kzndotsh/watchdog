@@ -46,7 +46,7 @@ import {
   StatusBadge,
   StatusInk,
 } from "@/shared/ui/vocab";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import {
   DropdownMenu,
   DropdownMenuContent,

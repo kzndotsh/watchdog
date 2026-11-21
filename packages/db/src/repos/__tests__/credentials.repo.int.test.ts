@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import { withTestTx } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { credentialsRepo } from "../credentials.repo.ts";
 

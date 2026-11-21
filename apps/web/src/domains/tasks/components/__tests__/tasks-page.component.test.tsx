@@ -13,9 +13,9 @@ import type {
 import type { TaskListItem } from "@/domains/tasks/types";
 import { toast } from "@/shared/ui/toast";
 import { buildEntityRecord, buildTaskListItem } from "@/testing/records";
-import { taskList } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { taskList } from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: ({ count }: { count?: React.ReactNode }) => (

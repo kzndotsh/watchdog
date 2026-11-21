@@ -4,7 +4,7 @@ import {
   NAME_MAX,
   requiredText,
   trimmedUuidSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const invitationPreviewSchema = z.object({
   id: trimmedUuidSchema,

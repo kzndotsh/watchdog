@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   parseGraphUuidList,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import {

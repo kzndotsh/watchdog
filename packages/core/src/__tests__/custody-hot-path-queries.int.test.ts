@@ -17,7 +17,8 @@ import { jobsRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   expectQueries,
   resetTestDb,
@@ -28,7 +29,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 /**
  * Measured on main before the link tables (#302). Accept is 13 with the Graph history (#303): the

@@ -6,7 +6,8 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import {
   HISTORY_CONTEXT_MISSING_SQLSTATE,
   type CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   expectPostgresRefusal,
   listAllGraphHistory,
@@ -18,7 +19,6 @@ import {
   withTestTx,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { APP_ROLE, WORKER_ROLE } from "../app-role.ts";
 import { setGraphHistoryContext } from "../history-context.ts";

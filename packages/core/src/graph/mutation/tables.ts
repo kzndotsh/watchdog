@@ -35,8 +35,8 @@ import type {
   eventSchema,
   identifierSchema,
   questionSchema,
-} from "@watchdog/schemas/graph";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 
 import type {
   GraphTable,
@@ -44,7 +44,7 @@ import type {
   RemovableGraphTable,
 } from "./graph-table";
 
-/** The Graph records are the wire schemas' output types (`@watchdog/schemas/graph`): one owner per shape. */
+/** The Graph records are the wire schemas' output types (`@watchdog/domain/schemas/graph`): one owner per shape. */
 export type EventRecord = z.output<typeof eventSchema>;
 export type ClaimRecord = z.output<typeof claimSchema>;
 export type IdentifierRecord = z.output<typeof identifierSchema>;

@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import type { TaskStatus } from "@watchdog/schemas/shared";
+import type { TaskStatus } from "@watchdog/domain/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 
 type BaseProps = {

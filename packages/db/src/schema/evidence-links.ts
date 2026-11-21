@@ -7,7 +7,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { createdAt } from "./_helpers";
 import { caseIsolation } from "./_organization-policy";

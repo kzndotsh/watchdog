@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { taskList } from "@watchdog/schemas/feed";
+import { taskList } from "@watchdog/domain/schemas/feed";
 
 import { entities } from "../schema/entities";
 import { tasks } from "../schema/tasks";

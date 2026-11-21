@@ -9,7 +9,7 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { LIST_SEARCH_MIN_LENGTH } from "@watchdog/schemas/shared";
+import { LIST_SEARCH_MIN_LENGTH } from "@watchdog/domain/schemas/shared";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import { Input } from "@watchdog/ui/components/input";
 

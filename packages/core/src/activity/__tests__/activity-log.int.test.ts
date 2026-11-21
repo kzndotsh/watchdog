@@ -28,13 +28,14 @@ import {
   createActivityGate,
   parseActivityCursor,
   type ActivityEntry,
-} from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -42,7 +43,6 @@ import {
   testDb as db,
   withCaseOrganizationScope,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../graph-activity";
 

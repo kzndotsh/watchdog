@@ -2,18 +2,18 @@ import { Effect } from "effect";
 
 import { activityListRepo } from "@watchdog/db";
 import type { ProposalActivityLabelRow, ActivityFeedRow } from "@watchdog/db";
-import { activityList, type ActivityItem } from "@watchdog/schemas/feed";
+import { activityList, type ActivityItem } from "@watchdog/domain/schemas/feed";
 import type {
   ListInput,
   ListPage,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   OPEN_IN_DESTINATION_LABELS,
   openInDestinationSchema,
   opsOf,
   parseTrimmedCaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   labelForActor,

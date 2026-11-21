@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 
 import { Chip } from "@/shared/ui/chip";
 import { PATCH_OP_TONES, patchOpLabel } from "@/shared/ui/vocab/patch-op.lib";
-import type { PatchVerb } from "@watchdog/schemas/graph";
+import type { PatchVerb } from "@watchdog/domain/schemas/graph";
 
 type Op = PatchVerb;
 

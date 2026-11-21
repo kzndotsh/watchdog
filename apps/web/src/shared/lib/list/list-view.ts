@@ -21,7 +21,7 @@ import {
   type ListPage,
   type ListQuery,
   type UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** The pages of one list view as the Query cache holds them. */
 export type ListPages<Item> = InfiniteData<ListPage<Item>, string | undefined>;

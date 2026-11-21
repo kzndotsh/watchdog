@@ -16,8 +16,9 @@ import {
   startJobEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   countJobDeliveries,
   listCaseJobs,
@@ -28,7 +29,6 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { startCaseExportJobEffect } from "../export-job";
 import { CASE_EXPORT_JOB } from "../system-jobs";

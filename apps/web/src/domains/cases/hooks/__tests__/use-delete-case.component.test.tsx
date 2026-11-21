@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { asCaseId } from "@watchdog/schemas/shared";
+import { asCaseId } from "@watchdog/domain/schemas/shared";
 
 const invalidateAfterCaseSwitch = vi.hoisted(() => vi.fn());
 

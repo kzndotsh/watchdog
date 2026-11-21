@@ -13,9 +13,9 @@ import {
 import {
   ACTIVITY_ENTRY_ACTIONS,
   ACTIVITY_ENTRY_KINDS,
-} from "@watchdog/schemas/feed";
-import type { ActivityEntryKind } from "@watchdog/schemas/feed";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { ActivityEntryKind } from "@watchdog/domain/schemas/feed";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { createdAt, timestamptz, xid8 } from "./_helpers";
 import { organizationIsolation } from "./_organization-policy";

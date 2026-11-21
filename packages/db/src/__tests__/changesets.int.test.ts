@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { buildClaimCreateOp } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   listAllGraphHistory,
   listCaseChangesets,
@@ -9,7 +10,6 @@ import {
   withSystemHistoryContext,
   withTestTx,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import {
   changesetsRepo,

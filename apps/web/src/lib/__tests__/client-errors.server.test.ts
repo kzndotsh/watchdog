@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 import {
   CLIENT_ERROR_MAX_BYTES,

@@ -23,7 +23,7 @@ const WHOLE_FILE =
 const INPUT_NAME = /(?:Input|Fields|Filters|Params)(?:Schema)?$/;
 
 const FIX =
-  "add `.max(<named limit>)` (NAME_MAX, NOTES_MAX, URL_MAX, ARRAY_MAX, ... from `@watchdog/schemas/shared`) or use `requiredText(max)` / `optionalText(max)` (conventions: input schemas are bounded)";
+  "add `.max(<named limit>)` (NAME_MAX, NOTES_MAX, URL_MAX, ARRAY_MAX, ... from `@watchdog/domain/schemas/shared`) or use `requiredText(max)` / `optionalText(max)` (conventions: input schemas are bounded)";
 
 /**
  * `z.string()` / `z.array(...)` / `z.url()` / `z.email()`: the constructor name.
@@ -200,7 +200,7 @@ const isInputPosition = (node, wholeFile) => {
 /**
  * Fails an unbounded `z.string()`, `z.array()`, `z.url()` or `z.email()` in an input
  * schema: a field with no maximum lets one request carry unbounded text or lists. The
- * maximums are named once in `@watchdog/schemas` (`limits.ts`). Scope (paths) is in
+ * maximums are named once in `@watchdog/domain/schemas` (`limits.ts`). Scope (paths) is in
  * `oxlint.config.ts`; there is no baseline.
  */
 export const boundedInputSchema = {

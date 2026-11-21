@@ -9,11 +9,11 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { JOB_START_LIMIT_SCOPES } from "@watchdog/schemas/shared";
+import { JOB_START_LIMIT_SCOPES } from "@watchdog/domain/schemas/shared";
 import type {
   JobStartLimitScope,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamptz, timestamps } from "./_helpers";
 import { vocabCheck } from "./_vocab";

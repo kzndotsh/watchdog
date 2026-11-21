@@ -20,7 +20,7 @@ function fixture() {
   repo.write("apps/cli/package.json", pkg("@wd/cli", ["@wd/schemas"]));
   repo.write("packages/api/package.json", pkg("@wd/api", ["@wd/core"]));
   repo.write("packages/core/package.json", pkg("@wd/core", ["@wd/schemas"]));
-  repo.write("packages/schemas/package.json", pkg("@wd/schemas"));
+  repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
   repo.write("packages/tools/package.json", pkg("@wd/tools"));
   repo.write("docs/readme.md", "docs\n");
   repo.commitAll("base");
@@ -33,7 +33,7 @@ const names = (out: string) => out.trim().split("\n").filter(Boolean).sort();
 describe("changed-packages", () => {
   it("selects a leaf package and every dependent", () => {
     const repo = fixture();
-    repo.write("packages/schemas/src/a.ts", "export {};\n");
+    repo.write("packages/domain/schemas/src/a.ts", "export {};\n");
     repo.commitAll("change schemas");
 
     const res = repo.run(GATE);

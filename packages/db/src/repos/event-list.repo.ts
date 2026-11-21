@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 
-import { eventList } from "@watchdog/schemas/graph";
+import { eventList } from "@watchdog/domain/schemas/graph";
 
 import { events } from "../schema/events";
 import { defineListRepo } from "./_list-query";

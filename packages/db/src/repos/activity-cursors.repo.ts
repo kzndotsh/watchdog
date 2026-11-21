@@ -1,6 +1,6 @@
 import { eq, gte, sql } from "drizzle-orm";
 
-import type { ActivityCursor } from "@watchdog/schemas/feed";
+import type { ActivityCursor } from "@watchdog/domain/schemas/feed";
 
 import type { DbExec } from "../exec";
 import { activityCursors } from "../schema/activity";

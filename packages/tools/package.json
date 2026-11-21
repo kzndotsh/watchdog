@@ -27,8 +27,8 @@
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
+    "@watchdog/domain": "workspace:*",
     "@watchdog/env": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
     "effect": "catalog:",
     "postal-mime": "^4.2.1",
     "undici": "catalog:",
@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@watchdog/test-kit": "workspace:*",
     "typescript": "catalog:"
   }
 }

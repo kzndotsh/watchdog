@@ -1,5 +1,8 @@
 import { listRecentActivityEffect } from "@watchdog/core/feed";
-import { activityList, activityPageSchema } from "@watchdog/schemas/feed";
+import {
+  activityList,
+  activityPageSchema,
+} from "@watchdog/domain/schemas/feed";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

@@ -6,7 +6,7 @@ import { identifierListView } from "@/domains/entities/identifiers/queries";
 import { entityListView } from "@/domains/entities/queries";
 import { buildCaseRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
-import { entityList, identifierList } from "@watchdog/schemas/graph";
+import { entityList, identifierList } from "@watchdog/domain/schemas/graph";
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,

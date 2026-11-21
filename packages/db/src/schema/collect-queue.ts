@@ -12,12 +12,12 @@ import {
 import {
   COLLECT_ROW_KINDS,
   COLLECT_ROW_STATES,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   CollectRowKind,
   CollectRowState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamptz, xid8 } from "./_helpers";
 import { caseIsolation } from "./_organization-policy";

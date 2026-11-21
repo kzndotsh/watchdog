@@ -1,6 +1,6 @@
 import { entities, type DbExec } from "@watchdog/db";
-import type { CaseId, EntityKind } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit/fixtures";
+import type { CaseId, EntityKind } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import { withSystemHistoryContext } from "../system-history-context.ts";

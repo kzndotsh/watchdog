@@ -11,8 +11,8 @@ import type { CapabilityDef } from "@watchdog/caps/sdk";
 import {
   DEFAULT_ALLOWED_EGRESS,
   formatEgressBlock,
-} from "@watchdog/schemas/caps";
-import type { CaseId, EgressClass } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/caps";
+import type { CaseId, EgressClass } from "@watchdog/domain/schemas/shared";
 
 import {
   BREACH_DISABLED_MESSAGE,

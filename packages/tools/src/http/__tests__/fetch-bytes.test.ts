@@ -13,7 +13,7 @@ import {
   HttpResponse,
   mockJson,
   mockServer,
-} from "@watchdog/test-kit/http";
+} from "@watchdog/domain/test-kit/http";
 
 import { fetchBytesEffect } from "../fetch-bytes.ts";
 import { toolsHttpClientLayer } from "../http-client-layer";

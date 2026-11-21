@@ -1,6 +1,6 @@
 import { isIP } from "node:net";
 
-import { expandIpv6 } from "@watchdog/schemas/ip";
+import { expandIpv6 } from "@watchdog/domain/schemas/ip";
 
 import { asString, isRecord } from "../parse/coerce";
 

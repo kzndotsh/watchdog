@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { member } from "../schema/auth";

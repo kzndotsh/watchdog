@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const createApiContext = vi.hoisted(() => vi.fn());
 

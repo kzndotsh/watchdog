@@ -15,7 +15,7 @@ const isKeyword = (annotation, kind) =>
 /**
  * Bans `x as never` and `x as unknown as T` in tests: a cast that silences a type error
  * hides the drift between the test and the type it exercises. Build a valid value (a
- * `build*` helper from `@watchdog/schemas/testing` or `apps/web/src/testing/records.ts`),
+ * `build*` helper from `@watchdog/domain/schemas/testing` or `apps/web/src/testing/records.ts`),
  * or use the `untrusted*` helpers for deliberately invalid input. `as const`, a single
  * `as T` and `as unknown` alone stay legal. Existing casts are baselined per file
  * (shrink-only). Policy: docs/contributing/testing/standards.md Mock policy.

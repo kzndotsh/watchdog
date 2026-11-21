@@ -2,8 +2,8 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
+import { rendezvous, testId } from "@watchdog/domain/test-kit";
 import { listAllActivity, listAllGraphHistory } from "@watchdog/test-db";
-import { rendezvous, testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../../activity/graph-activity";
 import { inOrganization } from "../../../infra/organization-scope";

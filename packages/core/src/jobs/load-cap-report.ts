@@ -1,7 +1,10 @@
 import { Effect } from "effect";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import {
+  parseJsonValue,
+  type JsonValue,
+} from "@watchdog/domain/schemas/shared";
 
 import { errorMessage } from "../errors/error-utils";
 import type { InternalError } from "../errors/tagged-errors";

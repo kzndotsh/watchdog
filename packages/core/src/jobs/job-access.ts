@@ -6,7 +6,7 @@ import {
   resolveUserOrganizationId,
   type JobRow,
 } from "@watchdog/db";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import { nowDateEffect } from "../infra/clock";

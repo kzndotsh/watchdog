@@ -15,7 +15,7 @@ import {
   proposalSchema,
   proposalListPageSchema,
   proposalQueuePageSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";

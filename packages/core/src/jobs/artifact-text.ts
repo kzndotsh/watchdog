@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import { isTextMime } from "@watchdog/schemas/shared";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import { isTextMime } from "@watchdog/domain/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import { artifactTextOf } from "../infra/artifact-text";

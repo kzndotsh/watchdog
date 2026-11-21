@@ -5,9 +5,9 @@ import {
   ACTIVITY_ENTRY_KINDS,
   FEED_ACTIONS,
   isActivityActionForKind,
-} from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { jobLabelSubject } from "../job-feed";
 import { proposalEventAction } from "../recent-activity";

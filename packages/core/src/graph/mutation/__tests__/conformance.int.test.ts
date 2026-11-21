@@ -23,10 +23,10 @@ import {
   type QuestionPatch,
   type QuestionRow,
 } from "@watchdog/db";
-import type { EdgePredicate } from "@watchdog/schemas/shared";
-import { slugifyName } from "@watchdog/schemas/shared";
+import type { EdgePredicate } from "@watchdog/domain/schemas/shared";
+import { slugifyName } from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import { seedEntity, seedEvidence, testDb as db } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import {
   seedGraphFixture,

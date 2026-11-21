@@ -1,6 +1,6 @@
 import { and, eq, getTableColumns } from "drizzle-orm";
 
-import { graphHistoryList } from "@watchdog/schemas/graph";
+import { graphHistoryList } from "@watchdog/domain/schemas/graph";
 
 import { graphHistory } from "../schema/graph-history";
 import { defineListRepo } from "./_list-query";

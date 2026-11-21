@@ -1,4 +1,4 @@
-import { TASK_BOARD_MAX } from "@watchdog/schemas/feed";
+import { TASK_BOARD_MAX } from "@watchdog/domain/schemas/feed";
 import {
   Alert,
   AlertDescription,

@@ -8,13 +8,13 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { identifiersRepo, questionsRepo } from "@watchdog/db";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
   withSystemHistoryContext,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture } from "./graph-mutations";
 

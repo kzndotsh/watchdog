@@ -3,17 +3,17 @@ import { Effect } from "effect";
 import {
   evidenceSnapshotSchema,
   type EvidenceSnapshot,
-} from "@watchdog/schemas/evidence";
+} from "@watchdog/domain/schemas/evidence";
 import {
   ENRICHED_MD_ARTIFACT,
   evidenceIdsFromJobInputs,
   URL_ENRICH_CAPABILITY_ID,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   parseTrimmedUuid,
   trimmedOrUndefined,
   type CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { NotFoundError, type DomainTag } from "../errors/tagged-errors";
 import { readArtifactBytesEffect } from "../infra/blob";

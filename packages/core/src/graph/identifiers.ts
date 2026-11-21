@@ -9,7 +9,7 @@ import type {
 import {
   validateIdentifierWrite,
   type caseIdentifierSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   CaseId,
   ConfidenceTier,
@@ -17,8 +17,8 @@ import type {
   IdentifierType,
   OrganizationId,
   GraphActor,
-} from "@watchdog/schemas/shared";
-import { trimmedOrNull } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { trimmedOrNull } from "@watchdog/domain/schemas/shared";
 
 import { dossierChannel } from "../activity/graph-activity";
 import {

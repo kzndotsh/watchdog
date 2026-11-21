@@ -3,8 +3,8 @@ import {
   egressClassLabel,
   egressDestinations,
   type CapContact,
-} from "@watchdog/schemas/caps";
-import type { EgressClass } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/caps";
+import type { EgressClass } from "@watchdog/domain/schemas/shared";
 
 /** Why a step cannot start on a Case: the classes it needs that the Case does not allow, and where the seed would go. */
 export type EgressBlock = {

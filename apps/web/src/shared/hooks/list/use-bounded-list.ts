@@ -11,7 +11,7 @@ import {
   type ListQuery,
   type UnfixedSearch,
   type UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * A bounded list's view state held in the component, for a screen that keeps it in `useState`

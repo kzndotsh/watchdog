@@ -3,12 +3,12 @@ import {
   asCaseId,
   type EgressClass,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { insertCasesInScope } from "../organization-scope.ts";
 import { at } from "./types.ts";

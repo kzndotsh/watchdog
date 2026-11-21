@@ -1,6 +1,6 @@
 import { foreignKey, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
 import {

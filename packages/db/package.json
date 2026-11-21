@@ -17,8 +17,8 @@
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
   },
   "dependencies": {
+    "@watchdog/domain": "workspace:*",
     "@watchdog/env": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "catalog:",
     "pg-boss": "catalog:",
     "postgres": "catalog:"
@@ -26,7 +26,6 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
-    "@watchdog/test-kit": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-kit": "^0.31.11",
     "esbuild": "catalog:",

@@ -29,15 +29,15 @@ import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { TabCount } from "@/shared/ui/tab-count";
-import type { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList } from "@watchdog/schemas/graph";
+import type { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { identifierList } from "@watchdog/domain/schemas/graph";
 import {
   CONFIDENCE_TIER_LABELS,
   EVIDENCE_KIND_LABELS,
   IDENTIFIER_STATUS_LABELS,
   IDENTIFIER_TYPE_LABELS,
   type ListSearch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import { Switch } from "@watchdog/ui/components/switch";
 
 /* The list standard on in-memory data: the real declarations, `useList`, the toolbar, chips,

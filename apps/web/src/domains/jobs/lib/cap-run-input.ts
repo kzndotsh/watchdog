@@ -1,11 +1,11 @@
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { normalizeJobInput } from "@watchdog/schemas/jobs";
+import { normalizeJobInput } from "@watchdog/domain/schemas/jobs";
 import {
   isJsonObject,
   parseOptionalTrimmedUuid,
   type JsonObject,
   type JsonValue,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { inputFormProperties } from "../types";
 

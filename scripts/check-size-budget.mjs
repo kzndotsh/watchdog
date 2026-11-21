@@ -34,9 +34,13 @@ function trackedSources() {
     [
       "ls-files",
       ":(glob)apps/*/src/**/*.ts",
+      ":(glob)apps/*/*/src/**/*.ts",
       ":(glob)apps/*/src/**/*.tsx",
+      ":(glob)apps/*/*/src/**/*.tsx",
       ":(glob)packages/*/src/**/*.ts",
+      ":(glob)packages/*/*/src/**/*.ts",
       ":(glob)packages/*/src/**/*.tsx",
+      ":(glob)packages/*/*/src/**/*.tsx",
     ],
     { cwd: root, encoding: "utf-8" }
   );

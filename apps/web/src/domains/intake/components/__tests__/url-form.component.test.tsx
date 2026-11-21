@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { UrlForm } from "@/domains/intake/components/url-form";
-import { testHttpUrl } from "@watchdog/test-kit";
+import { testHttpUrl } from "@watchdog/domain/test-kit";
 
 // Flaked under shuffled file order (#224): task-board-keyboard left a keyboard
 // drag lifted, and dnd-kit's leftover document keydown listener swallowed the

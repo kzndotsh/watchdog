@@ -1,7 +1,7 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 
 import { changesets, jobs, type DbExec } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { readInCaseOrganizationScope } from "./organization-scope.ts";
 

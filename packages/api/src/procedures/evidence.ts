@@ -34,10 +34,13 @@ import {
   evidencePickerItemSchema,
   evidencePickerPageSchema,
   evidenceDownloadUrlsSchema,
-} from "@watchdog/schemas/evidence";
-import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
-import { jobSchema, providerCallListSchema } from "@watchdog/schemas/jobs";
-import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/domain/schemas/graph";
+import {
+  jobSchema,
+  providerCallListSchema,
+} from "@watchdog/domain/schemas/jobs";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/domain/schemas/shared";
 
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";

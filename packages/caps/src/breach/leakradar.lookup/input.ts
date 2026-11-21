@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { breachQuerySeedSchema } from "@watchdog/schemas/caps";
-import { optionalUuidSchema } from "@watchdog/schemas/shared";
+import { breachQuerySeedSchema } from "@watchdog/domain/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
 import {
   LEAKRADAR_DEFAULT_PAGE_SIZE,
   LEAKRADAR_MAX_PAGE,

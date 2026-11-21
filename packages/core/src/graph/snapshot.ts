@@ -5,12 +5,12 @@ import {
   GRAPH_EGO_EDGE_MAX,
   GRAPH_SNAPSHOT_EDGE_MAX,
   GRAPH_SNAPSHOT_ENTITY_MAX,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   graphEgoSchema,
   graphSnapshotSchema,
-} from "@watchdog/schemas/graph";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import {
   assertCaseInOrgEffect,

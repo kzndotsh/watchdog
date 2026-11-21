@@ -1,7 +1,7 @@
 import {
   normalizeIdentifierPlatform,
   resolveIdentifierPlatform,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { isJunkEmail, pushClaim, pushId } from "../harvest-helpers";
 import * as P from "../harvest-patterns";

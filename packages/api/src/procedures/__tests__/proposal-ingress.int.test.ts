@@ -2,15 +2,15 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { ApiCredential } from "@watchdog/schemas/shared";
+import type { ApiCredential } from "@watchdog/domain/schemas/shared";
 import {
   buildClaimCreateOp,
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
   testApiKey,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import type { ApiContext } from "../../context";
 import { responsePlugins } from "../../response-plugins";

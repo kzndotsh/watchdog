@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 
 import { parseAgentPatch } from "../parse-agent-patch.ts";
 

@@ -3,7 +3,7 @@ import { PlusIcon } from "lucide-react";
 import type { AnyFilterSource } from "@/shared/lib/list/list-types";
 import { ListFilterRow } from "@/shared/ui/list/list-filter-row";
 import { Button } from "@/shared/ui/primitives/button";
-import type { AnyFilter } from "@watchdog/schemas/shared";
+import type { AnyFilter } from "@watchdog/domain/schemas/shared";
 
 export type FilterRowModel = {
   readonly key: string;

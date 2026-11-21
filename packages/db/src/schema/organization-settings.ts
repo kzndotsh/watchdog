@@ -1,6 +1,6 @@
 import { boolean, pgTable, text } from "drizzle-orm/pg-core";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { timestamps } from "./_helpers";
 import { organization } from "./auth";
@@ -8,7 +8,7 @@ import { organization } from "./auth";
 /**
  * Per-organization switches an owner or admin controls. One row per
  * organization, written on the first change: an organization with no row has the
- * defaults (`DEFAULT_ORGANIZATION_SETTINGS` in `@watchdog/schemas/shared`). The
+ * defaults (`DEFAULT_ORGANIZATION_SETTINGS` in `@watchdog/domain/schemas/shared`). The
  * row goes with the organization (`on delete cascade`).
  */
 export const organizationSettings = pgTable("organization_settings", {

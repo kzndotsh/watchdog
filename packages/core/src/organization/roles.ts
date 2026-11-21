@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { canManageTeam, type OrganizationId } from "@watchdog/schemas/shared";
+import {
+  canManageTeam,
+  type OrganizationId,
+} from "@watchdog/domain/schemas/shared";
 
 import { ForbiddenError, type DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

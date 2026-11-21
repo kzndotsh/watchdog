@@ -3,14 +3,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { ListRepo, ListRow } from "@watchdog/db";
 import { LIST_REPOS, listRepoOf } from "@watchdog/db/testing";
-import { opsOf } from "@watchdog/schemas/shared";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 import type {
   AnyListDef,
   AnyFilter,
   ListInput,
   ListPage,
-} from "@watchdog/schemas/shared";
-import { LIST_DEFS } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/shared";
+import { LIST_DEFS } from "@watchdog/domain/schemas/testing";
 import {
   captureStatements,
   LIST_CONFORMANCE,

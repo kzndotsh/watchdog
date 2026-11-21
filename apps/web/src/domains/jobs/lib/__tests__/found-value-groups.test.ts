@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { groupFoundValues } from "@/domains/jobs/lib/found-value-groups";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
-import { testId } from "@watchdog/test-kit";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
+import { testId } from "@watchdog/domain/test-kit";
 
 function row(
   type: FoundValueRecord["type"],

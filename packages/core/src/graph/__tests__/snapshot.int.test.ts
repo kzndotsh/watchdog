@@ -7,7 +7,8 @@ import { edgesRepo } from "@watchdog/db";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -15,7 +16,6 @@ import {
   testDb,
   withSystemHistoryContext,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 type SeededCase = Awaited<ReturnType<typeof seedCase>>;
 

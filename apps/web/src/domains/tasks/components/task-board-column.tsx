@@ -18,7 +18,7 @@ import { SectionLabel } from "@/shared/ui/section-label";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TASK_BOARD_COLUMN_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import { taskStatusLabel } from "@/shared/ui/vocab";
-import type { TaskStatus } from "@watchdog/schemas/shared";
+import type { TaskStatus } from "@watchdog/domain/schemas/shared";
 import { Input } from "@watchdog/ui/components/input";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 

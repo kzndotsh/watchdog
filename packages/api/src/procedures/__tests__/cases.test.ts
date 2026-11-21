@@ -35,7 +35,7 @@ vi.mock("@watchdog/core/export", async (importOriginal) => {
   return { ...actual, updateCaseEffect };
 });
 
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor } from "@watchdog/domain/schemas/testing";
 
 import { create, get, list, update } from "../cases";
 

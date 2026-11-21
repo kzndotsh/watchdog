@@ -6,9 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   GraphHistoryAttribution,
   GraphHistoryEntry,
-} from "@watchdog/schemas/graph";
-import type { ListPage } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/graph";
+import type { ListPage } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit";
 
 // Only the network boundary is faked: the popover reads through the real
 // `graphHistoryListView` under a real QueryClient (docs/contributing/testing/standards.md Mock policy).

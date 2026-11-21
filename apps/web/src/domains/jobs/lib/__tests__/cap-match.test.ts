@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { testCapProvider } from "@/testing/records";
-import { testHttpUrl } from "@watchdog/test-kit";
+import { testHttpUrl } from "@watchdog/domain/test-kit";
 
 import type { CapListItem } from "../../types.ts";
 import { detectPasteSeed, matchCaps } from "../cap-match.ts";

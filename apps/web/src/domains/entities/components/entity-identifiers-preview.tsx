@@ -1,7 +1,7 @@
 import { EntityIdentifierTypeValues } from "@/domains/entities/components/entity-identifier-type-values";
 import { IdentifierTypeGroups } from "@/domains/entities/components/identifier-type-groups";
-import { identifierList } from "@watchdog/schemas/graph";
-import { opsOf } from "@watchdog/schemas/shared";
+import { identifierList } from "@watchdog/domain/schemas/graph";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 
 type EntityIdentifiersPreviewProps = {
   readonly caseId: string;

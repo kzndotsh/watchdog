@@ -12,8 +12,8 @@ import {
   putCredentialSlotEffect,
 } from "@watchdog/core/vault";
 import { credentialsRepo } from "@watchdog/db";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import { resetTestDb, testDb as db } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const OTHER_USER = "other-actor";
 

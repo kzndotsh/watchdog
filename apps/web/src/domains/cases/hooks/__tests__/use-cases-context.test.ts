@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LAST_CASE_STORAGE_KEY } from "@/domains/cases/lib/active-case";
 import { visibleCasesQuery } from "@/domains/cases/queries";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 // Only the network boundary is faked: the hook reads through the real `visibleCasesQuery`
 // under a real QueryClient (docs/contributing/testing/standards.md Mock policy).

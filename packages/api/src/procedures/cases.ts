@@ -32,7 +32,7 @@ import {
   deletedCasesPageSchema,
   deletionPolicySchema,
   restoredCaseSchema,
-} from "@watchdog/schemas/cases";
+} from "@watchdog/domain/schemas/cases";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed, sessionAuthed } from "../os";

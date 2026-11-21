@@ -13,8 +13,8 @@ import {
   updateClaimInputSchema,
   claimListPageSchema,
   claimSchema,
-} from "@watchdog/schemas/graph";
-import { ARRAY_MAX, boundedListSchema } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { ARRAY_MAX, boundedListSchema } from "@watchdog/domain/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";

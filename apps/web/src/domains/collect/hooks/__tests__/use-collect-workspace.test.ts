@@ -18,8 +18,8 @@ import {
   buildJobRecord,
 } from "@/testing/records";
 import type { CollectQueueItem } from "@watchdog/core/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const toastInfo = vi.hoisted(() => vi.fn());
 

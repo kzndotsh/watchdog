@@ -2,8 +2,8 @@ import {
   CONFIDENCE_GATED_RESOURCES,
   patchOpResource,
   type PatchOp,
-} from "@watchdog/schemas/graph";
-import { parseGraphUuidList } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { parseGraphUuidList } from "@watchdog/domain/schemas/shared";
 
 export type AttachEvidenceResult =
   | { ok: true; patch: PatchOp[] }

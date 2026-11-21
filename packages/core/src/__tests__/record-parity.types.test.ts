@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 /**
- * Type test (#667): a record's shape is owned by its `@watchdog/schemas` schema. Each core
+ * Type test (#667): a record's shape is owned by its `@watchdog/domain/schemas` schema. Each core
  * record type equals the schema's `z.output`, and each row mapper returns exactly it, so a field
  * added to a schema fails here (or in the mapper) until core fills it. Graph records are checked
  * beside them in `graph/__tests__/record-parity.types.test.ts`. `pnpm typecheck` compiles this
@@ -14,19 +14,19 @@ import type {
   deletedCaseSchema,
   deletionPolicySchema,
   restoredCaseSchema,
-} from "@watchdog/schemas/cases";
-import type { evidenceSchema } from "@watchdog/schemas/evidence";
+} from "@watchdog/domain/schemas/cases";
+import type { evidenceSchema } from "@watchdog/domain/schemas/evidence";
 import type {
   taskBoardSchema,
   taskEntityLabelSchema,
   taskListItemSchema,
   taskSchema,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import type {
   entityPickerItemSchema,
   graphEgoSchema,
   graphSnapshotSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   collectLocatedSchema,
   collectQueueItemSchema,
@@ -36,7 +36,7 @@ import type {
   proposalSchema,
   providerCallListSchema,
   providerCallSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 import type {
   DeletedCaseRecord,

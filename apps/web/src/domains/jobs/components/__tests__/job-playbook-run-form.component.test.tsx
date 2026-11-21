@@ -10,7 +10,7 @@ import {
   emptyEntityPickerPort,
   pickerTestWrapper,
 } from "@/testing/memory-picker-port";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (

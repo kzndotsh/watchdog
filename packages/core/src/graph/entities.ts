@@ -7,7 +7,7 @@ import {
   entityList,
   type entityListItemSchema,
   type entityPickerItemSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   CaseId,
   EntityKind,
@@ -15,13 +15,13 @@ import type {
   ListPage,
   OrganizationId,
   GraphActor,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   PAGE_LIMIT_DEFAULT,
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { dossierChannel } from "../activity/graph-activity";
 import { assertCaseInOrgEffect } from "../cases/access";

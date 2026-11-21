@@ -11,8 +11,8 @@ import {
 } from "vitest";
 import { z } from "zod";
 
-import { testCaseId } from "@watchdog/schemas/testing";
-import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 import { egressPolicyFor } from "@watchdog/tools/http";
 
 import { CAPABILITIES } from "../registry";

@@ -11,7 +11,10 @@ import {
   playbookRunStatus,
 } from "@/domains/jobs/lib/status";
 import type { CollectQueueItem, JobListRecord } from "@watchdog/core/jobs";
-import { isOpenJobStatus, parseTrimmedUuid } from "@watchdog/schemas/shared";
+import {
+  isOpenJobStatus,
+  parseTrimmedUuid,
+} from "@watchdog/domain/schemas/shared";
 
 /** What the Cap and playbook catalogs add to a row: a playbook's title and its recipe length. */
 export type CollectCatalog = {

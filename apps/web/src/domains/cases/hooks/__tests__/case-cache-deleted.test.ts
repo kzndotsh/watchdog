@@ -13,7 +13,7 @@ import {
 } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { buildCaseRecord } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const ALPHA = buildCaseRecord({
   id: testCaseId(1),

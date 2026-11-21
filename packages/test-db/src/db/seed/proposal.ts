@@ -4,8 +4,8 @@ import {
   type DbExec,
   type NewProposal,
 } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { withCaseOrganizationScope } from "../organization-scope.ts";
 

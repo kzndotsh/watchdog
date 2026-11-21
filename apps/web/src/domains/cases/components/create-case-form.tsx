@@ -7,7 +7,7 @@ import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage, nextAutoSlug } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
-import { createCaseInputSchema } from "@watchdog/schemas/cases";
+import { createCaseInputSchema } from "@watchdog/domain/schemas/cases";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Spinner } from "@watchdog/ui/components/spinner";

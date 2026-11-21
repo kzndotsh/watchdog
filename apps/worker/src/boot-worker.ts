@@ -28,6 +28,11 @@ import {
   JOB_RECONCILE,
 } from "@watchdog/core/maintenance";
 import type { Vault } from "@watchdog/core/vault";
+import type { ActivityEntry } from "@watchdog/domain/schemas/feed";
+import {
+  trimmedUuidSchema,
+  type CaseId,
+} from "@watchdog/domain/schemas/shared";
 import {
   errorReportingSettings,
   otlpSettings,
@@ -39,8 +44,6 @@ import {
   jobWideEventFields,
   logStartupWarnings,
 } from "@watchdog/log";
-import type { ActivityEntry } from "@watchdog/schemas/feed";
-import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
 import type { OutboundClient } from "@watchdog/tools/http";
 
 import { WorkerConfigError } from "./config-error";

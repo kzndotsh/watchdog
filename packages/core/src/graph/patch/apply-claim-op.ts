@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import type { PatchOpOf } from "@watchdog/schemas/graph";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import type { PatchOpOf } from "@watchdog/domain/schemas/graph";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 
 import { assertEntityInCaseEffect } from "../../cases/access";
 import { InvalidError, type DomainTag } from "../../errors/tagged-errors";

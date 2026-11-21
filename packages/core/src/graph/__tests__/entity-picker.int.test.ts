@@ -10,11 +10,11 @@ import {
   matchEntityNamesEffect,
 } from "@watchdog/core/graph";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList } from "@watchdog/domain/schemas/graph";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   captureStatements,
   expectNoSeqScanOn,

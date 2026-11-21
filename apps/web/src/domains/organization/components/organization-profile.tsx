@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { canManageTeam } from "@watchdog/schemas/shared";
+import { canManageTeam } from "@watchdog/domain/schemas/shared";
 import {
   Field,
   FieldError,

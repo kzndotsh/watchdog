@@ -1,6 +1,6 @@
 import { and, eq, lt } from "drizzle-orm";
 
-import type { JobStartLimitScope } from "@watchdog/schemas/shared";
+import type { JobStartLimitScope } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { jobStartCounters } from "../schema/job-start-limits";

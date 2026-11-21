@@ -5,7 +5,7 @@ import {
   SECRET_MAX,
   httpUrlSchema,
   requiredText,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Vault-shaped provider config — never env soup in Cap bodies. */
 export const llmProviderConfigSchema = z.discriminatedUnion("kind", [

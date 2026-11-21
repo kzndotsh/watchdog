@@ -9,7 +9,7 @@ import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import {
   trimmedOrUndefined,
   type PlaybookSeedKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import { Input } from "@watchdog/ui/components/input";
 
 export type UrlDumpOption = {

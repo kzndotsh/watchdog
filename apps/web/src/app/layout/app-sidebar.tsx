@@ -18,7 +18,7 @@ import { SearchButton } from "@/domains/search/components/search-button";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 import { caseRouteScreen } from "@/shared/lib/case-path";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";
 import {
   Avatar,
   AvatarFallback,

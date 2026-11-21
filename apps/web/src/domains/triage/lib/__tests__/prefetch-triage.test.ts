@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
 import { proposalListView, proposalsKeys } from "@/domains/triage/queries";
-import { proposalList } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {

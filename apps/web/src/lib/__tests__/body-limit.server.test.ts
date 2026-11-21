@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 import {
   PAYLOAD_TOO_LARGE_CODE,
@@ -173,7 +173,8 @@ describe("enforceBodyLimit", () => {
   });
 
   it("defaults to the schemas limit", async () => {
-    const { REQUEST_BODY_MAX_BYTES } = await import("@watchdog/schemas/shared");
+    const { REQUEST_BODY_MAX_BYTES } =
+      await import("@watchdog/domain/schemas/shared");
     const over = declared(1, REQUEST_BODY_MAX_BYTES + 1);
     expect(((await enforceBodyLimit(over)) as Response).status).toBe(413);
     const at = declared(1, REQUEST_BODY_MAX_BYTES);

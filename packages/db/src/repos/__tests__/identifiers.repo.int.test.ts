@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { testId } from "@watchdog/domain/test-kit";
 import {
   captureStatements,
   seedCase,
@@ -7,7 +8,6 @@ import {
   seedIdentifier,
   withSystemTestTx,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { identifiersRepo } from "../identifiers.repo.ts";
 

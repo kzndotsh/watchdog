@@ -10,7 +10,7 @@ import {
   or,
 } from "drizzle-orm";
 
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";

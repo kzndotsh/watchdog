@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { asOrganizationId } from "@watchdog/schemas/shared";
+import { asOrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { actorFromSession } from "../api-context";
 

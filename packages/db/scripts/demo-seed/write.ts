@@ -33,9 +33,12 @@ import {
   type DbExec,
   type NewProposal,
 } from "@watchdog/db";
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import { fingerprintPatchOp, type PatchOp } from "@watchdog/schemas/graph";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
+import {
+  fingerprintPatchOp,
+  type PatchOp,
+} from "@watchdog/domain/schemas/graph";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
 import type {
   ClaimClass,
   ConfidenceTier,
@@ -51,7 +54,7 @@ import type {
   QuestionStatus,
   TaskPriority,
   TaskStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export type SeedTally = {
   cases: number;

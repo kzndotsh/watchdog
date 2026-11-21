@@ -3,7 +3,7 @@ import { getTableColumns, sql, type SQL } from "drizzle-orm";
 import {
   normalizeJobInput,
   jobInputGraphIdFieldIssues,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   parseGraphUuidList,
   type JobStatus,
@@ -11,7 +11,7 @@ import {
   type JsonObject,
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { jobs } from "../schema/jobs";

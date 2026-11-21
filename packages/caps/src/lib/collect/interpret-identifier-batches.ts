@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { validateIdentifierWrite } from "@watchdog/schemas/graph";
-import type { IdentifierType } from "@watchdog/schemas/shared";
+import { validateIdentifierWrite } from "@watchdog/domain/schemas/graph";
+import type { IdentifierType } from "@watchdog/domain/schemas/shared";
 
 import type { CapInterpretResult } from "../../sdk";
 import { eligibleCtDomains } from "./eligible-domain-hosts";

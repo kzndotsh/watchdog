@@ -1,4 +1,4 @@
-import type { JsonValue } from "@watchdog/schemas/shared";
+import type { JsonValue } from "@watchdog/domain/schemas/shared";
 import { waybackHistorySnapshotSchema } from "@watchdog/tools/wayback";
 
 import { internetArchive } from "../../providers";

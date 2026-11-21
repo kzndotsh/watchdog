@@ -4,7 +4,7 @@ import { DeletedCasesPage } from "@/domains/cases/components/deleted-cases-page"
 import { warmDeletedCases } from "@/domains/cases/lib/prefetch-deleted-cases";
 import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
 import { RouteError } from "@/shared/layout/route-error";
-import { deletedCaseList } from "@watchdog/schemas/cases";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
 
 /** The Deleted Cases view (ADR-0007): filters, `q` and sort, a bad value dropped. */
 const deletedCasesSearchSchema = deletedCaseList.searchWith({});

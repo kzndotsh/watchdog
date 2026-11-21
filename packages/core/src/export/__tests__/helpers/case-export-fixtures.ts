@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { blobStoreLayer, uploadArtifactEffect } from "../../../infra/blob";
 import type { CaseExportSettings } from "../../settings";

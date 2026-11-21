@@ -6,7 +6,7 @@ import {
   optionalIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /*
  * Model and harvest OUTPUT, not caller input: an over-long field must not fail the whole

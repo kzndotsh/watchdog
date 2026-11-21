@@ -12,7 +12,7 @@ import {
   type CapContext,
 } from "@watchdog/caps/sdk";
 import type { JobArtifact } from "@watchdog/db";
-import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
+import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 import {
   MissingCredentialError,
   ValidationVendorError,

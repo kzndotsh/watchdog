@@ -7,7 +7,7 @@ import {
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";

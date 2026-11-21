@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
 import { buildProposalQueueItem } from "@/testing/records";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const PROPOSAL = buildProposalQueueItem({
   id: testId(50),

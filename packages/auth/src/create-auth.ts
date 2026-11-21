@@ -18,12 +18,12 @@ import {
   user,
   verification,
 } from "@watchdog/db";
-import { env } from "@watchdog/env/server";
 import {
   asOrganizationId,
   isInstanceAdminRole,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { env } from "@watchdog/env/server";
 
 import { assertNoClientApiKeyWrite } from "./api-key-guard";
 import { logAuthHookFailure } from "./hook-failure-log";

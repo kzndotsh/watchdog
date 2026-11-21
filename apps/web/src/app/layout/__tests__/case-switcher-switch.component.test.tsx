@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LAST_CASE_STORAGE_KEY } from "@/domains/cases/lib/active-case";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({

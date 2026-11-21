@@ -1,15 +1,15 @@
 import { activity, type DbExec } from "@watchdog/db";
-import type { ActivityEntryKind } from "@watchdog/schemas/feed";
+import type { ActivityEntryKind } from "@watchdog/domain/schemas/feed";
 import {
   asCaseId,
   type CaseId,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import {
   insertCasesInScope,

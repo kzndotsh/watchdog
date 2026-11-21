@@ -6,8 +6,8 @@ import {
   parseActivityCursor,
   type ActivityCursor,
   type ActivityEntry,
-} from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { InternalError, type DomainTag } from "../errors/tagged-errors";
 import { Db } from "../infra/db-service";

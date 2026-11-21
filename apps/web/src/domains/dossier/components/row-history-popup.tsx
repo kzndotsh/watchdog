@@ -14,8 +14,8 @@ import { RelativeTime } from "@/shared/ui/relative-time";
 import {
   graphHistoryList,
   type GraphHistoryAttribution,
-} from "@watchdog/schemas/graph";
-import type { GraphHistoryKind } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import type { GraphHistoryKind } from "@watchdog/domain/schemas/shared";
 
 type AuthorLineProps = {
   verb: string;

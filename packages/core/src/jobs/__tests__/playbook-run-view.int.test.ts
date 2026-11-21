@@ -13,13 +13,13 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { jobsRepo, type JobRow } from "@watchdog/db";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { settleJobEffect } from "../lifecycle/settle.ts";
 import { advancePlaybookTailEffect } from "../lifecycle/tail.ts";

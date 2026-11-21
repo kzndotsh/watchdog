@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { jobsRepo, tryLockJobReconcile } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   backdateJob,
   countJobDeliveries,
@@ -19,7 +20,6 @@ import {
   setJobDeliveryState,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { enqueueCapJobEffect } from "../../boss.ts";
 import { jobQueueProducerLayer, recordingJobQueue } from "../../job-queue.ts";

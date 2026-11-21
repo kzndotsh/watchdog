@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   collectQueueReference,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   collectQueueDiff,
   listCollectQueueStale,

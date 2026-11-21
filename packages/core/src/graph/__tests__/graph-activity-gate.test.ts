@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { isActivityActionForKind } from "@watchdog/schemas/feed";
+import { isActivityActionForKind } from "@watchdog/domain/schemas/feed";
 
 import { GRAPH_MUTATIONS } from "./graph-mutations";
 

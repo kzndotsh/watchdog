@@ -25,7 +25,7 @@ function fixture() {
   repo.write("package.json", '{"name":"root"}');
   repo.write("apps/web/package.json", pkg("@wd/web", ["@wd/core"]));
   repo.write("packages/core/package.json", pkg("@wd/core", ["@wd/schemas"]));
-  repo.write("packages/schemas/package.json", pkg("@wd/schemas"));
+  repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
   repo.write("packages/tools/package.json", pkg("@wd/tools"));
   repo.write("packages/tools/src/gone.ts", "export {};\n");
   repo.write("packages/caps/capabilities.gen.json", "{}\n");
@@ -55,7 +55,7 @@ function plan(repo: Repo, args: string[] = []) {
 describe("verify (changed)", () => {
   it("tests a changed package and its dependents, and lints only the changed files", () => {
     const repo = fixture();
-    repo.write("packages/schemas/src/a.ts", "export {};\n");
+    repo.write("packages/domain/schemas/src/a.ts", "export {};\n");
     repo.commitAll("schemas");
 
     const steps = plan(repo);
@@ -64,7 +64,7 @@ describe("verify (changed)", () => {
       / packages\/schemas\/src\/a\.ts$/
     );
     expect(steps.get("tests (affected)")).toBe(
-      "pnpm exec vitest run --passWithNoTests --project unit --project web-unit --project property apps/web packages/core packages/schemas"
+      "pnpm exec vitest run --passWithNoTests --project unit --project web-unit --project property apps/web packages/core packages/domain/schemas"
     );
     expect(steps.get("typecheck")).toBe("pnpm run --silent typecheck");
     expect(steps.get("check:boundaries")).toBe(

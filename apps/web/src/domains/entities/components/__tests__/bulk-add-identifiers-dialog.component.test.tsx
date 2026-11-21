@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { pickerTestWrapper } from "@/testing/memory-picker-port";
 import { procedureDouble } from "@/testing/orpc-client";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

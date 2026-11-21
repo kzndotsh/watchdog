@@ -5,14 +5,14 @@ import {
   deleteEdgeInputSchema,
   edgeList,
   updateEdgeInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   edgeRelatedToHasNotes,
   optionalEdgePredicateSchema,
   predicateLabel,
   trimmedConfidenceTierSchema,
   trimmedEdgePredicateSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail } from "../client";
 import {

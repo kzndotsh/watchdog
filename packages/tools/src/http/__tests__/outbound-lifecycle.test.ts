@@ -11,7 +11,7 @@ import { HttpClient } from "effect/http";
 import { Agent } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { listenFetchable } from "@watchdog/test-kit";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { isBlockedAddress } from "../blocked-address";
 import { unrecordedEgressLayer } from "../egress";

@@ -10,8 +10,9 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { evidenceLinksRepo } from "@watchdog/db";
-import { identifierList } from "@watchdog/schemas/graph";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { identifierList } from "@watchdog/domain/schemas/graph";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -20,7 +21,6 @@ import {
   seedEvidence,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 describe("createIdentifier", () => {
   beforeEach(async () => {

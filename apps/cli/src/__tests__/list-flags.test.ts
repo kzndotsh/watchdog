@@ -1,12 +1,15 @@
 import { parseArgs } from "citty";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList, caseScopeInputSchema } from "@watchdog/schemas/graph";
-import { defineList, tags } from "@watchdog/schemas/shared";
-import type { AnyListDef } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import {
+  identifierList,
+  caseScopeInputSchema,
+} from "@watchdog/domain/schemas/graph";
+import { defineList, tags } from "@watchdog/domain/schemas/shared";
+import type { AnyListDef } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 // A developer `.env` above the checkout would otherwise be loaded into process.env.
 vi.mock("dotenv", () => ({ config: vi.fn() }));

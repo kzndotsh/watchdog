@@ -5,7 +5,7 @@ import {
 import {
   EDGE_PREDICATE_META,
   type EdgePredicate,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Clear gap between card edges on the same row. */
 export const CASE_GRAPH_NODE_MARGIN_X = 72;

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import { buildClaimCreateOp } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   seedCase,
   seedEntity,
@@ -10,7 +11,6 @@ import {
   seedProposal,
   withTestTx,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { proposalsRepo } from "../proposals.repo.ts";
 

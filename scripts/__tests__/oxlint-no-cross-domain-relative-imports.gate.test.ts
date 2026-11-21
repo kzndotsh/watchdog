@@ -61,7 +61,7 @@ const OK: Record<string, string> = {
   "domains/entities/claims/same-domain-child.ts": imp("../edges/types"),
   "domains/cases/components/alias-domain.ts": imp("@/domains/entities/lib/a"),
   "domains/cases/components/alias-shared.ts": imp("@/shared/ui/a"),
-  "domains/cases/components/package.ts": imp("@watchdog/schemas/shared"),
+  "domains/cases/components/package.ts": imp("@watchdog/domain/schemas/shared"),
   "domains/cases/components/bare.ts": imp("zod"),
   "domains/cases/components/outside-src.ts": imp("../../../../e2e/a"),
   "domains/cases/components/dynamic-variable.ts":

@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   optionalUuidSchema,
   trimmedUuidSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const evidenceHarvestInput = z.object({
   evidenceId: trimmedUuidSchema.describe("Evidence id"),

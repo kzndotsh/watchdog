@@ -19,7 +19,7 @@ import {
   type OrganizationId,
   parseTrimmedCaseId,
   requireScope,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 type EntityExportMdResult =
   | { kind: "missing" }

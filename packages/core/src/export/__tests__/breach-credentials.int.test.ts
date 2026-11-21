@@ -5,7 +5,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { jobsRepo } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   pinEvidenceId,
   resetTestDb,

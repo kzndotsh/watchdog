@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
 import { beforeAll, vi } from "vitest";
 
-import { asCaseId } from "@watchdog/schemas/shared";
+import { asCaseId } from "@watchdog/domain/schemas/shared";
 
 import { deleteObjectKeysEffect, uploadArtifactEffect } from "../../blob";
 import { blobStoreLayer } from "../../blob-store";

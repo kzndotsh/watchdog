@@ -15,13 +15,13 @@ import {
 import {
   blockedEgressClasses,
   deriveEgressClasses,
-} from "@watchdog/schemas/caps";
+} from "@watchdog/domain/schemas/caps";
 import {
   trimmedOrUndefined,
   type CaseId,
   type EgressClass,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

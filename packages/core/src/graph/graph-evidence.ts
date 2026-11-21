@@ -1,12 +1,12 @@
 import { Effect } from "effect";
 
 import type { DbExec } from "@watchdog/db";
-import { confirmedEvidenceViolation } from "@watchdog/policy";
-import type { CaseId, ConfidenceTier } from "@watchdog/schemas/shared";
+import { confirmedEvidenceViolation } from "@watchdog/domain/policy";
+import type { CaseId, ConfidenceTier } from "@watchdog/domain/schemas/shared";
 import {
   parseGraphUuidList,
   parseTrimmedCaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   boundEchoedId,

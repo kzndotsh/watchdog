@@ -1,5 +1,5 @@
 /* oxlint-disable react/only-export-components -- label helpers (no React components) */
-import { capabilityIdLabel } from "@watchdog/schemas/caps";
+import { capabilityIdLabel } from "@watchdog/domain/schemas/caps";
 
 /**
  * Human label for a capability id.

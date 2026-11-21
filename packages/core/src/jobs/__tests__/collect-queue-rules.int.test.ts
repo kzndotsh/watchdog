@@ -4,14 +4,17 @@ import { listCapabilities } from "@watchdog/caps";
 import {
   isProcessCapability,
   URL_ENRICH_CAPABILITY_ID,
-} from "@watchdog/schemas/jobs";
-import { parseTrimmedUuid, type JsonValue } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/jobs";
+import {
+  parseTrimmedUuid,
+  type JsonValue,
+} from "@watchdog/domain/schemas/shared";
+import { fc } from "@watchdog/domain/test-kit/fc";
 import {
   collectLinkedCaps,
   parseCollectInputIds,
   testDb,
 } from "@watchdog/test-db";
-import { fc } from "@watchdog/test-kit/fc";
 
 /*
  * The two rules Collect's queue projection (#574) restates in SQL from TypeScript, held to their

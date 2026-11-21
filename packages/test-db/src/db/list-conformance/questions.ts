@@ -1,6 +1,6 @@
 import { questions, type DbExec } from "@watchdog/db";
-import type { CaseId, QuestionStatus } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit/fixtures";
+import type { CaseId, QuestionStatus } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import { seedEntity } from "../seed/entity.ts";

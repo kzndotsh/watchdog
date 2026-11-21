@@ -7,7 +7,8 @@ import {
   buildClaimCreateOp,
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -21,7 +22,6 @@ import {
   withSystemHistoryContext,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 describe("searchCase", () => {
   beforeEach(async () => {

@@ -1,9 +1,9 @@
 import { toast } from "@/shared/ui/toast";
-import { validateIdentifierWrite } from "@watchdog/schemas/graph";
+import { validateIdentifierWrite } from "@watchdog/domain/schemas/graph";
 import {
   normalizeIdentifierPlatform,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export function isHandleWithoutPlatform(
   type: IdentifierType,

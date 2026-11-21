@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { updateEdgeInputSchema } from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
+import { updateEdgeInputSchema } from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("edge input schemas", () => {
   it("rejects empty edge update input", () => {

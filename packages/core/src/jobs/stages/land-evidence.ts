@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
+import { isJobInternalArtifact } from "@watchdog/domain/schemas/jobs";
 
 import { InvalidError, type DomainTag } from "../../errors/tagged-errors";
 import { createCapturedEvidenceEffect } from "../../evidence/evidence-activity";

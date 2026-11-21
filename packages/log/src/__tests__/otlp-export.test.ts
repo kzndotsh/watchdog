@@ -3,7 +3,7 @@ import type { Socket } from "node:net";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { listenFetchable } from "@watchdog/test-kit";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { createScrubber } from "../error-scrub.ts";
 import {

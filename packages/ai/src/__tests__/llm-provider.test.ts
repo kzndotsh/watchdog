@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 import { llmProviderConfigSchema } from "../llm-provider.ts";
 

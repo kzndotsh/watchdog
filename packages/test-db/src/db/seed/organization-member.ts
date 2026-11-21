@@ -1,5 +1,5 @@
 import { member, organization, user, type DbExec } from "@watchdog/db";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 /**
  * Make `userId` a member of `organizationId` with `role`, creating the user and

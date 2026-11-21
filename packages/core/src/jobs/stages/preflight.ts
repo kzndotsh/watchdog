@@ -14,7 +14,7 @@ import {
   type CaseId,
   type EgressClass,
   type JsonObject,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { breachCapsMode, stampedCapVersion } from "../../caps/breach-caps";
 import { errorMessage } from "../../errors/error-utils";

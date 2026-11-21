@@ -60,5 +60,5 @@ Layers: `schemas` (Zod types and vocabulary, a leaf) → `db` (Drizzle schema an
 
 - Integration: `withTestTx` when the code under test takes `tx` (it always rolls back); `resetTestDb()` when a test must commit; `resetE2eDb()` from Playwright only. Seed through the `seed*` helpers (real repos); a direct Graph write in a test runs in `withSystemHistoryContext` / `withSystemTestTx`.
 - Races use `twoWriters`, never a sleep. Count activity with `listAllActivity()`, never `activityLogRepo.drain` (commit-safe: it hides rows behind open transactions). Read Collect's queue after `flushCollectQueue(tx)`.
-- `test-kit` imports no workspace package. Branded id fixtures (`testCaseId`, `TEST_ORGANIZATION_ID`, `testActor`, `untrusted*`) live in `@watchdog/schemas/testing`, the one tree exempt from `watchdog/no-brand-cast`.
+- `test-kit` imports no workspace package. Branded id fixtures (`testCaseId`, `TEST_ORGANIZATION_ID`, `testActor`, `untrusted*`) live in `@watchdog/domain/schemas/testing`, the one tree exempt from `watchdog/no-brand-cast`.
 - Core tests never import `drizzle-orm`; generic padded-UUID trimming is tested once in its owners, not again per service.

@@ -6,7 +6,7 @@ import {
   type IdentifierPasteRowOverride,
   type IdentifierPasteTarget,
 } from "@/domains/entities/lib/parse-identifier-paste";
-import { normalizeIdentifierPlatform } from "@watchdog/schemas/shared";
+import { normalizeIdentifierPlatform } from "@watchdog/domain/schemas/shared";
 
 export type BulkAddIdentifiersStage = "paste" | "map";
 

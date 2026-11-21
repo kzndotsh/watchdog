@@ -1,8 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { identifierListView } from "@/domains/entities/identifiers/queries";
-import { identifierList } from "@watchdog/schemas/graph";
-import type { ListSearch } from "@watchdog/schemas/shared";
+import { identifierList } from "@watchdog/domain/schemas/graph";
+import type { ListSearch } from "@watchdog/domain/schemas/shared";
 
 /**
  * Warm the Identifiers table's first page (the URL's view), without blocking paint. Nothing

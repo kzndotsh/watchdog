@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { SCOPES, scopeSchema } from "@watchdog/schemas/shared";
+import { SCOPES, scopeSchema } from "@watchdog/domain/schemas/shared";
 
 import { authed } from "../os";
 

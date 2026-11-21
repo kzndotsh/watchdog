@@ -7,14 +7,14 @@ import { activity } from "@watchdog/db";
 import {
   buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllGraphHistory,
   resetTestDb,
   seedCase,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const KEY_ID = "key-366";
 

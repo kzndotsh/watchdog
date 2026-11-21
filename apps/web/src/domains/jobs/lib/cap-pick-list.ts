@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { choices, defineList, flag, tags } from "@watchdog/schemas/shared";
+import {
+  choices,
+  defineList,
+  flag,
+  tags,
+} from "@watchdog/domain/schemas/shared";
 
 /** The Cap kinds the run form offers, with their labels. */
 const CAP_KINDS = ["collect", "enrich", "process", "act"] as const;
@@ -25,7 +30,7 @@ const CAP_CATEGORY_MAX = 40;
 /**
  * The Cap run form's picker, as a bounded list (#573, ADR-0007): the catalog (`capabilities.list`,
  * about sixty entries) is read whole and narrowed in the browser by `matchCaps`. Declared here,
- * not in `@watchdog/schemas`, because no procedure serves it; the declaration gives the form the
+ * not in `@watchdog/domain/schemas`, because no procedure serves it; the declaration gives the form the
  * standard Filters popover and chips (`useBoundedList`), with its view held in the form's state,
  * never the URL. `category` is any of the catalog's categories (its options come from the form).
  */

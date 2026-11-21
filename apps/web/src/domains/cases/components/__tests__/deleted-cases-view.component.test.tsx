@@ -16,9 +16,9 @@ import {
   buildRestoredCaseRecord,
 } from "@/testing/records";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { deletedCaseList } from "@watchdog/schemas/cases";
-import type { ListSearch } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import type { ListSearch } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

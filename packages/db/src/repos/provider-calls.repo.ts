@@ -5,7 +5,7 @@ import {
   normalizeUuidList,
   type CaseId,
   type ProvenanceState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { jobs } from "../schema/jobs";

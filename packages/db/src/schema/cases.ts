@@ -10,13 +10,13 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
 import {
   EGRESS_CLASSES,
   type CaseId,
   type EgressClass,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { currentOrganization } from "./_organization-policy";

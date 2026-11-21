@@ -10,7 +10,7 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { caseCountsInputSchema } from "@watchdog/schemas/cases";
+import { caseCountsInputSchema } from "@watchdog/domain/schemas/cases";
 import {
   dueTasksSchema,
   taskCreateInputSchema,
@@ -23,12 +23,12 @@ import {
   taskReorderInputSchema,
   taskUpdateInputSchema,
   taskSchema,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import {
   ARRAY_MAX,
   boundedListSchema,
   listPageSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";

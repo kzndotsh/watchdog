@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { EML_MAX_INPUT_BYTES } from "@watchdog/tools/file";
 

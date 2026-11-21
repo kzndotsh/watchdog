@@ -18,7 +18,7 @@ import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedEntityKindSchema,
   type EntityKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   Field,
   FieldError,

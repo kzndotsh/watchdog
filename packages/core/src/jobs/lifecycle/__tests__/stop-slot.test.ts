@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { JOB_STOP_CAUSES } from "@watchdog/schemas/shared";
+import { JOB_STOP_CAUSES } from "@watchdog/domain/schemas/shared";
 
 import { makeStopSlot, stopEvent, stopMessage } from "../stop-slot";
 

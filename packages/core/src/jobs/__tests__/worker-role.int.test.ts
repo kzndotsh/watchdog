@@ -2,9 +2,10 @@ import { Effect, Layer, Predicate, Result } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { casesRepo, entitiesRepo, jobsRepo, workerRoleDb } from "@watchdog/db";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   backdateCaseDeletion,
   listAllActivity,
@@ -16,7 +17,6 @@ import {
   seedPlaybookRun,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { deleteCaseEffect } from "../../case-deletion/tombstone.ts";

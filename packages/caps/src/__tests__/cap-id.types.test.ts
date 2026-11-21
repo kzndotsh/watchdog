@@ -4,12 +4,12 @@ import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   EVIDENCE_HARVEST_CAPABILITY_ID,
   URL_ENRICH_CAPABILITY_ID,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 import type { PlaybookDef } from "../playbooks/plan";
 import type { CapId } from "../registry";
 
-/** Fails typecheck when a Cap id named in `@watchdog/schemas` is not a registered Cap. */
+/** Fails typecheck when a Cap id named in `@watchdog/domain/schemas` is not a registered Cap. */
 const SCHEMA_CAP_IDS = [
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   EVIDENCE_HARVEST_CAPABILITY_ID,

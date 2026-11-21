@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { titleCase } from "@watchdog/schemas/shared";
+import { titleCase } from "@watchdog/domain/schemas/shared";
 
 import { formatOpaqueId } from "../format-opaque-id.ts";
 import { groupItemsByDay } from "../group-by-day.ts";

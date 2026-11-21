@@ -1,7 +1,7 @@
 import { Cause, Effect } from "effect";
 
 import type { CasePurgeCounts } from "@watchdog/db";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { setHistoryContextEffect } from "../activity/graph-activity";
 import { optionalActorId } from "../actors/require-actor-id";

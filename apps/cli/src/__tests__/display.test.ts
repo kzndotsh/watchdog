@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { capEgressLabel } from "@watchdog/schemas/caps";
+import { capEgressLabel } from "@watchdog/domain/schemas/caps";
 import {
   evidenceDisplayLabel,
   evidenceTitleMapFromRows,
-} from "@watchdog/schemas/evidence";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/evidence";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import {
   caseEgressLabel,

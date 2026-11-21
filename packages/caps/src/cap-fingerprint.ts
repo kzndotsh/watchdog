@@ -6,7 +6,7 @@
  * DEFINES the imported symbol (a barrel is looked through, not hashed), so editing one vendor
  * in `@watchdog/tools/network` moves only the Caps that import that vendor. What is hashed:
  *
- * - every reached source module of this repo, `@watchdog/schemas` included, by path and content;
+ * - every reached source module of this repo, `@watchdog/domain/schemas` included, by path and content;
  * - for each npm package a reached module imports, its name and the version the lockfile
  *   resolves for the workspace package that imports it.
  *

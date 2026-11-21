@@ -11,7 +11,7 @@ import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-fe
 import { loadDisplayBody } from "@/shared/ui/list/parts/load-popover-bodies";
 import { PopoverBodyFallback } from "@/shared/ui/list/parts/popover-body-fallback";
 import { Button } from "@/shared/ui/primitives/button";
-import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
+import type { AnyListDef, FilterKey } from "@watchdog/domain/schemas/shared";
 import {
   Popover,
   PopoverContent,

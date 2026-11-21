@@ -1,8 +1,8 @@
 import { Data, Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testApiKey } from "@watchdog/schemas/testing";
-import { testHttpOrigin, testId } from "@watchdog/test-kit";
+import { testApiKey } from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin, testId } from "@watchdog/domain/test-kit";
 
 class NotFoundError extends Data.TaggedError("NotFoundError")<{
   readonly entity: string;

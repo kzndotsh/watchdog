@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   createEventInputSchema,
   updateEventInputSchema,
-} from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("events types schemas", () => {
   it("parses create and update event payloads", () => {

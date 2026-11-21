@@ -12,8 +12,9 @@ import { entitiesRepo, type NewEntity } from "@watchdog/db";
 import {
   HISTORY_CONTEXT_MISSING_SQLSTATE,
   type CaseId,
-} from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   expectPostgresRefusal,
   resetTestDb,
@@ -21,7 +22,6 @@ import {
   withTestTx,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../activity/graph-activity";
 

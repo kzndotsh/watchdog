@@ -8,7 +8,7 @@ import type {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
   updateIdentifierInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 export type IdentifierRecord = CoreIdentifierRecord;
 export type CaseIdentifierRecord = CoreCaseIdentifierRecord;

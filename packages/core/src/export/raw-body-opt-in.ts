@@ -1,6 +1,6 @@
 import type { Effect } from "effect";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

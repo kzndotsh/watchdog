@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fakeVault } from "@watchdog/core/vault";
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor } from "@watchdog/domain/schemas/testing";
 
 import { toOrpcError } from "../../map-domain-error";
 import * as runtime from "../../runtime";

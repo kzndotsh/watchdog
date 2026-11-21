@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { asCaseId } from "@watchdog/schemas/shared";
+import { asCaseId } from "@watchdog/domain/schemas/shared";
 
 import {
   blobStoreLayer,

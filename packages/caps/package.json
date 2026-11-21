@@ -14,14 +14,13 @@
   },
   "dependencies": {
     "@watchdog/ai": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
+    "@watchdog/domain": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@watchdog/test-kit": "workspace:*",
     "oxc-parser": "catalog:",
     "typescript": "catalog:"
   }

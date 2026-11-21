@@ -20,11 +20,12 @@ import { updateCaseEffect } from "@watchdog/core/export";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
 import { entitiesRepo } from "@watchdog/db";
-import { EGRESS_CLASSES, asCaseId } from "@watchdog/schemas/shared";
+import { EGRESS_CLASSES, asCaseId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -33,7 +34,6 @@ import {
   testDb,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 const runWithBlobs = runDomainWith(
   Layer.mergeAll(

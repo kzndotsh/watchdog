@@ -23,8 +23,8 @@ import { QueueRow } from "@/shared/ui/queue-row";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { KindBadge } from "@/shared/ui/vocab";
-import type { evidenceList } from "@watchdog/schemas/evidence";
-import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
+import type { evidenceList } from "@watchdog/domain/schemas/evidence";
+import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
 import { ButtonGroup } from "@watchdog/ui/components/button-group";
 import { FieldError } from "@watchdog/ui/components/field";
 

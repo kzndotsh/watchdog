@@ -9,7 +9,7 @@ import {
   type ConfidenceTier,
   type EdgePredicate,
   type EntityKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { assertEntityInCaseEffect } from "../cases/access";
 import {

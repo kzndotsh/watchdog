@@ -18,7 +18,7 @@ import {
   type GraphHistoryChannel,
   type GraphHistoryKind,
   type GraphHistoryOp,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamptz } from "./_helpers";
 import {

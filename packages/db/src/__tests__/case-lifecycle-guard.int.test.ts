@@ -6,7 +6,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import {
   CASE_LIFECYCLE_SQLSTATE,
   type CaseDeletionEvent,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   expectPostgresRefusal,
   resetTestDb,

@@ -1,4 +1,4 @@
-import type { ActivityCursor } from "@watchdog/schemas/feed";
+import type { ActivityCursor } from "@watchdog/domain/schemas/feed";
 
 import { ACTIVITY_CHANNEL, listenOnChannel } from "./events";
 import type { DbExec } from "./exec";

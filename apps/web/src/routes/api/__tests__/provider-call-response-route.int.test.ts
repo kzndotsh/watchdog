@@ -6,11 +6,12 @@ import { authServerDouble } from "@/testing/auth-server-double";
 import { appRuntime } from "@watchdog/api";
 import { uploadArtifactEffect } from "@watchdog/core/blob";
 import { runDomain } from "@watchdog/core/infra";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -18,7 +19,6 @@ import {
   seedProviderCall,
   testDb,
 } from "@watchdog/test-db";
-import { testHttpOrigin } from "@watchdog/test-kit";
 
 /**
  * The raw-response download (#498) against real data and the real object store: the bytes of a

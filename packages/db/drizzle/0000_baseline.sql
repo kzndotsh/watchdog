@@ -1470,7 +1470,7 @@ FOR EACH ROW EXECUTE FUNCTION "public"."cases_lifecycle_guard"();
 -- A change to a rule (the Cap list, attachment, state, activity, search text) ships as a new
 -- migration with `CREATE OR REPLACE` (ending with the backfill
 -- `SELECT public.collect_queue_rebuild(c.id) FROM public.cases c WHERE c.deleted_at IS NULL ORDER BY c.id;`
--- once there are rows to rebuild), with the TypeScript reference (`@watchdog/schemas/testing`, `collectQueueReference`) changed to match.
+-- once there are rows to rebuild), with the TypeScript reference (`@watchdog/domain/schemas/testing`, `collectQueueReference`) changed to match.
 
 -- Process and enrich Caps link to Evidence through their input (`isProcessCapability`,
 -- `URL_ENRICH_CAPABILITY_ID`); a playbook step does too, decided by the caller.

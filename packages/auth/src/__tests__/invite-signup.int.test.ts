@@ -2,8 +2,8 @@ import { APIError } from "better-auth/api";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { client, db, invitation, organization, user } from "@watchdog/db";
-import type { OrganizationId } from "@watchdog/schemas/shared";
-import { asOrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
+import { asOrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { createAuth } from "../create-auth";
 

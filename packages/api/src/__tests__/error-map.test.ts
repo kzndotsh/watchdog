@@ -11,7 +11,7 @@ import {
   StaleCursorError,
   StaleVersionError,
 } from "@watchdog/core/errors";
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor } from "@watchdog/domain/schemas/testing";
 
 import { apiErrorMap, withStableCode } from "../error-map";
 import { toOrpcError } from "../map-domain-error";

@@ -11,7 +11,7 @@ import {
   useBoundedList,
   useLocalListSearch,
 } from "@/shared/hooks/list/use-bounded-list";
-import { opsOf } from "@watchdog/schemas/shared";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 
 /**
  * The Cap run form's filters: the picker's bounded list (`capPickList`), held in the form's

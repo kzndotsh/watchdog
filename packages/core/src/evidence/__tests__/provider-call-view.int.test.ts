@@ -4,12 +4,12 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { jobsRepo, providerCallsRepo } from "@watchdog/db";
-import { PROVIDER_CALL_LIST_MAX } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { PROVIDER_CALL_LIST_MAX } from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   resetTestDb,
   seedCase,

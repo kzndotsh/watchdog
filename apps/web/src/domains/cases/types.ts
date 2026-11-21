@@ -12,7 +12,7 @@ import type {
 import type {
   getCaseBySlugInputSchema,
   DeleteCaseInput,
-} from "@watchdog/schemas/cases";
+} from "@watchdog/domain/schemas/cases";
 
 export type CaseRecord = CoreCaseRecord;
 

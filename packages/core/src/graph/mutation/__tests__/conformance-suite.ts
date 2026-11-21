@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { InternalError } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
-import { TEST_OTHER_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_OTHER_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { rendezvous } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   listAllGraphHistory,
   resetTestDb,
 } from "@watchdog/test-db";
-import { rendezvous } from "@watchdog/test-kit";
 
 import { runGraphMutation } from "../run-graph-mutation";
 import { defineLinkedConformance } from "./conformance-extras";

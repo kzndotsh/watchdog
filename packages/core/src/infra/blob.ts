@@ -11,12 +11,12 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Effect, Stream } from "effect";
 
 import type { ArtifactReadLimit } from "@watchdog/caps/sdk";
-import type { InlineImageMime } from "@watchdog/schemas/evidence";
+import type { InlineImageMime } from "@watchdog/domain/schemas/evidence";
 import {
   MAX_UPLOAD_BYTES,
   sha256HexSchema,
   type CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   InternalError,

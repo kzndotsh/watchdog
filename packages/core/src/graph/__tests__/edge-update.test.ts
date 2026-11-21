@@ -1,8 +1,11 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import {
+  TEST_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { validateEdgeUpdateEffect } from "../edge-update";
 

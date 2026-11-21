@@ -85,7 +85,9 @@ const integrationEnv = {
 /** Tests that measure at scale (query plans, memory budgets): their own project, uninstrumented. */
 const SCALE_TESTS = [
   "packages/*/src/**/__tests__/**/*.scale.int.test.ts",
+  "packages/*/*/src/**/__tests__/**/*.scale.int.test.ts",
   "apps/*/src/**/__tests__/**/*.scale.int.test.ts",
+  "apps/*/*/src/**/__tests__/**/*.scale.int.test.ts",
 ];
 
 /**
@@ -175,7 +177,9 @@ export default defineConfig({
           clearMocks: true,
           include: [
             "packages/*/src/**/__tests__/**/*.test.ts",
+            "packages/*/*/src/**/__tests__/**/*.test.ts",
             "packages/*/scripts/**/__tests__/**/*.test.ts",
+            "packages/*/*/scripts/**/__tests__/**/*.test.ts",
             "apps/worker/src/**/__tests__/**/*.test.ts",
             "apps/cli/src/**/__tests__/**/*.test.ts",
             "apps/cli/src/commands/__tests__/**/*.test.ts",
@@ -223,7 +227,9 @@ export default defineConfig({
           clearMocks: true,
           include: [
             "packages/*/src/**/__tests__/**/*.property.test.ts",
+            "packages/*/*/src/**/__tests__/**/*.property.test.ts",
             "apps/*/src/**/__tests__/**/*.property.test.ts",
+            "apps/*/*/src/**/__tests__/**/*.property.test.ts",
           ],
           exclude: ["**/node_modules/**"],
           environment: "node",
@@ -319,7 +325,9 @@ export default defineConfig({
       integrationProject("integration", {
         include: [
           "packages/*/src/**/__tests__/**/*.int.test.ts",
+          "packages/*/*/src/**/__tests__/**/*.int.test.ts",
           "apps/*/src/**/__tests__/**/*.int.test.ts",
+          "apps/*/*/src/**/__tests__/**/*.int.test.ts",
         ],
         exclude: ["**/node_modules/**", ...SCALE_TESTS],
       }),

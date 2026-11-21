@@ -1,7 +1,7 @@
 import { Effect, Result } from "effect";
 
 import { jobOrganizationIdUnchecked } from "@watchdog/db";
-import { parseTrimmedUuid } from "@watchdog/schemas/shared";
+import { parseTrimmedUuid } from "@watchdog/domain/schemas/shared";
 
 import { Db } from "../infra/db-service";
 import { inOrganization } from "../infra/organization-scope";

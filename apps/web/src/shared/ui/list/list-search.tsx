@@ -12,7 +12,7 @@ import { CONTROL_HEIGHT, CONTROL_TEXT } from "@/shared/ui/control-chrome";
 import {
   LIST_SEARCH_MIN_LENGTH,
   type AnyListDef,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   InputGroup,
   InputGroupAddon,

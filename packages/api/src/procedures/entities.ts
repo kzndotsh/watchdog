@@ -23,12 +23,12 @@ import {
   entitySchema,
   entityPickerItemSchema,
   entityPickerPageSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   ARRAY_MAX,
   boundedListSchema,
   recordOpenInInputSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";

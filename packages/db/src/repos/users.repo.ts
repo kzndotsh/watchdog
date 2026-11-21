@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { user } from "../schema/auth";

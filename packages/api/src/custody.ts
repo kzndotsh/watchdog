@@ -1,10 +1,10 @@
 import { ORPCError } from "@orpc/server";
 
-import { childWriteViolation } from "@watchdog/policy";
+import { childWriteViolation } from "@watchdog/domain/policy";
 import {
   trimmedConfidenceTierSchema,
   type ApiCredential,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateAfterCredentialMutation } from "@/app/lib/query-invalidation";
 import { orpc } from "@/lib/orpc-client";
 import { toast } from "@/shared/ui/toast";
-import { deleteCredentialInputSchema } from "@watchdog/schemas/caps";
+import { deleteCredentialInputSchema } from "@watchdog/domain/schemas/caps";
 
 /**
  * Delete a credential slot (variable: its name). `onDeleted` closes the dialog and runs

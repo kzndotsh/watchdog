@@ -19,7 +19,7 @@ import {
 } from "@/shared/ui/identifiers/identifier-cells";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { memoryPickerPort } from "@/testing/memory-picker-port";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const ENTITY_ACTIONS: EntityTableActions = {
   updateKind: vi.fn(),

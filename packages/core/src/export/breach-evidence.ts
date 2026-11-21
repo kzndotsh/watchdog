@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { isBreachCapId, redactBreachArtifact } from "@watchdog/caps";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
 import type { DomainTag } from "../errors/tagged-errors";

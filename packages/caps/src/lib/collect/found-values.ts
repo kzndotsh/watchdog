@@ -1,5 +1,5 @@
-import type { FoundValue } from "@watchdog/schemas/jobs";
-import type { IdentifierType } from "@watchdog/schemas/shared";
+import type { FoundValue } from "@watchdog/domain/schemas/jobs";
+import type { IdentifierType } from "@watchdog/domain/schemas/shared";
 
 import { validatedIdentifierValue } from "./validated-identifier-value";
 

@@ -5,8 +5,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { AnyListRepo, ListRow } from "@watchdog/db";
 import { LIST_REPOS, listRepoOf } from "@watchdog/db/testing";
-import { opsOf } from "@watchdog/schemas/shared";
-import type { ListInput, ListPage } from "@watchdog/schemas/shared";
+import { opsOf } from "@watchdog/domain/schemas/shared";
+import type { ListInput, ListPage } from "@watchdog/domain/schemas/shared";
 import {
   openPlanDb,
   planNodes,

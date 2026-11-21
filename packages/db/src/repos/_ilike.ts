@@ -1,4 +1,4 @@
-import { slugifyName } from "@watchdog/schemas/shared";
+import { slugifyName } from "@watchdog/domain/schemas/shared";
 
 /**
  * Build an ILIKE contains pattern for a user term: trimmed, with `\`, `%` and `_` escaped (LIKE's

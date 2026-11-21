@@ -3,14 +3,14 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { authServerDouble } from "@/testing/auth-server-double";
 import { appRuntime } from "@watchdog/api";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
   seedOrganizationMember,
   testDb,
 } from "@watchdog/test-db";
-import { testHttpOrigin } from "@watchdog/test-kit";
 
 /**
  * The per-Export opt-in for raw provider responses on `export.zip` (#499), against real data:
@@ -39,7 +39,7 @@ vi.mock("@/auth/server", () => authServerDouble());
 vi.mock("@watchdog/auth/server", () => ({
   createApiContext: vi.fn(async () => {
     const { testApiKey: key, TEST_ORGANIZATION_ID: organizationId } =
-      await import("@watchdog/schemas/testing");
+      await import("@watchdog/domain/schemas/testing");
     return {
       headers: new Headers(),
       credential:

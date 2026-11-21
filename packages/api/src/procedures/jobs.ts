@@ -28,7 +28,7 @@ import {
   jobSchema,
   jobListPageSchema,
   providerCallListSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 import { actorKeyIdFromContext, actorLabelFromContext } from "../actor-label";
 import { authed } from "../os";

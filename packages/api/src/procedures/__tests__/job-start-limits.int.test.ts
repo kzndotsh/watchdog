@@ -8,12 +8,12 @@ import {
   EGRESS_CLASSES,
   type ApiCredential,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testApiKey,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   forceJobStatus,
   resetTestDb,

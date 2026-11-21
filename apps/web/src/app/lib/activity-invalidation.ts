@@ -12,7 +12,10 @@ import {
   invalidateAfterResync,
   invalidateAfterTaskMutation,
 } from "@/app/lib/query-invalidation";
-import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
+import type {
+  ActivityEntry,
+  ActivityEntryKind,
+} from "@watchdog/domain/schemas/feed";
 
 /** What an entry's kind refreshes: the same function for every Graph kind. */
 type ActivityTarget =

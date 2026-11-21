@@ -5,7 +5,7 @@ import type {
   createEventInputSchema,
   eventScopeInputSchema,
   updateEventInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 export type EventRecord = CoreEventRecord;
 

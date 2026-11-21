@@ -1,6 +1,6 @@
 import type { Browser, Page } from "@playwright/test";
 
-import { testId } from "@watchdog/test-kit/fixtures";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { expect, test } from "../../fixtures/test";
 import { e2eOrigin } from "../../support/env";

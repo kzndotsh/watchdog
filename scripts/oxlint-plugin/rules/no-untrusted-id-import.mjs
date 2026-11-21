@@ -12,7 +12,7 @@ const UNTRUSTED_ID_HELPERS = new Set([
 
 /**
  * Bans importing (or re-exporting) `untrustedCaseId` / `untrustedOrganizationId` from
- * `@watchdog/test-kit`. They stamp a brand on unvalidated text so tests can feed
+ * `@watchdog/domain/test-kit`. They stamp a brand on unvalidated text so tests can feed
  * malformed ids to code that must reject them; production code could use them to
  * bypass the validating constructors. Allowed trees are exempted in `oxlint.config.ts`.
  */
@@ -33,8 +33,8 @@ export const noUntrustedIdImport = {
         !isRecord(source) ||
         typeof source.value !== "string" ||
         !(
-          source.value.startsWith("@watchdog/test-kit") ||
-          source.value === "@watchdog/schemas/testing"
+          source.value.startsWith("@watchdog/domain/test-kit") ||
+          source.value === "@watchdog/domain/schemas/testing"
         )
       ) {
         return;

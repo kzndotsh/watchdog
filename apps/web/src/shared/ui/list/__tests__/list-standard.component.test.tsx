@@ -15,7 +15,7 @@ import {
   FixedEntityHarness,
 } from "@/shared/ui/list/__tests__/list-test-harness";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { LIST_MAX_PAGES } from "@watchdog/schemas/shared";
+import { LIST_MAX_PAGES } from "@watchdog/domain/schemas/shared";
 
 function renderHarness(
   ui: Parameters<typeof render>[0],

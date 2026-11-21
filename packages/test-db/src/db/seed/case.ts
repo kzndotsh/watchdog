@@ -11,8 +11,8 @@ import {
   type DbExec,
   type NewCase,
 } from "@watchdog/db";
-import { slugifyName, type EgressClass } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { slugifyName, type EgressClass } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 
 import {
   withCaseOrganizationScope,

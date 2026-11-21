@@ -1,6 +1,6 @@
 /**
  * Proves the real `oxlint.config.ts` enforces `watchdog/bounded-input-schema`: in the
- * input-schema modules of `packages/schemas/src` and in `packages/api/src/procedures`, a
+ * input-schema modules of `packages/domain/schemas/src` and in `packages/api/src/procedures`, a
  * `z.string()`, `z.array()`, `z.url()` or `z.email()` in an input schema needs a `.max()`
  * or `.length()`. Probe files are written into a throwaway repo that carries the real
  * config and plugin (helpers/oxlint-fixture.ts).
@@ -10,7 +10,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const SCHEMAS = "packages/schemas/src";
+const SCHEMAS = "packages/domain/schemas/src";
 const PROCEDURES = "packages/api/src/procedures";
 const RULE = "watchdog/bounded-input-schema";
 const Z = 'import { z } from "zod";\n\n';

@@ -13,9 +13,12 @@ import {
   asOrganizationId,
   parseTrimmedCaseId,
   parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
 
 import {
   getCaseByIdEffect,

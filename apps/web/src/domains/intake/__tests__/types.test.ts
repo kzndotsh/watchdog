@@ -5,8 +5,8 @@ import {
   dumpPasteInputSchema,
   dumpUrlInputSchema,
   presignUploadInputSchema,
-} from "@watchdog/schemas/evidence";
-import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/domain/schemas/graph";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
 const EVIDENCE_ID = "660e8400-e29b-41d4-a716-446655440001";

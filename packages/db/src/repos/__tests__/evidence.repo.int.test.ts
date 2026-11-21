@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { testId } from "@watchdog/domain/test-kit";
 import {
   listCaseEvidence,
   seedCase,
@@ -7,7 +8,6 @@ import {
   seedEvidence,
   withTestTx,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { evidenceRepo } from "../evidence.repo.ts";
 

@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { account, client, db, member, organization, user } from "@watchdog/db";
-import { asOrganizationId, parseKeyScopes } from "@watchdog/schemas/shared";
+import {
+  asOrganizationId,
+  parseKeyScopes,
+} from "@watchdog/domain/schemas/shared";
 
 import {
   API_KEY_CREATE_REFUSED,

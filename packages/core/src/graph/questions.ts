@@ -6,8 +6,11 @@ import type {
   EntityKind,
   OrganizationId,
   GraphActor,
-} from "@watchdog/schemas/shared";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import {
+  trimmedOrNull,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
 
 import { dossierChannel } from "../activity/graph-activity";
 import {

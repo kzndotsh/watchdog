@@ -1,6 +1,6 @@
 import { type AnyColumn, sql } from "drizzle-orm";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";

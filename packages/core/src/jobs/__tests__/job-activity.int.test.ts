@@ -14,8 +14,9 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { jobsRepo } from "@watchdog/db";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -23,7 +24,6 @@ import {
   seedEvidence,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { settleJobEffect } from "../lifecycle/settle.ts";
 import { advancePlaybookRunEffect } from "../stages/chain.ts";

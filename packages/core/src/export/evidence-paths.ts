@@ -1,5 +1,5 @@
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import type { EvidenceKind } from "@watchdog/schemas/shared";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
+import type { EvidenceKind } from "@watchdog/domain/schemas/shared";
 
 export function safeFilename(label: string): string {
   return (

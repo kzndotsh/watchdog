@@ -5,7 +5,7 @@ import type {
   ApiActor,
   OrganizationId,
   ProcedureScope,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { runAsCaller } from "./caller-role";
 import type { ApiContext } from "./context";

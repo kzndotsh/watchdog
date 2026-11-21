@@ -1,13 +1,13 @@
 import { and, desc, eq, getTableColumns, ilike, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import {
   type CaseId,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   parseGraphUuidList,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

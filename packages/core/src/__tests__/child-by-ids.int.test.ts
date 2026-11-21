@@ -7,7 +7,8 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { claimsRepo, eventsRepo, questionsRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -15,7 +16,6 @@ import {
   withSystemHistoryContext,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 /**
  * The by-id reads an update verb makes for a row's version (`claims|events|questions.getMany`):

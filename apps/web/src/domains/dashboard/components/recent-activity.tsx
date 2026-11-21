@@ -28,13 +28,13 @@ import {
   activityList,
   type ActivityItem,
   type ActivityKind,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import {
   JOB_STATUSES,
   PROPOSAL_STATUSES,
   TASK_STATUSES,
   type TaskStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {
   Select,

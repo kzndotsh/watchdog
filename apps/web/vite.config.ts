@@ -98,8 +98,8 @@ const config = defineConfig({
             "@watchdog/db",
             "@watchdog/env",
             "@watchdog/log",
-            "@watchdog/policy",
-            "@watchdog/schemas",
+            "@watchdog/domain/policy",
+            "@watchdog/domain/schemas",
             "@watchdog/tools",
             "@watchdog/ui",
           ],
@@ -117,7 +117,7 @@ const config = defineConfig({
   },
   optimizeDeps: {
     // Belt for residual HMR / server-fn discovery after client code stays on
-    // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).
+    // `@watchdog/domain/policy/patch-needs-confidence` (do not import Effect in browser UI).
     include: ["effect"],
     // The dependency scan reads source before TanStack Start strips server code, so it follows
     // server function bodies, `api/` route handlers and `*.server.ts` files into the workspace

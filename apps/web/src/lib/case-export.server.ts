@@ -40,12 +40,12 @@ import {
   type ZipSink,
 } from "@watchdog/core/export";
 import { startCaseExportJobEffect } from "@watchdog/core/jobs";
-import { createLogger } from "@watchdog/log";
 import {
   type CaseId,
   parseTrimmedCaseId,
   requireScope,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { createLogger } from "@watchdog/log";
 
 /** Process log for an export step that failed; carries the error only, never Case or Evidence data. */
 function logExportFailure(

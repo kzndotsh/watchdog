@@ -29,7 +29,7 @@ vi.mock("@watchdog/core/jobs", async (importOriginal) => {
   };
 });
 
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor } from "@watchdog/domain/schemas/testing";
 
 import {
   getPlaybookRun,

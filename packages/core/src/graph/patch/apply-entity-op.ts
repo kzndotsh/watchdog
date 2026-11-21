@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { PatchOpOf } from "@watchdog/schemas/graph";
+import type { PatchOpOf } from "@watchdog/domain/schemas/graph";
 
 import { ConflictError, type DomainTag } from "../../errors/tagged-errors";
 import type { Db } from "../../infra/db-service";

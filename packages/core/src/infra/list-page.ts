@@ -7,7 +7,7 @@ import type {
   ListRepo,
   ListRow,
 } from "@watchdog/db";
-import { ARRAY_MAX, opsOf } from "@watchdog/schemas/shared";
+import { ARRAY_MAX, opsOf } from "@watchdog/domain/schemas/shared";
 import type {
   AnyListDef,
   ListInput,
@@ -15,7 +15,7 @@ import type {
   ListQuery,
   ListScope,
   ListTotal,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "./db-service";

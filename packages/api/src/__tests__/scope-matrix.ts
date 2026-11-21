@@ -1,6 +1,6 @@
-import { SCOPES } from "@watchdog/schemas/shared";
-import type { Scope } from "@watchdog/schemas/shared";
-import { testApiKey } from "@watchdog/schemas/testing";
+import { SCOPES } from "@watchdog/domain/schemas/shared";
+import type { Scope } from "@watchdog/domain/schemas/shared";
+import { testApiKey } from "@watchdog/domain/schemas/testing";
 
 import { router } from "../router";
 import { declaredScope, procedurePaths } from "./org-isolation-fixtures";

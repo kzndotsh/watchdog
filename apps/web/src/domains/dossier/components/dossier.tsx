@@ -47,15 +47,15 @@ import { ListCount } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { EntityKindGlyph } from "@/shared/ui/vocab";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { taskList } from "@watchdog/schemas/feed";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { taskList } from "@watchdog/domain/schemas/feed";
 import {
   claimList,
   edgeList,
   eventList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,

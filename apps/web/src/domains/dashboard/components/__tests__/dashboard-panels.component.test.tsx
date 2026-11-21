@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
 import { buildProposalQueueItem } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({

@@ -11,8 +11,8 @@ import {
   egressClassDescription,
   egressClassLabel,
   normalizeAllowedEgress,
-} from "@watchdog/schemas/caps";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
 import {
   Field,
   FieldDescription,

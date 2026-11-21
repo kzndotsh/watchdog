@@ -2,7 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { useListViewReset } from "@/shared/hooks/list/use-list-view-reset";
 import type { ListView } from "@/shared/lib/list/list-view";
-import type { AnyListDef, ListQuery } from "@watchdog/schemas/shared";
+import type { AnyListDef, ListQuery } from "@watchdog/domain/schemas/shared";
 
 /**
  * A feed over a declared list: one view read a page at a time, `data` the loaded items flattened

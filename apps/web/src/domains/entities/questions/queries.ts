@@ -3,7 +3,7 @@ import { orpc } from "@/lib/orpc-client";
 import { listView } from "@/shared/lib/list/list-view";
 import { scopeCaseId, scopeCaseIdEnabled } from "@/shared/lib/query-ingress";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { questionList } from "@watchdog/schemas/graph";
+import { questionList } from "@watchdog/domain/schemas/graph";
 
 /**
  * Questions keys are the oRPC procedure keys: `all(caseId)` is

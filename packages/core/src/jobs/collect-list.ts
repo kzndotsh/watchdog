@@ -7,23 +7,23 @@ import {
   locateCollectRow,
 } from "@watchdog/db";
 import type { CollectListRow, CollectMemberJson } from "@watchdog/db";
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
 import {
   collectList,
   entityIdsFromJobInputs,
   evidenceIdsFromJobInputs,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import type {
   LocateCollectInput,
   collectLocatedSchema,
   collectQueueItemSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import type {
   CaseId,
   ListInput,
   ListPage,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
 import { assertCaseInOrgEffect } from "../cases/access";

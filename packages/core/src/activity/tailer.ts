@@ -7,8 +7,8 @@ import {
   type ActivityTailerOptions,
   type DbExec,
 } from "@watchdog/db";
-import type { ActivityEntry } from "@watchdog/schemas/feed";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { ActivityEntry } from "@watchdog/domain/schemas/feed";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { InternalError } from "../errors/tagged-errors";
 import { Db } from "../infra/db-service";

@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { listClaimsEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
-import { claimList } from "@watchdog/schemas/graph";
+import { claimList } from "@watchdog/domain/schemas/graph";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("graph write (core service)", () => {
   beforeEach(async () => {

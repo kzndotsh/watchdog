@@ -17,7 +17,7 @@ import {
   JOB_STATUSES,
   JOB_STOP_CAUSES,
   PROVENANCE_STATES,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   JobPivots,
   JobStatus,
@@ -25,7 +25,7 @@ import type {
   JsonObject,
   CaseId,
   ProvenanceState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import {

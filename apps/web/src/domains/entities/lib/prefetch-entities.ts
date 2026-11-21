@@ -1,8 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { entityListView } from "@/domains/entities/queries";
-import { entityList } from "@watchdog/schemas/graph";
-import type { ListSearch } from "@watchdog/schemas/shared";
+import { entityList } from "@watchdog/domain/schemas/graph";
+import type { ListSearch } from "@watchdog/domain/schemas/shared";
 
 /**
  * Warm the Entities table's first page (the URL's view), without blocking paint. Nothing else:

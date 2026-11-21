@@ -1,12 +1,12 @@
 import { sql } from "drizzle-orm";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import type {
   CaseId,
   ConfidenceTier,
   GraphActor,
   GraphHistoryChannel,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "./exec";
 import { changesets } from "./schema/changesets";
@@ -50,7 +50,7 @@ export type GraphHistoryContext = GraphActor & {
  * id; every history row the transaction writes in that Case names it. Call it once, as the first
  * statement of a Graph write transaction, on that transaction's `tx`: the settings end with it.
  * The application role may not write the Graph without them (the database refuses with
- * `HISTORY_CONTEXT_MISSING_SQLSTATE` (`@watchdog/schemas/shared`)); the owner role may, and is
+ * `HISTORY_CONTEXT_MISSING_SQLSTATE` (`@watchdog/domain/schemas/shared`)); the owner role may, and is
  * recorded as channel `system`, no actor. Not a repo (it opens no transaction), so it may use a
  * raw statement.
  */

@@ -1,6 +1,6 @@
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import type { PatchResource } from "@watchdog/schemas/graph";
-import { predicateLabel } from "@watchdog/schemas/shared";
+import type { PatchResource } from "@watchdog/domain/schemas/graph";
+import { predicateLabel } from "@watchdog/domain/schemas/shared";
 
 /** Safely stringify an unknown patch-data field without `[object Object]` noise. */
 function stringifyField(value: unknown, fallback = ""): string {

@@ -2,8 +2,8 @@ import { isProcedure } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
-import { LIST_DEFS } from "@watchdog/schemas/testing";
+import { PAGE_LIMIT_MAX } from "@watchdog/domain/schemas/shared";
+import { LIST_DEFS } from "@watchdog/domain/schemas/testing";
 
 import { router } from "../router";
 import { procedurePaths } from "./org-isolation-fixtures";

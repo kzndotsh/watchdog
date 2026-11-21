@@ -62,7 +62,7 @@ A list declared with `defineList` (ADR-0007, spec #547) has one web shape, with 
 
 One `EventSource` on `/api/events` carries the whole organization (ADR-0005): every Case the caller can see, on one connection, however many Cases the dashboard shows and however many components mount. `useActivityInvalidation()` (`app/hooks/use-activity-stream.ts`) is mounted once, in the `_protected` layout; it binds the stream (`app/lib/activity-stream.ts`) to the Query cache through `bindActivityInvalidation` (`app/lib/activity-invalidation.ts`). Screens do not subscribe for invalidation; none reacts to an entry beyond refetching.
 
-The stream listens for one SSE event, `activity`, whose payload is `activityEntrySchema` (`packages/schemas/src/activity-log.ts`), and for `resync`. Each message carries `id:` = the entry cursor, so the browser resends it as `Last-Event-ID` after a transient drop and the server replays the gap. If the browser gives up (the source is `CLOSED`) the module reopens it after a backoff (1 s doubling to 30 s) with `?after=<last cursor>`. Delivery is at-least-once: the client drops entries at or below its last cursor.
+The stream listens for one SSE event, `activity`, whose payload is `activityEntrySchema` (`packages/domain/schemas/src/activity-log.ts`), and for `resync`. Each message carries `id:` = the entry cursor, so the browser resends it as `Last-Event-ID` after a transient drop and the server replays the gap. If the browser gives up (the source is `CLOSED`) the module reopens it after a backoff (1 s doubling to 30 s) with `?after=<last cursor>`. Delivery is at-least-once: the client drops entries at or below its last cursor.
 
 `invalidateForActivity(client, entry)` maps the entry to the same contracts the mutations use; a burst of entries of one target for one Case (a patch of N ops appends N) runs one pass:
 
@@ -76,7 +76,7 @@ The stream listens for one SSE event, `activity`, whose payload is `activityEntr
 | `case` | `invalidateAfterCaseSwitch` (Case list, feed, search) |
 | `resync` | `invalidateAfterResync`: every query stale, the active ones refetched |
 
-Recent activity (`activityListView`) has no SSE type of its own: every contract above soft-invalidates `activityKeys.all`, and the feed itself reads only the log (ADR-0005 decision 5; which `(kind, action)` pairs it shows is `FEED_ACTIONS` in `@watchdog/schemas/feed`). Don't invent a workspace-wide channel for it.
+Recent activity (`activityListView`) has no SSE type of its own: every contract above soft-invalidates `activityKeys.all`, and the feed itself reads only the log (ADR-0005 decision 5; which `(kind, action)` pairs it shows is `FEED_ACTIONS` in `@watchdog/domain/schemas/feed`). Don't invent a workspace-wide channel for it.
 
 - No manual Refresh buttons on live paths. Keep previous rows on refetch; don't remount the split skeleton.
 - Optimistic writes settle through the same contract: board drag may `setQueriesData` on the boards (`tasksKeys.boards(caseId)`) and the Task list's pages (`taskListView.prefix`), both under `tasksKeys.all(caseId)`, and a Cap start may seed `jobsKeys.all` and `jobsKeys.detail` from the mutation result before `onJobIdChange`, so URL selection does not flicker. Don't invent a second local list SoT.

@@ -5,7 +5,7 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const coerceProbe = os
   .route({ method: "GET", path: "/coerce-probe" })

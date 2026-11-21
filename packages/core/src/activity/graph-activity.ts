@@ -9,12 +9,12 @@ import {
 import type {
   ACTIVITY_ENTRY_ACTIONS,
   ActivityEntryKind,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import type {
   CaseId,
   GraphActor,
   GraphHistoryChannel,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
 import type { DomainTag } from "../errors/tagged-errors";

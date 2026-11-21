@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { jobQueueTx, type DbTx } from "@watchdog/db";
-import { parseTrimmedUuid } from "@watchdog/schemas/shared";
+import { parseTrimmedUuid } from "@watchdog/domain/schemas/shared";
 
 import type { InternalError } from "../errors/tagged-errors";
 import { InvalidError } from "../errors/tagged-errors";

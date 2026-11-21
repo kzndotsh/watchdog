@@ -1,6 +1,6 @@
 import { asc, eq, like, sql } from "drizzle-orm";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { account, session, user } from "../schema/auth";

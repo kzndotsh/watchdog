@@ -7,13 +7,13 @@ import { couldnt, errMessage } from "@/lib/utils";
 import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { LoadingRegion, TableBodySkeletonLayout } from "@/shared/ui/skeletons";
-import type { identifierList } from "@watchdog/schemas/graph";
+import type { identifierList } from "@watchdog/domain/schemas/graph";
 import {
   IDENTIFIER_TYPE_LABELS,
   LIST_TOTAL_CAP,
   type IdentifierType,
   type ListQuery,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   Collapsible,
   CollapsibleContent,

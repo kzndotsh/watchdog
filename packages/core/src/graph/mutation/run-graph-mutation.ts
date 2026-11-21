@@ -6,7 +6,7 @@ import type {
   GraphHistoryChannel,
   OrganizationId,
   GraphActor,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   appendGraphActivityEffect,

@@ -3,7 +3,7 @@ import { useEffect, useEffectEvent } from "react";
 
 import { isListViewReset } from "@/shared/lib/list/list-status";
 import type { ListView } from "@/shared/lib/list/list-view";
-import type { AnyListDef, ListQuery } from "@watchdog/schemas/shared";
+import type { AnyListDef, ListQuery } from "@watchdog/domain/schemas/shared";
 
 /**
  * The one stale-cursor handling of a list view. The view's query marks a stale cursor with a

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildProposalRecord } from "@/testing/records";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { totalEvidenceCount } from "../accept-validation.ts";
 import { buildDecideHeaderView } from "../decide-header-view.ts";

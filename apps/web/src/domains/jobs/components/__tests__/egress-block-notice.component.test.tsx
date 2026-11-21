@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseEgress } from "@/domains/cases/types";
 import type { EgressBlock } from "@/domains/jobs/lib/egress-block";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

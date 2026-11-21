@@ -2,6 +2,7 @@ import { sql, type SQL } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   prepareCasePurge,
@@ -10,7 +11,6 @@ import {
   testDb as db,
   withSystemHistoryContext,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import {
   cases,

@@ -1,8 +1,12 @@
 import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { ENTITY_KIND_LABELS, ENTITY_KINDS } from "@watchdog/schemas/shared";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import {
+  ENTITY_KIND_LABELS,
+  ENTITY_KINDS,
+} from "@watchdog/domain/schemas/shared";
+import { buildClaimCreateOp } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   captureStatements,
   explainPlan,
@@ -14,7 +18,6 @@ import {
   withTestTx,
   type PlanNode,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import type { DbExec } from "../../exec.ts";
 import { entitySlugIlikePatterns } from "../_ilike.ts";

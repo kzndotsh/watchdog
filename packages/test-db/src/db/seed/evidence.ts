@@ -8,9 +8,9 @@ import {
   type EvidenceRow,
   type NewEvidence,
 } from "@watchdog/db";
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import type { CaseId } from "@watchdog/schemas/shared";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue";
 import { withCaseOrganizationScope } from "../organization-scope.ts";

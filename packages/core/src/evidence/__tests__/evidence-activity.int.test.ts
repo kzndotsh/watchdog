@@ -17,7 +17,8 @@ import {
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { markEvidenceProcessedEffect } from "@watchdog/core/jobs";
 import { activity } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -26,7 +27,6 @@ import {
   seedEvidence,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 const UPLOAD_BYTES = new TextEncoder().encode("scan");
 const UPLOAD_SHA = sha256Hex(UPLOAD_BYTES);

@@ -5,7 +5,7 @@ import type {
   JobStatus,
   PlaybookRunOutcome,
   PlaybookRunStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { collectQueue, collectQueueMember } from "../schema/collect-queue";
 import { jobEvidence } from "../schema/evidence-links";

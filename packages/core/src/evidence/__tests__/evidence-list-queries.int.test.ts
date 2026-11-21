@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import { evidenceRepo } from "@watchdog/db";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   captureStatements,
   expectNoSeqScanOn,

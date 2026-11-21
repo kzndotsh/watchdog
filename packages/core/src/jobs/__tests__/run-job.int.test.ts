@@ -8,8 +8,8 @@ import {
   playbookRunsRepo,
   type JobArtifact,
 } from "@watchdog/db";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   forceJobStatus,
   resetTestDb,

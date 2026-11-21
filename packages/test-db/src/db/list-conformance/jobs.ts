@@ -1,6 +1,6 @@
 import { jobs, playbookRuns, type DbExec } from "@watchdog/db";
-import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
-import { testId, TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
+import type { CaseId, JobStatus } from "@watchdog/domain/schemas/shared";
+import { testId, TEST_ACTOR_ID } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import { at, inChoices } from "./types.ts";

@@ -2,10 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
-import type { ActivityItem } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
+import type { ActivityItem } from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (

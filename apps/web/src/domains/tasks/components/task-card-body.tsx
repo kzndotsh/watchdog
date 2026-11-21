@@ -10,7 +10,7 @@ import {
   taskPriorityShortLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 type TaskCardBodyProps = {
   task: TaskRecord;

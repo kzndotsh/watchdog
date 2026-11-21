@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { caseList } from "@watchdog/schemas/cases";
+import { caseList } from "@watchdog/domain/schemas/cases";
 
 import { cases } from "../schema/cases";
 import { defineListRepo } from "./_list-query";

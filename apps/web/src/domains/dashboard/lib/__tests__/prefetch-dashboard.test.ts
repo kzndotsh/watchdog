@@ -6,7 +6,7 @@ import { caseCountsQuery } from "@/domains/cases/queries";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { dueTasksQuery } from "@/domains/tasks/queries";
 import { pendingProposalsQuery } from "@/domains/triage/queries";
-import { activityList } from "@watchdog/schemas/feed";
+import { activityList } from "@watchdog/domain/schemas/feed";
 
 // Warm helpers fetch in the browser only; this node project stands in for it.
 beforeEach(() => {

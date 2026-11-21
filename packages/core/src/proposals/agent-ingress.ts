@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { graphWriteListRepo } from "@watchdog/db";
-import { graphWriteList, type PatchOp } from "@watchdog/schemas/graph";
+import { graphWriteList, type PatchOp } from "@watchdog/domain/schemas/graph";
 import {
   PAGE_LIMIT_DEFAULT,
   trimmedOrNull,
@@ -12,7 +12,7 @@ import {
   type ListInput,
   type ListPage,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { setHistoryContextEffect } from "../activity/graph-activity";
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";

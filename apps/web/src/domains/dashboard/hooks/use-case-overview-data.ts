@@ -24,7 +24,7 @@ import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
   evidenceIdsFromJobInputs,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 const NO_JOBS: JobListRecord[] = [];
 const NO_PROPOSALS: ProposalQueueItem[] = [];

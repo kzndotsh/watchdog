@@ -24,7 +24,7 @@ import { ListCount, ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { LoadingRegion, TableBodySkeletonLayout } from "@/shared/ui/skeletons";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
-import { trimmedEntityKindSchema } from "@watchdog/schemas/shared";
+import { trimmedEntityKindSchema } from "@watchdog/domain/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import { TableCell } from "@watchdog/ui/components/table";
 

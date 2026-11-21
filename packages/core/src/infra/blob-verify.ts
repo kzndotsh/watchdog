@@ -9,7 +9,10 @@ import {
 } from "@aws-sdk/client-s3";
 import { Effect, Stream } from "effect";
 
-import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas/shared";
+import {
+  MAX_UPLOAD_BYTES,
+  sha256HexSchema,
+} from "@watchdog/domain/schemas/shared";
 
 import {
   InternalError,

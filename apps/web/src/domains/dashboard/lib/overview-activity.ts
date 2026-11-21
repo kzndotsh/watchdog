@@ -11,7 +11,7 @@ import { searchJobHitLabel } from "@/domains/search/lib/hit-labels";
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalQueueItem } from "@watchdog/core/proposals";
-import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
+import { entityTitleMapForJobInputs } from "@watchdog/domain/schemas/jobs";
 
 /** What the feed reads of one Evidence item: its title parts and capture time. */
 export type ActivityEvidence = Pick<

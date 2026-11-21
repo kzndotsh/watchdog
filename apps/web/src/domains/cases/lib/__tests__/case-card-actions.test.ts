@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import type { CaseRecord } from "../../types.ts";
 import { caseCardActions } from "../case-card-actions.ts";

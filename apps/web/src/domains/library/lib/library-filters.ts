@@ -1,6 +1,6 @@
 import type { LibraryQuery } from "@/domains/library/lib/library-list";
 import type { LibraryEntry } from "@/domains/library/types";
-import { catalogIdMatchesSearch } from "@watchdog/schemas/cases";
+import { catalogIdMatchesSearch } from "@watchdog/domain/schemas/cases";
 
 /** Search over title, id (raw and humanized), provider names and description. */
 export function entryMatchesQuery(entry: LibraryEntry, query: string): boolean {

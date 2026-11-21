@@ -18,7 +18,7 @@ import {
   graphSnapshotSchema,
   graphWriteResultSchema,
   graphWritePageSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 import { actorLabelFromContext, graphActorFromContext } from "../actor-label";
 import { authed } from "../os";

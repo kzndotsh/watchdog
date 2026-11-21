@@ -5,7 +5,7 @@ import {
   PLAYBOOK_CATEGORY,
 } from "@/shared/lib/cap-category";
 import { isWorkScreen } from "@/shared/lib/case-path";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 import type { PageTrailInput, TrailItem } from "./page-trail.types";
 

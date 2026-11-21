@@ -1,7 +1,7 @@
 import { HeadObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { Effect } from "effect";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { InternalError } from "../errors/tagged-errors";
 import { CASE_EXPORT_PREFIX, deleteObjectKeysEffect } from "../infra/blob";

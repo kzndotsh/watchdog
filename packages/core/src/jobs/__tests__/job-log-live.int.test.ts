@@ -7,7 +7,8 @@ import { jobsRepo } from "@watchdog/db";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetActorAccess,
@@ -17,7 +18,6 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { outboundClientLayer } from "@watchdog/tools/http";
 

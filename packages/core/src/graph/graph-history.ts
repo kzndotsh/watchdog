@@ -7,19 +7,19 @@ import type {
   GraphHistoryEntry,
   GraphHistoryRowInput,
   GraphHistorySnapshot,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   graphHistoryList,
   graphHistorySnapshotSchema,
-} from "@watchdog/schemas/graph";
-import { opsOf } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   GraphHistoryKind,
   ListInput,
   ListPage,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   labelForActor,

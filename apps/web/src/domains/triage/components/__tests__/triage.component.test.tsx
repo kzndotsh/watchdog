@@ -11,9 +11,9 @@ import type {
   ProposalQueueItem,
   ProposalRecord,
 } from "@watchdog/core/proposals";
-import { proposalList } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,

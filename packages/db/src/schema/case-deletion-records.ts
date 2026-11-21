@@ -1,12 +1,12 @@
 import { sql } from "drizzle-orm";
 import { bigint, index, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import { CASE_DELETION_EVENTS } from "@watchdog/schemas/shared";
+import { CASE_DELETION_EVENTS } from "@watchdog/domain/schemas/shared";
 import type {
   CaseDeletionEvent,
   CaseId,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamptz, xid8 } from "./_helpers";
 import { organizationIsolation } from "./_organization-policy";

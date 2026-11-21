@@ -7,11 +7,11 @@ import {
   patchOpHeadline,
   type PatchOp,
   type PatchResource,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   proposalEntityName as coreProposalEntityName,
   proposalEntitySlug as coreProposalEntitySlug,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 /**
  * What the headline needs of a Proposal: a queue row (no patch, so no Entity name to fall back on)

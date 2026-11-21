@@ -1,6 +1,9 @@
 import { and, eq } from "drizzle-orm";
 
-import { type CaseId, trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  type CaseId,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { changesets } from "../schema/changesets";

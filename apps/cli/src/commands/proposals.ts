@@ -3,7 +3,7 @@ import { defineCommand } from "citty";
 import {
   createProposalInputSchema,
   proposalList,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 import { api, emit, emitList, truncText } from "../client";
 import {

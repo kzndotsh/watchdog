@@ -9,8 +9,11 @@ import {
 } from "@watchdog/core/errors";
 import { Db, outsideTransaction, transact, tryDb } from "@watchdog/core/infra";
 import { casesRepo, db } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 
 import { runDomain } from "../run-domain";

@@ -13,8 +13,8 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
-import { IDENTIFIER_TYPE_LABELS } from "@watchdog/schemas/shared";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
+import { IDENTIFIER_TYPE_LABELS } from "@watchdog/domain/schemas/shared";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
 type AddFoundValueDialogProps = {

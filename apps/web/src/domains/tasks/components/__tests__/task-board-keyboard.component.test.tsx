@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import type { TaskListItem } from "@/domains/tasks/types";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 // The real DndContext, sensors and sortable wiring: only the browser APIs jsdom lacks.
 class ResizeObserverMock {

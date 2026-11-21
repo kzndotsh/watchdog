@@ -16,7 +16,7 @@ import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { isInstanceAdminRole } from "@watchdog/schemas/shared";
+import { isInstanceAdminRole } from "@watchdog/domain/schemas/shared";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Spinner } from "@watchdog/ui/components/spinner";
 

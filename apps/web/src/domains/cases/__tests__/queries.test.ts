@@ -17,8 +17,8 @@ import {
 import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
 import { buildCaseRecord, buildDeletedCaseRecord } from "@/testing/records";
-import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { PAGE_LIMIT_MAX } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const getCase = procedureDouble("cases.get");
 const getCaseBySlug = procedureDouble("cases.getBySlug");

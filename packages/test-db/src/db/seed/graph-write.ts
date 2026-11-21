@@ -1,7 +1,7 @@
 import { setGraphHistoryContext, type DbExec } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import type { CaseId, ConfidenceTier } from "@watchdog/schemas/shared";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import type { CaseId, ConfidenceTier } from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit/fixtures";
 
 import { withCaseOrganizationScope } from "../organization-scope.ts";
 import { withSystemHistoryContext } from "../system-history-context.ts";

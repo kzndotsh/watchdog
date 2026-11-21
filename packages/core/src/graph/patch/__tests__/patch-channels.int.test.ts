@@ -9,7 +9,7 @@ import {
   evidenceLinksRepo,
   identifiersRepo,
 } from "@watchdog/db";
-import type { GraphActor } from "@watchdog/schemas/shared";
+import type { GraphActor } from "@watchdog/domain/schemas/shared";
 import {
   buildClaimCreateOp,
   buildEdgeCreateOp,
@@ -18,7 +18,8 @@ import {
   buildIdentifierCreateOp,
   buildQuestionCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   listAllGraphHistory,
@@ -27,7 +28,6 @@ import {
   withSystemTestTx,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { setHistoryContextEffect } from "../../../activity/graph-activity";
 import { inOrganization } from "../../../infra/organization-scope";

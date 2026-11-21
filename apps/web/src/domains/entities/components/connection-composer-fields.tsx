@@ -17,8 +17,8 @@ import {
   ENTITY_KINDS,
   parseEdgePhraseValue,
   parseOptionalTrimmedUuid,
-} from "@watchdog/schemas/shared";
-import type { EntityKind } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 

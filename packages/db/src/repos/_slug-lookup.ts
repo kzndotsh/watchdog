@@ -1,4 +1,4 @@
-import { slugifyName } from "@watchdog/schemas/shared";
+import { slugifyName } from "@watchdog/domain/schemas/shared";
 
 /** Slugify for WHERE lookups (getBySlug, listSlugsInCase); blank → miss. */
 export function slugForLookup(slug: string): string | undefined {

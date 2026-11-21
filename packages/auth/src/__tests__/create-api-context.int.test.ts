@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { account, client, db, member, organization, user } from "@watchdog/db";
-import { asOrganizationId } from "@watchdog/schemas/shared";
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { asOrganizationId } from "@watchdog/domain/schemas/shared";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 import { createApiContext } from "../api-context";
 import { createAuth } from "../create-auth";

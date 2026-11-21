@@ -1,6 +1,6 @@
 import type { DbExec } from "@watchdog/db";
-import type { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/domain/schemas/feed";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { GraphActivityKind } from "../../activity/graph-activity";
 import type { VersionedEntity } from "../../errors/tagged-errors";

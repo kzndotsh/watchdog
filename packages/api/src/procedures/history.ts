@@ -7,7 +7,7 @@ import {
   graphHistoryList,
   graphHistoryRowInputSchema,
   graphHistoryPageSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

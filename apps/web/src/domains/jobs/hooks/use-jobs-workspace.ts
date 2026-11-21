@@ -26,15 +26,18 @@ import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
-import { playbookSeedInputSchema } from "@watchdog/schemas/caps";
+import { playbookSeedInputSchema } from "@watchdog/domain/schemas/caps";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas/jobs";
-import { isLiveJobStatus, trimmedOrUndefined } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/jobs";
+import {
+  isLiveJobStatus,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
 
 const STUCK_JOB_MS = 60_000;
 

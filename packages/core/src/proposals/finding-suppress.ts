@@ -9,12 +9,12 @@ import {
   patchOpRelatedEntityIds,
   type PatchOp,
   type PatchOpOf,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   normalizeIdentifierPlatform,
   normalizeUuidList,
   type CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

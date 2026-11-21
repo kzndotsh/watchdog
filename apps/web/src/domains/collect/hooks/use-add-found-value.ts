@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useCreateIdentifier } from "@/domains/entities/identifiers/mutations";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 
 type AddFoundValueArgs = {
   readonly caseId: string;

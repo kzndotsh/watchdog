@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { TriageSearch } from "@/domains/triage/lib/triage-search";
 import { proposalByIdQuery, proposalListView } from "@/domains/triage/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { proposalList } from "@watchdog/schemas/jobs";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
 
 /**
  * Warm the URL's first queue page, and the selected Proposal when the URL names one (its Detail

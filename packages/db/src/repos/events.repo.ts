@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

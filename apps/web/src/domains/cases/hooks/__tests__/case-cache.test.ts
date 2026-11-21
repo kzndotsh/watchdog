@@ -8,7 +8,7 @@ import {
   casesKeys,
 } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const CASE: CaseRecord = {
   id: testCaseId(1),

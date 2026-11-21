@@ -1,4 +1,7 @@
-import { parseTrimmedUuid, trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  parseTrimmedUuid,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
 
 export const INVALID_COLLECT_ENTITY_SUMMARY = "Entity id is not a valid UUID";
 

@@ -21,20 +21,21 @@ import {
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
 import { createTaskEffect } from "@watchdog/core/tasks";
-import { graphHistoryList } from "@watchdog/schemas/graph";
-import { opsOf } from "@watchdog/schemas/shared";
+import { graphHistoryList } from "@watchdog/domain/schemas/graph";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   GraphHistoryKind,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   listAllGraphHistory,
   resetTestDb,
@@ -44,7 +45,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { encodeListCursor } from "../../infra/list-cursor";
 import { listPageSpec } from "../../infra/list-page";

@@ -6,7 +6,7 @@ import {
   TERMINAL_JOB_STATUSES,
   type JobStatus,
   type JobStopCause,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   allowedFromStatuses,

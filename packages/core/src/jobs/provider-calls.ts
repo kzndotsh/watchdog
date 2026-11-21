@@ -11,7 +11,7 @@ import type {
   CaseId,
   ProviderCallOutcome,
   ProvenanceState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   markCallsSaved,
   type BodyRecord,

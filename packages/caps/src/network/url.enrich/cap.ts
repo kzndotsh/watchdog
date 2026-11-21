@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   ENRICHED_MD_ARTIFACT,
   URL_ENRICH_CAPABILITY_ID,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   ValidationVendorError,
   upstreamDiagnostic,

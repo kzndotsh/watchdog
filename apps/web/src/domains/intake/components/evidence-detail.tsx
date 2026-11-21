@@ -53,12 +53,12 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 import {
   isLiveJobStatus,
   isOpenJobStatus,
   type EgressClass,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
 type DetailTab = "content" | "output" | "jobs" | "found" | "calls";

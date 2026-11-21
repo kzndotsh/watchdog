@@ -31,7 +31,7 @@ export function sqlLiteral(value: string): string {
 
 /**
  * A CHECK constraint that admits only `values`, for a column typed from the vocabulary module
- * (`text().$type<T>()`). The tuple is the one in `@watchdog/schemas`, so the database and the
+ * (`text().$type<T>()`). The tuple is the one in `@watchdog/domain/schemas`, so the database and the
  * schemas cannot drift: adding a value there changes the generated constraint, and
  * `pnpm check:migrations` fails until a migration carries the change. A nullable column keeps
  * NULL (`NULL IN (...)` is unknown, which a CHECK accepts). Use inside a table's constraints

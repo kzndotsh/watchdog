@@ -3,8 +3,12 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import type { ListAfter } from "@watchdog/db";
-import { CURSOR_MAX, parseIntRowId, URL_MAX } from "@watchdog/schemas/shared";
-import type { ListKeyType } from "@watchdog/schemas/shared";
+import {
+  CURSOR_MAX,
+  parseIntRowId,
+  URL_MAX,
+} from "@watchdog/domain/schemas/shared";
+import type { ListKeyType } from "@watchdog/domain/schemas/shared";
 
 import { InvalidError, StaleCursorError } from "../errors/tagged-errors";
 

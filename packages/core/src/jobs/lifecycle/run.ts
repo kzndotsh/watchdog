@@ -1,7 +1,7 @@
 import { Cause, Effect, Exit, Ref, Result } from "effect";
 
 import type { JobRow } from "@watchdog/db";
-import type { JobPivots } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect, nowMillisEffect } from "../../infra/clock";

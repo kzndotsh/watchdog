@@ -9,7 +9,7 @@ import {
   rememberLastCase,
   subscribeToLastCase,
 } from "@/domains/cases/lib/active-case";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 describe("the last Case entered", () => {
   afterEach(() => {

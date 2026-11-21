@@ -5,8 +5,8 @@ import {
   type EntityRow,
   type NewEntity,
 } from "@watchdog/db";
-import { slugifyName, type CaseId } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit/fixtures";
+import { slugifyName, type CaseId } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { withCaseOrganizationScope } from "../organization-scope.ts";
 import { withSystemHistoryContext } from "../system-history-context.ts";

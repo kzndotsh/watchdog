@@ -35,7 +35,7 @@ import {
   entityDisplayLabel,
   trimmedEntityKindSchema,
   type EntityKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The Entity an inline edit targets: its id and the `version` the table rendered it at, which the

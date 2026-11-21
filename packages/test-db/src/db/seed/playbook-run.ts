@@ -4,8 +4,8 @@ import {
   type NewPlaybookRun,
   type PlaybookRunRow,
 } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit/fixtures";
 
 import { withCaseOrganizationScope } from "../organization-scope.ts";
 

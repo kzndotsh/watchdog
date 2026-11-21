@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { InvalidError } from "../../errors/tagged-errors";
 import { parseValidatedCapInputEffect } from "../cap-input";

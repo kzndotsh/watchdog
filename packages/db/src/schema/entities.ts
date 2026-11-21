@@ -8,8 +8,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { ENTITY_KINDS } from "@watchdog/schemas/shared";
-import type { EntityKind, CaseId } from "@watchdog/schemas/shared";
+import { ENTITY_KINDS } from "@watchdog/domain/schemas/shared";
+import type { EntityKind, CaseId } from "@watchdog/domain/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
 import {

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { jobQueueTx, listPendingJobDeliveries, type DbTx } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";

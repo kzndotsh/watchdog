@@ -2,7 +2,7 @@ import { createServer, type Server } from "node:http";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { listenFetchable } from "@watchdog/test-kit";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { firstJson, runWd } from "../../__tests__/run-wd";
 

@@ -3,7 +3,7 @@ import {
   CONTROL_TRIGGER,
   resolveSelectValue,
 } from "@/shared/ui/control-chrome";
-import type { UntickedOpOutcome } from "@watchdog/schemas/jobs";
+import type { UntickedOpOutcome } from "@watchdog/domain/schemas/jobs";
 import {
   Select,
   SelectContent,

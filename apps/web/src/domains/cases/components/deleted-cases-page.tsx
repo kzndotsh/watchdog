@@ -5,8 +5,11 @@ import { deletionPolicyQuery } from "@/domains/cases/queries";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { InlineLoading } from "@/shared/ui/inline-loading";
-import type { deletedCaseList } from "@watchdog/schemas/cases";
-import type { ListSearch, ListSearchPatch } from "@watchdog/schemas/shared";
+import type { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import type {
+  ListSearch,
+  ListSearchPatch,
+} from "@watchdog/domain/schemas/shared";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 
 type DeletedCasesPageProps = {

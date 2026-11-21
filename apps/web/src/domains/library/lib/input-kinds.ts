@@ -1,6 +1,6 @@
 import type { CapConsumeItem } from "@/domains/jobs/types";
 import type { InputKindOption, LibraryEntry } from "@/domains/library/types";
-import type { PlaybookSeedKind } from "@watchdog/schemas/shared";
+import type { PlaybookSeedKind } from "@watchdog/domain/schemas/shared";
 
 /** The kinds an investigator names first; any other kind follows alphabetically. */
 const INPUT_KIND_ORDER: readonly string[] = [

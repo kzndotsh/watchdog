@@ -54,8 +54,8 @@ import {
   ConfidenceBadge,
   StatusBadge,
 } from "@/shared/ui/vocab";
-import type { claimList } from "@watchdog/schemas/graph";
-import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
+import type { claimList } from "@watchdog/domain/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 
 function evidenceTitleOf(

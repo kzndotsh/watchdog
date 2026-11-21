@@ -5,7 +5,7 @@ import {
   trimmedOrUndefined,
   type ListSearch,
   type ListSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** The category's short URL token: trimmed, blank is absent, junk is dropped. */
 const category = z

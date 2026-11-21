@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { jobList } from "@watchdog/schemas/jobs";
+import { jobList } from "@watchdog/domain/schemas/jobs";
 import {
   seedCase,
   seedJob,

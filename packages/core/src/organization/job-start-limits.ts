@@ -1,12 +1,12 @@
 import { Effect } from "effect";
 
-import { env } from "@watchdog/env/server";
 import {
   isInstanceAdminRole,
   type JobStartLimitState,
   type JobStartLimits,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { env } from "@watchdog/env/server";
 
 import {
   ForbiddenError,

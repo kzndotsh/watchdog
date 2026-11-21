@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { proposalList } from "@watchdog/schemas/jobs";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
 import {
   optionalUuidSchema,
   type ListSearch,
   type UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The Triage route's search (ADR-0007): the Proposal list's view (`status`, `q`, `sort`) plus the

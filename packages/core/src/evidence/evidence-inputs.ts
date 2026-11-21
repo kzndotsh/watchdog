@@ -1,5 +1,5 @@
 import type { DbTx } from "@watchdog/db";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 /** The inputs of the Evidence write services (`evidence.ts`). */
 export type DumpPasteInput = {

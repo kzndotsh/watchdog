@@ -3,8 +3,13 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import type { CaseId, JobStatus, JsonObject } from "@watchdog/schemas/shared";
-import { collectQueueReference } from "@watchdog/schemas/testing";
+import type {
+  CaseId,
+  JobStatus,
+  JsonObject,
+} from "@watchdog/domain/schemas/shared";
+import { collectQueueReference } from "@watchdog/domain/schemas/testing";
+import { fc } from "@watchdog/domain/test-kit/fc";
 import {
   collectQueueDiff,
   listCollectQueueStale,
@@ -15,7 +20,6 @@ import {
   seedEntity,
   testDb,
 } from "@watchdog/test-db";
-import { fc } from "@watchdog/test-kit/fc";
 
 import type { DbExec } from "../exec";
 

@@ -1,9 +1,9 @@
 import { ORPCError } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { SCOPES } from "@watchdog/schemas/shared";
-import type { Scope } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { SCOPES } from "@watchdog/domain/schemas/shared";
+import type { Scope } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import { resetTestDb, seedOrganizationMember, testDb } from "@watchdog/test-db";
 
 import { callProcedure, clientFor } from "./org-isolation-fixtures";

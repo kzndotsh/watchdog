@@ -7,12 +7,15 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { TASK_PRIORITIES, TASK_STATUSES } from "@watchdog/schemas/shared";
+import {
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+} from "@watchdog/domain/schemas/shared";
 import type {
   TaskPriority,
   TaskStatus,
   CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { attribution, timestamps, timestamptz } from "./_helpers";
 import { openTaskStatus } from "./_open-task";

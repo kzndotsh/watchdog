@@ -4,8 +4,8 @@ import {
   createQuestionInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-} from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("questions types schemas", () => {
   it("parses create and resolve question payloads", () => {

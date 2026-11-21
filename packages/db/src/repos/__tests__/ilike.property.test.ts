@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { fc } from "@watchdog/test-kit/fc";
+import { fc } from "@watchdog/domain/test-kit/fc";
 
 import { containsPattern } from "../_ilike.ts";
 

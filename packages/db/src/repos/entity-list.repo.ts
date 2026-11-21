@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList } from "@watchdog/domain/schemas/graph";
 
 import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";

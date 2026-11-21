@@ -8,7 +8,7 @@ import {
 } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { Toaster } from "@/shared/ui/toast";
-import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
+import { asCaseId, type CaseId } from "@watchdog/domain/schemas/shared";
 
 import {
   ACTIVE_CASE_SWITCH_ERROR,

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { createCapRunHarness, createRecordedRun } from "../../../testing";
 import { dnsReverse } from "../../dns.reverse/cap.ts";

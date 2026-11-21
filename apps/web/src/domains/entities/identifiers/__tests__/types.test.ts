@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   createIdentifierInputSchema,
   updateIdentifierInputSchema,
-} from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("identifiers types schemas", () => {
   it("defaults status to unknown and trims optional fields", () => {

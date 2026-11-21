@@ -11,7 +11,10 @@ import {
 } from "drizzle-orm";
 import type { Subquery } from "drizzle-orm";
 
-import { LIVE_JOB_STATUSES, type CaseId } from "@watchdog/schemas/shared";
+import {
+  LIVE_JOB_STATUSES,
+  type CaseId,
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";

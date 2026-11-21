@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
-import type { FoundValue } from "@watchdog/schemas/jobs";
-import type { JsonValue } from "@watchdog/schemas/shared";
+import type { FoundValue } from "@watchdog/domain/schemas/jobs";
+import type { JsonValue } from "@watchdog/domain/schemas/shared";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 import type { ToolsTag } from "@watchdog/tools/errors";
 

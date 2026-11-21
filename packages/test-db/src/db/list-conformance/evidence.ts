@@ -1,6 +1,6 @@
 import { evidence, type DbExec, type NewEvidence } from "@watchdog/db";
-import type { CaseId, EvidenceKind } from "@watchdog/schemas/shared";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit/fixtures";
+import type { CaseId, EvidenceKind } from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import { seedEntity } from "../seed/entity.ts";

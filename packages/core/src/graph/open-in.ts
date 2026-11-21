@@ -5,7 +5,7 @@ import {
   type OpenInDestination,
   type CaseId,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";

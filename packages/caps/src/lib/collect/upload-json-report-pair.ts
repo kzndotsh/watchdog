@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
 import type { CapArtifact } from "../../sdk";

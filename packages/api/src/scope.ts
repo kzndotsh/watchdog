@@ -4,8 +4,8 @@ import {
   credentialHasScope,
   insufficientScopeData,
   insufficientScopeMessage,
-} from "@watchdog/schemas/shared";
-import type { ApiCredential, Scope } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { ApiCredential, Scope } from "@watchdog/domain/schemas/shared";
 
 /** Throws the oRPC `FORBIDDEN` / `insufficient_scope` error when a key lacks `scope`. */
 export function assertScope(credential: ApiCredential, scope: Scope): void {

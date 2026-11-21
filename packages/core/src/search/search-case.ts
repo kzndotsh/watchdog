@@ -5,14 +5,14 @@ import type {
   JobWithPlaybook,
   ProposalWithCapability,
 } from "@watchdog/db";
-import { SEARCH_MIN_QUERY_LENGTH } from "@watchdog/schemas/cases";
+import { SEARCH_MIN_QUERY_LENGTH } from "@watchdog/domain/schemas/cases";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
   proposalEntityName,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import type {
   CaseId,
   EntityKind,
@@ -23,12 +23,12 @@ import type {
   OrganizationId,
   TaskPriority,
   TaskStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   entityDisplayLabel,
   pickPlaybookAggregateStatus,
   parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { getCaseByIdEffect } from "../cases/cases";
 import {

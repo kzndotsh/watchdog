@@ -4,7 +4,7 @@ import type {
   CaseDeletionEvent,
   CaseId,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { activity } from "../schema/activity";

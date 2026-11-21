@@ -24,7 +24,7 @@ A mock replaces something the code under test talks to. It earns its place only 
 
 | Boundary | How | Example |
 | --- | --- | --- |
-| Network and vendor clients | MSW through `@watchdog/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/tools/src/http/__tests__/page-enrich.test.ts` |
+| Network and vendor clients | MSW through `@watchdog/domain/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/tools/src/http/__tests__/page-enrich.test.ts` |
 | Database | A real Postgres through `@watchdog/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
 | Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `apps/worker/src/__tests__/maintenance.test.ts` |
 | Framework seams | The router, `window`, `EventSource`, the toast and auth server modules, through the shared doubles below | `apps/web/src/testing/` |
@@ -35,7 +35,7 @@ A mock replaces something the code under test talks to. It earns its place only 
 - **An internal module the code under test owns** (a sibling `lib/`, a helper, a child component, `@/app/lib/query-invalidation`). Call it. If it is slow or awkward to call, the design is the problem: move the seam to a real boundary or lift the test one tier.
 - **A data-fetching hook** (`useQuery`, `useMutation`, `useSuspenseQuery`, a domain `use*` query hook). Render under a real `QueryClientProvider` (`createAppQueryClient()`) and fake only the procedure the query function calls (`procedureDouble`). A faked hook cannot see a wrong key, a wrong invalidation or an optimistic-update bug.
 - **A query key.** Import the key factory from the domain's `queries.ts` (`jobsKeys`, `casesKeys`, ...) and use it in the assertion. A key copied into a test or a mock factory stays green when the real key changes: that is the defect to avoid.
-- **A custody or policy rule** (`@watchdog/policy`, `acceptGate`). Run the real rule; assert its outcome.
+- **A custody or policy rule** (`@watchdog/domain/policy`, `acceptGate`). Run the real rule; assert its outcome.
 
 **Effect services:** prefer a test double built as a Layer (`Layer.succeed(Service, impl)`, `Db.layerOf(exec)`, `BlobStore` layers) over `vi.mock` of the module that exports the service. The layer is typed against the service interface, so a changed interface fails the typecheck instead of slipping through. Provide it with `runDomainWith(layer)(effect)` or `it.effect`.
 
@@ -86,13 +86,13 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `*.compiled.test.tsx` | Small: as `*.component.test.tsx`, transformed by React Compiler (`component-compiled` project). Use it only when the bug needs the memoization; a stale cell or skipped re-render passes in `component` |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
-## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `packages/caps/src/testing`)
+## Helpers (`@watchdog/domain/test-kit`, `@watchdog/test-db`, `@watchdog/domain/schemas/testing`, `packages/caps/src/testing`)
 
 | Prefix / name | Meaning |
 | --- | --- |
-| `build*` | Pure in-memory value (`@watchdog/schemas/testing`) |
+| `build*` | Pure in-memory value (`@watchdog/domain/schemas/testing`) |
 | `seed*` | Persist via real repos, from `@watchdog/test-db` (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
-| `testId(seed)` | From `@watchdog/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
+| `testId(seed)` | From `@watchdog/domain/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
 | `withTestTx(fn)` | Always-rollback transaction |
 | `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*`. The integration project's `scripts/vitest/settle-export-writes.ts` waits after every test for detached Export writes, so a reset never deadlocks against their reads (#379); a test never needs its own wait |
 | `expectQueries` / `captureStatements` / `expectNoSeqScanOn` | Statement-count budget and `EXPLAIN` assertions ([below](#query-count-budgets-and-plan-assertions)) |
@@ -100,12 +100,12 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `expect*` | Assert inside an existing `it` (Cap helpers in `packages/caps/src/testing`) |
 | `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`; `packages/caps/src/testing`) |
 | `createCapRunHarness` | Fake `CapContext` (upload / credentials) for Cap `run()` |
-| `mockServer` / `mockJson` / `http` | MSW via `@watchdog/test-kit/http` |
+| `mockServer` / `mockJson` / `http` | MSW via `@watchdog/domain/test-kit/http` |
 | `listenFetchable(server, host?)` | Listen a real test server on a free loopback port that `fetch` will call; never `listen(0)` directly (an ephemeral port on the fetch bad-port list fails every request to it, where the OS port range starts low) |
 
 Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/URLs live in test-kit; helpers that need a workspace package live with it (see above).
 
-Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Row-level security ([`custody`](../../reference/contracts/custody.md#organization-isolation)) shows the application role no row of a Case-scoped table without an organization: `testDb` and `withTestTx` are in `TEST_ORGANIZATION_ID`'s scope, another organization's rows need `withOrganizationScope`, `withCaseOrganizationScope`, `withJobOrganizationScope` or `insertCasesInScope` (the seeds scope themselves to their Case's organization; `listAllActivity` and `listAllGraphHistory` read every organization as the owner), a core stage called directly (not through its Job run) needs a scoped pool (`Db.layerOf(testDb)`), and the raw `db` from `@watchdog/db` is unscoped (it sees nothing, like a path that forgot its scope). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
+Import `fc` from `@watchdog/domain/test-kit/fc` (and `testId` from `@watchdog/domain/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Row-level security ([`custody`](../../reference/contracts/custody.md#organization-isolation)) shows the application role no row of a Case-scoped table without an organization: `testDb` and `withTestTx` are in `TEST_ORGANIZATION_ID`'s scope, another organization's rows need `withOrganizationScope`, `withCaseOrganizationScope`, `withJobOrganizationScope` or `insertCasesInScope` (the seeds scope themselves to their Case's organization; `listAllActivity` and `listAllGraphHistory` read every organization as the owner), a core stage called directly (not through its Job run) needs a scoped pool (`Db.layerOf(testDb)`), and the raw `db` from `@watchdog/db` is unscoped (it sees nothing, like a path that forgot its scope). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
 Do not add tests for generated client JSON, `packages/ui` (generated primitives), pass-through query wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
 

@@ -40,10 +40,10 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | `*.server.ts` is never imported from client components, `lib/`, or `hooks/` | `guidance` (Start's import protection may fail a client build) |
 | Domains with RPC inputs keep Zod in `types.ts`; DTO and form-value types never live in `components/` | `guidance` |
 | Domains with server lists keep `queries.ts` and invalidate through `app/lib/query-invalidation.ts` | `guidance` |
-| Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
-| Client code imports the `@watchdog/policy` subpaths (`@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence`), never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
+| Predicate, confidence, and kind options come from `@watchdog/domain/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
+| Client code imports the `@watchdog/domain/policy` subpaths (`@watchdog/domain/policy/patch-needs-confidence`, `@watchdog/domain/policy/confirmed-evidence`), never the `@watchdog/domain/policy` barrel (Effect stays off the client) | `guidance` |
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
-| Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance` |
+| Types come from `@watchdog/domain/schemas` or the domain `types.ts` | `guidance` |
 | An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
 | `shared/**` imports no domain, app or route (any import form, tests included) | `watchdog/shared-no-upward-imports` |
 | No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` |

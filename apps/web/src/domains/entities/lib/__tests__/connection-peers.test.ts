@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildCaseEdgeRecord } from "@/testing/records";
-import { testId } from "@watchdog/test-kit/fixtures";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { edgeFromEntity } from "../connection-peers.ts";
 

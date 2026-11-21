@@ -2,7 +2,7 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 import type { AnyColumn } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import { FEED_ACTIONS } from "@watchdog/schemas/feed";
+import { FEED_ACTIONS } from "@watchdog/domain/schemas/feed";
 
 import { activity } from "../schema/activity";
 import { cases } from "../schema/cases";

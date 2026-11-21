@@ -5,13 +5,13 @@ import type { DbExec, EvidenceRow } from "@watchdog/db";
 import {
   inlineImageMime,
   type evidenceSchema,
-} from "@watchdog/schemas/evidence";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/evidence";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 import {
   parseTrimmedUuid,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

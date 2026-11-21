@@ -8,7 +8,7 @@ vi.mock("@/lib/orpc-client", async () =>
 );
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,

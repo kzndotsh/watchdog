@@ -9,9 +9,9 @@ import {
   type JobRow,
   type NewJob,
 } from "@watchdog/db";
-import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
-import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
+import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/domain/schemas/feed";
+import type { CaseId, JobStatus } from "@watchdog/domain/schemas/shared";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue";
 import {

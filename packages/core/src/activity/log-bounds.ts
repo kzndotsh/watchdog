@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   compareActivityCursor,
   type ActivityCursor,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

@@ -1,7 +1,7 @@
 import { foreignKey, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import { QUESTION_STATUSES } from "@watchdog/schemas/shared";
-import type { CaseId, QuestionStatus } from "@watchdog/schemas/shared";
+import { QUESTION_STATUSES } from "@watchdog/domain/schemas/shared";
+import type { CaseId, QuestionStatus } from "@watchdog/domain/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
 import {

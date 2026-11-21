@@ -1,6 +1,6 @@
 import { changesets, type DbExec } from "@watchdog/db";
-import type { CaseId, ConfidenceTier } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit/fixtures";
+import type { CaseId, ConfidenceTier } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import { at, inChoices } from "./types.ts";

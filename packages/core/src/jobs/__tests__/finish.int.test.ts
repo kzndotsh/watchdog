@@ -5,7 +5,7 @@ import { requireCapability } from "@watchdog/caps";
 import { Db, runDomain, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue, cancelJobEffect } from "@watchdog/core/jobs";
 import { jobsRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   listCaseEvidence,
   resetTestDb,

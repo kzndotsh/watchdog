@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { jobList } from "@watchdog/schemas/jobs";
+import { jobList } from "@watchdog/domain/schemas/jobs";
 
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";

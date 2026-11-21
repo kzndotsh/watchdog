@@ -7,8 +7,8 @@
 import { eq, isNull } from "drizzle-orm";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import { evidenceList } from "@watchdog/schemas/evidence";
-import type { CaseId, EvidenceKind } from "@watchdog/schemas/shared";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import type { CaseId, EvidenceKind } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../../exec";
 import { entities } from "../../schema/entities";

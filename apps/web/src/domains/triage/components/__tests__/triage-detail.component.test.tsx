@@ -8,8 +8,8 @@ vi.mock("@/lib/orpc-client", async () =>
 );
 
 import { buildEvidenceRecord, buildProposalRecord } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/domains/triage/components/triage-decide-header", () => ({
   TriageDecideHeader: () => <div>Triage decide header</div>,

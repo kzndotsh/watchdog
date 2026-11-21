@@ -2,17 +2,17 @@ import type { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import type { z } from "zod";
 
-import type { CapContact } from "@watchdog/schemas/caps";
-import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import type { FoundValue } from "@watchdog/schemas/jobs";
+import type { CapContact } from "@watchdog/domain/schemas/caps";
+import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import type { FoundValue } from "@watchdog/domain/schemas/jobs";
 import type {
   CaseId,
   EvidenceKind,
   IdentifierType,
   JobPivots,
   JsonValue,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   BreachCredentialMode,
   CredentialFingerprint,

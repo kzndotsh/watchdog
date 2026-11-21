@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 import { EntityKindIcon } from "@/shared/ui/vocab/entity-kind-icon";
 import type { EntityKindIconSize } from "@/shared/ui/vocab/kind.lib";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { ENTITY_KIND_LABELS } from "@watchdog/schemas/shared";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import { ENTITY_KIND_LABELS } from "@watchdog/domain/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 type EntityKindGlyphProps = {
   kind: EntityKind;

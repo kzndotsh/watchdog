@@ -4,7 +4,7 @@ import type { DbExec } from "@watchdog/db";
 import type {
   JobStartLimitScope,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { JobStartLimitError, type DomainTag } from "../errors/tagged-errors";
 import {

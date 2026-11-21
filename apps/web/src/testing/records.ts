@@ -30,8 +30,8 @@ import type {
   ProposalRecord,
 } from "@watchdog/core/proposals";
 import type { TaskListItem } from "@watchdog/core/tasks";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 /**
  * In-memory record builders for web tests: one valid default per record, any field

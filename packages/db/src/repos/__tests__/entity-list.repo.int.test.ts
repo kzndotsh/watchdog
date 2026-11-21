@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList } from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 import { seedCase, seedEntity, withSystemTestTx } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { edgesRepo } from "../edges.repo.ts";
 import { entityListRepo } from "../entity-list.repo.ts";

@@ -10,8 +10,8 @@
 import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 
 import { enforceBodyLimit } from "@/lib/body-limit.server";
+import { REQUEST_BODY_MAX_BYTES } from "@watchdog/domain/schemas/shared";
 import { createLogger } from "@watchdog/log";
-import { REQUEST_BODY_MAX_BYTES } from "@watchdog/schemas/shared";
 
 /**
  * Read by `scripts/serve.mjs` from the build output, which knip does not follow.

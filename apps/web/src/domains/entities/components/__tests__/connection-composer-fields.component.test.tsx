@@ -6,9 +6,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ConnectionComposerFields } from "@/domains/entities/components/connection-composer-fields";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildEntityRecord } from "@/testing/records";
-import { edgePhraseValue } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { edgePhraseValue } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

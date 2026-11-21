@@ -4,8 +4,8 @@ import { Readable } from "node:stream";
 import { Deferred, Effect, Exit, Fiber } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { MAX_UPLOAD_BYTES } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { MAX_UPLOAD_BYTES } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import { sha256Hex, verifyUploadedObjectEffect } from "../blob";
 import { recordingBlobStore } from "../blob-store";

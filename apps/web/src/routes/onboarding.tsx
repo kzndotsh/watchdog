@@ -13,7 +13,7 @@ import { CreateOrganizationForm } from "@/domains/organization/components/create
 import { useReloadIntoOrganization } from "@/domains/organization/hooks/use-reload-into-organization";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { Button } from "@/shared/ui/primitives/button";
-import { isInstanceAdminRole } from "@watchdog/schemas/shared";
+import { isInstanceAdminRole } from "@watchdog/domain/schemas/shared";
 import {
   Card,
   CardContent,

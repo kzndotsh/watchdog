@@ -2,7 +2,8 @@ import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { client } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   expectPostgresRefusal,
   PG_CHECK_VIOLATION,
@@ -13,7 +14,6 @@ import {
   seedJob,
   withSystemTestTx,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import type { DbTx } from "../exec";
 import { vocabChecks } from "../schema/vocab-checks";
@@ -21,7 +21,7 @@ import { insertRawRow, type RawRow } from "./helpers/raw-rows";
 
 /*
  * Vocabulary CHECK constraints (#302). The constraint for each vocabulary column is generated from
- * the tuple in `@watchdog/schemas` (`vocabCheck`); these tests prove the database enforces what the
+ * the tuple in `@watchdog/domain/schemas` (`vocabCheck`); these tests prove the database enforces what the
  * code says:
  *   - drift: the constraint Postgres holds names exactly the values the code lists, so a value
  *     added to a tuple without a migration fails here (and `pnpm check:migrations` fails too);

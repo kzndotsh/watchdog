@@ -7,14 +7,14 @@ import type {
   ProposalQueueListRow,
   ProposalRow,
 } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
-import { proposalList } from "@watchdog/schemas/jobs";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import { patchOpRelatedEntityIds } from "@watchdog/domain/schemas/graph";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
 import type {
   proposalQueueItemSchema,
   proposalSchema,
   UntickedOpOutcome,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import type {
   CaseId,
   ConfidenceTier,
@@ -22,14 +22,14 @@ import type {
   GraphActor,
   ListInput,
   ListPage,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   PAGE_LIMIT_DEFAULT,
   normalizeUuidList,
   parseGraphUuidList,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import { setHistoryContextEffect } from "../activity/graph-activity";

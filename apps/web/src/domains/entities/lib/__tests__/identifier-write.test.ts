@@ -4,7 +4,7 @@ import {
   buildCreateIdentifierData,
   buildUpdateIdentifierData,
 } from "@/domains/entities/lib/identifier-write";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("buildCreateIdentifierData", () => {
   it("trims value and normalizes evidence ids", () => {

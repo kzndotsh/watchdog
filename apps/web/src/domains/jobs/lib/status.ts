@@ -6,7 +6,7 @@ import {
   type JobStatus,
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Trim playbook run id; blank / whitespace → null. */
 export function normalizedPlaybookRunId(

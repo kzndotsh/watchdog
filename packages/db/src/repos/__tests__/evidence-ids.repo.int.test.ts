@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { jobList } from "@watchdog/schemas/jobs";
-import { untrustedCaseId } from "@watchdog/schemas/testing";
+import { jobList } from "@watchdog/domain/schemas/jobs";
+import { untrustedCaseId } from "@watchdog/domain/schemas/testing";
 import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,

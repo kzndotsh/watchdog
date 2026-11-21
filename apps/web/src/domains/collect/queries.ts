@@ -11,7 +11,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { GC_REALTIME, STALE_REALTIME } from "@/shared/lib/query-stale";
 import type { CollectQueueItem } from "@watchdog/core/jobs";
-import { collectList } from "@watchdog/schemas/jobs";
+import { collectList } from "@watchdog/domain/schemas/jobs";
 
 export type CollectListScope = { readonly caseId: string };
 

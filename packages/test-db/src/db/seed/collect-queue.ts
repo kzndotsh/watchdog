@@ -5,13 +5,13 @@ import {
   playbookRuns,
   type DbExec,
 } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   COLLECT_FIXTURE_EVIDENCE,
   COLLECT_FIXTURE_JOBS,
   COLLECT_FIXTURE_RUNS,
-} from "@watchdog/schemas/testing";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue";
 
@@ -24,7 +24,7 @@ function maybeAt(micros: number | null): Date | null {
 }
 
 /**
- * Seed Collect's 12-case fixture (`@watchdog/schemas/testing`) into `caseId`, then flush the
+ * Seed Collect's 12-case fixture (`@watchdog/domain/schemas/testing`) into `caseId`, then flush the
  * queue. Direct inserts, not repos: the fixture fixes every id and time (created, started,
  * finished, captured, hidden), which no repo accepts. Parents first (runs, Evidence, Jobs in
  * retry order), then the landing links in order.

@@ -9,7 +9,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/shared/ui/primitives/combobox";
-import type { TagsFilter } from "@watchdog/schemas/shared";
+import type { TagsFilter } from "@watchdog/domain/schemas/shared";
 
 type FilterTagsControlProps = {
   readonly filter: TagsFilter;

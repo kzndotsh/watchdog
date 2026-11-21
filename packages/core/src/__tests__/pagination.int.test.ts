@@ -27,9 +27,9 @@ import {
   questionsRepo,
   tasksRepo,
 } from "@watchdog/db";
-import { caseList } from "@watchdog/schemas/cases";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { taskList } from "@watchdog/schemas/feed";
+import { caseList } from "@watchdog/domain/schemas/cases";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { taskList } from "@watchdog/domain/schemas/feed";
 import {
   claimList,
   edgeList,
@@ -38,17 +38,18 @@ import {
   graphWriteList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
-import { jobList, proposalList } from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/graph";
+import { jobList, proposalList } from "@watchdog/domain/schemas/jobs";
 import {
   CURSOR_MAX,
   NAME_MAX,
   PAGE_LIMIT_DEFAULT,
   PAGE_LIMIT_MAX,
   URL_MAX,
-} from "@watchdog/schemas/shared";
-import type { CaseId, Page } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/shared";
+import type { CaseId, Page } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -61,7 +62,6 @@ import {
   withSystemHistoryContext,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 type Ctx = { caseId: CaseId; entityId: string };
 type Req = { cursor?: string | undefined; limit?: number | undefined };

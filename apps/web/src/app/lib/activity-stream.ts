@@ -4,7 +4,7 @@ import {
   parseActivityCursor,
   type ActivityCursor,
   type ActivityEntry,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 
 /**
  * The one organization-wide activity stream (ADR-0005 decision 6): a single

@@ -13,8 +13,8 @@ import {
   JOB_STATUSES,
   TERMINAL_JOB_STATUSES,
   type JobStatus,
-} from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   listAllActivity,
   resetTestDb,

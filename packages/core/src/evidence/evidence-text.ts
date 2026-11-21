@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";

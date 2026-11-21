@@ -1,9 +1,12 @@
 import { createRouterClient, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testApiKey } from "@watchdog/schemas/testing";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  testApiKey,
+} from "@watchdog/domain/schemas/testing";
 import {
   resetTestDb,
   seedCase,

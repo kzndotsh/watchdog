@@ -1,7 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
-import { OPEN_TASK_STATUSES } from "@watchdog/schemas/shared";
+import { OPEN_TASK_STATUSES } from "@watchdog/domain/schemas/shared";
 
 import { sqlLiteral } from "./_vocab";
 

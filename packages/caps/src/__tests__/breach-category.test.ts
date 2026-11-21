@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/schemas/caps";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
+import { DEFAULT_ALLOWED_EGRESS } from "@watchdog/domain/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
 
 import {
   CAPABILITIES,

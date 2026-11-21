@@ -10,19 +10,19 @@ import {
   type DbTx,
   type DeletedCaseRow,
 } from "@watchdog/db";
-import { deletedCaseList } from "@watchdog/schemas/cases";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
 import type {
   deletedCaseSchema,
   deletionPolicySchema,
   restoredCaseSchema,
-} from "@watchdog/schemas/cases";
+} from "@watchdog/domain/schemas/cases";
 import {
   PAGE_LIMIT_DEFAULT,
   type CaseId,
   type ListInput,
   type ListPage,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";

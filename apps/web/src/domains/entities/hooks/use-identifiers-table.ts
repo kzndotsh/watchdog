@@ -18,8 +18,11 @@ import { useListTable } from "@/shared/hooks/list/use-list-table";
 import { copyText } from "@/shared/hooks/use-copy-text";
 import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
 import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
-import type { identifierList } from "@watchdog/schemas/graph";
-import type { ListSearch, UnfixedSearchPatch } from "@watchdog/schemas/shared";
+import type { identifierList } from "@watchdog/domain/schemas/graph";
+import type {
+  ListSearch,
+  UnfixedSearchPatch,
+} from "@watchdog/domain/schemas/shared";
 
 import { useIdentifiersTableComposer } from "./use-identifiers-table-composer";
 import { useIdentifiersTableMutations } from "./use-identifiers-table-mutations";

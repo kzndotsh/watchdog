@@ -17,8 +17,8 @@ import {
   isProcessCapability,
   URL_ENRICH_CAPABILITY_ID,
   summarizeJobInput,
-} from "@watchdog/schemas/jobs";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/jobs";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 
 export function classifyRun(job: JobListRecord): CollectRunRole {
   if (job.playbookStep !== null && job.playbookStep !== undefined) {

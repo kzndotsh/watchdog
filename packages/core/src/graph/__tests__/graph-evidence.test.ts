@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy";
-import { CONFIDENCE_TIERS } from "@watchdog/schemas/shared";
-import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy";
+import { CONFIDENCE_TIERS } from "@watchdog/domain/schemas/shared";
+import { testCaseId, untrustedCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { InvalidError } from "../../errors/tagged-errors";
 import { runDomain } from "../../infra/run-domain";

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import type { ListTotal } from "@watchdog/schemas/shared";
+import type { ListTotal } from "@watchdog/domain/schemas/shared";
 
 /** "and 12 more" / "and 990+ more" under the list, from the read's capped total. */
 function moreLabel(shown: number, total: ListTotal | undefined): string | null {

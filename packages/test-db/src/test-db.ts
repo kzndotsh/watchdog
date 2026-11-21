@@ -1,5 +1,5 @@
 import { db, organizationScopedDb } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 
 /**
  * The shared test connection: tests import it from here so api and caps never depend on

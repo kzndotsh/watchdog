@@ -17,13 +17,14 @@ import {
   proposals,
   proposalsRepo,
 } from "@watchdog/db";
-import { fingerprintPatchOp } from "@watchdog/schemas/graph";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { fingerprintPatchOp } from "@watchdog/domain/schemas/graph";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 import {
   buildClaimCreateOp,
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   listCaseEvidence,
   resetTestDb,
@@ -34,7 +35,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("acceptProposal", () => {
   beforeEach(async () => {

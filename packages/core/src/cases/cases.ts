@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import { caseListRepo, casesRepo } from "@watchdog/db";
-import { normalizeAllowedEgress } from "@watchdog/schemas/caps";
-import { caseList } from "@watchdog/schemas/cases";
+import { normalizeAllowedEgress } from "@watchdog/domain/schemas/caps";
+import { caseList } from "@watchdog/domain/schemas/cases";
 import {
   PAGE_LIMIT_DEFAULT,
   slugifyName,
@@ -14,7 +14,7 @@ import {
   type GraphActor,
   type ListInput,
   type ListPage,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   appendGraphActivityEffect,

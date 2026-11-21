@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { asOrganizationId } from "@watchdog/schemas/shared";
+import { asOrganizationId } from "@watchdog/domain/schemas/shared";
 import { withTestTx } from "@watchdog/test-db";
 
 import {

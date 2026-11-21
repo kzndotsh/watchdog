@@ -11,8 +11,8 @@ import { couldnt, errMessage } from "@/lib/utils";
 import {
   attachEvidenceEntityInputSchema,
   processEvidenceInputSchema,
-} from "@watchdog/schemas/evidence";
-import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/domain/schemas/graph";
 
 type IntakePending = null | {
   kind: "harvest" | "extract" | "enrich";

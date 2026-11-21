@@ -59,14 +59,27 @@ async function walkTs(dir) {
 }
 
 /**
- * Every `src` tree under `packages/*` and `apps/*`.
+ * Every `src` tree under `packages/*` and `apps/*`, and one level down (`packages/server/core/src`).
  * @returns {Promise<string[]>}
  */
 async function sourceRoots() {
   const perParent = await Promise.all(
     ["packages", "apps"].map(async (parent) => {
       const names = await readdir(path.join(root, parent)).catch(() => []);
-      return names.map((name) => path.join(root, parent, name, "src"));
+      const nested = await Promise.all(
+        names.map(async (name) => {
+          const subs = await readdir(path.join(root, parent, name), {
+            withFileTypes: true,
+          }).catch(() => []);
+          return subs
+            .filter((sub) => sub.isDirectory() && sub.name !== "node_modules")
+            .map((sub) => path.join(root, parent, name, sub.name, "src"));
+        })
+      );
+      return [
+        ...names.map((name) => path.join(root, parent, name, "src")),
+        ...nested.flat(),
+      ];
     })
   );
   return perParent.flat();

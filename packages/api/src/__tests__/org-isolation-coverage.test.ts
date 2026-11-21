@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { SCOPES } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+import { SCOPES } from "@watchdog/domain/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { router } from "../router";
 import { foreignCaseAttacks } from "./org-isolation-case-attacks";

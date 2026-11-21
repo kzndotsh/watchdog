@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import { fetch as undiciFetch } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { listenFetchable } from "@watchdog/test-kit";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { BlockedTargetError } from "../../errors/tagged-errors";
 import { createOutboundTransport, createSafeFetch } from "../safe-fetch";

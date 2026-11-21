@@ -32,11 +32,11 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import type { ActivityEntryKind } from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import type { ActivityEntryKind } from "@watchdog/domain/schemas/feed";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import { seedCase, seedEntity, testDb as db } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 /**
  * The registry of Graph, Case and Task mutations (ADR-0005 S4): every mutation a caller can

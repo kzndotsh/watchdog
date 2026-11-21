@@ -1,7 +1,7 @@
 import { APIError } from "better-auth/api";
 
-import { scopesToPermissions } from "@watchdog/schemas/shared";
-import type { OrganizationId, Scope } from "@watchdog/schemas/shared";
+import { scopesToPermissions } from "@watchdog/domain/schemas/shared";
+import type { OrganizationId, Scope } from "@watchdog/domain/schemas/shared";
 
 /**
  * What `createScopedApiKey` needs of the Better Auth instance: its trusted (header-less)

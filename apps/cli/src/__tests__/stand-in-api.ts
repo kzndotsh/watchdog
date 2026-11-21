@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 
-import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { resetCliEnvForTests } from "../env";
 

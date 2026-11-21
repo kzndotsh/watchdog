@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { asCaseId, TASK_STATUSES } from "@watchdog/schemas/shared";
+import { asCaseId, TASK_STATUSES } from "@watchdog/domain/schemas/shared";
 
 import type { TaskRecord } from "../../types.ts";
 import {

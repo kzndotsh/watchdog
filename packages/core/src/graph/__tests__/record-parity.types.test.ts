@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 /**
- * Type test (#663): a Graph record's shape is owned by its `@watchdog/schemas/graph` schema.
+ * Type test (#663): a Graph record's shape is owned by its `@watchdog/domain/schemas/graph` schema.
  * Each core record type equals the schema's `z.output`, and each row mapper returns exactly it,
  * so a field added to a schema fails here (or in the mapper) until core fills it. `pnpm
  * typecheck` compiles this file; the runtime assertion only keeps vitest honest.
@@ -17,7 +17,7 @@ import type {
   eventSchema,
   identifierSchema,
   questionSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 import type {
   CaseEdgeRecord,

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
 import { couldnt } from "@/lib/utils";
-import type { CreateApiKeyInput } from "@watchdog/schemas/shared";
+import type { CreateApiKeyInput } from "@watchdog/domain/schemas/shared";
 
 /** What the create endpoint answers: the plaintext key, shown once. */
 export type CreatedApiKey = { id: string; name: string | null; key: string };

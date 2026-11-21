@@ -3,7 +3,7 @@ import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { IdentifiersPage } from "@/domains/entities/components/identifiers-page";
 import { warmIdentifiersQueries } from "@/domains/entities/lib/prefetch-identifiers";
 import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
-import { identifierList } from "@watchdog/schemas/graph";
+import { identifierList } from "@watchdog/domain/schemas/graph";
 
 /** The Identifiers table's view (ADR-0007): filters, `q` and sort, a bad value dropped. */
 const identifiersSearchSchema = identifierList.searchWith({});

@@ -89,7 +89,7 @@ const PASS_CASES = {
   "orpc-namespace-shadowed":
     'import * as server from "@orpc/server";\n\nexport const f = (server: { os: number }) => server.os;\n',
   "unrelated-barrel-pub":
-    'import { pub } from "../schemas";\nimport { pub as p2 } from "@watchdog/schemas";\n\nexport const a = [pub, p2];\n',
+    'import { pub } from "../schemas";\nimport { pub as p2 } from "@watchdog/domain/schemas";\n\nexport const a = [pub, p2];\n',
   "helper-file":
     'import { resolveAuthMethod } from "../os";\n\nexport const kind = resolveAuthMethod;\n',
   "orpc-namespace-other":

@@ -1,7 +1,7 @@
 import { and, arrayOverlaps, desc, eq, inArray, isNull } from "drizzle-orm";
 
-import { collectList } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { collectList } from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { collectQueue, collectQueueMember } from "../schema/collect-queue";

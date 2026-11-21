@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 
 import { evidenceUploads, type DbExec } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { withCaseOrganizationScope } from "../organization-scope.ts";
 

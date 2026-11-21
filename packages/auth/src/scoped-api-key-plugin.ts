@@ -1,7 +1,7 @@
 import { createAuthEndpoint, sessionMiddleware } from "better-auth/api";
 
 import type { DbExec } from "@watchdog/db";
-import { createApiKeyInputSchema } from "@watchdog/schemas/shared";
+import { createApiKeyInputSchema } from "@watchdog/domain/schemas/shared";
 
 import { resolveActorOrganizationId } from "./actor";
 import {

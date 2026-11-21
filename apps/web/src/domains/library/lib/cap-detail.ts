@@ -11,7 +11,7 @@ import {
   playbookInputKinds,
 } from "@/domains/library/lib/input-kinds";
 import type { CommercialUse } from "@/domains/library/types";
-import { egressDestinations } from "@watchdog/schemas/caps";
+import { egressDestinations } from "@watchdog/domain/schemas/caps";
 
 export const COMMERCIAL_USE_LABELS: Record<CommercialUse, string> = {
   allowed: "Allowed",

@@ -4,7 +4,7 @@ import {
   locateCollectInputSchema,
   collectListPageSchema,
   collectLocatedSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

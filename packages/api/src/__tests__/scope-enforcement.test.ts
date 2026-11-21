@@ -2,9 +2,9 @@ import { createRouterClient } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { requireScope } from "@watchdog/schemas/shared";
-import type { ApiCredential } from "@watchdog/schemas/shared";
-import { testActor, testApiKey } from "@watchdog/schemas/testing";
+import { requireScope } from "@watchdog/domain/schemas/shared";
+import type { ApiCredential } from "@watchdog/domain/schemas/shared";
+import { testActor, testApiKey } from "@watchdog/domain/schemas/testing";
 
 import { authed, pub, sessionAuthed } from "../os";
 

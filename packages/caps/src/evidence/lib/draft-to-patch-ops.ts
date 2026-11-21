@@ -1,13 +1,16 @@
 import { randomUUID } from "node:crypto";
 
 import { isEmptyDraft, type ProcessExtractDraft } from "@watchdog/ai";
-import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
+import {
+  validateIdentifierWrite,
+  type PatchOp,
+} from "@watchdog/domain/schemas/graph";
 import {
   normalizeIdentifierPlatform,
   parseTrimmedUuid,
   trimmedOrUndefined,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   INVALID_COLLECT_ENTITY_SUMMARY,

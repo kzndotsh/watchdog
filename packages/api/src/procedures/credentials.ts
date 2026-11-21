@@ -8,11 +8,11 @@ import {
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,
-} from "@watchdog/schemas/caps";
+} from "@watchdog/domain/schemas/caps";
 import {
   CREDENTIAL_SLOT_LIST_MAX,
   boundedListSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { authed, sessionAuthed } from "../os";
 import { runApp } from "../runtime";

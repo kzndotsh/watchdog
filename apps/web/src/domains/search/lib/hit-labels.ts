@@ -4,8 +4,8 @@ import {
   jobHeadlineLabel,
   proposalHeadlineLabel,
 } from "@/shared/ui/vocab";
-import { summarizeJobInput } from "@watchdog/schemas/jobs";
-import type { EvidenceKind, JsonObject } from "@watchdog/schemas/shared";
+import { summarizeJobInput } from "@watchdog/domain/schemas/jobs";
+import type { EvidenceKind, JsonObject } from "@watchdog/domain/schemas/shared";
 
 export function searchEvidenceHitLabel(hit: {
   label: string | null;

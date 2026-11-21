@@ -3,9 +3,9 @@ import {
   totalEvidenceCount,
 } from "@/domains/triage/lib/accept-validation";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import type { PatchOp } from "@watchdog/schemas/graph";
-import { listInvalidIdentifierOps } from "@watchdog/schemas/graph";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import { listInvalidIdentifierOps } from "@watchdog/domain/schemas/graph";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 
 export type AcceptGateStatus = "ready" | "needs" | "blocked";
 

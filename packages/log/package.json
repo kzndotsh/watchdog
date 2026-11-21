@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@watchdog/test-kit": "workspace:*",
+    "@watchdog/domain": "workspace:*",
     "typescript": "catalog:"
   }
 }

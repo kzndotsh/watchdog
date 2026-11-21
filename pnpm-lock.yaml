@@ -167,12 +167,12 @@ importers:
       '@watchdog/cli':
         specifier: workspace:*
         version: link:apps/cli
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:packages/domain
       '@watchdog/test-db':
         specifier: workspace:*
         version: link:packages/test-db
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:packages/test-kit
       babel-plugin-react-compiler:
         specifier: 'catalog:'
         version: 1.0.0
@@ -239,12 +239,9 @@ importers:
       '@watchdog/client':
         specifier: workspace:*
         version: link:../../packages/client
-      '@watchdog/policy':
+      '@watchdog/domain':
         specifier: workspace:*
-        version: link:../../packages/policy
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../../packages/schemas
+        version: link:../../packages/domain
       citty:
         specifier: ^0.2.2
         version: 0.2.2
@@ -258,9 +255,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../../packages/test-kit
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -382,18 +376,15 @@ importers:
       '@watchdog/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@watchdog/env':
         specifier: workspace:*
         version: link:../../packages/env
       '@watchdog/log':
         specifier: workspace:*
         version: link:../../packages/log
-      '@watchdog/policy':
-        specifier: workspace:*
-        version: link:../../packages/policy
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../../packages/schemas
       '@watchdog/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -488,9 +479,6 @@ importers:
       '@watchdog/test-db':
         specifier: workspace:*
         version: link:../../packages/test-db
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../../packages/test-kit
       babel-plugin-react-compiler:
         specifier: 'catalog:'
         version: 1.0.0
@@ -515,15 +503,15 @@ importers:
       '@watchdog/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@watchdog/env':
         specifier: workspace:*
         version: link:../../packages/env
       '@watchdog/log':
         specifier: workspace:*
         version: link:../../packages/log
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../../packages/schemas
       '@watchdog/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -552,9 +540,9 @@ importers:
       '@ai-sdk/openai-compatible':
         specifier: ^3.0.93
         version: 3.0.93(zod@4.6.7)
-      '@watchdog/schemas':
+      '@watchdog/domain':
         specifier: workspace:*
-        version: link:../schemas
+        version: link:../domain
       ai:
         specifier: ^7.0.176
         version: 7.0.176(zod@4.6.7)
@@ -565,9 +553,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
@@ -592,15 +577,12 @@ importers:
       '@watchdog/core':
         specifier: workspace:*
         version: link:../core
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@watchdog/log':
         specifier: workspace:*
         version: link:../log
-      '@watchdog/policy':
-        specifier: workspace:*
-        version: link:../policy
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       '@watchdog/tools':
         specifier: workspace:*
         version: link:../tools
@@ -620,9 +602,6 @@ importers:
       '@watchdog/test-db':
         specifier: workspace:*
         version: link:../test-db
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -641,15 +620,15 @@ importers:
       '@watchdog/db':
         specifier: workspace:*
         version: link:../db
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@watchdog/env':
         specifier: workspace:*
         version: link:../env
       '@watchdog/log':
         specifier: workspace:*
         version: link:../log
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       better-auth:
         specifier: 'catalog:'
         version: 1.7.25(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.169.5(esbuild@0.28.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.19)(rollup@4.62.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.1)(postgres@4.1.1))(pg@8.23.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.14)(vitest@5.1.1)
@@ -666,9 +645,6 @@ importers:
       '@watchdog/test-db':
         specifier: workspace:*
         version: link:../test-db
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -684,9 +660,9 @@ importers:
       '@watchdog/ai':
         specifier: workspace:*
         version: link:../ai
-      '@watchdog/schemas':
+      '@watchdog/domain':
         specifier: workspace:*
-        version: link:../schemas
+        version: link:../domain
       '@watchdog/tools':
         specifier: workspace:*
         version: link:../tools
@@ -700,9 +676,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       oxc-parser:
         specifier: 'catalog:'
         version: 0.159.0
@@ -743,18 +716,15 @@ importers:
       '@watchdog/db':
         specifier: workspace:*
         version: link:../db
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@watchdog/env':
         specifier: workspace:*
         version: link:../env
       '@watchdog/log':
         specifier: workspace:*
         version: link:../log
-      '@watchdog/policy':
-        specifier: workspace:*
-        version: link:../policy
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       '@watchdog/tools':
         specifier: workspace:*
         version: link:../tools
@@ -777,9 +747,6 @@ importers:
       '@watchdog/test-db':
         specifier: workspace:*
         version: link:../test-db
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -792,12 +759,12 @@ importers:
 
   packages/db:
     dependencies:
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@watchdog/env':
         specifier: workspace:*
         version: link:../env
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.1)(postgres@4.1.1)
@@ -814,9 +781,6 @@ importers:
       '@watchdog/test-db':
         specifier: workspace:*
         version: link:../test-db
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       dotenv:
         specifier: 'catalog:'
         version: 18.0.10
@@ -829,6 +793,31 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
+
+  packages/domain:
+    dependencies:
+      effect:
+        specifier: 'catalog:'
+        version: 4.1.4
+      fast-check:
+        specifier: ^4.10.3
+        version: 4.10.3
+      msw:
+        specifier: ^3.0.7
+        version: 3.0.7(@types/node@26.6.6)(graphql@16.14.2)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      vitest:
+        specifier: 'catalog:'
+        version: 5.1.1(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.1)(happy-dom@21.0.4)(jsdom@31.0.1(@noble/hashes@2.4.0))(msw@3.0.7(@types/node@26.6.6)(graphql@16.14.2)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/env:
     dependencies:
@@ -861,55 +850,21 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
-      '@watchdog/test-kit':
+      '@watchdog/domain':
         specifier: workspace:*
-        version: link:../test-kit
+        version: link:../domain
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
-
-  packages/policy:
-    dependencies:
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
-      effect:
-        specifier: 'catalog:'
-        version: 4.1.4
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.6
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-
-  packages/schemas:
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.6
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-      zod:
-        specifier: ^4.6.7
-        version: 4.6.7
 
   packages/test-db:
     dependencies:
       '@watchdog/db':
         specifier: workspace:*
         version: link:../db
-      '@watchdog/schemas':
+      '@watchdog/domain':
         specifier: workspace:*
-        version: link:../schemas
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
+        version: link:../domain
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.1)(postgres@4.1.1)
@@ -927,33 +882,14 @@ importers:
         specifier: 'catalog:'
         version: 7.0.2
 
-  packages/test-kit:
-    dependencies:
-      fast-check:
-        specifier: ^4.10.3
-        version: 4.10.3
-      msw:
-        specifier: ^3.0.7
-        version: 3.0.7(@types/node@26.6.6)(graphql@16.14.2)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-      vitest:
-        specifier: 'catalog:'
-        version: 5.1.1(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.1)(happy-dom@21.0.4)(jsdom@31.0.1(@noble/hashes@2.4.0))(msw@3.0.7(@types/node@26.6.6)(graphql@16.14.2)(typescript@7.0.2)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.6
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
-
   packages/tools:
     dependencies:
+      '@watchdog/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@watchdog/env':
         specifier: workspace:*
         version: link:../env
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       effect:
         specifier: 'catalog:'
         version: 4.1.4
@@ -970,9 +906,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
-      '@watchdog/test-kit':
-        specifier: workspace:*
-        version: link:../test-kit
       typescript:
         specifier: 'catalog:'
         version: 7.0.2

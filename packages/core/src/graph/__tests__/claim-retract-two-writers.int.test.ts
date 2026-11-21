@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { retractClaimEffect, updateClaimEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { claimsRepo } from "@watchdog/db";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -10,7 +11,6 @@ import {
   type TwoWritersOutcome,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture, type GraphFixture } from "./graph-mutations";
 

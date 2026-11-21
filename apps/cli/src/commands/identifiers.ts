@@ -6,14 +6,14 @@ import {
   getIdentifiersInputSchema,
   identifierList,
   updateIdentifierInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   optionalIdentifierStatusSchema,
   optionalIdentifierTypeSchema,
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail } from "../client";
 import {

@@ -9,8 +9,8 @@ import {
   COLLECT_FIXTURE_ORDER_STARTED_DESC,
   COLLECT_FIXTURE_ROWS,
   COLLECT_FIXTURE_RUNS,
-} from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { flushCollectQueue } from "../collect-queue.ts";
 import { seedCase } from "../seed/case.ts";
@@ -21,7 +21,7 @@ import { inChoices } from "./types.ts";
 import type { ConformanceFacts, ListConformance } from "./types.ts";
 
 /*
- * Collect's queue (#574) on the 12-case fixture of `@watchdog/schemas/testing`, whose 22 rows,
+ * Collect's queue (#574) on the 12-case fixture of `@watchdog/domain/schemas/testing`, whose 22 rows,
  * states, members and orders are written out by hand there. Two Evidence rows get an Entity here,
  * so the Entity filter has rows on both sides. The default view holds 21 rows (the hidden
  * Evidence row is its own view), the page holds 5.

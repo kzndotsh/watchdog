@@ -8,12 +8,12 @@ import {
   type PlaybookDef,
 } from "@watchdog/caps";
 import type { PlaybookRunRow } from "@watchdog/db";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
 import {
   isJsonObject,
   type CaseId,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "../cases/access";
 import {

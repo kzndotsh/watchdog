@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { activityList } from "@watchdog/schemas/feed";
-import { opsOf, type OrganizationId } from "@watchdog/schemas/shared";
+import { activityList } from "@watchdog/domain/schemas/feed";
+import { opsOf, type OrganizationId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
   untrustedCaseId,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   expectPostgresRefusal,
   PG_FOREIGN_KEY_VIOLATION,
@@ -19,7 +20,6 @@ import {
   withTestTx,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { ACTIVITY_CHANNEL, listenOnChannel } from "../../events.ts";
 import { activity } from "../../schema/activity.ts";

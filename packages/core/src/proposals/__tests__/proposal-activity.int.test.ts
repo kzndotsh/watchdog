@@ -9,12 +9,13 @@ import {
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
 import { activity } from "@watchdog/db";
-import { proposalList } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -24,7 +25,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { suppressAndProposeStageEffect } from "../suppress-and-propose";
 

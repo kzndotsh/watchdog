@@ -7,7 +7,7 @@ import {
   EVIDENCE_HARVEST_CAPABILITY_ID,
   URL_ENRICH_CAPABILITY_ID,
   evidenceIdsFromJobInputs,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   parseTrimmedCaseId,
   parseTrimmedUuid,
@@ -15,7 +15,7 @@ import {
   type CaseId,
   type JsonObject,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "@watchdog/db": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
-    "@watchdog/test-kit": "workspace:*",
+    "@watchdog/domain": "workspace:*",
     "drizzle-orm": "catalog:",
     "postgres": "catalog:",
     "vitest": "catalog:"

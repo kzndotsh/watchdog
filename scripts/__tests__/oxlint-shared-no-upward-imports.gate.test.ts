@@ -71,7 +71,7 @@ const OK = {
   "sibling.ts": 'import { a } from "./sibling-helper";\nexport { a };\n',
   "relative-up.ts": 'import { a } from "../lib/a";\nexport { a };\n',
   "package.ts":
-    'import { a } from "@watchdog/schemas/shared";\nexport { a };\n',
+    'import { a } from "@watchdog/domain/schemas/shared";\nexport { a };\n',
   "lookalike-alias.ts": 'import { a } from "@/domains-kit/a";\nexport { a };\n',
   "lookalike-relative.ts": 'import { a } from "./domains/a";\nexport { a };\n',
   "lookalike-package.ts":

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
-import type { Page } from "@watchdog/schemas/shared";
+import { PAGE_LIMIT_MAX } from "@watchdog/domain/schemas/shared";
+import type { Page } from "@watchdog/domain/schemas/shared";
 
 import { CliExitError, emitList } from "../io";
 import { fetchListPage, pageArgs } from "../paging";

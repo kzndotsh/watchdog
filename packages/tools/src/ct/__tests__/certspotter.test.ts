@@ -8,7 +8,7 @@ import {
 } from "@effect/vitest";
 import { Effect } from "effect";
 
-import { HttpResponse, mockServer, http } from "@watchdog/test-kit/http";
+import { HttpResponse, mockServer, http } from "@watchdog/domain/test-kit/http";
 
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {

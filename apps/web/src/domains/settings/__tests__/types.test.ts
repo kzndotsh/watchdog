@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,
-} from "@watchdog/schemas/caps";
+} from "@watchdog/domain/schemas/caps";
 
 describe("settings credential schemas", () => {
   it("parses put credential input", () => {

@@ -2,11 +2,11 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { db } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   resetTestDb,
   seedCase,

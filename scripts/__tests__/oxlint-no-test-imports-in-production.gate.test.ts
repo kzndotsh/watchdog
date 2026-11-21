@@ -28,7 +28,7 @@ const TEST_IMPORT_FAILS = {
   "test-db":
     'import { seedCase } from "@watchdog/test-db";\nexport const a = seedCase;\n',
   "test-kit-subpath":
-    'import { server } from "@watchdog/test-kit/http";\nexport const a = server;\n',
+    'import { server } from "@watchdog/domain/test-kit/http";\nexport const a = server;\n',
   "type-only": 'import type { Mock } from "vitest";\nexport type A = Mock;\n',
   "re-export": 'export { vi } from "vitest";\n',
   dynamic: 'export const a = () => import("@watchdog/test-db");\n',
@@ -68,9 +68,9 @@ const EXT_PASSES = {
 const EXEMPT = [
   "packages/core/src/__tests__/probe.ts",
   "packages/core/src/probe.test.ts",
-  "packages/schemas/src/testing/probe.ts",
+  "packages/domain/schemas/src/testing/probe.ts",
   "packages/test-db/src/probe.ts",
-  "packages/test-kit/src/probe.ts",
+  "packages/domain/test-kit/src/probe.ts",
   "apps/web/src/test-setup.ts",
 ] as const;
 

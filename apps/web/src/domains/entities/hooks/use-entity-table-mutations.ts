@@ -19,7 +19,7 @@ import {
   TOAST_ENTITY_UPDATED,
 } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 type UpdateEntityVars = {
   entityId: string;

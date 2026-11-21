@@ -5,18 +5,18 @@ import type {
 import {
   createEdgeInputSchema,
   updateEdgeInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   parseTrimmedUuid,
   resolveEdgeEndpoints,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   EdgeOrientation,
   EdgePredicate,
   ConfidenceTier,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Shared create/update core (table + dossier). */
 export type ConnectionWriteCore = {

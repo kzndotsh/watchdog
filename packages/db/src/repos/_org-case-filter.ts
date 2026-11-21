@@ -4,7 +4,7 @@ import {
   type CaseId,
   type OrganizationId,
   parseTrimmedCaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { cases } from "../schema/cases";
 import { visibleCase } from "./_visible-case";

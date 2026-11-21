@@ -2,8 +2,8 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "@watchdog/core/errors";
-import { testApiKey } from "@watchdog/schemas/testing";
-import { testId, testHttpOrigin } from "@watchdog/test-kit";
+import { testApiKey } from "@watchdog/domain/schemas/testing";
+import { testId, testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({

@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import type { DbExec } from "@watchdog/db";
-import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
-import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
+import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/domain/schemas/feed";
+import type { CaseId, JobStatus } from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import type { DomainTag } from "../errors/tagged-errors";

@@ -3,10 +3,13 @@ import { createHmac } from "node:crypto";
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import {
+  parseJsonValue,
+  type JsonValue,
+} from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 import type { CredentialFingerprint } from "@watchdog/tools/breach";
 
 import type {

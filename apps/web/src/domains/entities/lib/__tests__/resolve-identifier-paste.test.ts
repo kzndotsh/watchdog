@@ -5,7 +5,7 @@ import {
   identifierPasteRowKey,
   isIdentifierPasteRowImportable,
 } from "@/domains/entities/lib/resolve-identifier-paste";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("resolve-identifier-paste", () => {
   const E1 = testId(1);

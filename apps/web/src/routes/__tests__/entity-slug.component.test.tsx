@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const useParamsMock = vi.hoisted(() =>
   vi.fn(() => ({ caseSlug: "alpha", entitySlug: "target" }))

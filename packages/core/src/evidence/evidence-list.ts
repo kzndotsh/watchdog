@@ -2,13 +2,13 @@ import { Effect } from "effect";
 
 import { evidenceListRepo, evidencePickerListRepo } from "@watchdog/db";
 import type { EvidenceListRow, EvidencePickerListRow } from "@watchdog/db";
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 import type {
   CaseId,
   ListInput,
   ListPage,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
 import { assertCaseInOrgEffect } from "../cases/access";

@@ -15,7 +15,7 @@ import {
   type EdgePredicate,
   type EntityKind,
   titleCase,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * One stand-in peer per Entity kind, for `edgePhraseOptionsForPeers` while no peer is picked:

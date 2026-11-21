@@ -2,7 +2,7 @@ import { APIError } from "better-auth/api";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { account, client, db, member, organization, user } from "@watchdog/db";
-import { asOrganizationId } from "@watchdog/schemas/shared";
+import { asOrganizationId } from "@watchdog/domain/schemas/shared";
 
 // CI sets BETTER_AUTH_ALLOW_SIGNUP=1 for the whole job; this file is about the closed
 // (invite-only) install. The env module reads the process environment once, when it is

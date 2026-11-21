@@ -14,7 +14,7 @@ import {
 } from "@/domains/intake/queries";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildEvidenceRecord } from "@/testing/records";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listEvidence = procedureDouble("evidence.list");
 const pickerPage = procedureDouble("evidence.pickerPage");

@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
 import { apiKey, member, user, type DbExec } from "@watchdog/db";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 /**
  * Lift any ban on `userId` and delete API key `keyId`: `auth.*` survives `resetTestDb`, so a

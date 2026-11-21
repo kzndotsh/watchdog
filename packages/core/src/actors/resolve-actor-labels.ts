@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import type { UserDisplayRow } from "@watchdog/db";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

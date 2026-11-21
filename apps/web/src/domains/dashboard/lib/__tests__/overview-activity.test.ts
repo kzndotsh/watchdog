@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { buildProposalQueueItem } from "@/testing/records";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import {
   buildCaseOverviewActivity,

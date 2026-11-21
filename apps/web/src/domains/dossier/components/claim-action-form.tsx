@@ -7,7 +7,7 @@ import { useRetractClaim } from "@/domains/entities/claims/mutations";
 import { couldnt, errMessage } from "@/lib/utils";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FieldMessage } from "@/shared/ui/field-message";
-import type { RetractKind } from "@watchdog/schemas/shared";
+import type { RetractKind } from "@watchdog/domain/schemas/shared";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
 /* A Claim's contest, disprove or retract form: the reason, then the retraction of that kind. */

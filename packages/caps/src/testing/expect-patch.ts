@@ -5,7 +5,7 @@ import {
   type PatchOp,
   type PatchOpOf,
   type PatchResource,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 import type { CapInterpretResult } from "../sdk";
 

@@ -5,8 +5,9 @@ import { unzipSync } from "fflate";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { casesRepo, jobsRepo } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetActorAccess,
@@ -18,7 +19,6 @@ import {
   twoWriters,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { measureCaseExportEffect } from "../../export/case-export";

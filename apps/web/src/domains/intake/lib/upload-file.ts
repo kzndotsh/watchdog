@@ -4,8 +4,8 @@ import { couldnt } from "@/lib/utils";
 import {
   confirmFileUploadInputSchema,
   presignUploadInputSchema,
-} from "@watchdog/schemas/evidence";
-import { MAX_UPLOAD_BYTES } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/evidence";
+import { MAX_UPLOAD_BYTES } from "@watchdog/domain/schemas/shared";
 
 function sha256HexFile(file: File): Promise<string> {
   return file

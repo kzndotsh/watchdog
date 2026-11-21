@@ -6,8 +6,8 @@ import path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { listenFetchable } from "@watchdog/domain/test-kit";
 import { createLogger } from "@watchdog/log";
-import { listenFetchable } from "@watchdog/test-kit";
 
 import { initWatchdogLogger } from "../init.ts";
 

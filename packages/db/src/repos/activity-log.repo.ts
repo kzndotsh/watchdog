@@ -1,13 +1,16 @@
 import { and, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 
-import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type {
+  ActivityCursor,
+  ActivityEntryKind,
+} from "@watchdog/domain/schemas/feed";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import {
   normalizeUuidList,
   type CaseId,
   type JsonObject,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { activity } from "../schema/activity";

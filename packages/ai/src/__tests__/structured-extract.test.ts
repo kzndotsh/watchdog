@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { mockJson, mockServer } from "@watchdog/test-kit/http";
+import { mockJson, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { createWatchdogModel } from "../provider";
 import { structuredExtractEffect } from "../structured-extract";

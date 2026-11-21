@@ -1,4 +1,4 @@
-import { STALE_VERSION_MESSAGE_SUFFIX } from "@watchdog/schemas/shared";
+import { STALE_VERSION_MESSAGE_SUFFIX } from "@watchdog/domain/schemas/shared";
 
 /** Stable `data.code` the API sends when an edit named an out-of-date row version (#307). */
 const STALE_VERSION_CODE = "stale_version";

@@ -1,4 +1,4 @@
-import { LIST_MAX_PAGES, type ListPage } from "@watchdog/schemas/shared";
+import { LIST_MAX_PAGES, type ListPage } from "@watchdog/domain/schemas/shared";
 
 import { listStatus } from "./list-status";
 import type { ListCountValue, ListStatus } from "./list-types";

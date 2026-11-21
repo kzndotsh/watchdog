@@ -10,7 +10,7 @@ import {
   type DbTx,
 } from "@watchdog/db";
 import * as schema from "@watchdog/db/schema";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 
 /**
  * The tests connect as the application role (`DATABASE_URL`), which cannot TRUNCATE. Wiping

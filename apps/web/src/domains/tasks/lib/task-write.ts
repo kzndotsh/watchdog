@@ -5,8 +5,8 @@ import {
   taskUpdateInputSchema as updateTaskInputSchema,
   type CreateTaskInput,
   type UpdateTaskInput,
-} from "@watchdog/schemas/feed";
-import type { TaskStatus } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { TaskStatus } from "@watchdog/domain/schemas/shared";
 
 function taskPriorityFromForm(
   priority: TaskFormValues["priority"]

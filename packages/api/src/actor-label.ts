@@ -3,7 +3,7 @@ import type {
   ApiActor,
   ApiCredential,
   GraphActor,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** An authenticated caller: the actor and the credential it proved itself with. */
 type AuthedCaller = { actor: ApiActor; credential: ApiCredential };

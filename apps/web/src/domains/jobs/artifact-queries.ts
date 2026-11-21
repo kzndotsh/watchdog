@@ -8,7 +8,7 @@ import {
 import { orpc } from "@/lib/orpc-client";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { isTextMime } from "@watchdog/schemas/shared";
+import { isTextMime } from "@watchdog/domain/schemas/shared";
 
 function artifactContentQueryKey(input: GetArtifactContentInput) {
   const scoped = getArtifactContentInputSchema.safeParse(input);

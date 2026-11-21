@@ -8,7 +8,7 @@ import {
   TASK_PRIORITIES,
   TASK_STATUS_LABELS,
   TASK_STATUSES,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { openTaskStatus } from "../schema/_open-task";

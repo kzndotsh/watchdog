@@ -10,8 +10,11 @@ import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
-import type { FoundValueRecord, PlaybookRunView } from "@watchdog/schemas/jobs";
-import type { EgressClass } from "@watchdog/schemas/shared";
+import type {
+  FoundValueRecord,
+  PlaybookRunView,
+} from "@watchdog/domain/schemas/jobs";
+import type { EgressClass } from "@watchdog/domain/schemas/shared";
 
 export type CollectDetailProps = {
   row: CollectRow | null;

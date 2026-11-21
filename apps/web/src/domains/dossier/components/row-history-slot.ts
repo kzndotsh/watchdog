@@ -1,7 +1,7 @@
 import { createElement, type ReactNode } from "react";
 
 import { RowHistory } from "@/domains/dossier/components/row-history";
-import type { GraphHistoryKind } from "@watchdog/schemas/shared";
+import type { GraphHistoryKind } from "@watchdog/domain/schemas/shared";
 
 /**
  * A row's history control as a `TargetActionsHost` `trailing` slot, so a section

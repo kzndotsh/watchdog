@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const { handleMock, OpenAPIHandler } = vi.hoisted(() => {
   const handleMock = vi.fn();

@@ -2,19 +2,19 @@ import { Effect } from "effect";
 
 import { identifierListRepo } from "@watchdog/db";
 import type { IdentifierListPageRow } from "@watchdog/db";
-import { identifierList } from "@watchdog/schemas/graph";
-import type { IdentifierTypeCounts } from "@watchdog/schemas/graph";
+import { identifierList } from "@watchdog/domain/schemas/graph";
+import type { IdentifierTypeCounts } from "@watchdog/domain/schemas/graph";
 import {
   IDENTIFIER_TYPES,
   LIST_TOTAL_CAP,
   opsOf,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ListInput,
   ListPage,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { assertCaseInOrgEffect } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";

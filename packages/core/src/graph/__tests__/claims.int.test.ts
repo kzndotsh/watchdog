@@ -8,7 +8,8 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { evidenceRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -16,7 +17,6 @@ import {
   seedEvidence,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("createClaim", () => {
   beforeEach(async () => {

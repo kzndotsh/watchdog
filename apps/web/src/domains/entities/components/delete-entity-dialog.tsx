@@ -3,7 +3,7 @@ import { UserRoundIcon } from "lucide-react";
 import { useDeleteEntity } from "@/domains/entities/hooks/use-delete-entity";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 type DeleteEntityDialogProps = {
   caseId: string;

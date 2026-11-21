@@ -7,8 +7,12 @@ import {
   trimmedCaseIdSchema,
   type ApiCredential,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testApiKey } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  testApiKey,
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllGraphHistory,
   resetTestDb,
@@ -16,7 +20,6 @@ import {
   seedOrganizationMember,
   testDb,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { runsAsWorkerRole } from "../caller-role";
 import type { ApiContext } from "../context";

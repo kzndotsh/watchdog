@@ -1,6 +1,6 @@
 import { eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

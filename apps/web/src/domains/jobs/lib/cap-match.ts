@@ -3,8 +3,8 @@ import { capCategory, categoryLabel } from "@/shared/lib/cap-category";
 import {
   IDENTIFIER_TYPE_TABLE,
   identifierTypeEntry,
-} from "@watchdog/schemas/graph";
-import { isUuidString } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { isUuidString } from "@watchdog/domain/schemas/shared";
 
 export type PasteSeedKind =
   | "host"

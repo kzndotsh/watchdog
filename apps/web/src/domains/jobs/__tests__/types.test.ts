@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getArtifactContentInputSchema } from "@/domains/jobs/types";
 import type { CapListItem } from "@/domains/jobs/types";
-import { startJobInputSchema } from "@watchdog/schemas/jobs";
+import { startJobInputSchema } from "@watchdog/domain/schemas/jobs";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
 const JOB_ID = "660e8400-e29b-41d4-a716-446655440001";

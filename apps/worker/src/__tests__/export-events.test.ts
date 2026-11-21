@@ -6,9 +6,9 @@ import {
   ACTIVITY_ENTRY_KINDS,
   type ActivityEntry,
   type ActivityEntryKind,
-} from "@watchdog/schemas/feed";
-import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
-import { untrustedCaseId } from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/feed";
+import { asCaseId, type CaseId } from "@watchdog/domain/schemas/shared";
+import { untrustedCaseId } from "@watchdog/domain/schemas/testing";
 
 const { claimCaseExportEffect } = vi.hoisted(() => ({
   claimCaseExportEffect: vi.fn(() => Effect.succeed(Effect.void)),

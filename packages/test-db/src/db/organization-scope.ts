@@ -9,7 +9,7 @@ import {
   type DbExec,
   type DbTx,
 } from "@watchdog/db";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 type CaseInsert = typeof cases.$inferInsert;
 

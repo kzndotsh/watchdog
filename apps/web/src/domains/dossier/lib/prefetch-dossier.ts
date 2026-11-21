@@ -8,14 +8,14 @@ import { questionListView } from "@/domains/entities/questions/queries";
 import { evidenceListView } from "@/domains/intake/queries";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 import {
   claimList,
   edgeList,
   eventList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 /**
  * Warm dossier Query keys without blocking navigation.

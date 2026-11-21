@@ -12,7 +12,7 @@ import {
   buildPlaybookListItem,
   testCapProvider,
 } from "@/testing/records";
-import { opsOf, type ListSearch } from "@watchdog/schemas/shared";
+import { opsOf, type ListSearch } from "@watchdog/domain/schemas/shared";
 
 const entries = buildLibraryEntries({
   caps: [

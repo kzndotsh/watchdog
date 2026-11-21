@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import { Cause, Effect, Exit, Fiber, FiberMap, Layer } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { listenFetchable } from "@watchdog/test-kit";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 import {
   fetchUnshortenEffect,
   httpClientLayer,

@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
 
-import { HttpResponse, http, mockServer } from "@watchdog/test-kit/http";
+import { HttpResponse, http, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { firstJson, runWd } from "../../__tests__/run-wd";
 import {

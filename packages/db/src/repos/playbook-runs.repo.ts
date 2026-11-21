@@ -4,7 +4,7 @@ import type {
   CaseId,
   PlaybookRunOutcome,
   PlaybookRunStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { playbookRuns } from "../schema/playbook-runs";

@@ -2,7 +2,7 @@ import {
   JOB_STATUSES,
   type JobStatus,
   type JobStopCause,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** What happened to a Job. `fail` and `cancel` carry the cause that is stored with the stop. */
 export type JobEvent =

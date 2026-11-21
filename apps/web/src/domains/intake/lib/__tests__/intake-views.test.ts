@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { ENRICHED_MD_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import {
   collectRowForEvidence,

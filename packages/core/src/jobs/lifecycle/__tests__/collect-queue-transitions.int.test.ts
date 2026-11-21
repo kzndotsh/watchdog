@@ -14,11 +14,12 @@ import {
   transact,
 } from "@watchdog/core/infra";
 import { evidenceLinksRepo, evidenceRepo } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   COLLECT_FIXTURE,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   collectQueueDiff,
   listCollectQueueStale,
@@ -30,7 +31,6 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { jobsRepoFx } from "../../../infra/repos-fx.ts";
 import { recordingJobQueue } from "../../job-queue.ts";

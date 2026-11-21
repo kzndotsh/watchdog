@@ -12,9 +12,9 @@ import {
 } from "@/domains/entities/identifiers/queries";
 import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
-import { identifierList } from "@watchdog/schemas/graph";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { identifierList } from "@watchdog/domain/schemas/graph";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listIdentifiers = procedureDouble("identifiers.list");
 const typeCounts = procedureDouble("identifiers.typeCounts");

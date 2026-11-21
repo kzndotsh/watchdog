@@ -9,9 +9,9 @@ import type {
   dumpUrlInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
-} from "@watchdog/schemas/evidence";
-import type { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
-import type { PlaybookRunOutcome } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/evidence";
+import type { evidenceScopeInputSchema } from "@watchdog/domain/schemas/graph";
+import type { PlaybookRunOutcome } from "@watchdog/domain/schemas/shared";
 
 export type EvidenceRecord = CoreEvidenceRecord;
 

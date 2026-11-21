@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveEgressClasses } from "@watchdog/schemas/caps";
-import type { EgressClass } from "@watchdog/schemas/shared";
+import { deriveEgressClasses } from "@watchdog/domain/schemas/caps";
+import type { EgressClass } from "@watchdog/domain/schemas/shared";
 
 import { CAPABILITIES, listCapabilities } from "../registry";
 

@@ -13,9 +13,9 @@ import {
   type CapServices,
 } from "@watchdog/caps/sdk";
 import { jobsRepo, type JobRow } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 import { seedJob, testDb as db } from "@watchdog/test-db";
-import { listenFetchable } from "@watchdog/test-kit";
 import { mapToolsCatch, type ToolsTag } from "@watchdog/tools/errors";
 import {
   Egress,

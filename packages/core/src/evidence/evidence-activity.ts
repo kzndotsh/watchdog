@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import type { DbExec, EvidenceRow, NewEvidence } from "@watchdog/db";
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import type { CaseId, EvidenceKind } from "@watchdog/schemas/shared";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
+import type { CaseId, EvidenceKind } from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import type { DomainTag } from "../errors/tagged-errors";

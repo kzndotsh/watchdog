@@ -21,7 +21,7 @@ import { Button } from "@/shared/ui/primitives/button";
 import { StatusDot } from "@/shared/ui/status-dot";
 import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
 import type { CredentialSlot } from "@watchdog/core/vault";
-import { putCredentialInputSchema } from "@watchdog/schemas/caps";
+import { putCredentialInputSchema } from "@watchdog/domain/schemas/caps";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import {
   InputGroup,

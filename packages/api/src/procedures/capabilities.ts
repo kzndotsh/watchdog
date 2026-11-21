@@ -4,14 +4,17 @@ import {
   listCapabilitiesEffect,
   listPlaybookDescriptorsEffect,
 } from "@watchdog/core/caps";
-import { capContactSchema, egressClassSchema } from "@watchdog/schemas/caps";
+import {
+  capContactSchema,
+  egressClassSchema,
+} from "@watchdog/domain/schemas/caps";
 import {
   CAPABILITY_LIST_MAX,
   PLAYBOOK_LIST_MAX,
   boundedListSchema,
   jsonObjectSchema,
   PLAYBOOK_SEED_KINDS,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

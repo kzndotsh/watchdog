@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { parseActorId } from "@watchdog/schemas/shared";
+import { parseActorId } from "@watchdog/domain/schemas/shared";
 
 import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 

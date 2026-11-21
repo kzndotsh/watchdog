@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { NOTES_MAX, nullableTextPatch } from "@watchdog/schemas/shared";
+import { NOTES_MAX, nullableTextPatch } from "@watchdog/domain/schemas/shared";
 
 import { fail } from "./io";
 

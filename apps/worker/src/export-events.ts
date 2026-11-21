@@ -1,8 +1,14 @@
 import { Effect } from "effect";
 
 import { claimCaseExportEffect } from "@watchdog/core/export";
-import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
-import { type CaseId, parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import type {
+  ActivityEntry,
+  ActivityEntryKind,
+} from "@watchdog/domain/schemas/feed";
+import {
+  type CaseId,
+  parseTrimmedCaseId,
+} from "@watchdog/domain/schemas/shared";
 
 /** Trim and validate a case id for export scheduling; null when not schedulable. */
 export function normalizeSchedulableCaseId(caseId: string): CaseId | null {

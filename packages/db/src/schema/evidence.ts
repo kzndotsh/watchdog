@@ -8,8 +8,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { EVIDENCE_KINDS } from "@watchdog/schemas/shared";
-import type { EvidenceKind, CaseId } from "@watchdog/schemas/shared";
+import { EVIDENCE_KINDS } from "@watchdog/domain/schemas/shared";
+import type { EvidenceKind, CaseId } from "@watchdog/domain/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import {

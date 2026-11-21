@@ -6,7 +6,7 @@
  * input schema, egress and credential checks, artifacts, Proposal and cache.
  */
 
-import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
+import { CASE_EXPORT_JOB_ID } from "@watchdog/domain/schemas/caps";
 
 /** Large Case export: the archive is built on the worker and kept in object storage. */
 export const CASE_EXPORT_JOB = CASE_EXPORT_JOB_ID;

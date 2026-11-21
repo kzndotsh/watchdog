@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
 
-import { deletedCaseList } from "@watchdog/schemas/cases";
-import { activityList } from "@watchdog/schemas/feed";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import { activityList } from "@watchdog/domain/schemas/feed";
 import {
   opsOf,
   type CaseDeletionEvent,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   seedCase,
   seedEntity,

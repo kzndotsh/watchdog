@@ -7,7 +7,7 @@ import {
   sortOptionLabel,
 } from "@/shared/lib/list/list-copy";
 import type { ListCountValue } from "@/shared/lib/list/list-types";
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 
 function count(patch: Partial<ListCountValue>): ListCountValue {
   return {

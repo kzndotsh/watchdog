@@ -11,7 +11,7 @@ export const dbRepoNoValidationImport = {
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */
   create(context) {
-    const message = `Repos do not validate: Zod schemas live in @watchdog/schemas and core owns display-string validation; take plain values (${REPO_CONTRACT}).`;
+    const message = `Repos do not validate: Zod schemas live in @watchdog/domain/schemas and core owns display-string validation; take plain values (${REPO_CONTRACT}).`;
     /** @param {Record<string, unknown>} node */
     const check = (node) => {
       const { source } = node;

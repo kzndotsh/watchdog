@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
 import type { CaseRow } from "@watchdog/db";
-import type { caseSchema } from "@watchdog/schemas/cases";
+import type { caseSchema } from "@watchdog/domain/schemas/cases";
 
 /** A Case as the API returns it: the output of `caseSchema`. */
 export type CaseRecord = z.output<typeof caseSchema>;

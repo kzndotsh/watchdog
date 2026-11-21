@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobStopCause } from "@watchdog/schemas/shared";
+import type { JobStopCause } from "@watchdog/domain/schemas/shared";
 
 import { JobFibers } from "../job-fibers";
 

@@ -36,10 +36,9 @@
     "@aws-sdk/s3-request-presigner": "^3.1171.0",
     "@watchdog/caps": "workspace:*",
     "@watchdog/db": "workspace:*",
+    "@watchdog/domain": "workspace:*",
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
-    "@watchdog/policy": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "catalog:",
     "fflate": "catalog:",
@@ -49,7 +48,6 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
-    "@watchdog/test-kit": "workspace:*",
     "esbuild": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"

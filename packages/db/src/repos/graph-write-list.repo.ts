@@ -1,6 +1,6 @@
 import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 
-import { graphWriteList } from "@watchdog/schemas/graph";
+import { graphWriteList } from "@watchdog/domain/schemas/graph";
 
 import { changesets } from "../schema/changesets";
 import { defineListRepo } from "./_list-query";

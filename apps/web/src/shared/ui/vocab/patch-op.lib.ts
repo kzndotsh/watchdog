@@ -14,7 +14,7 @@ import {
   patchResourceLabel,
   type PatchResource,
   type PatchVerb,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 type Op = PatchVerb;
 type Resource = PatchResource;

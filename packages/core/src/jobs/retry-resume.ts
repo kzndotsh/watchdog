@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import type { DbExec, PlaybookRunRow } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas/shared";
+import { isOpenJobStatus } from "@watchdog/domain/schemas/shared";
 
 import { ConflictError, type DomainTag } from "../errors/tagged-errors";
 import { jobsRepoFx, playbookRunsRepoFx } from "../infra/repos-fx";

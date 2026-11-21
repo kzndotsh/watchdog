@@ -7,7 +7,8 @@ import {
   updateTaskEffect,
 } from "@watchdog/core/tasks";
 import { casesRepo, tasksRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { rendezvous, TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   resetTestDb,
@@ -15,7 +16,6 @@ import {
   withSystemHistoryContext,
   testDb as db,
 } from "@watchdog/test-db";
-import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 async function entriesFor(subjectId: string) {
   const rows = await listAllActivity();

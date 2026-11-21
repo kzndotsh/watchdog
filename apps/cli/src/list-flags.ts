@@ -5,14 +5,14 @@ import {
   LIST_SEARCH_MIN_LENGTH,
   opsOf,
   parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   AnyFilter,
   AnyListDef,
   CaseId,
   ListInput,
   RefFilter,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { fail } from "./client";
 import { resolveEntityId } from "./ids";

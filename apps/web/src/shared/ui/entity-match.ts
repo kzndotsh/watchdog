@@ -2,8 +2,8 @@ import {
   ENTITY_KIND_LABELS,
   entityDisplayLabel,
   slugifyName,
-} from "@watchdog/schemas/shared";
-import type { EntityKind } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 /** Combobox / picker filter — match display label, raw name, slug, or kind label. */
 export function entityMatchesQuery(

@@ -2,7 +2,7 @@ import type { ClaimFormValues } from "@/domains/entities/claims/types";
 import { defineGraphChildMutation } from "@/domains/entities/hooks/use-graph-child-mutation";
 import type { EntityScope } from "@/domains/entities/types";
 import { orpc } from "@/lib/orpc-client";
-import type { RetractKind } from "@watchdog/schemas/shared";
+import type { RetractKind } from "@watchdog/domain/schemas/shared";
 
 export type CreateClaimVariables = EntityScope & { value: ClaimFormValues };
 

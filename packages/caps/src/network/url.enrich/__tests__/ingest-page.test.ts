@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 import { toolsHttpClientLayer } from "@watchdog/tools/http";
 
 import { ingestRemotePageEffect } from "../ingest-page.ts";

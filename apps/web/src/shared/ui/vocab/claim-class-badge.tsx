@@ -2,8 +2,8 @@ import type { ComponentProps } from "react";
 
 import { Chip } from "@/shared/ui/chip";
 import { CLAIM_CLASS_TONES } from "@/shared/ui/vocab/kind.lib";
-import { CLAIM_CLASS_LABELS } from "@watchdog/schemas/shared";
-import type { ClaimClass } from "@watchdog/schemas/shared";
+import { CLAIM_CLASS_LABELS } from "@watchdog/domain/schemas/shared";
+import type { ClaimClass } from "@watchdog/domain/schemas/shared";
 
 type ClaimClassBadgeProps = Omit<
   ComponentProps<typeof Chip>,

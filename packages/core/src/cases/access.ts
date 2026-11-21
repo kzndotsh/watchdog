@@ -6,7 +6,7 @@ import {
   parseTrimmedUuid,
   type CaseId,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import {
   boundEchoedId,

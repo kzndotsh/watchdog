@@ -4,6 +4,7 @@ import { isDomainTag } from "@watchdog/core/errors";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { activityLogRepo } from "@watchdog/db";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   listAllGraphHistory,
@@ -12,7 +13,6 @@ import {
   twoWriters,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import {
   GRAPH_MUTATIONS,

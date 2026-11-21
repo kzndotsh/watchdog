@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testActor, testApiKey } from "@watchdog/schemas/testing";
+import { testActor, testApiKey } from "@watchdog/domain/schemas/testing";
 
 import {
   actorKeyIdFromContext,

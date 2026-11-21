@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { edgeRelatedToHasNotes } from "@watchdog/schemas/shared";
+import { edgeRelatedToHasNotes } from "@watchdog/domain/schemas/shared";
 
 import { withoutUserOverride } from "../graph-input";
 

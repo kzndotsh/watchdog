@@ -21,7 +21,7 @@ vi.mock("@watchdog/core/tasks", async (importOriginal) => {
   };
 });
 
-import { testActor } from "@watchdog/schemas/testing";
+import { testActor } from "@watchdog/domain/schemas/testing";
 
 import { board, list, reorder, update } from "../tasks";
 

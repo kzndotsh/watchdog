@@ -19,8 +19,8 @@ import { RelativeTime } from "@/shared/ui/relative-time";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
-import type { ActivityKind } from "@watchdog/schemas/feed";
-import type { ListTotal } from "@watchdog/schemas/shared";
+import type { ActivityKind } from "@watchdog/domain/schemas/feed";
+import type { ListTotal } from "@watchdog/domain/schemas/shared";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 function inboxMetricTone(

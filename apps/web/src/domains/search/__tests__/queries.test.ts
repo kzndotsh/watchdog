@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { placeholderFor } from "@/testing/query-placeholder";
-import type { SearchCaseResult } from "@watchdog/schemas/cases";
-import { testId } from "@watchdog/test-kit";
+import type { SearchCaseResult } from "@watchdog/domain/schemas/cases";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

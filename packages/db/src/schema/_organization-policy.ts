@@ -1,7 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import { pgPolicy, text, type AnyPgColumn } from "drizzle-orm/pg-core";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 /**
  * The organization the current transaction acts for, for row-level security policies: the

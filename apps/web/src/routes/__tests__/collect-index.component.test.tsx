@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const useSearchMock = vi.hoisted(() => vi.fn(() => ({ id: undefined })));
 const useNavigateMock = vi.hoisted(() => vi.fn());

@@ -29,13 +29,13 @@ import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { predicateLabel } from "@/shared/ui/vocab/edge-predicate";
-import { edgeList } from "@watchdog/schemas/graph";
+import { edgeList } from "@watchdog/domain/schemas/graph";
 import {
   entityDisplayLabel,
   edgePhraseValue,
   parseEdgePhraseValue,
-} from "@watchdog/schemas/shared";
-import type { EdgeOrientation } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { EdgeOrientation } from "@watchdog/domain/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Popover,

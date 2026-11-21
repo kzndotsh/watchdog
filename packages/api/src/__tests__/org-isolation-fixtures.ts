@@ -4,7 +4,7 @@ import type {
   ApiCredential,
   CaseId,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";

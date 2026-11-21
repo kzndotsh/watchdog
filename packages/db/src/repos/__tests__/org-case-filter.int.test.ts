@@ -4,7 +4,7 @@ import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   untrustedCaseId,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import {
   resetTestDb,
   seedCase,

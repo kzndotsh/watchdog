@@ -1,7 +1,10 @@
 import { Context, Effect, Layer } from "effect";
 
 import type { DbExec } from "@watchdog/db";
-import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
+import {
+  trimmedOrNull,
+  credentialNameSchema,
+} from "@watchdog/domain/schemas/shared";
 
 import {
   InvalidError,

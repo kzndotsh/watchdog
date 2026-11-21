@@ -1,7 +1,7 @@
 import { eq, inArray, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import { edgeList } from "@watchdog/schemas/graph";
+import { edgeList } from "@watchdog/domain/schemas/graph";
 
 import { edges } from "../schema/edges";
 import { entities } from "../schema/entities";

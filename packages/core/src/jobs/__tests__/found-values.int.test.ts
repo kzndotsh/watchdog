@@ -4,12 +4,13 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { jobsRepo } from "@watchdog/db";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -18,7 +19,6 @@ import {
   seedJob,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 import { recordingBlobStore } from "../../infra/blob-store";
 import { Db } from "../../infra/db-service";

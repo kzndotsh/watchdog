@@ -2,8 +2,8 @@ import { hashKey, QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import { listView, nextListCursor } from "@/shared/lib/list/list-view";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { LIST_MAX_PAGES, type ListPage } from "@watchdog/schemas/shared";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { LIST_MAX_PAGES, type ListPage } from "@watchdog/domain/schemas/shared";
 
 const page: ListPage<string> = { items: ["a"], nextCursor: "c1", total: null };
 

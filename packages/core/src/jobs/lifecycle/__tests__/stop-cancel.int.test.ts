@@ -11,8 +11,9 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listAllActivity,
   listJobDeliveryStates,
@@ -24,7 +25,6 @@ import {
   seedPlaybookRun,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { deleteCaseEffect } from "../../../case-deletion/tombstone.ts";

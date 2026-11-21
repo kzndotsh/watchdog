@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobPivots } from "@watchdog/schemas/shared";
+import type { JobPivots } from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowDateEffect } from "../../infra/clock";

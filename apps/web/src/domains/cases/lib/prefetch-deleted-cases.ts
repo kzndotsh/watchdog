@@ -5,8 +5,8 @@ import {
   deletionPolicyQuery,
 } from "@/domains/cases/queries";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { deletedCaseList } from "@watchdog/schemas/cases";
-import type { ListSearch } from "@watchdog/schemas/shared";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import type { ListSearch } from "@watchdog/domain/schemas/shared";
 
 /**
  * Warm the Deleted Cases first page (the URL's view) in the browser, without blocking paint, and

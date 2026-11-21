@@ -7,7 +7,7 @@ import { Auth } from "@/auth/ui/auth";
 import { AUTH_VIEW_PATHS } from "@/auth/ui/auth-view-paths";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { normalizeRouteSegment } from "@/shared/lib/route-slug";
-import { URL_MAX, optionalText } from "@watchdog/schemas/shared";
+import { URL_MAX, optionalText } from "@watchdog/domain/schemas/shared";
 
 const authSearchSchema = z.object({
   redirectTo: optionalText(URL_MAX),

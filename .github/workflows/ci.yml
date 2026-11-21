@@ -120,7 +120,7 @@ jobs:
               - 'packages/caps/**'
               # A Cap's version fingerprints the tools, schemas and ai modules it reaches.
               - 'packages/tools/**'
-              - 'packages/schemas/**'
+              - 'packages/domain/schemas/**'
               - 'packages/ai/**'
               - 'docs/reference/platform/cap-register.md'
             api:
@@ -133,8 +133,8 @@ jobs:
               - 'apps/site/**'
             db:
               - 'packages/db/**'
-              # db schema files import from @watchdog/schemas.
-              - 'packages/schemas/**'
+              # db schema files import from @watchdog/domain/schemas.
+              - 'packages/domain/schemas/**'
             e2e:
               - 'e2e/**'
               - 'playwright.config.ts'

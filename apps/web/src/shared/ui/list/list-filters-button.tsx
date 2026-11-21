@@ -14,7 +14,7 @@ import {
   isActiveFilterValue,
   type AnyListDef,
   type FilterKey,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   Popover,
   PopoverContent,

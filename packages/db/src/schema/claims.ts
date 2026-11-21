@@ -14,14 +14,14 @@ import {
   CLAIM_CLASSES,
   CONFIDENCE_TIERS,
   RETRACT_KINDS,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   OrganizationId,
   ClaimClass,
   ConfidenceTier,
   RetractKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { attribution, rowVersion, timestamps, timestamptz } from "./_helpers";
 import { currentOrganization } from "./_organization-policy";

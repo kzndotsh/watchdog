@@ -1,7 +1,10 @@
 import { defineCommand } from "citty";
 
-import { capEgressLabel, capabilityIdLabel } from "@watchdog/schemas/caps";
-import { titleCase } from "@watchdog/schemas/shared";
+import {
+  capEgressLabel,
+  capabilityIdLabel,
+} from "@watchdog/domain/schemas/caps";
+import { titleCase } from "@watchdog/domain/schemas/shared";
 
 import { api, emitList } from "../client";
 import { capKindLabel } from "../display";

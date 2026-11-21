@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
-import { parseCapJobInput } from "@watchdog/schemas/jobs";
-import type { JsonObject } from "@watchdog/schemas/shared";
+import { parseCapJobInput } from "@watchdog/domain/schemas/jobs";
+import type { JsonObject } from "@watchdog/domain/schemas/shared";
 
 import { InvalidError, type DomainTag } from "../errors/tagged-errors";
 

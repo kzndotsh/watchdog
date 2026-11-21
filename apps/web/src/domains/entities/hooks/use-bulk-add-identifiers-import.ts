@@ -10,7 +10,7 @@ import {
 import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import { createIdentifierInputSchema } from "@watchdog/schemas/graph";
+import { createIdentifierInputSchema } from "@watchdog/domain/schemas/graph";
 
 export function useBulkAddIdentifiersImport(options: {
   /** `caseId` is the Case the rows were written to, not the Case the screen shows now. */

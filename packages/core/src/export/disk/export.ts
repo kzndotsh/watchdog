@@ -13,12 +13,12 @@ import type {
   CaseId,
   EntityKind,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   entityDisplayLabel,
   parseTrimmedCaseId,
   parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../../errors/tagged-errors";
 import { nowIsoStringEffect } from "../../infra/clock";

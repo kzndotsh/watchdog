@@ -11,9 +11,9 @@ import {
 } from "@/testing/memory-picker-port";
 import { buildJobListRecord } from "@/testing/records";
 import { render as baseRender, screen, within } from "@/testing/render-in-case";
-import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const blobLinks = vi.hoisted(() => ({
   downloadUrl: null as string | null,

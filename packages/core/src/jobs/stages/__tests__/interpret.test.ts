@@ -4,8 +4,11 @@ import { describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { recordingBlobStore } from "@watchdog/core/blob";
 import type { JobArtifact, JobRow } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import {
+  TEST_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { createJobLog } from "../../job-log";
 import type { CollectRuntime } from "../collect";

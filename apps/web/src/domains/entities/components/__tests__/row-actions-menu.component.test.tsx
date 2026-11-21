@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { cloneElement, type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => (
@@ -38,7 +38,7 @@ vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const ENTITY: EntityRecord = {
   version: 1,

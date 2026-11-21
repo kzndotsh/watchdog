@@ -39,7 +39,7 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
 import { tabSearchParam } from "@/shared/lib/tab-search";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { isInstanceAdminRole } from "@watchdog/schemas/shared";
+import { isInstanceAdminRole } from "@watchdog/domain/schemas/shared";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");

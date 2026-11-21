@@ -5,8 +5,8 @@ import {
   memoryListProcedure,
   type ListPageData,
 } from "@/testing/memory-list";
-import { TASK_BOARD_MAX } from "@watchdog/schemas/feed";
-import { isOpenTaskStatus } from "@watchdog/schemas/shared";
+import { TASK_BOARD_MAX } from "@watchdog/domain/schemas/feed";
+import { isOpenTaskStatus } from "@watchdog/domain/schemas/shared";
 
 /** The Task list's filters and `q` (title, description) as the server reads them. */
 function matchesTaskView(row: TaskListItem, data: ListPageData): boolean {

@@ -12,13 +12,13 @@ import {
   edgeList,
   eventList,
   questionList,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   CaseId,
   ListInput,
   ListPage,
   OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { assertCaseInOrgEffect } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";

@@ -7,7 +7,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { vocabCheck } from "./_vocab";

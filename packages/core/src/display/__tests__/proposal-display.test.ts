@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { proposalEntityId, proposalEntityName } from "@watchdog/schemas/jobs";
+import {
+  proposalEntityId,
+  proposalEntityName,
+} from "@watchdog/domain/schemas/jobs";
 
 import {
   proposalActivityLabel,

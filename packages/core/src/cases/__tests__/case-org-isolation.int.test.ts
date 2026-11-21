@@ -12,12 +12,12 @@ import { listRecentActivityEffect } from "@watchdog/core/feed";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { listJobsForCaseEffect } from "@watchdog/core/jobs";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { activityList } from "@watchdog/schemas/feed";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { activityList } from "@watchdog/domain/schemas/feed";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 
 const OTHER_ORG_ID = TEST_OTHER_ORGANIZATION_ID;

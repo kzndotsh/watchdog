@@ -32,7 +32,7 @@ import {
   type RetractKind,
   type TaskStatus,
   titleCase,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** All statuses that bind to `--status-*` tokens (canonical unions only). */
 export type DisplayStatus =

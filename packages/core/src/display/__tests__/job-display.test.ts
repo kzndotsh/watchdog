@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { capabilityIdLabel, playbookIdLabel } from "@watchdog/schemas/caps";
-import { summarizeJobInput } from "@watchdog/schemas/jobs";
+import {
+  capabilityIdLabel,
+  playbookIdLabel,
+} from "@watchdog/domain/schemas/caps";
+import { summarizeJobInput } from "@watchdog/domain/schemas/jobs";
 
 import { jobActivityLabel } from "../job-display";
 

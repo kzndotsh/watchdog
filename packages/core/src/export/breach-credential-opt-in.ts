@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { breachCapsMode } from "../caps/breach-caps";
 import { InvalidError, type DomainTag } from "../errors/tagged-errors";

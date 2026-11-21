@@ -8,7 +8,7 @@ import type {
   SortValue,
   UnfixedSearch,
   UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The state of one list view, in the order every list body checks it (loading.md rule 5):

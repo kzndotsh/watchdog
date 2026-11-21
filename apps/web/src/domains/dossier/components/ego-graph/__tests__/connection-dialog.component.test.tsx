@@ -57,7 +57,7 @@ vi.mock("@/shared/ui/field-combobox", () => ({
 import { ConnectionDialog } from "@/domains/dossier/components/ego-graph/connection-dialog";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 beforeAll(preloadSharedLazyChunks);
 

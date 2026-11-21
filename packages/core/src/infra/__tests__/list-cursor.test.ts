@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 
-import { URL_MAX } from "@watchdog/schemas/shared";
+import { URL_MAX } from "@watchdog/domain/schemas/shared";
 
 import {
   decodeListCursor,

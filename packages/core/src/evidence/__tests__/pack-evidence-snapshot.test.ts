@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
-import { testCaseId } from "@watchdog/schemas/testing";
+import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import {
   MAX_SNAPSHOT_CHARS,

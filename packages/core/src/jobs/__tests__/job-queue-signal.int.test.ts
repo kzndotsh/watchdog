@@ -3,10 +3,11 @@ import { PgBoss } from "pg-boss";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { jobQueueTx, jobsRepo } from "@watchdog/db";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import { env } from "@watchdog/env/server";
 import { createLogger } from "@watchdog/log";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetActorAccess,
   resetTestDb,
@@ -15,7 +16,6 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import { recordingBlobStore } from "../../infra/blob-store.ts";

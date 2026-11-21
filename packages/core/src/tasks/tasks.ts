@@ -7,14 +7,14 @@ import {
   TASK_BOARD_MAX,
   TASK_DUE_LIST_LIMIT,
   taskList,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import type {
   TaskBoardInput,
   taskBoardSchema,
   taskEntityLabelSchema,
   taskListItemSchema,
   taskSchema,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
@@ -31,7 +31,7 @@ import {
   type OrganizationId,
   type TaskPriority,
   type TaskStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
 import {

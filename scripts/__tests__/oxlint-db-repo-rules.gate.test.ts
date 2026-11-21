@@ -578,7 +578,7 @@ const PASS: readonly { readonly name: string; readonly src: string }[] = [
   },
   {
     name: "schemas-shared-import",
-    src: `import { trimmedOrUndefined } from "@watchdog/schemas/shared";\n\n${repo(ok)}`,
+    src: `import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";\n\n${repo(ok)}`,
   },
 ];
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ARRAY_MAX } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { ARRAY_MAX } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import { entityTitlesForJobs } from "../job-entity-titles";
 import { queryIds, standInApi } from "./stand-in-api";

@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 
-import type { CaseId } from "@watchdog/schemas/shared";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

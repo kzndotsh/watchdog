@@ -6,14 +6,14 @@ import {
   isPatchOpOf,
   normalizeIdentifierValue,
   type PatchOp,
-} from "@watchdog/schemas/graph";
-import type { identifierCollisionSchema } from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/graph";
+import type { identifierCollisionSchema } from "@watchdog/domain/schemas/jobs";
 import {
   entityDisplayLabel,
   parseTrimmedCaseId,
   type CaseId,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";

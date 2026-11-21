@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 
-import { SCOPES } from "@watchdog/schemas/shared";
+import { SCOPES } from "@watchdog/domain/schemas/shared";
 
 import { api, emit } from "../client";
 import { withExamples } from "../examples";

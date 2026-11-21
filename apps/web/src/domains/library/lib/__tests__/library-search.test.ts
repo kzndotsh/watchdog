@@ -9,7 +9,7 @@ import {
 import { libraryList } from "@/domains/library/lib/library-list";
 import { librarySearchSchema } from "@/domains/library/lib/library-search";
 import { buildCapListItem, buildPlaybookListItem } from "@/testing/records";
-import { opsOf } from "@watchdog/schemas/shared";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 
 describe("library search", () => {
   it("is the list's search plus the category, dropping junk", () => {

@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core/infra";
 import { listProposalsForCaseEffect } from "@watchdog/core/proposals";
-import { proposalList } from "@watchdog/schemas/jobs";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
 import {
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -17,7 +18,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 describe("loadIdentifierCollisions", () => {
   beforeEach(async () => {

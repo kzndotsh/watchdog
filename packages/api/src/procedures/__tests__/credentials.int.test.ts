@@ -5,8 +5,8 @@ import {
   listCredentialSlotsEffect,
   putCredentialSlotEffect,
 } from "@watchdog/core/vault";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import { resetTestDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 describe("credentials (core services)", () => {
   beforeEach(async () => {

@@ -1,4 +1,4 @@
-import { URL_ENRICH_CAPABILITY_ID } from "@watchdog/schemas/jobs";
+import { URL_ENRICH_CAPABILITY_ID } from "@watchdog/domain/schemas/jobs";
 
 import { watchdogUserAgent, type CapArtifact } from "../../sdk";
 

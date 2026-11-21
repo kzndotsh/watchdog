@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { expandIpv6 } from "@watchdog/schemas/ip";
+import { expandIpv6 } from "@watchdog/domain/schemas/ip";
 
 import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";

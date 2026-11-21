@@ -4,7 +4,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { Effect, Exit, Layer, Scope } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import { InternalError } from "../../errors/tagged-errors";
 import {

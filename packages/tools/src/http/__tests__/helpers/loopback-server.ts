@@ -14,7 +14,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { listenFetchable } from "@watchdog/test-kit";
+import { listenFetchable } from "@watchdog/domain/test-kit";
 
 import { isBlockedAddress } from "../../blocked-address";
 import type { HostResolver, ResolvedAddress } from "../../outbound-policy";

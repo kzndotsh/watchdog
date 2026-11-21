@@ -5,8 +5,11 @@ import type {
   ClaimRecord,
 } from "@/domains/entities/claims/types";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import type { ClaimClass, ConfidenceTier } from "@watchdog/schemas/shared";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
+import type {
+  ClaimClass,
+  ConfidenceTier,
+} from "@watchdog/domain/schemas/shared";
 
 export const claimFormOptions = formOptions({
   defaultValues: {

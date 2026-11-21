@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
-import { activityList } from "@watchdog/schemas/feed";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import { activityList } from "@watchdog/domain/schemas/feed";
+import { parseTrimmedCaseId } from "@watchdog/domain/schemas/shared";
 
 import { activity } from "../schema/activity";
 import { cases } from "../schema/cases";

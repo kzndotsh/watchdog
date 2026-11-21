@@ -1,7 +1,10 @@
 import { Deferred, Effect, Fiber } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
+import {
+  TEST_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/domain/schemas/testing";
 
 import { runDomain } from "../../../infra/run-domain";
 import {

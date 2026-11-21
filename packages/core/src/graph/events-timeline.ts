@@ -6,7 +6,7 @@ import {
   type CaseId,
   type OrganizationId,
   type GraphActor,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { dossierChannel } from "../activity/graph-activity";
 import { assertEntityInCaseEffect } from "../cases/access";

@@ -1,7 +1,7 @@
 import { and, eq, gt } from "drizzle-orm";
 
-import type { CaseId } from "@watchdog/schemas/shared";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { capCache } from "../schema/cap-cache";

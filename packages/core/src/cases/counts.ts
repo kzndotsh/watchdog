@@ -1,13 +1,13 @@
 import { DateTime, Effect } from "effect";
 import type { z } from "zod";
 
-import type { caseCountsSchema } from "@watchdog/schemas/cases";
+import type { caseCountsSchema } from "@watchdog/domain/schemas/cases";
 import {
   LIST_TOTAL_CAP,
   type CaseId,
   type ListTotal,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { DomainTag } from "../errors/tagged-errors";
 import { DAY_MS, nowDateEffect } from "../infra/clock";

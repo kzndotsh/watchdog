@@ -21,8 +21,8 @@ import {
   STALE_DEFAULT,
   STALE_REALTIME,
 } from "@/shared/lib/query-stale";
-import { taskList, type TaskBoardInput } from "@watchdog/schemas/feed";
-import type { ListQuery } from "@watchdog/schemas/shared";
+import { taskList, type TaskBoardInput } from "@watchdog/domain/schemas/feed";
+import type { ListQuery } from "@watchdog/domain/schemas/shared";
 
 type TaskListScope = { readonly caseId: string };
 

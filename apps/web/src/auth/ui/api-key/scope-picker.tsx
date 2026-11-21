@@ -5,7 +5,7 @@ import {
   SCOPES,
   type Scope,
   type ScopePresetId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   Field,
   FieldDescription,

@@ -17,14 +17,14 @@ import {
   buildEntityListConnection,
   buildEntityListItem,
 } from "@/testing/records";
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList } from "@watchdog/domain/schemas/graph";
 import type {
   EntityKind,
   ListSearch,
   UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,

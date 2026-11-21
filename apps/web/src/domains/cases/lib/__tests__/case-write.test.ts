@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("buildUpdateCaseData", () => {
   it("trims name and clears blank description", () => {

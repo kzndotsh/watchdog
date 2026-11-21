@@ -12,9 +12,9 @@
   "dependencies": {
     "@effect/platform-node": "4.1.4",
     "@watchdog/core": "workspace:*",
+    "@watchdog/domain": "workspace:*",
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "catalog:"
   },

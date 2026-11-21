@@ -18,8 +18,8 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 
 | Package | Must not import |
 | --- | --- |
-| `@watchdog/env`, `@watchdog/schemas`, `@watchdog/ui`, `@watchdog/log` | any other `@watchdog/*` (leaf packages) |
-| `@watchdog/policy` | db, caps, core, api, apps, tools, ai |
+| `@watchdog/env`, `@watchdog/domain/schemas`, `@watchdog/ui`, `@watchdog/log` | any other `@watchdog/*` (leaf packages) |
+| `@watchdog/domain/policy` | db, caps, core, api, apps, tools, ai |
 | `@watchdog/db` | caps, core, api, apps. Owns schema + `repos`. Dev-only `test-db` is the one allowed cycle (db's integration tests use the harness; db never imports it outside tests) |
 | `@watchdog/ai` | db, caps, core |
 | `@watchdog/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
@@ -28,7 +28,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | `@watchdog/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); callers import per-domain subpaths (`@watchdog/core/cases`, `/graph`, `/jobs`, ...); the worker imports the same entry points and `/maintenance` |
 | `@watchdog/api` | apps, **db**, drizzle-orm (goes through core) |
 | `@watchdog/client` | api, apps, db, caps, core, log (generated JSON in `src/generated`; the `app-router` type entry aliases the live `AppRouter` in-monorepo only) |
-| `@watchdog/test-kit`, `@watchdog/test-db` | dev only: never imported from production code |
+| `@watchdog/domain/test-kit`, `@watchdog/test-db` | dev only: never imported from production code |
 | `apps/cli` | core, db, api, env, log (talks HTTP via `@watchdog/client` + schemas) |
 | `apps/web` | **db** (auth's db access is `@watchdog/auth`; the SSE route uses core) |
 | `apps/worker` | declares only core, env, log, schemas, tools |
@@ -36,4 +36,4 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 
 ## Where shared contracts live
 
-`PatchOp`, `patchOpSchema` and `EvidenceSnapshot` live in **`@watchdog/schemas`** so Caps never depend on Drizzle. Accept/apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/policy`**: pure, DB-free; import policy and schemas directly, do not re-export through core. Browser code imports `@watchdog/policy/patch-needs-confidence`, not the barrel ([`../contracts/custody.md`](../contracts/custody.md)). Full ownership map: [`types.md`](types.md).
+`PatchOp`, `patchOpSchema` and `EvidenceSnapshot` live in **`@watchdog/domain/schemas`** so Caps never depend on Drizzle. Accept/apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/domain/policy`**: pure, DB-free; import policy and schemas directly, do not re-export through core. Browser code imports `@watchdog/domain/policy/patch-needs-confidence`, not the barrel ([`../contracts/custody.md`](../contracts/custody.md)). Full ownership map: [`types.md`](types.md).

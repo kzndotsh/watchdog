@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { edgesToEgoFlow, type EgoEdge } from "../edges-to-flow";
 

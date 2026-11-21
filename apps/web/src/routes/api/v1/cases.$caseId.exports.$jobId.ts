@@ -17,7 +17,7 @@ import {
   parseTrimmedCaseId,
   parseTrimmedUuid,
   requireScope,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const Route = createFileRoute("/api/v1/cases/$caseId/exports/$jobId")({
   server: {

@@ -19,7 +19,8 @@ import {
   buildEventCreateOp,
   buildIdentifierCreateOp,
   buildQuestionCreateOp,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   seedCase,
   seedEntity,
@@ -27,7 +28,6 @@ import {
   withSystemTestTx,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 describe("applyPatch", () => {
   it("persists create ops for every patch resource", async () => {

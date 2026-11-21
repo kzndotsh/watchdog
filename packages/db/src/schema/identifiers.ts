@@ -12,13 +12,13 @@ import {
   CONFIDENCE_TIERS,
   IDENTIFIER_STATUSES,
   IDENTIFIER_TYPES,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ConfidenceTier,
   IdentifierStatus,
   IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
 import {

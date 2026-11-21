@@ -2,7 +2,7 @@ import { Effect, Fiber, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { client, jobsRepo, providerCallsRepo } from "@watchdog/db";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 import {
   countLockWaiters,
   resetTestDb,

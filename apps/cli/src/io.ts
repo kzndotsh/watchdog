@@ -3,8 +3,8 @@ import type { ArgsDef, CommandContext, CommandDef } from "citty";
 import {
   insufficientScopeMessage,
   scopeSchema,
-} from "@watchdog/schemas/shared";
-import type { ListTotal, Scope } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { ListTotal, Scope } from "@watchdog/domain/schemas/shared";
 
 import { CliConfigError } from "./env";
 

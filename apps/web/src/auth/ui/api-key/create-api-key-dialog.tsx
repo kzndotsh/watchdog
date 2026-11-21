@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { SCOPE_PRESETS, type Scope } from "@watchdog/schemas/shared";
+import { SCOPE_PRESETS, type Scope } from "@watchdog/domain/schemas/shared";
 import { Field, FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";

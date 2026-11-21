@@ -5,7 +5,10 @@ import {
   type RedistributionVerdict,
 } from "@watchdog/caps";
 import type { ProviderCallWithOutcome } from "@watchdog/db";
-import { fixedContactHost, type CapContact } from "@watchdog/schemas/caps";
+import {
+  fixedContactHost,
+  type CapContact,
+} from "@watchdog/domain/schemas/caps";
 import { contactAdmits, type Touch } from "@watchdog/tools/http";
 
 /**

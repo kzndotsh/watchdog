@@ -11,8 +11,9 @@ import {
 } from "@watchdog/core/jobs";
 import { putCredentialEffect, vaultLayer } from "@watchdog/core/vault";
 import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
 import {
   listCaseJobs,
   resetActorAccess,
@@ -22,7 +23,6 @@ import {
   seedOrganizationMember,
   testDb as db,
 } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { outboundClientLayer } from "@watchdog/tools/http";
 
 import {

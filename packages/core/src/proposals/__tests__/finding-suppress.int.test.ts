@@ -7,14 +7,15 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { suppressKnownFindingsEffect } from "@watchdog/core/proposals";
-import { fingerprintPatchOp } from "@watchdog/schemas/graph";
+import { fingerprintPatchOp } from "@watchdog/domain/schemas/graph";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
   buildEventCreateOp,
   buildIdentifierCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -23,7 +24,6 @@ import {
   seedProposal,
   testDb as db,
 } from "@watchdog/test-db";
-import { testId } from "@watchdog/test-kit";
 
 describe("suppressKnownFindingsEffect", () => {
   beforeEach(async () => {

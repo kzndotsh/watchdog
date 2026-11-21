@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { CONTROL_TRIGGER } from "@/shared/ui/control-chrome";
-import type { ChoicesFilter } from "@watchdog/schemas/shared";
+import type { ChoicesFilter } from "@watchdog/domain/schemas/shared";
 import {
   Select,
   SelectContent,

@@ -1,5 +1,5 @@
 import type { JobRow } from "@watchdog/db";
-import type { CaseId, JobStopCause } from "@watchdog/schemas/shared";
+import type { CaseId, JobStopCause } from "@watchdog/domain/schemas/shared";
 
 import type { PreflightStopReason } from "./stages/preflight";
 

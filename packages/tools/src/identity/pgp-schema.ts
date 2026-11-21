@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** What a keyserver query asks for (mirrors `PgpQueryKind` in `@watchdog/schemas`, which tools does not import). */
+/** What a keyserver query asks for (mirrors `PgpQueryKind` in `@watchdog/domain/schemas`, which tools does not import). */
 export const pgpQueryKindSchema = z.enum([
   "email",
   "domain",

@@ -10,7 +10,7 @@ import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { Button } from "@/shared/ui/primitives/button";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 import {
   Collapsible,
   CollapsibleContent,

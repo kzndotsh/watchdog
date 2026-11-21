@@ -10,13 +10,13 @@ import {
 import {
   PLAYBOOK_RUN_OUTCOMES,
   PLAYBOOK_RUN_STATUSES,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import type {
   JsonObject,
   PlaybookRunOutcome,
   PlaybookRunStatus,
   CaseId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import {

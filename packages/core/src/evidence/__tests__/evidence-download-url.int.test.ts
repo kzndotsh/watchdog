@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { getEvidenceDownloadUrlEffect } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import {
   resetTestDb,
   seedCase,

@@ -10,9 +10,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { PatchOp } from "@watchdog/schemas/graph";
-import { PROPOSAL_STATUSES } from "@watchdog/schemas/shared";
-import type { ProposalStatus, CaseId } from "@watchdog/schemas/shared";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
+import { PROPOSAL_STATUSES } from "@watchdog/domain/schemas/shared";
+import type { ProposalStatus, CaseId } from "@watchdog/domain/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { graphWriteResultSchema } from "@watchdog/schemas/graph";
+import { graphWriteResultSchema } from "@watchdog/domain/schemas/graph";
 
 import { credentialSlotSchema } from "../schemas";
 

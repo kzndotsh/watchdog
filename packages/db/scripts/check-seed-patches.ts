@@ -5,7 +5,7 @@
  */
 import postgres from "postgres";
 
-import { patchSchema } from "@watchdog/schemas/graph";
+import { patchSchema } from "@watchdog/domain/schemas/graph";
 
 const url = process.env.DATABASE_URL_MIGRATE;
 if (url === undefined || url === "") {

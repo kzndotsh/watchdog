@@ -1,7 +1,7 @@
 import {
   CASE_LIFECYCLE_SQLSTATE,
   HISTORY_CONTEXT_MISSING_SQLSTATE,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Extract a human-readable message from an unknown catch value. */
 export function errorMessage(error: unknown, fallback?: string): string {

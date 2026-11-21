@@ -10,9 +10,9 @@ import {
   questionsKeys,
 } from "@/domains/entities/questions/queries";
 import { procedureDouble } from "@/testing/orpc-client";
-import { questionList } from "@watchdog/schemas/graph";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { questionList } from "@watchdog/domain/schemas/graph";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listQuestions = procedureDouble("questions.list");
 

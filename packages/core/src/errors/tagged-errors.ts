@@ -3,7 +3,7 @@ import { Data } from "effect";
 import {
   STALE_VERSION_MESSAGE_SUFFIX,
   type JobStartLimitScope,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /*
  * Every tag carries a stable, unique `code` literal. Codes are public API

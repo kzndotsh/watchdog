@@ -39,18 +39,18 @@ import {
   identifierPlatformOptionMatchesQuery,
   CONFIDENCE_OPTIONS,
 } from "@/shared/ui/vocab";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import {
   validateIdentifierWrite,
   HANDLE_REQUIRES_PLATFORM,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   Popover,
   PopoverContent,

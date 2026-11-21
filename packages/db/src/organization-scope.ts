@@ -3,7 +3,7 @@ import { PgTransaction } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type postgres from "postgres";
 
-import type { OrganizationId } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 
 import { WORKER_ROLE } from "./app-role";
 import type { Db } from "./client";

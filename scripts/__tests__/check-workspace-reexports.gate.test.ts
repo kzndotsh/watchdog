@@ -53,7 +53,7 @@ describe("check-workspace-reexports gate", () => {
   it("fails when an imported workspace symbol is exported by name", () => {
     const res = repoWith({
       "packages/core/src/bad.ts": [
-        'import { titleCase, type Foo } from "@watchdog/schemas";',
+        'import { titleCase, type Foo } from "@watchdog/domain/schemas";',
         "export { titleCase };",
         "export type { Foo };",
         "",
@@ -119,7 +119,7 @@ describe("check-workspace-reexports gate", () => {
   it("limits the web wrapper exemption to @watchdog/ui/components specifiers", () => {
     const res = repoWith({
       "apps/web/src/shared/ui/primitives/bad.tsx":
-        'export * from "@watchdog/schemas";\n',
+        'export * from "@watchdog/domain/schemas";\n',
     }).run(GATE);
 
     expect(res.code).toBe(1);

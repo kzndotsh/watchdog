@@ -6,8 +6,8 @@ import {
 } from "@/domains/triage/lib/filters";
 import { proposalSourceLabel } from "@/shared/ui/vocab";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
-import type { ProposalStatus } from "@watchdog/schemas/shared";
+import { patchNeedsConfidence } from "@watchdog/domain/policy/patch-needs-confidence";
+import type { ProposalStatus } from "@watchdog/domain/schemas/shared";
 
 export type DecideEvidenceMode = "cite" | "pick";
 

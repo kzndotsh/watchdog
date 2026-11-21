@@ -22,8 +22,8 @@ import {
   STALE_REALTIME,
   STALE_STABLE,
 } from "@/shared/lib/query-stale";
-import { deletedCaseList } from "@watchdog/schemas/cases";
-import { PAGE_LIMIT_MAX } from "@watchdog/schemas/shared";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import { PAGE_LIMIT_MAX } from "@watchdog/domain/schemas/shared";
 
 /** The switcher, palette, Cases page and first-Case gate read one page of Cases by name. */
 const VISIBLE_CASES_INPUT = { limit: PAGE_LIMIT_MAX } as const;

@@ -10,7 +10,7 @@ import { egoTruncationNotice } from "@/domains/entities/lib/graph-notice";
 import { couldnt } from "@/lib/utils";
 import { useListCount } from "@/shared/hooks/list/use-list-count";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { edgeList } from "@watchdog/schemas/graph";
+import { edgeList } from "@watchdog/domain/schemas/graph";
 
 const NO_EGO_EDGES: readonly EgoEdge[] = [];
 

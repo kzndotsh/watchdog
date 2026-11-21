@@ -1,6 +1,6 @@
 import { Effect, Fiber } from "effect";
 
-import type { JobStopCause } from "@watchdog/schemas/shared";
+import type { JobStopCause } from "@watchdog/domain/schemas/shared";
 
 import type { JobFibers } from "./job-fibers";
 import type { QueueAbort, QueuedJob } from "./job-queue-worker";

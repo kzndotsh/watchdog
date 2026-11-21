@@ -8,7 +8,10 @@ import { useMemo, useState } from "react";
 
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { PICKER_SEARCH_DEBOUNCE_MS } from "@/shared/lib/debounce";
-import { ARRAY_MAX, LIST_SEARCH_MIN_LENGTH } from "@watchdog/schemas/shared";
+import {
+  ARRAY_MAX,
+  LIST_SEARCH_MIN_LENGTH,
+} from "@watchdog/domain/schemas/shared";
 
 /** One read of a picker's records (a domain query: its key under the domain root, so invalidation reaches it). */
 export type PickerQuery<T> = UseQueryOptions<readonly T[], Error, readonly T[]>;

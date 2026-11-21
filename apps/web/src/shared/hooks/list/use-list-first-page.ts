@@ -1,7 +1,11 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import type { ListView } from "@/shared/lib/list/list-view";
-import type { AnyListDef, ListPage, ListQuery } from "@watchdog/schemas/shared";
+import type {
+  AnyListDef,
+  ListPage,
+  ListQuery,
+} from "@watchdog/domain/schemas/shared";
 
 export type ListFirstPage<Item> = {
   readonly page: ListPage<Item> | undefined;

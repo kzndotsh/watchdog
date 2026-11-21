@@ -8,12 +8,12 @@ import {
   processExtractDraftSchema,
   structuredExtractEffect,
 } from "@watchdog/ai";
-import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
-import { EVIDENCE_EXTRACT_AI_CAPABILITY_ID } from "@watchdog/schemas/jobs";
+import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
+import { EVIDENCE_EXTRACT_AI_CAPABILITY_ID } from "@watchdog/domain/schemas/jobs";
 import {
   IDENTIFIER_PLATFORM_SLUGS,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 import {
   BlockedTargetError,
   ValidationVendorError,

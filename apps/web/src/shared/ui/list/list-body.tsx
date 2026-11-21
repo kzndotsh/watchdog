@@ -6,7 +6,7 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ListEmpty } from "@/shared/ui/list/list-empty";
 import { ListFooter } from "@/shared/ui/list/list-footer";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
+import type { AnyListDef, FilterKey } from "@watchdog/domain/schemas/shared";
 
 type ListBodyProps<D extends AnyListDef, Item, K extends FilterKey<D>> = {
   readonly list: ListHandle<D, Item, K>;

@@ -1,6 +1,6 @@
 import { and, eq, isNotNull } from "drizzle-orm";
 
-import { deletedCaseList } from "@watchdog/schemas/cases";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
 
 import { cases } from "../schema/cases";
 import { defineListRepo } from "./_list-query";

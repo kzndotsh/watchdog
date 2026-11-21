@@ -24,8 +24,8 @@ import {
   isPatchOpOf,
   listInvalidIdentifierOps,
   patchOpText,
-} from "@watchdog/schemas/graph";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
 import {
   Alert,
   AlertDescription,

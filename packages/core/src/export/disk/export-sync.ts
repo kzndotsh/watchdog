@@ -13,12 +13,12 @@ import nodePath from "node:path";
 import { Context, Data, Effect, Fiber, Layer, SynchronizedRef } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
 import {
   parseTrimmedCaseId,
   type CaseId,
   type OrganizationId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { errorMessage } from "../../errors/error-utils";
 import { readArtifactBytesEffect } from "../../infra/blob";

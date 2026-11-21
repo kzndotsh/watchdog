@@ -2,7 +2,7 @@ import {
   parseOptionalTrimmedUuid,
   trimmedOrUndefined,
   type EgressClass,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { CapListItem } from "../types";
 import { breachDisabledReason } from "./breach-disabled";
