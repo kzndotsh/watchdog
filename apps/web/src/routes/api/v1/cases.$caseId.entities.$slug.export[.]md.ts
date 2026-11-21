@@ -8,18 +8,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { runAppAs } from "@watchdog/api";
-import { getCaseByIdEffect } from "@watchdog/core/cases";
-import type { DomainTag } from "@watchdog/core/errors";
-import { renderEntityMarkdownEffect } from "@watchdog/core/export";
-import { getEntityByCaseSlugEffect } from "@watchdog/core/graph";
-import { inOrganization, type Db } from "@watchdog/core/infra";
 import {
   type CaseId,
   type OrganizationId,
   parseTrimmedCaseId,
   requireScope,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { runAppAs } from "@watchdog/server/api";
+import { getCaseByIdEffect } from "@watchdog/server/core/cases";
+import type { DomainTag } from "@watchdog/server/core/errors";
+import { renderEntityMarkdownEffect } from "@watchdog/server/core/export";
+import { getEntityByCaseSlugEffect } from "@watchdog/server/core/graph";
+import { inOrganization, type Db } from "@watchdog/server/core/infra";
 
 type EntityExportMdResult =
   | { kind: "missing" }

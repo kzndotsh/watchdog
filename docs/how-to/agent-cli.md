@@ -3,7 +3,7 @@
 **What this is:** how to point agents and automation at the HTTP API (OpenAPI at `/api/v1`, JSON by default) and the `wd` CLI.  
 **What this is not:** Cap authoring ([`../reference/platform/caps-boundary.md`](../reference/platform/caps-boundary.md)), the web app's oRPC wiring ([`../reference/web/architecture.md`](../reference/web/architecture.md)), or the verb list (`wd --help`).
 
-Agents and the CLI share one OpenAPI contract via `@watchdog/client`. The default graph path is **propose**; an explicit graph write is the escape hatch ([`../reference/contracts/agent-ingress.md`](../reference/contracts/agent-ingress.md) owns those rules).
+Agents and the CLI share one OpenAPI contract via `apps/cli/client`. The default graph path is **propose**; an explicit graph write is the escape hatch ([`../reference/contracts/agent-ingress.md`](../reference/contracts/agent-ingress.md) owns those rules).
 
 ## Setup
 
@@ -18,7 +18,7 @@ WD_API_KEY=<key-from-settings>
 
 4. After `pnpm install` and `pnpm build:cli`, `wd` is available via `pnpm exec wd` (or `node_modules/.bin/wd`). `wd --help` works without a key; authenticated verbs need both vars (`loadCliEnv()`). From the repo root, dotenv picks up `.env`.
 
-`pnpm generate:client` writes `packages/client/src/generated/` (gitignored build output); `pnpm install`, `pnpm typecheck` and `pnpm build:cli` run it, so the CLI always builds against the current API. `@watchdog/api`, `@watchdog/client` and `@watchdog/cli` pin TypeScript to the workspace version in their `package.json`; do not float it.
+`pnpm generate:client` writes `apps/cli/client/src/generated/` (gitignored build output); `pnpm install`, `pnpm typecheck` and `pnpm build:cli` run it, so the CLI always builds against the current API. `@watchdog/server/api`, `apps/cli/client` and `@watchdog/cli` pin TypeScript to the workspace version in their `package.json`; do not float it.
 
 ## Interactive API docs
 

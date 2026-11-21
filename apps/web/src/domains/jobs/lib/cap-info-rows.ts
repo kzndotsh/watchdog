@@ -1,5 +1,5 @@
-import { capEgressLabel } from "@watchdog/schemas/caps";
-import { titleCase } from "@watchdog/schemas/shared";
+import { capEgressLabel } from "@watchdog/domain/schemas/caps";
+import { titleCase } from "@watchdog/domain/schemas/shared";
 
 import type { CapListItem } from "../types";
 import { formatCapCredentials, formatCapIo } from "./cap-run-input";

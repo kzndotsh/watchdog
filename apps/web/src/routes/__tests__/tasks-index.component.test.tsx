@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { parseTasksSearch } from "@/domains/tasks/lib/tasks-search";
 import { tasksKeys } from "@/domains/tasks/queries";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const useSearchMock = vi.hoisted(() => vi.fn((): unknown => ({})));
 

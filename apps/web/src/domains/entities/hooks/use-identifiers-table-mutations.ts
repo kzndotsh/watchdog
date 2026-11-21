@@ -18,7 +18,7 @@ import type {
   ConfidenceTier,
   IdentifierStatus,
   IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 type UpdateIdentifierVars = {
   identifierId: string;

@@ -11,9 +11,9 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_REALTIME, STALE_REALTIME } from "@/shared/lib/query-stale";
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
-import { proposalList } from "@watchdog/schemas/jobs";
-import type { ListPage } from "@watchdog/schemas/shared";
+import { proposalList } from "@watchdog/domain/schemas/jobs";
+import type { ListPage } from "@watchdog/domain/schemas/shared";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 
 /** Rows the Dashboard and the Case overview show: their longest pending list (12 activity rows). */
 const PENDING_SUMMARY_LIMIT = 12;

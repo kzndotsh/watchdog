@@ -11,8 +11,8 @@ import {
   buildEntityListConnection,
   buildEntityListItem,
 } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/domains/entities/components/connection-composer-fields", () => ({
   ConnectionComposerFields: () => <div>Composer fields</div>,

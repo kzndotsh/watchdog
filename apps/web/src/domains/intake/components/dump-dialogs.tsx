@@ -1,5 +1,6 @@
 import { useId } from "react";
 
+import { Field, FieldLabel } from "#ui/components/field";
 import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { PasteForm } from "@/domains/intake/components/paste-form";
 import { UrlForm } from "@/domains/intake/components/url-form";
@@ -15,7 +16,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 export type DumpModal = "file" | "paste" | "url";
 

@@ -13,8 +13,8 @@ import { SummarySection } from "@/domains/dossier/components/summary-section";
 import type { EntityRecord } from "@/domains/entities/types";
 import { procedureDouble } from "@/testing/orpc-client";
 import { createTestRouter, testRouterWrapper } from "@/testing/test-router";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const updateEntity = procedureDouble("entities.update");
 

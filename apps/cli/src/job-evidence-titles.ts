@@ -1,8 +1,8 @@
 import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
-} from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";

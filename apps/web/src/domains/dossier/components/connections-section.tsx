@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { ConnectionDialog } from "@/domains/dossier/components/ego-graph/connection-dialog";
@@ -20,9 +21,8 @@ import { useList } from "@/shared/hooks/list/use-list";
 import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { ListBody, ListToolbar } from "@/shared/ui/list";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
-import type { edgeList } from "@watchdog/schemas/graph";
-import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
+import type { edgeList } from "@watchdog/domain/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
 
 /** The Connections tab's view in the route's URL (the Overview's nest keeps its own). */
 export type ConnectionsSectionView = SectionListView<

@@ -1,8 +1,8 @@
 import "@tanstack/react-start/server-only";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 
-import { createAuth } from "@watchdog/auth/server";
-import { sharedDb } from "@watchdog/core/infra";
+import { createAuth } from "@watchdog/server/auth/server";
+import { sharedDb } from "@watchdog/server/core/infra";
 
 // Better Auth is built at module load, before any request builds the API runtime, so it
 // takes the process pool by value: `sharedDb()` is the pool `Db.owned` (AppLive) owns, so
@@ -18,8 +18,8 @@ export const auth = createAuth({
   // the delete cancels the Cases' Jobs' pg-boss deliveries through its queue.
   beforeDeleteOrganization: async ({ organizationId, actorId }) => {
     const { deleteOrganizationCasesEffect } =
-      await import("@watchdog/core/case-deletion");
-    const { runApp } = await import("@watchdog/api");
+      await import("@watchdog/server/core/case-deletion");
+    const { runApp } = await import("@watchdog/server/api");
     await runApp(deleteOrganizationCasesEffect(organizationId, { actorId }));
   },
 });

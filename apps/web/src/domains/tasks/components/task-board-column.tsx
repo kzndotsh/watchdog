@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { Input } from "#ui/components/input";
+import { ScrollArea } from "#ui/components/scroll-area";
 import { TaskCard } from "@/domains/tasks/components/task-card";
 import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 import { frozenSortingStrategy } from "@/domains/tasks/lib/task-board-dnd";
@@ -18,9 +20,7 @@ import { SectionLabel } from "@/shared/ui/section-label";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TASK_BOARD_COLUMN_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import { taskStatusLabel } from "@/shared/ui/vocab";
-import type { TaskStatus } from "@watchdog/schemas/shared";
-import { Input } from "@watchdog/ui/components/input";
-import { ScrollArea } from "@watchdog/ui/components/scroll-area";
+import type { TaskStatus } from "@watchdog/domain/schemas/shared";
 
 /**
  * A finished column (Done, Dropped) is a paged list: its count is the list's total, and its

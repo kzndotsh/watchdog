@@ -2,14 +2,14 @@ import "@tanstack/react-start/server-only";
 /**
  * Request body limit for every route that reads a body (the `/api/v1` OpenAPI handler,
  * Better Auth, server functions). One definition, `REQUEST_BODY_MAX_BYTES` in
- * `@watchdog/schemas`; `server.ts` applies it before the Start handler, and
+ * `@watchdog/domain/schemas`; `server.ts` applies it before the Start handler, and
  * `scripts/serve.mjs` hands the same number to srvx as a backstop for the container.
  *
  * Evidence files never pass through here: they go to the object store with a presigned
- * PUT, and `MAX_UPLOAD_BYTES` (`@watchdog/schemas`) bounds them separately.
+ * PUT, and `MAX_UPLOAD_BYTES` (`@watchdog/domain/schemas`) bounds them separately.
  */
 import { CSP_REPORT_PATH } from "@/lib/security-headers.server";
-import { REQUEST_BODY_MAX_BYTES } from "@watchdog/schemas/shared";
+import { REQUEST_BODY_MAX_BYTES } from "@watchdog/domain/schemas/shared";
 
 /** Stable machine-readable code of a body-limit refusal (`data.code`). */
 export const PAYLOAD_TOO_LARGE_CODE = "payload_too_large";

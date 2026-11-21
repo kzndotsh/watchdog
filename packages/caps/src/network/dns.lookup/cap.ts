@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
-import { resolveDnsRecordsEffect, dnsRecordsSchema } from "@watchdog/tools/dns";
-import { normalizeHost } from "@watchdog/tools/normalize";
+import { resolveDnsRecordsEffect, dnsRecordsSchema } from "#tools/dns";
+import { normalizeHost } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { foundOfType } from "../../lib/collect/found-values";

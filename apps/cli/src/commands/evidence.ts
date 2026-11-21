@@ -5,9 +5,9 @@ import {
   dumpUrlInputSchema,
   evidenceList,
   processEvidenceInputSchema,
-} from "@watchdog/schemas/evidence";
-import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
-import { URL_MAX, requiredText } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/domain/schemas/graph";
+import { URL_MAX, requiredText } from "@watchdog/domain/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import {

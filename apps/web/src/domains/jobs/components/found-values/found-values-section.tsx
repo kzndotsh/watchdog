@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, CopyIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Collapsible, CollapsibleContent } from "#ui/components/collapsible";
+import { Input } from "#ui/components/input";
 import { groupFoundValues } from "@/domains/jobs/lib/found-value-groups";
 import { jobFoundValuesQuery } from "@/domains/jobs/queries";
 import { copyText } from "@/shared/hooks/use-copy-text";
@@ -10,12 +12,7 @@ import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { Button } from "@/shared/ui/primitives/button";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@watchdog/ui/components/collapsible";
-import { Input } from "@watchdog/ui/components/input";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 
 /** A type group at or under this size starts open. */
 const GROUP_OPEN_MAX = 12;

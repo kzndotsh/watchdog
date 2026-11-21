@@ -15,8 +15,8 @@ import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { entityList } from "@watchdog/schemas/graph";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import { entityList } from "@watchdog/domain/schemas/graph";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 export { entitiesKeys } from "@/domains/entities/entities-keys";
 

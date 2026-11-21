@@ -21,8 +21,8 @@ import {
   readScan,
 } from "../oxlint-plugin/lib/baseline-update.mjs";
 
-const A = "packages/core/src/a.ts";
-const B = "packages/core/src/b.ts";
+const A = "packages/server/core/src/a.ts";
+const B = "packages/server/core/src/b.ts";
 const diag = (filename: string, code = "watchdog(r)") => ({
   message: "m",
   code,

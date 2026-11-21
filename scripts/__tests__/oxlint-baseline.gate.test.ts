@@ -34,16 +34,16 @@ describe("scripts/oxlint-baseline.mjs", { timeout: LINT_TIMEOUT_MS }, () => {
 
   it("--init records the current counts and the result lints clean", () => {
     const fixture = scriptFixture();
-    fixture.write("packages/core/src/a.ts", withLegacy(2));
-    fixture.write("packages/core/src/b.ts", withLegacy(1));
+    fixture.write("packages/server/core/src/a.ts", withLegacy(2));
+    fixture.write("packages/server/core/src/b.ts", withLegacy(1));
     const res = run(fixture, "--init");
     expect(res.code).toBe(0);
     expect(JSON.parse(baselineOf(fixture))).toEqual({
-      "packages/core/src/a.ts": 2,
-      "packages/core/src/b.ts": 1,
+      "packages/server/core/src/a.ts": 2,
+      "packages/server/core/src/b.ts": 1,
     });
     expect(
-      lintRule(fixture, ["packages/core/src"]).findings.filter(
+      lintRule(fixture, ["packages/server/core/src"]).findings.filter(
         (f) => f.rule === RULE
       )
     ).toHaveLength(0);
@@ -51,32 +51,32 @@ describe("scripts/oxlint-baseline.mjs", { timeout: LINT_TIMEOUT_MS }, () => {
 
   it("shrinks counts and drops files that are gone", () => {
     const fixture = scriptFixture();
-    fixture.write("packages/core/src/a.ts", withLegacy(1));
+    fixture.write("packages/server/core/src/a.ts", withLegacy(1));
     fixture.write(
       BASELINE,
-      '{ "packages/core/src/a.ts": 3, "packages/core/src/gone.ts": 1 }\n'
+      '{ "packages/server/core/src/a.ts": 3, "packages/server/core/src/gone.ts": 1 }\n'
     );
     expect(run(fixture).code).toBe(0);
     expect(JSON.parse(baselineOf(fixture))).toEqual({
-      "packages/core/src/a.ts": 1,
+      "packages/server/core/src/a.ts": 1,
     });
   });
 
   it("refuses to record a violation the baseline does not allow", () => {
     const fixture = scriptFixture();
-    fixture.write("packages/core/src/a.ts", withLegacy(2));
-    fixture.write(BASELINE, '{ "packages/core/src/a.ts": 1 }\n');
+    fixture.write("packages/server/core/src/a.ts", withLegacy(2));
+    fixture.write(BASELINE, '{ "packages/server/core/src/a.ts": 1 }\n');
     const res = run(fixture);
     expect(res.code).toBe(1);
     expect(res.output).toContain("baseline allows 1");
     expect(JSON.parse(baselineOf(fixture))).toEqual({
-      "packages/core/src/a.ts": 1,
+      "packages/server/core/src/a.ts": 1,
     });
   });
 
   it("refuses --init over an existing baseline", () => {
     const fixture = scriptFixture();
-    fixture.write("packages/core/src/a.ts", withLegacy(1));
+    fixture.write("packages/server/core/src/a.ts", withLegacy(1));
     // Any existing file, even an unreadable one, means "already initialised".
     fixture.write(BASELINE, "not json");
     const res = run(fixture, "--init");

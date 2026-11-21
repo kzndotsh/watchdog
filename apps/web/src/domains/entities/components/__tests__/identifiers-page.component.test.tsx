@@ -16,20 +16,20 @@ import {
   buildCaseIdentifierRecord,
   buildEntityRecord,
 } from "@/testing/records";
-import { identifierList } from "@watchdog/schemas/graph";
+import { identifierList } from "@watchdog/domain/schemas/graph";
 import type {
   IdentifierType,
   ListSearch,
   UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,
 }));
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 

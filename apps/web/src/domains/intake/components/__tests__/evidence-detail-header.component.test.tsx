@@ -2,6 +2,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { Tabs } from "#ui/components/tabs";
 import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
 import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
@@ -14,10 +15,9 @@ import {
   pickerRouteCaseWrapper,
 } from "@/testing/memory-picker-port";
 import { render as baseRender, screen } from "@/testing/render-in-case";
-import type { JobListRecord } from "@watchdog/core/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
-import { Tabs } from "@watchdog/ui/components/tabs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({

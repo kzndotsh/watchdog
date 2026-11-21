@@ -3,6 +3,8 @@ import { notFound, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
+import { FieldError } from "#ui/components/field";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/tabs";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
@@ -47,22 +49,15 @@ import { ListCount } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { EntityKindGlyph } from "@/shared/ui/vocab";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { taskList } from "@watchdog/schemas/feed";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { taskList } from "@watchdog/domain/schemas/feed";
 import {
   claimList,
   edgeList,
   eventList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
-import { FieldError } from "@watchdog/ui/components/field";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@watchdog/ui/components/tabs";
+} from "@watchdog/domain/schemas/graph";
 
 /** The route's search writer (`usePatchSearch`): a list tab's view and the Evidence selection. */
 type DossierSearchWriter = (patch: Readonly<Record<string, unknown>>) => void;

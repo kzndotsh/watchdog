@@ -1,6 +1,9 @@
 import type { SortingStrategy } from "@dnd-kit/sortable";
 
-import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas/shared";
+import {
+  TASK_STATUSES,
+  type TaskStatus,
+} from "@watchdog/domain/schemas/shared";
 
 /** What the board's drag logic reads of a card. */
 type BoardTask = { readonly id: string; readonly status: TaskStatus };

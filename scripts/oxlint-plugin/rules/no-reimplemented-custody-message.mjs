@@ -127,7 +127,7 @@ const isOperand = (node) => {
 };
 
 /**
- * Bans spelling the custody evidence message outside `@watchdog/policy`: a string or
+ * Bans spelling the custody evidence message outside `@watchdog/domain/policy`: a string or
  * template literal whose text holds the message (or its distinctive phrase), and the
  * same text split across a `+` chain, template parts, `concat`, `join` or consts the
  * parts resolve to by lexical scope. An imported `CONFIRMED_REQUIRES_EVIDENCE` (named,
@@ -138,20 +138,20 @@ const isOperand = (node) => {
  * unknown, and a destructured binding is never read. Plain JSX text is checked too
  * (`<p>confirmed requires evidence</p>`, whitespace and `&nbsp;`-style entities
  * normalised); text split across elements (`<b>confirmed</b> requires ...`) is not a
- * finding, since no single node spells it. `@watchdog/policy` itself is switched off by `overrides` in `oxlint.config.ts`.
+ * finding, since no single node spells it. `@watchdog/domain/policy` itself is switched off by `overrides` in `oxlint.config.ts`.
  */
 export const noReimplementedCustodyMessage = {
   meta: {
     type: "problem",
     docs: {
       description:
-        "Ban re-typing the custody evidence message outside @watchdog/policy.",
+        "Ban re-typing the custody evidence message outside @watchdog/domain/policy.",
     },
   },
   /** @param {RuleContext} context */
   create(context) {
     const message =
-      "the custody evidence message is typed here, a second copy that drifts from the rule: import CONFIRMED_REQUIRES_EVIDENCE (or call confirmedEvidenceViolation) from @watchdog/policy in server code and from @watchdog/policy/confirmed-evidence in browser code, never the @watchdog/policy root; web forms ask isConfirmedBlocked in apps/web/src/shared/lib/confirmed-evidence.ts (conventions: one source per domain rule)";
+      "the custody evidence message is typed here, a second copy that drifts from the rule: import CONFIRMED_REQUIRES_EVIDENCE (or call confirmedEvidenceViolation) from @watchdog/domain/policy in server code and from @watchdog/domain/policy/confirmed-evidence in browser code, never the @watchdog/domain/policy root; web forms ask isConfirmedBlocked in apps/web/src/shared/lib/confirmed-evidence.ts (conventions: one source per domain rule)";
 
     /** Names written after their declaration anywhere in the file (`x = ...`, `x += ...`, `x++`, `[x] = ...`). */
     const written = new Set();

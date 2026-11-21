@@ -4,6 +4,6 @@ import { bansNode, calleeName, REPO_CONTRACT } from "../lib/db-repo.mjs";
 export const dbRepoNoTrimOrNull = bansNode({
   type: "CallExpression",
   test: (node) => calleeName(node) === "trimmedOrNull",
-  description: "Ban trimmedOrNull in packages/db repos.",
+  description: "Ban trimmedOrNull in packages/server/db repos.",
   message: `Repos must not trim display strings: use trimmedOrNull in core or schemas, and keep repos to lookup scoping (${REPO_CONTRACT}).`,
 });

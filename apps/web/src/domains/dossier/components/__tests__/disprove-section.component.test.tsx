@@ -6,8 +6,8 @@ import type { ClaimRecord } from "@/domains/entities/claims/types";
 import { lastProcedureInput, memoryListProcedure } from "@/testing/memory-list";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildClaimRecord } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

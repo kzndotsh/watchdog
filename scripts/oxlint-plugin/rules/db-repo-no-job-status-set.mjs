@@ -1,7 +1,7 @@
 import { isRecord } from "../lib/ast.mjs";
 import { REPO_CONTRACT } from "../lib/db-repo.mjs";
 
-/** Job statuses (mirrors JOB_STATUSES in @watchdog/schemas vocab). */
+/** Job statuses (mirrors JOB_STATUSES in @watchdog/domain/schemas vocab). */
 const JOB_STATUSES = new Set([
   "queued",
   "running",
@@ -40,7 +40,7 @@ export const dbRepoNoJobStatusSet = {
     type: "problem",
     docs: {
       description:
-        "Ban array literals of two or more job statuses in packages/db repos.",
+        "Ban array literals of two or more job statuses in packages/server/db repos.",
     },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */
@@ -53,7 +53,7 @@ export const dbRepoNoJobStatusSet = {
         if (found.size < 2) return;
         context.report({
           node,
-          message: `Repos define no job status set: use the named sets and predicates from @watchdog/schemas vocab (OPEN_JOB_STATUSES, CANCELLABLE_JOB_STATUSES, LIVE_JOB_STATUSES, TERMINAL_JOB_STATUSES) (${REPO_CONTRACT}).`,
+          message: `Repos define no job status set: use the named sets and predicates from @watchdog/domain/schemas vocab (OPEN_JOB_STATUSES, CANCELLABLE_JOB_STATUSES, LIVE_JOB_STATUSES, TERMINAL_JOB_STATUSES) (${REPO_CONTRACT}).`,
         });
       },
     };

@@ -9,7 +9,7 @@ import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
 import { artifactKeys } from "@/domains/jobs/jobs-keys";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { procedureDouble } from "@/testing/orpc-client";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const artifactText = procedureDouble("jobs.artifactText");
 const evidenceText = procedureDouble("evidence.text");

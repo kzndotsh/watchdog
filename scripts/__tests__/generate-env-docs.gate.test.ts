@@ -12,7 +12,7 @@ const repoRoot = path.resolve(import.meta.dirname, "../..");
  * The schema's dependencies (zod) resolve from the real install, so the fixture repo reads the
  * real env source and keeps only the generated files of its own.
  */
-const SOURCE = ["--source", path.join(repoRoot, "packages/env/src")];
+const SOURCE = ["--source", path.join(repoRoot, "packages/server/env/src")];
 const SCRIPT = "generate-env-docs.mjs";
 const PRODUCTION_EXAMPLE = readFileSync(
   path.join(repoRoot, "env.production.example"),

@@ -1,17 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
+import { Card, CardContent, CardHeader, CardTitle } from "#ui/components/card";
 import { CreateCaseForm } from "@/domains/cases/components/create-case-form";
 import { useOpenFirstCase } from "@/domains/cases/hooks/use-open-first-case";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@watchdog/ui/components/card";
 
 /**
  * Onboarding's second step: "Create your first Case". Shown on `/onboarding` once the user

@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@watchdog/ui/components/empty";
+} from "#ui/components/empty";
+import { cn } from "@/lib/utils";
 
 type DetailEmptyProps = {
   title?: string;

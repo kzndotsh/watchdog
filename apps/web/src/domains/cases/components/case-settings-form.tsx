@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Switch } from "#ui/components/switch";
+import { Textarea } from "#ui/components/textarea";
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -11,17 +20,8 @@ import {
   egressClassDescription,
   egressClassLabel,
   normalizeAllowedEgress,
-} from "@watchdog/schemas/caps";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Switch } from "@watchdog/ui/components/switch";
-import { Textarea } from "@watchdog/ui/components/textarea";
+} from "@watchdog/domain/schemas/caps";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
 
 /** The classes a Case can switch: `local` is always allowed, so it has no switch. */
 const CASE_EGRESS_TOGGLES = EGRESS_CLASSES.filter((c) => c !== "local");

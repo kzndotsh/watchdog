@@ -148,7 +148,7 @@ beforeAll(() => {
     `${RQ}export const useThing = () => useMutation({ mutationFn: async () => 1 });\n`
   );
   fixture.write(
-    "packages/core/src/probe/use-thing.ts",
+    "packages/server/core/src/probe/use-thing.ts",
     `${RQ}export const useThing = () => useMutation({ mutationFn: async () => 1 });\n`
   );
 
@@ -198,7 +198,7 @@ beforeAll(() => {
     "export const f = (qc: any) => qc.invalidateQueries({});\n"
   );
   fixture.write(
-    "packages/core/src/probe/write.ts",
+    "packages/server/core/src/probe/write.ts",
     "export const f = (qc: any) => qc.invalidateQueries({});\n"
   );
 
@@ -236,7 +236,7 @@ beforeAll(() => {
   fixture.write(`${SRC}/domains/probe/queries.tsx`, queriesSource);
   fixture.write(`${SRC}/domains/probe/my-queries-helper.ts`, queriesSource);
   fixture.write(`${SRC}/domains/probe/__tests__/keys.test.ts`, queriesSource);
-  fixture.write("packages/core/src/probe/keys.ts", queriesSource);
+  fixture.write("packages/server/core/src/probe/keys.ts", queriesSource);
 
   result = fixture.lint([SRC, "packages"]);
 }, LINT_TIMEOUT_MS);
@@ -279,9 +279,9 @@ describe("useMutation only in hooks (mutation-only-in-hooks)", () => {
     expect(
       hits(`${SRC}/domains/probe/__tests__/thing.test.tsx`, MUTATION)
     ).toHaveLength(0);
-    expect(hits("packages/core/src/probe/use-thing.ts", MUTATION)).toHaveLength(
-      0
-    );
+    expect(
+      hits("packages/server/core/src/probe/use-thing.ts", MUTATION)
+    ).toHaveLength(0);
   });
 });
 
@@ -319,7 +319,9 @@ describe("cache writes only in hooks (cache-writes-only-in-hooks)", () => {
     expect(
       hits(`${SRC}/domains/probe/__tests__/write.test.tsx`, CACHE)
     ).toHaveLength(0);
-    expect(hits("packages/core/src/probe/write.ts", CACHE)).toHaveLength(0);
+    expect(hits("packages/server/core/src/probe/write.ts", CACHE)).toHaveLength(
+      0
+    );
   });
 });
 
@@ -359,6 +361,8 @@ describe("query keys only in queries modules (query-keys-in-queries-modules)", (
     expect(
       hits(`${SRC}/domains/probe/__tests__/keys.test.ts`, KEYS)
     ).toHaveLength(0);
-    expect(hits("packages/core/src/probe/keys.ts", KEYS)).toHaveLength(0);
+    expect(hits("packages/server/core/src/probe/keys.ts", KEYS)).toHaveLength(
+      0
+    );
   });
 });

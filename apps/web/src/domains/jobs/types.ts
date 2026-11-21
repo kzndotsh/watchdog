@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import type { CapContact } from "@watchdog/schemas/caps";
+import type { CapContact } from "@watchdog/domain/schemas/caps";
 import type {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   getJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   sha256HexSchema,
   trimmedUuidSchema,
@@ -15,7 +15,7 @@ import {
   type JsonObject,
   type JsonValue,
   type PlaybookSeedKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** CapDescriptor wire shape from capabilities.list (serializable catalog). */
 export type CapConsumeItem = {

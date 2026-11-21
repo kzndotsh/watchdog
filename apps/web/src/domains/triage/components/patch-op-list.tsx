@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon } from "lucide-react";
 
+import { Checkbox } from "#ui/components/checkbox";
+import { Collapsible, CollapsibleContent } from "#ui/components/collapsible";
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
 import {
   groupPatchOps,
@@ -20,12 +22,7 @@ import {
   patchOpResource,
   patchOpVerb,
   type PatchOp,
-} from "@watchdog/schemas/graph";
-import { Checkbox } from "@watchdog/ui/components/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@watchdog/ui/components/collapsible";
+} from "@watchdog/domain/schemas/graph";
 
 const EMPTY_IDS: string[] = [];
 

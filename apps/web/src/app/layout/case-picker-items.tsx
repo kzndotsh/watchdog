@@ -1,12 +1,12 @@
 import { CheckIcon, PlusIcon } from "lucide-react";
 
-import type { CaseRecord } from "@/domains/cases/types";
 import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "@watchdog/ui/components/dropdown-menu";
+} from "#ui/components/dropdown-menu";
+import type { CaseRecord } from "@/domains/cases/types";
 
 type CasePickerItemsProps = {
   cases: CaseRecord[];

@@ -1,11 +1,11 @@
 /**
  * Proves the real `oxlint.config.ts` bans re-typing the custody evidence message
- * (`watchdog/no-reimplemented-custody-message`) outside `@watchdog/policy`: a string,
+ * (`watchdog/no-reimplemented-custody-message`) outside `@watchdog/domain/policy`: a string,
  * template, concatenation, `concat`, `join` or const that spells the text. Probe files are
  * written into a throwaway repo that carries the real config and plugin
  * (helpers/oxlint-fixture.ts). The fixture starts with no baseline.
  */
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -23,12 +23,20 @@ const MSG = "confirmed requires at least one Evidence attachment";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 
-/** Every real app and package directory, so a new workspace is covered without an edit. */
-const scopes = ["apps", "packages"].flatMap((group) =>
-  readdirSync(path.join(repoRoot, group), { withFileTypes: true })
+/** A directory's subdirectories, node_modules left out. */
+const subdirs = (dir: string) =>
+  readdirSync(path.join(repoRoot, dir), { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
-    .map((entry) => `${group}/${entry.name}`)
-);
+    .map((entry) => `${dir}/${entry.name}`);
+
+/**
+ * Every real source root: each workspace with its own `src`, and each folder of a workspace
+ * that has one (`packages/server/core`), so a new workspace or folder is covered without an edit.
+ */
+const scopes = ["apps", "packages"]
+  .flatMap((group) => subdirs(group))
+  .flatMap((workspace) => [workspace, ...subdirs(workspace)])
+  .filter((dir) => existsSync(path.join(repoRoot, dir, "src")));
 
 const createFixture = oxlintFixtureFactory();
 
@@ -74,12 +82,12 @@ const FAIL = {
 } as const;
 
 const OK = {
-  "import-constant.ts": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy";\nexport const m = CONFIRMED_REQUIRES_EVIDENCE;\n`,
-  "web-subpath.ts": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";\nexport const m = \`\${CONFIRMED_REQUIRES_EVIDENCE}!\`;\n`,
-  "aliased.ts": `import { CONFIRMED_REQUIRES_EVIDENCE as MSG } from "@watchdog/policy/confirmed-evidence";\nexport const m = "Error: " + MSG;\n`,
-  "namespace.ts": `import * as ce from "@watchdog/policy/confirmed-evidence";\nexport const m = ce.CONFIRMED_REQUIRES_EVIDENCE;\n`,
-  "violation-fn.ts": `import { confirmedEvidenceViolation } from "@watchdog/policy/confirmed-evidence";\nexport const m = confirmedEvidenceViolation({ confidence: "confirmed", evidenceCount: 0 });\n`,
-  "imported-concat.ts": `import { CONFIRMED_REQUIRES_EVIDENCE as MSG } from "@watchdog/policy/confirmed-evidence";\nconst A = "Error: ";\nexport const m = A + MSG + " (blocked)";\n`,
+  "import-constant.ts": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy";\nexport const m = CONFIRMED_REQUIRES_EVIDENCE;\n`,
+  "web-subpath.ts": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";\nexport const m = \`\${CONFIRMED_REQUIRES_EVIDENCE}!\`;\n`,
+  "aliased.ts": `import { CONFIRMED_REQUIRES_EVIDENCE as MSG } from "@watchdog/domain/policy/confirmed-evidence";\nexport const m = "Error: " + MSG;\n`,
+  "namespace.ts": `import * as ce from "@watchdog/domain/policy/confirmed-evidence";\nexport const m = ce.CONFIRMED_REQUIRES_EVIDENCE;\n`,
+  "violation-fn.ts": `import { confirmedEvidenceViolation } from "@watchdog/domain/policy/confirmed-evidence";\nexport const m = confirmedEvidenceViolation({ confidence: "confirmed", evidenceCount: 0 });\n`,
+  "imported-concat.ts": `import { CONFIRMED_REQUIRES_EVIDENCE as MSG } from "@watchdog/domain/policy/confirmed-evidence";\nconst A = "Error: ";\nexport const m = A + MSG + " (blocked)";\n`,
   "unrelated-confirmed.ts": `export const m = "A confirmed claim is final";\n`,
   "unrelated-requires.ts": `export const m = "This action requires at least one Case";\n`,
   "evidence-copy.ts": `export const m = "Attach Evidence to every claim";\n`,
@@ -97,7 +105,7 @@ const OK = {
   "destructured-object.ts": `const { lead } = { lead: "confirmed requires " };\nexport const m = lead + "evidence";\n`,
   "jsx-text-valid.tsx": `export const X = () => <p>Attach Evidence to the claim; confirmed claims are final</p>;\n`,
   "jsx-split-elements.tsx": `export const X = () => <p><b>confirmed</b> requires evidence</p>;\n`,
-  "jsx-constant.tsx": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";\nexport const X = () => <p>{CONFIRMED_REQUIRES_EVIDENCE}</p>;\n`,
+  "jsx-constant.tsx": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";\nexport const X = () => <p>{CONFIRMED_REQUIRES_EVIDENCE}</p>;\n`,
   "join-unrelated.ts": `export const m = ["Accept", "needs", "a", "Case"].join(" ");\n`,
   "identifier-names.ts": `export const confirmedRequiresEvidence = true;\nexport const CONFIRMED_REQUIRES_EVIDENCE_FLAG = "x";\n`,
 } as const;
@@ -118,7 +126,7 @@ beforeAll(() => {
   }
   fixture.write(`${DIR}/__tests__/probe.test.ts`, literal);
   fixture.write(`${DIR}/probe.test.ts`, literal);
-  fixture.write("packages/policy/src/confirmed-evidence.ts", literal);
+  fixture.write("packages/domain/policy/src/confirmed-evidence.ts", literal);
 
   result = fixture.lint(["apps", "packages"]);
 }, LINT_TIMEOUT_MS);
@@ -134,8 +142,10 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
     const [hit] = hits(`${DIR}/scoped.ts`);
     expect(hit?.message).toContain("CONFIRMED_REQUIRES_EVIDENCE");
     expect(hit?.message).toContain("confirmedEvidenceViolation");
-    expect(hit?.message).toContain("@watchdog/policy/confirmed-evidence");
-    expect(hit?.message).toContain("never the @watchdog/policy root");
+    expect(hit?.message).toContain(
+      "@watchdog/domain/policy/confirmed-evidence"
+    );
+    expect(hit?.message).toContain("never the @watchdog/domain/policy root");
     expect(hit?.message).toContain("conventions: one source per domain rule");
     expect(hit?.line).toBe(2);
   });
@@ -149,13 +159,13 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
     expect(hits(`${DIR}/${name}`)).toHaveLength(0);
   });
 
-  it("scans every real app and package directory", () => {
+  it("scans every real source root", () => {
     expect(scopes).toEqual(
-      expect.arrayContaining(["apps/web", "apps/site", "packages/core"])
+      expect.arrayContaining(["apps/web", "apps/site", "packages/server/core"])
     );
   });
 
-  it.each(scopes.filter((scope) => scope !== "packages/policy"))(
+  it.each(scopes.filter((scope) => scope !== "packages/domain/policy"))(
     "applies in %s, in source, tests and JSX text",
     (scope) => {
       expect(hits(`${scope}/src/probe.ts`), scope).toHaveLength(1);
@@ -171,12 +181,12 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
     expect(hits(`${DIR}/probe.test.ts`)).toHaveLength(1);
   });
 
-  it("exempts @watchdog/policy: source, tests and JSX text", () => {
+  it("exempts @watchdog/domain/policy: source, tests and JSX text", () => {
     for (const file of [
-      "packages/policy/src/confirmed-evidence.ts",
-      "packages/policy/src/probe.ts",
-      "packages/policy/src/__tests__/probe.test.ts",
-      "packages/policy/src/probe.tsx",
+      "packages/domain/policy/src/confirmed-evidence.ts",
+      "packages/domain/policy/src/probe.ts",
+      "packages/domain/policy/src/__tests__/probe.test.ts",
+      "packages/domain/policy/src/probe.tsx",
     ]) {
       expect(hits(file), file).toHaveLength(0);
     }

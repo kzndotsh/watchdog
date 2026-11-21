@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-import type { MailConfigSnapshot } from "@watchdog/tools/dns";
+import type { MailConfigSnapshot } from "#tools/dns";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { expectNoConfidenceOnPatch } from "../../../testing";
 import { interpretMailConfigReport } from "../interpret.ts";

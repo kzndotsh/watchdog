@@ -1,10 +1,10 @@
 import type { ComponentProps } from "react";
 
+import { AlertDialogContent as BaseAlertDialogContent } from "#ui/components/alert-dialog";
 import { handleDialogEnter } from "@/shared/lib/dialog-default-action";
 import { Button } from "@/shared/ui/primitives/button";
-import { AlertDialogContent as BaseAlertDialogContent } from "@watchdog/ui/components/alert-dialog";
 
-export * from "@watchdog/ui/components/alert-dialog";
+export * from "#ui/components/alert-dialog";
 
 /** Upstream AlertDialogContent + Enter confirms the default action (see dialog-default-action.ts). */
 export function AlertDialogContent({

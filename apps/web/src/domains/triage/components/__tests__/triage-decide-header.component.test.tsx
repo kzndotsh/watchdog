@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { render, screen } from "@/testing/render-in-case";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -30,7 +30,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { TriageDecideHeader } from "@/domains/triage/components/triage-decide-header";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 function pendingProposal(
   overrides: Partial<ProposalRecord> = {}

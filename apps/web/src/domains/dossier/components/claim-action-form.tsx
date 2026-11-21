@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 
+import { Textarea } from "#ui/components/textarea";
 import { ClaimComposerActions } from "@/domains/dossier/components/claim-composer-actions";
 import type { ClaimRowActionKind } from "@/domains/dossier/lib/claim-row-actions";
 import type { DossierEntityScope } from "@/domains/dossier/types";
@@ -7,8 +8,7 @@ import { useRetractClaim } from "@/domains/entities/claims/mutations";
 import { couldnt, errMessage } from "@/lib/utils";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FieldMessage } from "@/shared/ui/field-message";
-import type { RetractKind } from "@watchdog/schemas/shared";
-import { Textarea } from "@watchdog/ui/components/textarea";
+import type { RetractKind } from "@watchdog/domain/schemas/shared";
 
 /* A Claim's contest, disprove or retract form: the reason, then the retraction of that kind. */
 

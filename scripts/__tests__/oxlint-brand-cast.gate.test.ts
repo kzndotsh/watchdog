@@ -1,7 +1,7 @@
 /**
  * Proves the real `oxlint.config.ts` bans bare casts to the branded id types
  * (`as OrganizationId`, `as CaseId`, `as unknown as CaseId`, `<CaseId>x`) outside
- * `packages/schemas/src/testing`, while constructors, other casts and the schemas testing fixtures stay
+ * `packages/domain/schemas/src/testing`, while constructors, other casts and the schemas testing fixtures stay
  * allowed. Probe files are written into a throwaway repo that carries the real config
  * and plugin (helpers/oxlint-fixture.ts); nothing touches the working tree.
  */
@@ -15,11 +15,11 @@ import {
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const RULE = "watchdog/no-brand-cast";
-const PROBE = "packages/core/src/probe";
-const EXEMPT = "packages/schemas/src/testing/probe";
+const PROBE = "packages/server/core/src/probe";
+const EXEMPT = "packages/domain/schemas/src/testing/probe";
 
 const TYPES =
-  'import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";\n';
+  'import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";\n';
 
 const FAIL_CASES = {
   "as-organization-id": `${TYPES}export const a = (v: string) => v as OrganizationId;\n`,
@@ -36,12 +36,12 @@ const FAIL_CASES = {
   "as-unknown-as-array": `${TYPES}export const a = (v: string) => v as unknown as CaseId[];\n`,
   "as-brand-marker": `import type { z } from "zod";\n\nexport const a = (v: string) => v as string & z.BRAND<"CaseId">;\n`,
   "as-brand-marker-org": `import type { BRAND } from "zod";\n\nexport const a = (v: string) => v as string & BRAND<"OrganizationId">;\n`,
-  "as-aliased-import": `import type { CaseId as C } from "@watchdog/schemas/shared";\n\nexport const a = (v: string) => v as C;\n`,
+  "as-aliased-import": `import type { CaseId as C } from "@watchdog/domain/schemas/shared";\n\nexport const a = (v: string) => v as C;\n`,
   "angle-bracket-array": `${TYPES}export const a = (v: string[]) => <CaseId[]>v;\n`,
 } as const;
 
 const PASS_CASES = {
-  constructor: `import { asCaseId } from "@watchdog/schemas/shared";\n\nexport const a = (v: string) => asCaseId(v);\n`,
+  constructor: `import { asCaseId } from "@watchdog/domain/schemas/shared";\n\nexport const a = (v: string) => asCaseId(v);\n`,
   "other-cast": `${TYPES}export type A = CaseId;\nexport const a = (v: unknown) => v as string;\n`,
   "annotation-union": `${TYPES}export const a = (v: CaseId | null): CaseId | null => v;\nexport const b: CaseId | null = null;\n`,
   "promise-return": `${TYPES}export const a = async (v: CaseId): Promise<CaseId> => v;\n`,
@@ -73,7 +73,7 @@ describe("branded id cast ban (oxlint.config.ts)", () => {
   it.each(Object.keys(PASS_CASES))("allows %s", (name) => {
     expect(hitsFor(`${PROBE}/${name}.ts`)).toHaveLength(0);
   });
-  it("exempts packages/schemas/src/testing fixtures", () => {
+  it("exempts packages/domain/schemas/src/testing fixtures", () => {
     expect(hitsFor(`${EXEMPT}/exempt.ts`)).toHaveLength(0);
   });
   it("reports the message and the cast location", () => {

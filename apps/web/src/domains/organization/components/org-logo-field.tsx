@@ -1,6 +1,8 @@
 import { Camera, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { Field, FieldError } from "#ui/components/field";
+import { Label } from "#ui/components/label";
 import {
   logoFileProblem,
   orgInitials,
@@ -8,8 +10,6 @@ import {
 } from "@/domains/organization/lib/org-logo";
 import { couldnt, errMessage } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
-import { Field, FieldError } from "@watchdog/ui/components/field";
-import { Label } from "@watchdog/ui/components/label";
 
 type OrgLogoFieldProps = {
   name: string;

@@ -5,7 +5,7 @@ import {
 } from "@/domains/dossier/lib/history-labels";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import type { GraphHistoryEntry } from "@watchdog/schemas/graph";
+import type { GraphHistoryEntry } from "@watchdog/domain/schemas/graph";
 
 type RowHistoryEntryProps = {
   entry: GraphHistoryEntry;

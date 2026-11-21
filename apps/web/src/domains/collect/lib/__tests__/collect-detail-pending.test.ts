@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { collectDetailPending } from "@/domains/collect/lib/collect-detail-pending";
 import type { CollectRow } from "@/domains/collect/types";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {

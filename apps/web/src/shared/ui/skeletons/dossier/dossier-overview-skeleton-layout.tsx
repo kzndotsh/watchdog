@@ -1,3 +1,4 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-loading-region";
 import { GRAPH_CANVAS_EMBED_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
@@ -6,7 +7,6 @@ import { DossierConnectionListSkeleton } from "@/shared/ui/skeletons/dossier/par
 import { DossierSectionBlockSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-section-block-skeleton";
 import { TABLE_HEADER_CELLS } from "@/shared/ui/skeletons/dossier/parts/table-header-cells";
 import { TableBodySkeletonLayout } from "@/shared/ui/skeletons/table-body-skeleton-layout";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Dossier Overview tab — Summary, Claims, Identifiers, Connections stack. */
 export function DossierOverviewSkeletonLayout() {

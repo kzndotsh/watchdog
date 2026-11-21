@@ -2,21 +2,22 @@ import { Layer } from "effect";
 import { unzipSync, strFromU8 } from "fflate";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { appRuntime } from "@watchdog/api";
-import { deleteCaseEffect } from "@watchdog/core/case-deletion";
-import { Db, runDomainWith } from "@watchdog/core/infra";
-import { recordingJobQueue } from "@watchdog/core/jobs";
 import {
   formatActivityCursor,
   activityEntrySchema,
   type ActivityEntry,
-} from "@watchdog/schemas/feed";
-import type { OrganizationId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import type { OrganizationId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testCaseId,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin, testId } from "@watchdog/domain/test-kit";
+import { appRuntime } from "@watchdog/server/api";
+import { deleteCaseEffect } from "@watchdog/server/core/case-deletion";
+import { Db, runDomainWith } from "@watchdog/server/core/infra";
+import { recordingJobQueue } from "@watchdog/server/core/jobs";
 import {
   resetTestDb,
   seedCase,
@@ -24,8 +25,7 @@ import {
   seedJob,
   seedOrganizationMember,
   testDb,
-} from "@watchdog/test-db";
-import { testHttpOrigin, testId } from "@watchdog/test-kit";
+} from "@watchdog/server/test-db";
 
 /**
  * Organization scoping of the two routes that sit outside oRPC, against real data.

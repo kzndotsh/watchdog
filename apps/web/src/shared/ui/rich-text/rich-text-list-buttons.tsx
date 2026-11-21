@@ -3,14 +3,11 @@ import { KEYS } from "platejs";
 import type { PlateEditor } from "platejs/react";
 import { useEditorSelector } from "platejs/react";
 
+import { ToggleGroup, ToggleGroupItem } from "#ui/components/toggle-group";
 import {
   activeList,
   applyListChange,
 } from "@/shared/ui/rich-text/rich-text-toolbar-controls.lib";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@watchdog/ui/components/toggle-group";
 
 export function RichTextListButtons({ editor }: { editor: PlateEditor }) {
   const isUl = useEditorSelector(

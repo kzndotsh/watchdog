@@ -7,7 +7,7 @@ vi.mock("@/lib/orpc-client", async () =>
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildEvidenceRecord } from "@/testing/records";
-import { testId, testHttpUrl } from "@watchdog/test-kit";
+import { testId, testHttpUrl } from "@watchdog/domain/test-kit";
 
 const presignUploadFn = procedureDouble("evidence.presign");
 const confirmFileUploadFn = procedureDouble("evidence.confirmFile");

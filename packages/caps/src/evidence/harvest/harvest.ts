@@ -1,7 +1,4 @@
-import {
-  processExtractDraftSchema,
-  type ProcessExtractDraft,
-} from "@watchdog/ai";
+import { processExtractDraftSchema, type ProcessExtractDraft } from "#ai";
 
 import { HARVEST_EXTRACTORS } from "./extractors";
 import { stripZeroWidth } from "./harvest-helpers";

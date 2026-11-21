@@ -5,7 +5,7 @@ import { collectItemQuery } from "@/domains/collect/queries";
 import { couldnt, errMessage } from "@/lib/utils";
 import { TOAST_COLLECT_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import type { CollectQueueItem } from "@watchdog/core/jobs";
+import type { CollectQueueItem } from "@watchdog/server/core/jobs";
 
 type CollectSelectionArgs = {
   readonly caseId: string;

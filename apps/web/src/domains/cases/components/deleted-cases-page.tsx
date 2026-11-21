@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { Alert, AlertDescription } from "#ui/components/alert";
 import { DeletedCasesView } from "@/domains/cases/components/deleted-cases-view";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import { Page } from "@/shared/layout/page";
 import { PageHeader } from "@/shared/layout/page-header";
 import { InlineLoading } from "@/shared/ui/inline-loading";
-import type { deletedCaseList } from "@watchdog/schemas/cases";
-import type { ListSearch, ListSearchPatch } from "@watchdog/schemas/shared";
-import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
+import type { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import type {
+  ListSearch,
+  ListSearchPatch,
+} from "@watchdog/domain/schemas/shared";
 
 type DeletedCasesPageProps = {
   search: ListSearch<typeof deletedCaseList>;

@@ -11,7 +11,7 @@ import {
   taskListView,
 } from "@/domains/tasks/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { taskList } from "@watchdog/schemas/feed";
+import { taskList } from "@watchdog/domain/schemas/feed";
 
 /**
  * Warm the URL's view of the board without blocking paint: the open columns (one capped read)

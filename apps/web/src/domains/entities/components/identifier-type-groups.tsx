@@ -2,22 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Collapsible, CollapsibleContent } from "#ui/components/collapsible";
 import { identifierTypeCountsQuery } from "@/domains/entities/identifiers/queries";
 import { couldnt, errMessage } from "@/lib/utils";
 import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { LoadingRegion, TableBodySkeletonLayout } from "@/shared/ui/skeletons";
-import type { identifierList } from "@watchdog/schemas/graph";
+import type { identifierList } from "@watchdog/domain/schemas/graph";
 import {
   IDENTIFIER_TYPE_LABELS,
   LIST_TOTAL_CAP,
   type IdentifierType,
   type ListQuery,
-} from "@watchdog/schemas/shared";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@watchdog/ui/components/collapsible";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * A group this small starts open; a bigger one (80 domains from a sweep) starts closed, unless it

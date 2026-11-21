@@ -2,13 +2,8 @@ import type { SettingsView } from "@better-auth-ui/core";
 import { useAuth, useAuthenticate } from "@better-auth-ui/react";
 import { Shield, User2 } from "lucide-react";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#ui/components/tabs";
 import { cn } from "@/lib/utils";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@watchdog/ui/components/tabs";
 
 import { AccountSettings } from "./account/account-settings";
 import { SecuritySettings } from "./security/security-settings";

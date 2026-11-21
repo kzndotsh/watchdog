@@ -13,7 +13,7 @@ import {
 } from "@/testing/memory-picker-port";
 import { procedureDouble } from "@/testing/orpc-client";
 import { testCapProvider } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()

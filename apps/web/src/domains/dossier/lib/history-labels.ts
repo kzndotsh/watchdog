@@ -2,7 +2,7 @@ import type {
   GraphHistoryChannel,
   GraphHistoryKind,
   GraphHistoryOp,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** What a row of each kind is called to the user (an Edge is a connection). */
 export const HISTORY_KIND_NOUNS: Record<GraphHistoryKind, string> = {

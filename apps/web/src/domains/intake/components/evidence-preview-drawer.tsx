@@ -1,6 +1,15 @@
 import { DownloadIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { ScrollArea } from "#ui/components/scroll-area";
+import { Separator } from "#ui/components/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "#ui/components/sheet";
 import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
 import {
   evidenceShowsInlineText,
@@ -17,15 +26,6 @@ import { MetaRow } from "@/shared/ui/meta-row";
 import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { KindBadge } from "@/shared/ui/vocab";
-import { ScrollArea } from "@watchdog/ui/components/scroll-area";
-import { Separator } from "@watchdog/ui/components/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@watchdog/ui/components/sheet";
 
 function EvidencePreviewBody({
   evidence,

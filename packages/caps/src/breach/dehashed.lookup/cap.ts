@@ -4,7 +4,7 @@ import {
   redactDehashedSnapshot,
   fetchDehashedLookupEffect,
   dehashedLookupSnapshotSchema,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dehashed } from "../../providers";

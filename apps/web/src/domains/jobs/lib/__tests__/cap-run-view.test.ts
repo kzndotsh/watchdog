@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 
 import { testCapProvider } from "@/testing/records";
-import { EGRESS_CLASSES } from "@watchdog/schemas/shared";
-import { testId } from "@watchdog/test-kit";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { testId } from "@watchdog/domain/test-kit";
 
 import type { CapListItem } from "../../types.ts";
 import { buildCapRunView } from "../cap-run-view.ts";

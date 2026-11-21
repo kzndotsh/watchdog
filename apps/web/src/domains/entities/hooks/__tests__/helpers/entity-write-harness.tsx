@@ -15,8 +15,8 @@ import {
   eventList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 
 export const CASE_A = testId(10);
 export const CASE_B = testId(11);

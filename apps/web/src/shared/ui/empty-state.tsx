@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/primitives/button";
 import {
   Empty,
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@watchdog/ui/components/empty";
+} from "#ui/components/empty";
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
 
 /**
  * Queue / page empty intents (Geist catalog).

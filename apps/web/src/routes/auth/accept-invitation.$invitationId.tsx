@@ -3,7 +3,7 @@ import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { AcceptInvitation } from "@/domains/organization/components/accept-invitation";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { trimmedUuidSchema } from "@watchdog/schemas/shared";
+import { trimmedUuidSchema } from "@watchdog/domain/schemas/shared";
 
 const routeApi = getRouteApi("/auth/accept-invitation/$invitationId");
 

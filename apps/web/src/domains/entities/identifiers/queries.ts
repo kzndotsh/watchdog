@@ -5,8 +5,8 @@ import { orpc } from "@/lib/orpc-client";
 import { listView } from "@/shared/lib/list/list-view";
 import { scopeCaseId, scopeCaseIdEnabled } from "@/shared/lib/query-ingress";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { identifierList } from "@watchdog/schemas/graph";
-import { opsOf, type ListQuery } from "@watchdog/schemas/shared";
+import { identifierList } from "@watchdog/domain/schemas/graph";
+import { opsOf, type ListQuery } from "@watchdog/domain/schemas/shared";
 
 /**
  * Identifiers keys are the oRPC procedure keys: `all(caseId)` is

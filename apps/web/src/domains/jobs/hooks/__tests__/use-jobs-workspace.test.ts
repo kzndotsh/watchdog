@@ -16,13 +16,13 @@ import {
   buildJobListRecord,
   buildJobRecord,
 } from "@/testing/records";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
 // Only the network boundary is faked. The hook runs against a real QueryClient and the
 // real `jobs/queries` module, so a changed query key or a cache write under the wrong key
 // fails here (docs/contributing/testing/standards.md Mock policy).
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
+import type { JobListRecord, JobRecord } from "@watchdog/server/core/jobs";
 
 const getJobFn = procedureDouble("jobs.get");
 const getPlaybookRunFn = procedureDouble("jobs.getPlaybookRun");

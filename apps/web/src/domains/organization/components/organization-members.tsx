@@ -4,6 +4,11 @@ import { useSession } from "@better-auth-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { DropdownMenuItem } from "#ui/components/dropdown-menu";
+import { Field } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Label } from "#ui/components/label";
+import { Spinner } from "#ui/components/spinner";
 import { authClient } from "@/auth/client";
 import { useCancelInvitation } from "@/domains/organization/hooks/use-cancel-invitation";
 import { useInviteMember } from "@/domains/organization/hooks/use-invite-member";
@@ -26,16 +31,14 @@ import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SettingsMembersSkeleton } from "@/shared/ui/skeletons";
 import {
+  canManageTeam,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
+import {
   buildInvitationAcceptUrl,
   invitationAcceptPath,
-} from "@watchdog/auth/invitation-url";
-import { INVITE_ROLE_OPTIONS } from "@watchdog/auth/org-roles";
-import { canManageTeam, trimmedOrUndefined } from "@watchdog/schemas/shared";
-import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
-import { Field } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Label } from "@watchdog/ui/components/label";
-import { Spinner } from "@watchdog/ui/components/spinner";
+} from "@watchdog/server/auth/invitation-url";
+import { INVITE_ROLE_OPTIONS } from "@watchdog/server/auth/org-roles";
 
 type OrgMember = {
   id: string;

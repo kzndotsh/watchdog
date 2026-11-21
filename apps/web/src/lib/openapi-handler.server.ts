@@ -12,7 +12,7 @@ import {
   openApiSpecGenerateOptions,
   responsePlugins,
   router,
-} from "@watchdog/api";
+} from "@watchdog/server/api";
 
 const zodJsonSchemaConverter = new ZodToJsonSchemaConverter();
 

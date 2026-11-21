@@ -35,7 +35,7 @@ const FAIL = {
 
 const OK = {
   "derived.ts":
-    'import { watchdogUserAgent } from "@watchdog/tools/errors";\nexport const ua = watchdogUserAgent("a.b");\n',
+    'import { watchdogUserAgent } from "@watchdog/caps/tools/errors";\nexport const ua = watchdogUserAgent("a.b");\n',
   "label-override.ts":
     'export const cap = { id: "threat.demo.lookup", reportLabel: "demo report" };\n',
   "authored-flags.ts":
@@ -52,7 +52,7 @@ beforeAll(() => {
   }
   fixture.write(`${DIR}/__tests__/ua.test.ts`, FAIL["ua-const.ts"]);
   fixture.write(`${DIR}/ua.test.ts`, FAIL["ua-const.ts"]);
-  fixture.write("packages/tools/src/ua.ts", FAIL["ua-const.ts"]);
+  fixture.write("packages/caps/tools/src/ua.ts", FAIL["ua-const.ts"]);
   result = fixture.lint(["packages"]);
 }, LINT_TIMEOUT_MS);
 
@@ -80,6 +80,6 @@ describe("derived Cap metadata (no-derived-cap-metadata)", () => {
   it("exempts tests and packages outside caps", () => {
     expect(hits(`${DIR}/__tests__/ua.test.ts`)).toHaveLength(0);
     expect(hits(`${DIR}/ua.test.ts`)).toHaveLength(0);
-    expect(hits("packages/tools/src/ua.ts")).toHaveLength(0);
+    expect(hits("packages/caps/tools/src/ua.ts")).toHaveLength(0);
   });
 });

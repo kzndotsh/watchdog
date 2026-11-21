@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CONFIRMED_REFUSED_MESSAGE,
   USER_OVERRIDE_REQUIRED_MESSAGE,
-} from "@watchdog/policy";
+} from "@watchdog/domain/policy";
 
 import {
   parseOptionalConfidence,

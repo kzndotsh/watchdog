@@ -1,4 +1,4 @@
-import { resolveIdentifierPlatform } from "@watchdog/schemas/shared";
+import { resolveIdentifierPlatform } from "@watchdog/domain/schemas/shared";
 
 import { cleanPasteCell, inferPasteIdentity } from "./infer-paste-identity";
 import {

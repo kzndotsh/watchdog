@@ -1,10 +1,10 @@
-import { entitySlugScopeInputSchema } from "@watchdog/schemas/graph";
+import { entitySlugScopeInputSchema } from "@watchdog/domain/schemas/graph";
 import {
   type CaseId,
   entitySlugSchema,
   parseTrimmedCaseId,
   parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";

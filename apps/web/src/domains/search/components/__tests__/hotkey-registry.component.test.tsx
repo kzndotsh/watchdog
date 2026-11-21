@@ -24,7 +24,7 @@ vi.mock("@/domains/search/hooks/use-global-hotkeys", () => ({
   },
 }));
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   useSidebar: () => ({ toggleSidebar: toggleSidebarMock }),
 }));
 

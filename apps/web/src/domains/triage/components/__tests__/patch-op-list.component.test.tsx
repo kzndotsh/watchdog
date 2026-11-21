@@ -6,8 +6,8 @@ import {
   buildClaimCreateOp,
   buildEntityCreateOp,
   buildIdentifierCreateOp,
-} from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({

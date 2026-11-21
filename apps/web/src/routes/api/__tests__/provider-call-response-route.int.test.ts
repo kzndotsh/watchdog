@@ -3,22 +3,22 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { authServerDouble } from "@/testing/auth-server-double";
-import { appRuntime } from "@watchdog/api";
-import { uploadArtifactEffect } from "@watchdog/core/blob";
-import { runDomain } from "@watchdog/core/infra";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/schemas/testing";
+} from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
+import { appRuntime } from "@watchdog/server/api";
+import { uploadArtifactEffect } from "@watchdog/server/core/blob";
+import { runDomain } from "@watchdog/server/core/infra";
 import {
   resetTestDb,
   seedCase,
   seedJob,
   seedProviderCall,
   testDb,
-} from "@watchdog/test-db";
-import { testHttpOrigin } from "@watchdog/test-kit";
+} from "@watchdog/server/test-db";
 
 /**
  * The raw-response download (#498) against real data and the real object store: the bytes of a
@@ -42,7 +42,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 // The integration project does not register the web setup file, so the shared double is mocked here.
 vi.mock("@/auth/server", () => authServerDouble());
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   createApiContext: vi.fn(() =>
     Promise.resolve({
       headers: new Headers(),

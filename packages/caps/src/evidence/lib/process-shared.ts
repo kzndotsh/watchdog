@@ -1,17 +1,17 @@
 import { Effect } from "effect";
 
-import {
-  processExtractDraftSchema,
-  type ProcessExtractDraft,
-} from "@watchdog/ai";
-import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
+import { processExtractDraftSchema, type ProcessExtractDraft } from "#ai";
+import type { ToolsTag } from "#tools/errors";
+import type { EvidenceSnapshot } from "@watchdog/domain/schemas/evidence";
 import {
   DERIVED_JSON_ARTIFACT,
   EVIDENCE_SNAPSHOT_ARTIFACT,
   REPORT_JSON_ARTIFACT,
-} from "@watchdog/schemas/jobs";
-import { parseTrimmedUuid, trimmedOrUndefined } from "@watchdog/schemas/shared";
-import type { ToolsTag } from "@watchdog/tools/errors";
+} from "@watchdog/domain/schemas/jobs";
+import {
+  parseTrimmedUuid,
+  trimmedOrUndefined,
+} from "@watchdog/domain/schemas/shared";
 
 import type {
   CapArtifact,

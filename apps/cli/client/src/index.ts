@@ -1,0 +1,54 @@
+import { createORPCClient } from "@orpc/client";
+import type { ContractRouterClient } from "@orpc/contract";
+import type { JsonifiedClient } from "@orpc/openapi-client";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
+
+import type { AppRouter } from "./generated/app-router";
+import contract from "./generated/contract.json" with { type: "json" };
+
+export type { AppRouter } from "./generated/app-router";
+export type WatchdogClient = JsonifiedClient<ContractRouterClient<AppRouter>>;
+
+export type CreateWatchdogClientOptions = {
+  /** Base URL including `/api/v1` (default: `WD_API_URL`, else localhost). */
+  baseUrl?: string;
+  /** Better Auth API key (`x-api-key`). */
+  apiKey: string;
+};
+
+const DEFAULT_API_URL = "http://localhost:3000/api/v1";
+
+function resolveBaseUrl(explicit?: string): string {
+  const fromOpts = explicit?.trim();
+  if (fromOpts !== undefined && fromOpts !== "")
+    return fromOpts.replace(/\/$/, "");
+  const fromEnv =
+    typeof process === "undefined" ? undefined : process.env.WD_API_URL?.trim();
+  return (fromEnv ?? DEFAULT_API_URL).replace(/\/$/, "");
+}
+
+/**
+ * Typed OpenAPI client for agents/CLI.
+ * Contract: `pnpm generate:client` → `apps/cli/client/src/generated/` (gitignored build output).
+ */
+export function createWatchdogClient(
+  opts: CreateWatchdogClientOptions
+): WatchdogClient {
+  const apiKey = opts.apiKey.trim();
+  if (!apiKey) {
+    throw new Error("apiKey is required");
+  }
+
+  // contract.json is the generated OpenAPI contract (data only); AppRouter's
+  // procedure/handler types have no runtime representation to validate
+  // against, so OpenAPILink's documented pattern is to assert the JSON
+  // payload as the router type.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- see above
+  const link = new OpenAPILink(contract as unknown as AppRouter, {
+    url: resolveBaseUrl(opts.baseUrl),
+    headers: () => ({
+      "x-api-key": apiKey,
+    }),
+  });
+  return createORPCClient(link);
+}

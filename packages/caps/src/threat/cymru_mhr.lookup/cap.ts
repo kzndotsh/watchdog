@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchCymruMhrLookupEffect,
   cymruMhrLookupSnapshotSchema,
-} from "@watchdog/tools/threat";
+} from "#tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { teamCymru } from "../../providers";

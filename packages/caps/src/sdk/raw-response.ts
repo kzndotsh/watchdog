@@ -3,7 +3,7 @@ import { isBreachCapId } from "./descriptor";
 /**
  * What a Job keeps of a Cap's provider responses in storage (the raw body; the hash and size
  * are always kept). Omitted: the default keep limit applies (`DEFAULT_KEEP_LIMITS` in
- * `@watchdog/tools/http`). `hash_only` keeps no body; `{ maxBytes }` sets this Cap's per-call
+ * `#tools/http`). `hash_only` keeps no body; `{ maxBytes }` sets this Cap's per-call
  * limit, over which the hash is kept and the body is withheld.
  */
 export type RawResponsePolicy = {

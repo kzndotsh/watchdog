@@ -2,6 +2,11 @@ import type { ReactTable, RowData } from "@tanstack/react-table";
 import { Settings2Icon } from "lucide-react";
 import { lazy, Suspense } from "react";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "#ui/components/popover";
 import type { ListDisplay } from "@/shared/hooks/list/use-list-display";
 import { sortOptionLabel } from "@/shared/lib/list/list-copy";
 import { isSortValue, sortValuesOf } from "@/shared/lib/list/list-guards";
@@ -11,12 +16,7 @@ import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-fe
 import { loadDisplayBody } from "@/shared/ui/list/parts/load-popover-bodies";
 import { PopoverBodyFallback } from "@/shared/ui/list/parts/popover-body-fallback";
 import { Button } from "@/shared/ui/primitives/button";
-import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
+import type { AnyListDef, FilterKey } from "@watchdog/domain/schemas/shared";
 
 const LoadedDisplayBody = lazy(loadDisplayBody);
 

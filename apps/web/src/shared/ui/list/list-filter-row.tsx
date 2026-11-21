@@ -8,7 +8,7 @@ import { FilterFlagControl } from "@/shared/ui/list/parts/filter-flag-control";
 import { FilterRefControl } from "@/shared/ui/list/parts/filter-ref-control";
 import { FilterTagsControl } from "@/shared/ui/list/parts/filter-tags-control";
 import { Button } from "@/shared/ui/primitives/button";
-import type { AnyFilter } from "@watchdog/schemas/shared";
+import type { AnyFilter } from "@watchdog/domain/schemas/shared";
 
 type ListFilterRowProps = {
   /** The field select's options: this row's filter plus every filter without a row. */

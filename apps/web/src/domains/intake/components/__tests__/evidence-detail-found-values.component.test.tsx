@@ -14,8 +14,8 @@ import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildEvidenceRecord, buildJobListRecord } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
-import type { JobFoundValues } from "@watchdog/schemas/jobs";
-import { testId } from "@watchdog/test-kit";
+import type { JobFoundValues } from "@watchdog/domain/schemas/jobs";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listJobFoundValuesFn = procedureDouble("jobs.listFound");
 

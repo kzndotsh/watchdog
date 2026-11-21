@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import {
   parseIdList,

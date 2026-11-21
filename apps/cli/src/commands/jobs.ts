@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 
-import { playbookSeedInputSchema } from "@watchdog/schemas/caps";
+import { playbookSeedInputSchema } from "@watchdog/domain/schemas/caps";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
@@ -11,13 +11,13 @@ import {
   retryJobInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   isJsonObject,
   trimmedOrUndefined,
   PAGE_LIMIT_MAX,
-} from "@watchdog/schemas/shared";
-import type { ListPage } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { ListPage } from "@watchdog/domain/schemas/shared";
 
 import { api, emit, emitList, fail, truncText } from "../client";
 import {

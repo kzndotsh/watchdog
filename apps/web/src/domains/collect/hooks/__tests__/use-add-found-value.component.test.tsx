@@ -15,8 +15,8 @@ import { useAddFoundValue } from "@/domains/collect/hooks/use-add-found-value";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseIdentifierRecord } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const createIdentifier = procedureDouble("identifiers.create");
 

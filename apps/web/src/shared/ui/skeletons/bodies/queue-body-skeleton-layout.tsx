@@ -1,4 +1,4 @@
-import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Skeleton } from "#ui/components/skeleton";
 
 /** Inner queue-row blocks — composed by `QueueSkeleton`. */
 export function QueueBodySkeletonLayout({ rows = 8 }: { rows?: number }) {

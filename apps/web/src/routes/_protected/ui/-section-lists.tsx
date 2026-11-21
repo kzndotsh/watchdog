@@ -5,6 +5,7 @@ import type {
 } from "@tanstack/react-table";
 import { useId, useState } from "react";
 
+import { Switch } from "#ui/components/switch";
 import { GuideSection } from "@/routes/_protected/ui/-guide-chrome";
 import {
   DEMO_ENTITIES,
@@ -29,16 +30,15 @@ import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { TabCount } from "@/shared/ui/tab-count";
-import type { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList } from "@watchdog/schemas/graph";
+import type { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { identifierList } from "@watchdog/domain/schemas/graph";
 import {
   CONFIDENCE_TIER_LABELS,
   EVIDENCE_KIND_LABELS,
   IDENTIFIER_STATUS_LABELS,
   IDENTIFIER_TYPE_LABELS,
   type ListSearch,
-} from "@watchdog/schemas/shared";
-import { Switch } from "@watchdog/ui/components/switch";
+} from "@watchdog/domain/schemas/shared";
 
 /* The list standard on in-memory data: the real declarations, `useList`, the toolbar, chips,
  * footer and both empty states, as a table (Identifiers) and as a queue body (Evidence). The

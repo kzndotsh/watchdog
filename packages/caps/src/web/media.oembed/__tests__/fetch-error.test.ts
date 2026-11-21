@@ -1,14 +1,14 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import { ValidationVendorError } from "#tools/errors";
 
 const { fetchOembedEffect } = vi.hoisted(() => ({
   fetchOembedEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/tools/http", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/tools/http")>();
+vi.mock("#tools/http", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#tools/http")>();
   return { ...actual, fetchOembedEffect };
 });
 

@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import {
-  fetchIpLookupEffect,
-  ipLookupSnapshotSchema,
-} from "@watchdog/tools/network";
-import { normalizeIp } from "@watchdog/tools/normalize";
+import { fetchIpLookupEffect, ipLookupSnapshotSchema } from "#tools/network";
+import { normalizeIp } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { teamCymru } from "../../providers";

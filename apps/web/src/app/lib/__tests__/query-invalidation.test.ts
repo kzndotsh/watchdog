@@ -26,7 +26,7 @@ import { jobsKeys } from "@/domains/jobs/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
 import { LIST_REFETCH_THROTTLE_MS } from "@/shared/lib/list/list-refetch-throttle";
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList } from "@watchdog/domain/schemas/graph";
 
 /** No declared list view is cached in the mock clients: every key refetches directly. */
 function noListViews() {

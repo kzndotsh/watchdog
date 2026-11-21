@@ -1,0 +1,107 @@
+import { Effect } from "effect";
+import type { z } from "zod";
+
+import {
+  GRAPH_EGO_EDGE_MAX,
+  GRAPH_SNAPSHOT_EDGE_MAX,
+  GRAPH_SNAPSHOT_ENTITY_MAX,
+} from "@watchdog/domain/schemas/graph";
+import type {
+  graphEgoSchema,
+  graphSnapshotSchema,
+} from "@watchdog/domain/schemas/graph";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
+
+import {
+  assertCaseInOrgEffect,
+  assertEntityInCaseEffect,
+} from "../cases/access";
+import type { DomainTag } from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
+import { graphSnapshotRepoFxDb } from "../infra/repos-fx";
+
+export type GraphSnapshotEntity = GraphSnapshot["entities"][number];
+
+export type GraphSnapshotEdge = GraphSnapshot["edges"][number];
+
+/** What the Graph page draws: a capped part of the Case, and whether anything was left out. */
+export type GraphSnapshot = z.output<typeof graphSnapshotSchema>;
+
+/** The caps; tests pass small ones. */
+export type GraphSnapshotCaps = {
+  readonly entityMax: number;
+  readonly edgeMax: number;
+};
+
+const DEFAULT_CAPS: GraphSnapshotCaps = {
+  entityMax: GRAPH_SNAPSHOT_ENTITY_MAX,
+  edgeMax: GRAPH_SNAPSHOT_EDGE_MAX,
+};
+
+/**
+ * The Case graph, capped on the server (#570). Keeps the `entityMax` most connected Entities
+ * (Connection count in both directions, then most recently updated, then id), then the
+ * Connections whose two ends are both kept, most recently updated first, at most `edgeMax`.
+ * `isTruncated` is true when either cap cut something. Two statements, each bounded by its cap.
+ */
+export function getGraphSnapshotEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  caps: GraphSnapshotCaps = DEFAULT_CAPS
+): Effect.Effect<GraphSnapshot, DomainTag, Db> {
+  const program = Effect.gen(function* getGraphSnapshotGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const entityRows = yield* graphSnapshotRepoFxDb.mostConnectedEntities(
+      scopedCaseId,
+      caps.entityMax + 1
+    );
+    const entities = entityRows.slice(0, caps.entityMax);
+    const edgeRows = yield* graphSnapshotRepoFxDb.edgesAmong(
+      scopedCaseId,
+      entities.map((entity) => entity.id),
+      caps.edgeMax + 1
+    );
+    return {
+      entities,
+      edges: edgeRows.slice(0, caps.edgeMax),
+      isTruncated:
+        entityRows.length > caps.entityMax || edgeRows.length > caps.edgeMax,
+    };
+  });
+  return inOrganization(organizationId, program);
+}
+
+/** One of the Entity's Connections in the ego graph, with the label of its other end. */
+export type GraphEgoEdge = GraphEgo["edges"][number];
+
+/** What the Dossier ego graph draws: a capped star around one Entity. */
+export type GraphEgo = z.output<typeof graphEgoSchema>;
+
+/**
+ * One Entity's neighbourhood, capped on the server (#585): its Connections at either end, most
+ * recently updated first, at most `edgeMax`, each with its peer's label. `isTruncated` is true
+ * when the Entity has more; the Dossier then says so and its Connections list pages the rest.
+ * One statement bounded by the cap, after the Case and Entity checks.
+ */
+export function getGraphEgoEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  entityId: string,
+  edgeMax: number = GRAPH_EGO_EDGE_MAX
+): Effect.Effect<GraphEgo, DomainTag, Db> {
+  const program = Effect.gen(function* getGraphEgoGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const centerId = yield* assertEntityInCaseEffect(scopedCaseId, entityId);
+    const rows = yield* graphSnapshotRepoFxDb.egoEdges(
+      scopedCaseId,
+      centerId,
+      edgeMax + 1
+    );
+    return {
+      edges: rows.slice(0, edgeMax),
+      isTruncated: rows.length > edgeMax,
+    };
+  });
+  return inOrganization(organizationId, program);
+}

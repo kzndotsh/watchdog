@@ -18,13 +18,13 @@ import { useRecordsByIds } from "@/shared/hooks/use-picker-source";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import type { JobListRecord } from "@watchdog/core/jobs";
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
   evidenceIdsFromJobInputs,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 
 const NO_JOBS: JobListRecord[] = [];
 const NO_PROPOSALS: ProposalQueueItem[] = [];

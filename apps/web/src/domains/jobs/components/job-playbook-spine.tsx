@@ -15,8 +15,8 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
-import type { JobListRecord } from "@watchdog/core/jobs";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 type JobPlaybookSpineProps = {
   playbookId: string;

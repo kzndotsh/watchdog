@@ -29,9 +29,9 @@ reviews:
     - "!pnpm-lock.yaml"
     - "!apps/web/src/routeTree.gen.ts"
     - "!packages/caps/capabilities.gen.json"
-    - "!packages/db/drizzle/meta/**"
-    - "!packages/ui/src/components/**"
-    - "!packages/ui/src/hooks/**"
+    - "!packages/server/db/drizzle/meta/**"
+    - "!apps/web/ui/src/components/**"
+    - "!apps/web/ui/src/hooks/**"
 
   path_instructions:
     - path: "**/*.{ts,tsx,mjs}"
@@ -50,14 +50,14 @@ reviews:
         Flag any path where a Cap, machine, agent or the CLI writes to the Case Graph or sets
         `confirmed` without going through Proposal -> Triage Accept, or a graph write that skips
         `userOverride` / `unverified` / `changesets`. See docs/reference/contracts/custody.md.
-        Flag secrets or Evidence bodies passed to `@watchdog/log`.
+        Flag secrets or Evidence bodies passed to `@watchdog/server/log`.
     - path: "**/__tests__/**"
       instructions: |
         Flag casts or `@ts-expect-error` used to silence a test type error. Flag tests that
         change `process.env`, `globalThis`, timers or the DOM without restoring them (vitest
         projects share workers). Flag a hand-rolled `vi.mock("@/auth/server")` or local
         record factory where apps/web/src/testing provides one.
-    - path: "packages/db/drizzle/*.sql"
+    - path: "packages/server/db/drizzle/*.sql"
       instructions: |
         Review for lock safety on a live table (blocking ALTERs, non-concurrent index builds,
         NOT NULL without default on populated tables) and for data loss. Migrations are

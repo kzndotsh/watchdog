@@ -12,7 +12,7 @@ import {
 import { organizationSettingsQuery } from "@/domains/organization/queries";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import type { OpenInDestination } from "@watchdog/schemas/shared";
+import type { OpenInDestination } from "@watchdog/domain/schemas/shared";
 
 type OpenInEntity = {
   caseId: string;

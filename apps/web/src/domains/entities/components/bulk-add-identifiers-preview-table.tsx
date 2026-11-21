@@ -1,6 +1,14 @@
 import { CircleAlertIcon, InfoIcon } from "lucide-react";
 
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "#ui/components/table";
+import {
   identifierPasteRowKey,
   type IdentifierPasteEntity,
   type IdentifierPasteRow,
@@ -28,15 +36,7 @@ import {
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
-} from "@watchdog/schemas/shared";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@watchdog/ui/components/table";
+} from "@watchdog/domain/schemas/shared";
 
 const PREVIEW_CONFIDENCE_OPTIONS = CONFIDENCE_OPTIONS.filter(
   (opt) => opt.value !== "confirmed"

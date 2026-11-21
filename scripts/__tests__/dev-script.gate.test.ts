@@ -50,7 +50,7 @@ afterEach(async () => {
 const SERVICE = `
 const fs = require("node:fs");
 const [name, mode] = process.argv.slice(2);
-const logOf = (n) => { try { return fs.readFileSync("../" + n + "/" + n + ".log", "utf8"); } catch { return ""; } };
+const logOf = (n) => { try { return fs.readFileSync(process.env.HOME + "/apps/" + n + "/" + n + ".log", "utf8"); } catch { return ""; } };
 const log = (line) => fs.appendFileSync(name + ".log", line + "\\n");
 for (const sig of ["SIGINT", "SIGTERM"]) {
   process.on(sig, () => {
@@ -70,14 +70,21 @@ setInterval(() => {}, 1000);
 
 type Modes = { web?: string; site?: string; worker?: string };
 
-/** A throwaway checkout holding a COPY of dev.sh and three fake apps whose `dev` scripts are the fake service. */
+/** Where dev.sh finds each service: its directory and the package.json script it runs. */
+const SERVICES = {
+  web: { dir: "apps/web", script: "dev" },
+  site: { dir: "apps/site", script: "dev" },
+  worker: { dir: "packages/server", script: "worker:dev" },
+} as const;
+
+/** A throwaway checkout holding a COPY of dev.sh and three fake services whose scripts are the fake service. */
 function fixture(modes: Modes = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "dev-sh-"));
   dirs.push(dir);
   mkdirSync(path.join(dir, "scripts"));
   copyFileSync(SCRIPT, path.join(dir, "scripts/dev.sh"));
   for (const app of ["web", "site", "worker"] as const) {
-    const appDir = path.join(dir, "apps", app);
+    const appDir = path.join(dir, SERVICES[app].dir);
     mkdirSync(appDir, { recursive: true });
     writeFileSync(path.join(appDir, "svc.cjs"), SERVICE);
     const mode = modes[app] ?? "normal";
@@ -85,7 +92,9 @@ function fixture(modes: Modes = {}) {
       path.join(appDir, "package.json"),
       JSON.stringify({
         name: app,
-        scripts: { dev: `node svc.cjs ${app} ${mode} --port 3000` },
+        scripts: {
+          [SERVICES[app].script]: `node svc.cjs ${app} ${mode} --port 3000`,
+        },
       })
     );
   }
@@ -95,8 +104,8 @@ function fixture(modes: Modes = {}) {
 const until = (check: () => boolean) =>
   expect.poll(check, { interval: 50, timeout: 10_000 }).toBe(true);
 
-const logOf = (dir: string, app: string) => {
-  const file = path.join(dir, "apps", app, `${app}.log`);
+const logOf = (dir: string, app: keyof typeof SERVICES) => {
+  const file = path.join(dir, SERVICES[app].dir, `${app}.log`);
   return existsSync(file) ? readFileSync(file, "utf-8").trim().split("\n") : [];
 };
 
@@ -137,7 +146,9 @@ function start(dir: string, env: Record<string, string> = {}): Run {
 }
 
 const allReady = (dir: string) => () =>
-  ["web", "site", "worker"].every((app) => logOf(dir, app).includes("ready"));
+  (["web", "site", "worker"] as const).every((app) =>
+    logOf(dir, app).includes("ready")
+  );
 
 describe("dev.sh", () => {
   it("on a terminal Ctrl+C (SIGINT to the whole group) each service gets one signal, and it exits 0", async () => {
@@ -146,7 +157,7 @@ describe("dev.sh", () => {
     await until(allReady(dir));
     run.ctrlC();
     expect(await run.exited).toBe(0);
-    for (const app of ["web", "site", "worker"]) {
+    for (const app of ["web", "site", "worker"] as const) {
       expect(logOf(dir, app)).toEqual(["ready", "SIGINT"]);
     }
   });
@@ -192,13 +203,13 @@ describe("dev.sh", () => {
   it("starts nothing when a later app has no dev script", async () => {
     const dir = fixture();
     writeFileSync(
-      path.join(dir, "apps/worker/package.json"),
+      path.join(dir, "packages/server/package.json"),
       JSON.stringify({ name: "worker", scripts: {} })
     );
     const run = start(dir);
     expect(await run.exited).toBe(2);
     expect(run.stderr()).toContain(
-      "apps/worker/package.json has no dev script"
+      "packages/server/package.json has no worker:dev script"
     );
     expect(existsSync(path.join(dir, "apps/web/web.log"))).toBe(false);
     expect(existsSync(path.join(dir, "apps/site/site.log"))).toBe(false);

@@ -1,5 +1,5 @@
-import type { UntickedOpOutcome } from "@watchdog/schemas/jobs";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import type { UntickedOpOutcome } from "@watchdog/domain/schemas/jobs";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 
 /** Client Accept composer values (confidence, optional evidence / attestation, chosen ops). */
 export type AcceptFormValues = {

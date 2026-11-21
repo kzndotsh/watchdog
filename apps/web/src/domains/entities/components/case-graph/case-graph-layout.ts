@@ -8,8 +8,8 @@ import type {
   ConfidenceTier,
   EdgePredicate,
   EntityKind,
-} from "@watchdog/schemas/shared";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 import {
   computeDirectedNodeRanks,

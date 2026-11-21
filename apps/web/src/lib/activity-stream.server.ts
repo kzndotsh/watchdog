@@ -22,20 +22,23 @@
 import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { runAppAs } from "@watchdog/api";
-import { ActivityTailer, replayActivityEffect } from "@watchdog/core/activity";
-import {
-  assertCaseInOrgEffect,
-  listVisibleCaseIdsEffect,
-} from "@watchdog/core/cases";
-import { createLogger } from "@watchdog/log";
 import {
   createActivityGate,
   parseActivityCursor,
   parseSseCaseIdParam,
   type ActivityEntry,
-} from "@watchdog/schemas/feed";
-import { requireScope } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/feed";
+import { requireScope } from "@watchdog/domain/schemas/shared";
+import { runAppAs } from "@watchdog/server/api";
+import {
+  ActivityTailer,
+  replayActivityEffect,
+} from "@watchdog/server/core/activity";
+import {
+  assertCaseInOrgEffect,
+  listVisibleCaseIdsEffect,
+} from "@watchdog/server/core/cases";
+import { createLogger } from "@watchdog/server/log";
 
 /** Process log for a failed stream step; carries the error only, never Case or Evidence data. */
 function logStreamFailure(scope: string, error: unknown): void {

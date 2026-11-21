@@ -1,7 +1,7 @@
+import { Field, FieldLabel } from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import type { SlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 import { cn } from "@/lib/utils";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 const STATUS_TEXT: Record<SlugAvailability, string | null> = {
   idle: null,

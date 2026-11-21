@@ -1,0 +1,23 @@
+import { Effect } from "effect";
+import type { z } from "zod";
+
+import { parseCapJobInput } from "@watchdog/domain/schemas/jobs";
+import type { JsonObject } from "@watchdog/domain/schemas/shared";
+
+import { InvalidError, type DomainTag } from "../errors/tagged-errors";
+
+export type CapInputParser = {
+  input: z.ZodType;
+};
+
+/** Validate Cap input against its schema and normalize graph id fields. */
+export function parseValidatedCapInputEffect(
+  cap: CapInputParser,
+  raw: unknown
+): Effect.Effect<JsonObject, DomainTag> {
+  const result = parseCapJobInput(cap.input, raw);
+  if (!result.ok) {
+    return Effect.fail(new InvalidError({ reason: result.message }));
+  }
+  return Effect.succeed(result.input);
+}

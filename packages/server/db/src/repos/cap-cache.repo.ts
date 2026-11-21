@@ -1,0 +1,119 @@
+import { and, eq, gt } from "drizzle-orm";
+
+import type { CaseId } from "@watchdog/domain/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";
+
+import type { DbExec } from "../exec";
+import { capCache } from "../schema/cap-cache";
+import { jobs, type JobArtifact } from "../schema/jobs";
+import { jobEvidenceIds } from "./_evidence-ids";
+import { trimCaseId, trimResourceId } from "./_scoped-ids";
+
+export type CapCacheRow = typeof capCache.$inferSelect;
+
+export type CapCacheLookup = {
+  artifacts: JobArtifact[];
+  resultSummary: string | null;
+  jobId: string | null;
+  evidenceIds: string[];
+};
+
+export type UpsertCapCacheValues = {
+  caseId: CaseId;
+  capabilityId: string;
+  inputHash: string;
+  capVersion: string;
+  jobId: string;
+  artifacts: JobArtifact[];
+  resultSummary: string | null;
+  ttlMs: number;
+  createdAt: Date;
+  expiresAt: Date;
+};
+
+export const capCacheRepo = {
+  async lookupActive(
+    exec: DbExec,
+    caseId: CaseId,
+    capabilityId: string,
+    inputHash: string,
+    capVersion: string,
+    now: Date
+  ): Promise<CapCacheLookup | null> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedCapabilityId = trimmedOrUndefined(capabilityId);
+    const scopedInputHash = trimmedOrUndefined(inputHash);
+    if (
+      scopedCaseId === undefined ||
+      scopedCapabilityId === undefined ||
+      scopedInputHash === undefined
+    ) {
+      return null;
+    }
+    const [row] = await exec
+      .select({
+        artifacts: capCache.artifacts,
+        resultSummary: capCache.resultSummary,
+        jobId: capCache.jobId,
+        evidenceIds: jobEvidenceIds,
+      })
+      .from(capCache)
+      .leftJoin(jobs, eq(capCache.jobId, jobs.id))
+      .where(
+        and(
+          eq(capCache.caseId, scopedCaseId),
+          eq(capCache.capabilityId, scopedCapabilityId),
+          eq(capCache.inputHash, scopedInputHash),
+          // A row from another version (or from before the column, NULL) is a miss.
+          eq(capCache.capVersion, capVersion),
+          gt(capCache.expiresAt, now)
+        )
+      )
+      .limit(1);
+    if (!row) return null;
+    // Missing Job (left join) or a Job with no Evidence links → []; collect still
+    // cache-hits artifacts, landEvidence creates Evidence from those blobs.
+    return {
+      artifacts: row.artifacts,
+      resultSummary: row.resultSummary,
+      jobId: row.jobId,
+      evidenceIds: row.evidenceIds,
+    };
+  },
+
+  async upsert(exec: DbExec, values: UpsertCapCacheValues): Promise<void> {
+    const scopedCaseId = trimCaseId(values.caseId);
+    const scopedCapabilityId = trimmedOrUndefined(values.capabilityId);
+    const scopedInputHash = trimmedOrUndefined(values.inputHash);
+    const scopedJobId = trimResourceId(values.jobId);
+    if (
+      scopedCaseId === undefined ||
+      scopedCapabilityId === undefined ||
+      scopedInputHash === undefined ||
+      scopedJobId === undefined
+    ) {
+      return;
+    }
+    await exec
+      .insert(capCache)
+      .values({
+        ...values,
+        caseId: scopedCaseId,
+        capabilityId: scopedCapabilityId,
+        inputHash: scopedInputHash,
+        jobId: scopedJobId,
+      })
+      .onConflictDoUpdate({
+        target: [capCache.caseId, capCache.capabilityId, capCache.inputHash],
+        set: {
+          capVersion: values.capVersion,
+          jobId: scopedJobId,
+          artifacts: values.artifacts,
+          resultSummary: values.resultSummary,
+          ttlMs: values.ttlMs,
+          createdAt: values.createdAt,
+          expiresAt: values.expiresAt,
+        },
+      });
+  },
+};

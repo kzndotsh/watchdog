@@ -1,14 +1,11 @@
 import { Heading1Icon, Heading2Icon, Heading3Icon } from "lucide-react";
 import type { PlateEditor } from "platejs/react";
 
+import { ToggleGroup, ToggleGroupItem } from "#ui/components/toggle-group";
 import {
   applyHeadingChange,
   type HeadingValue,
 } from "@/shared/ui/rich-text/rich-text-toolbar-controls.lib";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@watchdog/ui/components/toggle-group";
 
 type RichTextHeadingToggleGroupProps = {
   editor: PlateEditor;

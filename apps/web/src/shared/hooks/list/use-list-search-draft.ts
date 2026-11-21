@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { LIST_SEARCH_DEBOUNCE_MS } from "@/shared/lib/debounce";
-import { LIST_SEARCH_MIN_LENGTH } from "@watchdog/schemas/shared";
+import { LIST_SEARCH_MIN_LENGTH } from "@watchdog/domain/schemas/shared";
 
 /** The `q` a draft writes: null for empty, undefined while too short to send (nothing is written). */
 export function committedSearch(text: string): string | null | undefined {

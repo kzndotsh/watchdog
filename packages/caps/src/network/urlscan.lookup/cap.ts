@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import {
   fetchUrlscanSearchEffect,
   urlscanLookupSnapshotSchema,
-} from "@watchdog/tools/network";
-import { normalizeHost } from "@watchdog/tools/normalize";
+} from "#tools/network";
+import { normalizeHost } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { foundOfType } from "../../lib/collect/found-values";

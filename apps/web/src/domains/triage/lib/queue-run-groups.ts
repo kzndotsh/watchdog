@@ -1,4 +1,4 @@
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 
 type QueueRun = NonNullable<ProposalQueueItem["playbookRun"]>;
 

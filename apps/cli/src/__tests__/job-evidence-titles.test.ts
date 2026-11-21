@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 import { evidenceTitlesForJobs } from "../job-evidence-titles";
 import { queryIds, standInApi } from "./stand-in-api";

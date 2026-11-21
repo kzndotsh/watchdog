@@ -1,6 +1,6 @@
-import { validateIdentifierValue } from "@watchdog/schemas/graph";
-import type { IdentifierType } from "@watchdog/schemas/shared";
-import { normalizeIp } from "@watchdog/tools/normalize";
+import { normalizeIp } from "#tools/normalize";
+import { validateIdentifierValue } from "@watchdog/domain/schemas/graph";
+import type { IdentifierType } from "@watchdog/domain/schemas/shared";
 
 import { eligibleCtDomains } from "./eligible-domain-hosts";
 

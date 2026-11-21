@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { DossierClaimsSearch } from "@/domains/dossier/lib/dossier-tabs";
 import type { ClaimRecord } from "@/domains/entities/claims/types";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 // Only the network boundary is faked: the section reads claims through the real
 // `claimListView` and the real oRPC utils under a real QueryClient, so a wrong query key or a
@@ -33,7 +33,7 @@ import {
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildClaimRecord, buildEvidenceRecord } from "@/testing/records";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const getEvidenceManyFn = procedureDouble("evidence.getMany");
 

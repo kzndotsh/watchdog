@@ -1,10 +1,10 @@
-import { validateIdentifierWrite } from "@watchdog/schemas/graph";
+import { validateIdentifierWrite } from "@watchdog/domain/schemas/graph";
 import {
   entityDisplayLabel,
   normalizeIdentifierPlatform,
   parseOptionalTrimmedUuid,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { cleanPasteCell, inferPasteIdentity } from "./infer-paste-identity";
 import {

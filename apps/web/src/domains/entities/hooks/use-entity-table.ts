@@ -17,8 +17,11 @@ import { useList } from "@/shared/hooks/list/use-list";
 import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { useListTable } from "@/shared/hooks/list/use-list-table";
 import { toast } from "@/shared/ui/toast";
-import type { entityList } from "@watchdog/schemas/graph";
-import type { ListSearch, UnfixedSearchPatch } from "@watchdog/schemas/shared";
+import type { entityList } from "@watchdog/domain/schemas/graph";
+import type {
+  ListSearch,
+  UnfixedSearchPatch,
+} from "@watchdog/domain/schemas/shared";
 
 import { useEntityTableComposer } from "./use-entity-table-composer";
 import { useEntityTableMutations } from "./use-entity-table-mutations";

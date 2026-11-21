@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchHudsonrockLookupEffect,
   hudsonrockLookupSnapshotSchema,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hudsonRock } from "../../providers";

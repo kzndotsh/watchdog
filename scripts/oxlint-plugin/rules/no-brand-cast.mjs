@@ -93,7 +93,7 @@ export const noBrandCast = {
       if (hit !== null) {
         context.report({
           node,
-          message: `Do not cast to a type containing ${hit}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/schemas/shared. Only the branded test fixtures in packages/schemas/src/testing are exempt (ADR-0003).`,
+          message: `Do not cast to a type containing ${hit}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/domain/schemas/shared. Only the branded test fixtures in packages/domain/schemas/src/testing are exempt (ADR-0003).`,
         });
       }
     };

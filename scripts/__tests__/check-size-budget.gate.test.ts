@@ -59,7 +59,7 @@ describe("check-size-budget gate", () => {
   it("exempts tests and generated files", () => {
     const repo = repoWith({
       "apps/web/src/big.test.ts": lines(700),
-      "packages/core/src/__tests__/big.ts": lines(700),
+      "packages/server/core/src/__tests__/big.ts": lines(700),
       "apps/web/src/routeTree.gen.ts": lines(700),
     });
 

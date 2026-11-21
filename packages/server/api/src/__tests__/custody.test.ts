@@ -1,0 +1,85 @@
+import { ORPCError } from "@orpc/server";
+import { describe, expect, it } from "vitest";
+
+import { testApiKey } from "@watchdog/domain/schemas/testing";
+
+import {
+  assertAgentChildWriteCustody,
+  refuseConfirmed,
+  requireUserOverride,
+} from "../custody";
+
+describe("custody", () => {
+  it("requireUserOverride rejects missing override", () => {
+    expect(() => {
+      requireUserOverride(false);
+    }).toThrow(ORPCError);
+    expect(() => {
+      requireUserOverride(undefined);
+    }).toThrow(ORPCError);
+  });
+
+  it("requireUserOverride accepts literal true", () => {
+    expect(() => {
+      requireUserOverride(true);
+    }).not.toThrow();
+  });
+
+  it("refuseConfirmed rejects confirmed", () => {
+    expect(() => {
+      refuseConfirmed("confirmed");
+    }).toThrow(ORPCError);
+  });
+
+  it("refuseConfirmed reads confidence as the input schema will, so no spelling of confirmed passes", () => {
+    for (const confidence of ["Confirmed", " confirmed ", "CONFIRMED"]) {
+      expect(() => {
+        refuseConfirmed(confidence);
+      }).toThrow(ORPCError);
+    }
+  });
+
+  it("refuseConfirmed allows other tiers", () => {
+    expect(() => {
+      refuseConfirmed("unverified");
+    }).not.toThrow();
+    expect(() => {
+      refuseConfirmed("possible");
+    }).not.toThrow();
+    expect(() => {
+      refuseConfirmed(undefined);
+    }).not.toThrow();
+  });
+
+  it("assertAgentChildWriteCustody skips session auth", () => {
+    expect(() => {
+      assertAgentChildWriteCustody(
+        { confidence: "confirmed" },
+        { kind: "session" }
+      );
+    }).not.toThrow();
+  });
+
+  it("assertAgentChildWriteCustody enforces override and confirmed for apiKey", () => {
+    expect(() => {
+      assertAgentChildWriteCustody(
+        { confidence: "unverified" },
+        testApiKey("key-1")
+      );
+    }).toThrow(ORPCError);
+
+    expect(() => {
+      assertAgentChildWriteCustody(
+        { confidence: "confirmed", userOverride: true },
+        testApiKey("key-1")
+      );
+    }).toThrow(ORPCError);
+
+    expect(() => {
+      assertAgentChildWriteCustody(
+        { confidence: "unverified", userOverride: true },
+        testApiKey("key-1")
+      );
+    }).not.toThrow();
+  });
+});

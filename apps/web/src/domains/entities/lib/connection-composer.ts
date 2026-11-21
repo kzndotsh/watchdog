@@ -1,5 +1,5 @@
-import { parseEdgePhraseValue } from "@watchdog/schemas/shared";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import { parseEdgePhraseValue } from "@watchdog/domain/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 export type ConnectionComposerValues = {
   peerId: string;

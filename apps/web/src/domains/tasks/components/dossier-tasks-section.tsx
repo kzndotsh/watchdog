@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { FieldError } from "#ui/components/field";
 import { dossierTasksFallback } from "@/domains/tasks/components/dossier-tasks-fallback";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import { TaskBoardNotice } from "@/domains/tasks/components/task-board-notice";
@@ -11,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type DossierTasksSectionProps = {
   caseId: string;

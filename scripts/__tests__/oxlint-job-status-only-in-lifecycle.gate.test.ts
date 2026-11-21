@@ -1,6 +1,6 @@
 /**
  * Proves the real `oxlint.config.ts` keeps Job status writes inside the lifecycle module
- * (`packages/core/src/jobs/lifecycle/`): `jobsRepo.settle` is called only from there,
+ * (`packages/server/core/src/jobs/lifecycle/`): `jobsRepo.settle` is called only from there,
  * `jobs-settle.repo.ts` is the one db file that sets `jobs.status`, and an insert may only
  * admit a `queued` Job. Tests, test-db and files outside `src` (the demo seed) are exempt.
  */
@@ -25,36 +25,36 @@ const INSERT_RUNNING =
   "export const a = (exec: any) => exec.insert(jobs).values({ status: 'running' });\n";
 
 const FAIL: Readonly<Record<string, string>> = {
-  "packages/core/src/jobs/outside-settle.ts": SETTLE_CALL,
-  "packages/core/src/jobs/outside-update.ts": UPDATE_STATUS,
-  "packages/db/src/repos/jobs.repo.ts": UPDATE_STATUS,
-  "packages/db/src/repos/wrapped.repo.ts": WRAPPED_STATUS,
-  "packages/db/src/repos/insert-running.repo.ts": INSERT_RUNNING,
-  "apps/worker/src/settle.ts": SETTLE_CALL,
-  "packages/core/src/jobs/outside-settle-fx.ts":
+  "packages/server/core/src/jobs/outside-settle.ts": SETTLE_CALL,
+  "packages/server/core/src/jobs/outside-update.ts": UPDATE_STATUS,
+  "packages/server/db/src/repos/jobs.repo.ts": UPDATE_STATUS,
+  "packages/server/db/src/repos/wrapped.repo.ts": WRAPPED_STATUS,
+  "packages/server/db/src/repos/insert-running.repo.ts": INSERT_RUNNING,
+  "packages/server/worker/src/settle.ts": SETTLE_CALL,
+  "packages/server/core/src/jobs/outside-settle-fx.ts":
     "export const a = (exec: unknown) => jobsRepoFx.settle(exec, c, j, { status: 'failed' }, ['running']);\n",
-  "packages/core/src/jobs/outside-settle-fx-db.ts":
+  "packages/server/core/src/jobs/outside-settle-fx-db.ts":
     "export const a = jobsRepoFxDb.settle(c, j, { status: 'failed' }, ['running']);\n",
-  "packages/core/src/jobs/outside-settle-repo.ts":
+  "packages/server/core/src/jobs/outside-settle-repo.ts":
     "export const a = (exec: unknown) => jobsSettleRepo.settle(exec, c, j, { status: 'failed' }, ['running']);\n",
 };
 
 const PASS: Readonly<Record<string, string>> = {
   // The module itself and the one db writer.
-  "packages/core/src/jobs/lifecycle/settle.ts": SETTLE_CALL,
-  "packages/db/src/repos/jobs-settle.repo.ts": UPDATE_STATUS,
+  "packages/server/core/src/jobs/lifecycle/settle.ts": SETTLE_CALL,
+  "packages/server/db/src/repos/jobs-settle.repo.ts": UPDATE_STATUS,
   // Tests, test-db and seeds outside `src`.
-  "packages/core/src/jobs/__tests__/seed.test.ts": UPDATE_STATUS,
-  "packages/test-db/src/db/seed/job.ts": UPDATE_STATUS,
-  "packages/db/scripts/demo-seed/write.ts": UPDATE_STATUS,
+  "packages/server/core/src/jobs/__tests__/seed.test.ts": UPDATE_STATUS,
+  "packages/server/test-db/src/db/seed/job.ts": UPDATE_STATUS,
+  "packages/server/db/scripts/demo-seed/write.ts": UPDATE_STATUS,
   // Admission, and writes that do not touch status.
-  "packages/db/src/repos/insert-queued.repo.ts":
+  "packages/server/db/src/repos/insert-queued.repo.ts":
     "export const a = (exec: any) => exec.insert(jobs).values({ status: 'queued' });\n",
-  "packages/db/src/repos/update-logs.repo.ts":
+  "packages/server/db/src/repos/update-logs.repo.ts":
     "export const a = (exec: any) => exec.update(jobs).set({ logs: [] }).where(w);\n",
-  "packages/db/src/repos/other-table.repo.ts":
+  "packages/server/db/src/repos/other-table.repo.ts":
     "export const a = (exec: any) => exec.update(playbookRuns).set({ status: 'cancelled' }).where(w);\n",
-  "packages/core/src/jobs/settle-job-effect.ts":
+  "packages/server/core/src/jobs/settle-job-effect.ts":
     "export const a = settleJobEffect(c, j, { status: 'failed' });\n",
 };
 

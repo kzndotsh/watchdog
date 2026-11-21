@@ -1,0 +1,501 @@
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+  or,
+} from "drizzle-orm";
+
+import {
+  type CaseId,
+  type EvidenceKind,
+  ENTITY_KIND_LABELS,
+  ENTITY_KINDS,
+  EVIDENCE_KIND_LABELS,
+  EVIDENCE_KINDS,
+  normalizeUuidList,
+} from "@watchdog/domain/schemas/shared";
+
+import type { DbExec } from "../exec";
+import { entities } from "../schema/entities";
+import { evidence } from "../schema/evidence";
+import { selectEvidenceExportSizes } from "./_evidence-export";
+import { entitySlugIlikePatterns } from "./_ilike";
+import { inArrayForDisplayLabelMatch } from "./_label-search";
+import { clampSearchLimit } from "./_limits";
+import {
+  trimActorId,
+  trimCaseId,
+  trimScopedCaseIds,
+  resolveNullableGraphIdForWrite,
+} from "./_scoped-ids";
+
+export const evidenceColumns = {
+  id: evidence.id,
+  caseId: evidence.caseId,
+  entityId: evidence.entityId,
+  kind: evidence.kind,
+  label: evidence.label,
+  notes: evidence.notes,
+  mime: evidence.mime,
+  uri: evidence.uri,
+  sha256: evidence.sha256,
+  text: evidence.text,
+  sourceUrl: evidence.sourceUrl,
+  actorId: evidence.actorId,
+  actorLabel: evidence.actorLabel,
+  capturedAt: evidence.capturedAt,
+  processedAt: evidence.processedAt,
+  deletedAt: evidence.deletedAt,
+} as const;
+
+export type EvidenceRow = {
+  [K in keyof typeof evidenceColumns]: (typeof evidence.$inferSelect)[K &
+    keyof typeof evidence.$inferSelect];
+};
+
+export type NewEvidence = Pick<
+  typeof evidence.$inferInsert,
+  | "caseId"
+  | "entityId"
+  | "kind"
+  | "label"
+  | "notes"
+  | "mime"
+  | "uri"
+  | "sha256"
+  | "text"
+  | "sourceUrl"
+  | "actorId"
+  | "actorLabel"
+>;
+
+export type EvidenceCapSeed = {
+  id: string;
+  entityId: string | null;
+  sourceUrl: string | null;
+  text: string | null;
+};
+
+export const evidenceRepo = {
+  async searchForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    term: string,
+    limit: number
+  ): Promise<EvidenceRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const safeLimit = clampSearchLimit(limit);
+    const slugPatterns = entitySlugIlikePatterns(term);
+    if (slugPatterns.length === 0) return [];
+    const pattern = slugPatterns[0];
+    const entitySlugMatches = slugPatterns.map((p) => ilike(entities.slug, p));
+    const kindLabelMatch = inArrayForDisplayLabelMatch(
+      evidence.kind,
+      EVIDENCE_KINDS,
+      EVIDENCE_KIND_LABELS,
+      term
+    );
+    const entityKindLabelMatch = inArrayForDisplayLabelMatch(
+      entities.kind,
+      ENTITY_KINDS,
+      ENTITY_KIND_LABELS,
+      term
+    );
+    const entityFieldMatch = and(
+      eq(entities.caseId, scopedCaseId),
+      or(
+        ilike(entities.name, pattern),
+        ...entitySlugMatches,
+        ilike(entities.summary, pattern),
+        ilike(entities.notes, pattern),
+        ilike(entities.kind, pattern),
+        ...(entityKindLabelMatch ? [entityKindLabelMatch] : [])
+      )
+    );
+    return exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .leftJoin(entities, eq(evidence.entityId, entities.id))
+      .where(
+        and(
+          eq(evidence.caseId, scopedCaseId),
+          isNull(evidence.deletedAt),
+          or(
+            ilike(evidence.label, pattern),
+            ilike(evidence.notes, pattern),
+            ilike(evidence.sourceUrl, pattern),
+            ilike(evidence.text, pattern),
+            ilike(evidence.sha256, pattern),
+            ilike(evidence.mime, pattern),
+            ilike(evidence.kind, pattern),
+            ...(kindLabelMatch ? [kindLabelMatch] : []),
+            entityFieldMatch
+          )
+        )
+      )
+      .orderBy(desc(evidence.capturedAt))
+      .limit(safeLimit);
+  },
+
+  /** Active evidence attached to an entity — export order (oldest first). */
+  async listForEntity(
+    exec: DbExec,
+    caseId: CaseId,
+    entityId: string
+  ): Promise<EvidenceRow[]> {
+    const scoped = trimScopedCaseIds(caseId, entityId);
+    if (!scoped) return [];
+    return exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.caseId, scoped.caseId),
+          eq(evidence.entityId, scoped.resourceId),
+          isNull(evidence.deletedAt)
+        )
+      )
+      .orderBy(asc(evidence.capturedAt));
+  },
+
+  /** Active (non-deleted) evidence in a case — export order (oldest first). */
+  async listActiveForCaseAsc(
+    exec: DbExec,
+    caseId: CaseId
+  ): Promise<EvidenceRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(and(eq(evidence.caseId, scopedCaseId), isNull(evidence.deletedAt)))
+      .orderBy(asc(evidence.capturedAt));
+  },
+
+  /**
+   * A Case export's pre-read: the active row count and the bytes of the text bodies the export
+   * writes itself. No body leaves the database.
+   */
+  async exportSizesForCase(
+    exec: DbExec,
+    caseId: CaseId
+  ): Promise<{ count: number; textBytes: number }> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return { count: 0, textBytes: 0 };
+    return selectEvidenceExportSizes(exec, scopedCaseId);
+  },
+
+  /** One page (by id, `after` is the last id of the page before) of the stored-file keys of a Case's active Evidence. */
+  async listExportUrisPage(
+    exec: DbExec,
+    caseId: CaseId,
+    page: { after?: string; limit: number }
+  ): Promise<{ id: string; uri: string }[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const rows = await exec
+      .select({ id: evidence.id, uri: evidence.uri })
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.caseId, scopedCaseId),
+          isNull(evidence.deletedAt),
+          isNotNull(evidence.uri),
+          page.after === undefined ? undefined : gt(evidence.id, page.after)
+        )
+      )
+      .orderBy(asc(evidence.id))
+      .limit(page.limit);
+    return rows.flatMap((row) =>
+      row.uri === null || row.uri === "" ? [] : [{ id: row.id, uri: row.uri }]
+    );
+  },
+
+  /**
+   * One page of a Case's active Evidence, bodies included, in id order, for the streaming
+   * export. `attestationsOnly` keeps the text-only attestations (the rows of `attestations.md`).
+   */
+  async listExportPage(
+    exec: DbExec,
+    caseId: CaseId,
+    page: { after?: string; limit: number; attestationsOnly?: boolean }
+  ): Promise<EvidenceRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.caseId, scopedCaseId),
+          isNull(evidence.deletedAt),
+          page.after === undefined ? undefined : gt(evidence.id, page.after),
+          page.attestationsOnly === true
+            ? and(
+                eq(evidence.kind, "attestation"),
+                or(isNull(evidence.uri), eq(evidence.uri, "")),
+                isNotNull(evidence.text),
+                ne(evidence.text, "")
+              )
+            : undefined
+        )
+      )
+      .orderBy(asc(evidence.id))
+      .limit(page.limit);
+  },
+
+  async getActiveInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string
+  ): Promise<EvidenceRow | null> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return null;
+    const [row] = await exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId),
+          isNull(evidence.deletedAt)
+        )
+      )
+      .limit(1);
+    return row ?? null;
+  },
+
+  async create(exec: DbExec, values: NewEvidence): Promise<EvidenceRow | null> {
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (scopedCaseId === undefined) return null;
+    const scopedActorId = trimActorId(values.actorId);
+    if (scopedActorId === undefined) return null;
+    const resolvedEntityId = resolveNullableGraphIdForWrite(values.entityId);
+    if (!resolvedEntityId.ok) return null;
+    const [created] = await exec
+      .insert(evidence)
+      .values({
+        ...values,
+        caseId: scopedCaseId,
+        actorId: scopedActorId,
+        ...(values.entityId === undefined
+          ? {}
+          : { entityId: resolvedEntityId.id ?? null }),
+      })
+      .returning(evidenceColumns);
+    return created ?? null;
+  },
+
+  /** Soft-deleted rows included — Hidden dumps must stay downloadable. */
+  /** The newest Evidence row (hidden or not) recorded for an object key in the Case. */
+  async getLatestByUriIncludingDeleted(
+    exec: DbExec,
+    caseId: CaseId,
+    uri: string
+  ): Promise<EvidenceRow | null> {
+    const scoped = trimCaseId(caseId);
+    if (scoped === undefined) return null;
+    const [row] = await exec
+      .select(evidenceColumns)
+      .from(evidence)
+      .where(and(eq(evidence.caseId, scoped), eq(evidence.uri, uri)))
+      .orderBy(desc(evidence.capturedAt), desc(evidence.id))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async getUriInCaseIncludingDeleted(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string
+  ): Promise<{ uri: string | null; mime: string | null } | null> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return null;
+    const [row] = await exec
+      .select({ uri: evidence.uri, mime: evidence.mime })
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId)
+        )
+      )
+      .limit(1);
+    return row ?? null;
+  },
+
+  /**
+   * Evidence ids that exist in the Case (active and hidden).
+   * Used by graph evidence-link validation.
+   */
+  async listIdsInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceIds: string[]
+  ): Promise<{ id: string }[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const normalized = normalizeUuidList(evidenceIds);
+    if (normalized.length === 0) return [];
+    return exec
+      .select({ id: evidence.id })
+      .from(evidence)
+      .where(
+        and(eq(evidence.caseId, scopedCaseId), inArray(evidence.id, normalized))
+      );
+  },
+
+  /** Label fields for job/activity chrome — includes hidden when explicitly referenced. */
+  async listActivityLabelsInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceIds: string[]
+  ): Promise<
+    {
+      id: string;
+      label: string | null;
+      kind: EvidenceKind;
+      sourceUrl: string | null;
+    }[]
+  > {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const normalized = normalizeUuidList(evidenceIds);
+    if (normalized.length === 0) return [];
+    return exec
+      .select({
+        id: evidence.id,
+        label: evidence.label,
+        kind: evidence.kind,
+        sourceUrl: evidence.sourceUrl,
+      })
+      .from(evidence)
+      .where(
+        and(eq(evidence.caseId, scopedCaseId), inArray(evidence.id, normalized))
+      );
+  },
+
+  async softDelete(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string
+  ): Promise<{ id: string } | null> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return null;
+    const [row] = await exec
+      .update(evidence)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId),
+          isNull(evidence.deletedAt)
+        )
+      )
+      .returning({ id: evidence.id });
+    return row ?? null;
+  },
+
+  async restore(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string
+  ): Promise<{ id: string } | null> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return null;
+    const [row] = await exec
+      .update(evidence)
+      .set({ deletedAt: null })
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId),
+          isNotNull(evidence.deletedAt)
+        )
+      )
+      .returning({ id: evidence.id });
+    return row ?? null;
+  },
+
+  /** Active (non-deleted) row fields needed to start a Cap from Evidence. */
+  async getCapSeedInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string
+  ): Promise<EvidenceCapSeed | null> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return null;
+    const [row] = await exec
+      .select({
+        id: evidence.id,
+        entityId: evidence.entityId,
+        sourceUrl: evidence.sourceUrl,
+        text: evidence.text,
+      })
+      .from(evidence)
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId),
+          isNull(evidence.deletedAt)
+        )
+      )
+      .limit(1);
+    return row ?? null;
+  },
+
+  async markProcessed(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string
+  ): Promise<boolean> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return false;
+    const updated = await exec
+      .update(evidence)
+      .set({ processedAt: new Date() })
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId),
+          isNull(evidence.deletedAt),
+          isNull(evidence.processedAt)
+        )
+      )
+      .returning({ id: evidence.id });
+    return updated.length > 0;
+  },
+
+  async setEntityInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    evidenceId: string,
+    entityId: string | null
+  ): Promise<EvidenceRow | null> {
+    const scoped = trimScopedCaseIds(caseId, evidenceId);
+    if (scoped === null) return null;
+    const resolvedEntityId = resolveNullableGraphIdForWrite(entityId);
+    if (!resolvedEntityId.ok) return null;
+    const nextEntityId = resolvedEntityId.id ?? null;
+    const [row] = await exec
+      .update(evidence)
+      .set({ entityId: nextEntityId })
+      .where(
+        and(
+          eq(evidence.id, scoped.resourceId),
+          eq(evidence.caseId, scoped.caseId),
+          isNull(evidence.deletedAt)
+        )
+      )
+      .returning(evidenceColumns);
+    return row ?? null;
+  },
+};

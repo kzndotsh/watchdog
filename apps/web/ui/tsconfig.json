@@ -1,0 +1,14 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // Read by the shadcn CLI (`pnpm ui:sync`), which resolves the components.json aliases through
+    // these paths; the web typecheck covers ui/src. Browser code: no Node globals.
+    "types": [],
+    "paths": {
+      "#ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}

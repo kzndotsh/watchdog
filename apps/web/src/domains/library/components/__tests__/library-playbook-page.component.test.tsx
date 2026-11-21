@@ -7,6 +7,7 @@ vi.mock("@/lib/orpc-client", async () =>
   (await import("@/testing/orpc-client")).orpcClientModuleDouble()
 );
 
+import { SidebarProvider } from "#ui/components/sidebar";
 import { visibleCasesQuery } from "@/domains/cases/queries";
 import {
   capabilitiesListQuery,
@@ -21,9 +22,8 @@ import {
   buildPlaybookListItem,
   testCapProvider,
 } from "@/testing/records";
-import type { CredentialSlot } from "@watchdog/core/vault";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { SidebarProvider } from "@watchdog/ui/components/sidebar";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 
 const navigate = vi.hoisted(() => vi.fn());
 

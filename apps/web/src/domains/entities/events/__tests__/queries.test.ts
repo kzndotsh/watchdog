@@ -7,9 +7,9 @@ vi.mock("@/lib/orpc-client", async () =>
 
 import { eventListView, eventsKeys } from "@/domains/entities/events/queries";
 import { procedureDouble } from "@/testing/orpc-client";
-import { eventList } from "@watchdog/schemas/graph";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { eventList } from "@watchdog/domain/schemas/graph";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listEvents = procedureDouble("events.list");
 

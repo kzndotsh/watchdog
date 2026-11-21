@@ -1,4 +1,4 @@
-import type { ProcessExtractDraft } from "@watchdog/ai";
+import type { ProcessExtractDraft } from "#ai";
 
 import type { DraftClaim, DraftId } from "../harvest-helpers";
 

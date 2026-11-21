@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { CollapsibleTrigger } from "@watchdog/ui/components/collapsible";
+import { CollapsibleTrigger } from "#ui/components/collapsible";
 
 /**
  * A full-width, non-button Collapsible trigger row: top-aligned content, hover wash,

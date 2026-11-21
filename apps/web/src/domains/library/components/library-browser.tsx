@@ -30,7 +30,7 @@ import { useListDisplay } from "@/shared/hooks/list/use-list-display";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { LIBRARY_MAIN_CLASS } from "@/shared/ui/library-shell";
 import { LibraryRailSkeleton } from "@/shared/ui/skeletons/library/library-rail-skeleton";
-import { opsOf } from "@watchdog/schemas/shared";
+import { opsOf } from "@watchdog/domain/schemas/shared";
 
 const QUICK_PICK_COUNT = 5;
 

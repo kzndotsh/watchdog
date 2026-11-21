@@ -51,24 +51,25 @@ on_term() { signal="${signal:-TERM}"; signals=$((signals + 1)); }
 trap on_int INT
 trap on_term TERM
 
-# command_of <app> [port]: apps/<app>'s `dev` script, with its --port replaced when one is given.
-# Resolved for every app before any is launched, so a bad package.json starts nothing.
+# command_of <dir> <script> [port]: the `<script>` script of <dir>/package.json, with its --port
+# replaced when one is given. Resolved for every service before any is launched, so a bad
+# package.json starts nothing.
 command_of() {
   local cmd
-  cmd="$(cd "$root/apps/$1" && node -e "const c = require('./package.json').scripts?.dev; if (!c) process.exit(1); console.log(c)")" ||
-    die "apps/$1/package.json has no dev script"
-  if [[ -n "${2:-}" ]]; then
-    cmd="$(printf '%s' "$cmd" | sed -E "s/--port [0-9]+/--port $2/")"
+  cmd="$(cd "$root/$1" && node -e "const c = require('./package.json').scripts?.['$2']; if (!c) process.exit(1); console.log(c)")" ||
+    die "$1/package.json has no $2 script"
+  if [[ -n "${3:-}" ]]; then
+    cmd="$(printf '%s' "$cmd" | sed -E "s/--port [0-9]+/--port $3/")"
   fi
   printf '%s' "$cmd"
 }
 
-# launch <app> <command>: run it as a background job, as `pnpm run` would (the app's and the
-# root's node_modules/.bin on PATH) but with no pnpm between us and the process. Skipped once a
-# signal has arrived.
+# launch <dir> <command>: run it in <dir> as a background job, as `pnpm run` would (the
+# workspace's and the root's node_modules/.bin on PATH) but with no pnpm between us and the
+# process. Skipped once a signal has arrived.
 launch() {
   [[ -n "$signal" ]] && return 0
-  local dir="$root/apps/$1"
+  local dir="$root/$1"
   (cd "$dir" && PATH="$dir/node_modules/.bin:$root/node_modules/.bin:$PATH" exec bash -c "exec $2") </dev/null &
 }
 
@@ -91,14 +92,14 @@ drain() {
   wait 2>/dev/null || true
 }
 
-web_cmd="$(command_of web "$web_port")" || exit $?
-site_cmd="$(command_of site "$site_port")" || exit $?
-worker_cmd="$(command_of worker)" || exit $?
+web_cmd="$(command_of apps/web dev "$web_port")" || exit $?
+site_cmd="$(command_of apps/site dev "$site_port")" || exit $?
+worker_cmd="$(command_of packages/server worker:dev)" || exit $?
 
 echo "Starting web → http://127.0.0.1:${web_port} · site → http://127.0.0.1:${site_port}"
-launch web "$web_cmd"
-launch site "$site_cmd"
-launch worker "$worker_cmd"
+launch apps/web "$web_cmd"
+launch apps/site "$site_cmd"
+launch packages/server "$worker_cmd"
 
 # `wait -n` also returns when a trapped signal arrives; `signal` tells the two apart. A signal
 # that arrived while starting up must not reach `wait -n`, which would then block for good.

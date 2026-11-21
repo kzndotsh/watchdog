@@ -1,15 +1,12 @@
 import { Effect } from "effect";
 
+import { ValidationVendorError, upstreamDiagnostic } from "#tools/errors";
+import { formatLinksMarkdownSection, mergeUnique } from "#tools/html";
+import { waybackArchiveUrl } from "#tools/wayback";
 import {
   ENRICHED_MD_ARTIFACT,
   URL_ENRICH_CAPABILITY_ID,
-} from "@watchdog/schemas/jobs";
-import {
-  ValidationVendorError,
-  upstreamDiagnostic,
-} from "@watchdog/tools/errors";
-import { formatLinksMarkdownSection, mergeUnique } from "@watchdog/tools/html";
-import { waybackArchiveUrl } from "@watchdog/tools/wayback";
+} from "@watchdog/domain/schemas/jobs";
 
 import { internetArchive } from "../../providers";
 import { contact, defineCapability } from "../../sdk";

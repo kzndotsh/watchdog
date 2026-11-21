@@ -12,7 +12,7 @@ const UNTRUSTED_ID_HELPERS = new Set([
 
 /**
  * Bans importing (or re-exporting) `untrustedCaseId` / `untrustedOrganizationId` from
- * `@watchdog/test-kit`. They stamp a brand on unvalidated text so tests can feed
+ * `@watchdog/domain/test-kit`. They stamp a brand on unvalidated text so tests can feed
  * malformed ids to code that must reject them; production code could use them to
  * bypass the validating constructors. Allowed trees are exempted in `oxlint.config.ts`.
  */
@@ -33,8 +33,10 @@ export const noUntrustedIdImport = {
         !isRecord(source) ||
         typeof source.value !== "string" ||
         !(
-          source.value.startsWith("@watchdog/test-kit") ||
-          source.value === "@watchdog/schemas/testing"
+          source.value.startsWith("@watchdog/domain/test-kit") ||
+          source.value.startsWith("#test-kit") ||
+          source.value === "@watchdog/domain/schemas/testing" ||
+          source.value === "#schemas/testing"
         )
       ) {
         return;
@@ -45,7 +47,7 @@ export const noUntrustedIdImport = {
         if (name !== null && UNTRUSTED_ID_HELPERS.has(name)) {
           context.report({
             node: spec,
-            message: `${name} stamps an unvalidated brand and is for tests only: mint ids with asCaseId / asOrganizationId or a schema parse (ADR-0003). Allowed in __tests__, *.test.ts, testing/ helper dirs and packages/test-db/src.`,
+            message: `${name} stamps an unvalidated brand and is for tests only: mint ids with asCaseId / asOrganizationId or a schema parse (ADR-0003). Allowed in __tests__, *.test.ts, testing/ helper dirs and packages/server/test-db/src.`,
           });
         }
       }

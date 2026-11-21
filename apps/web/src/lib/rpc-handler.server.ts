@@ -3,7 +3,7 @@ import { SimpleCsrfProtectionHandlerPlugin } from "@orpc/server/plugins";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { RPC_PREFIX } from "@/lib/rpc-prefix";
-import { responsePlugins, router } from "@watchdog/api";
+import { responsePlugins, router } from "@watchdog/server/api";
 
 /**
  * The router over oRPC's RPC protocol, for this app's browser only (no CORS: another origin

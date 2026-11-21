@@ -12,7 +12,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { RouteCaseContext, useWorkCase } from "@/shared/hooks/use-route-case";
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildCaseRecord } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 const listCases = procedureDouble("cases.list");
 

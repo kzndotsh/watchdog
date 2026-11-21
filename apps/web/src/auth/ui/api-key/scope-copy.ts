@@ -3,7 +3,7 @@ import {
   SCOPES,
   type Scope,
   type ScopePresetId,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** What a key scope is called and what it lets the key do, as the create dialog and key list say it. */
 export const SCOPE_COPY: Record<Scope, { label: string; description: string }> =

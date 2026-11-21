@@ -1,0 +1,102 @@
+import {
+  activityCursorsRepo,
+  activityFloorRepo,
+  activityLogRepo,
+  capCacheRepo,
+  caseCountsRepo,
+  caseDeletionRecordsRepo,
+  casesRepo,
+  claimsRepo,
+  credentialsRepo,
+  edgesRepo,
+  graphSnapshotRepo,
+  entitiesRepo,
+  eventsRepo,
+  evidenceLinksRepo,
+  evidenceRepo,
+  evidenceUploadsRepo,
+  findingSuppressionsRepo,
+  changesetsRepo,
+  identifiersRepo,
+  jobsRepo,
+  jobStartCountersRepo,
+  jobStartLimitsRepo,
+  organizationSettingsRepo,
+  playbookRunsRepo,
+  proposalsRepo,
+  providerCallsRepo,
+  questionsRepo,
+  tasksRepo,
+  usersRepo,
+} from "#db";
+
+import { repoFx, repoFxDb } from "./repo-fx";
+
+/**
+ * The repos as Effect modules (ADR-0002, #444). `xRepoFx.m(exec, ...)` takes the handle
+ * explicitly (a transaction's `tx`, or any `exec`); `xRepoFxDb.m(...)` is the same method on
+ * the pool, reading the `Db` service. Add a repo here with the first call that needs it.
+ */
+export const activityCursorsRepoFx = repoFx(() => activityCursorsRepo);
+export const activityCursorsRepoFxDb = repoFxDb(activityCursorsRepoFx);
+export const activityFloorRepoFx = repoFx(() => activityFloorRepo);
+export const activityFloorRepoFxDb = repoFxDb(activityFloorRepoFx);
+export const activityLogRepoFx = repoFx(() => activityLogRepo);
+export const activityLogRepoFxDb = repoFxDb(activityLogRepoFx);
+const capCacheRepoFx = repoFx(() => capCacheRepo);
+export const capCacheRepoFxDb = repoFxDb(capCacheRepoFx);
+const caseCountsRepoFx = repoFx(() => caseCountsRepo);
+export const caseCountsRepoFxDb = repoFxDb(caseCountsRepoFx);
+export const caseDeletionRecordsRepoFx = repoFx(() => caseDeletionRecordsRepo);
+export const casesRepoFx = repoFx(() => casesRepo);
+export const casesRepoFxDb = repoFxDb(casesRepoFx);
+export const claimsRepoFx = repoFx(() => claimsRepo);
+export const claimsRepoFxDb = repoFxDb(claimsRepoFx);
+export const credentialsRepoFx = repoFx(() => credentialsRepo);
+export const credentialsRepoFxDb = repoFxDb(credentialsRepoFx);
+export const edgesRepoFx = repoFx(() => edgesRepo);
+export const edgesRepoFxDb = repoFxDb(edgesRepoFx);
+const graphSnapshotRepoFx = repoFx(() => graphSnapshotRepo);
+export const graphSnapshotRepoFxDb = repoFxDb(graphSnapshotRepoFx);
+export const entitiesRepoFx = repoFx(() => entitiesRepo);
+export const entitiesRepoFxDb = repoFxDb(entitiesRepoFx);
+const eventsRepoFx = repoFx(() => eventsRepo);
+export const eventsRepoFxDb = repoFxDb(eventsRepoFx);
+export const evidenceLinksRepoFx = repoFx(() => evidenceLinksRepo);
+export const evidenceLinksRepoFxDb = repoFxDb(evidenceLinksRepoFx);
+export const evidenceRepoFx = repoFx(() => evidenceRepo);
+export const evidenceRepoFxDb = repoFxDb(evidenceRepoFx);
+export const evidenceUploadsRepoFx = repoFx(() => evidenceUploadsRepo);
+export const evidenceUploadsRepoFxDb = repoFxDb(evidenceUploadsRepoFx);
+export const findingSuppressionsRepoFx = repoFx(() => findingSuppressionsRepo);
+const changesetsRepoFx = repoFx(() => changesetsRepo);
+export const changesetsRepoFxDb = repoFxDb(changesetsRepoFx);
+export const identifiersRepoFx = repoFx(() => identifiersRepo);
+export const identifiersRepoFxDb = repoFxDb(identifiersRepoFx);
+/**
+ * @canonical `jobsRepoFx`, `jobsRepoFxDb`: A repo call in an Effect, through the `xRepoFx` / `xRepoFxDb` pair of its repo in this module (this pair is the example; all of core, #444/#445; a repo call is never wrapped in `tryDb`/`tryDbWith` unless it passes `opts`: `watchdog/no-repo-wrapper`): `xRepoFx.m(exec, ...)` with an explicit handle, `xRepoFxDb.m(...)` on the pool (`R = Db`)
+ */
+export const jobsRepoFx = repoFx(() => jobsRepo);
+export const jobsRepoFxDb = repoFxDb(jobsRepoFx);
+export const jobStartCountersRepoFx = repoFx(() => jobStartCountersRepo);
+export const jobStartCountersRepoFxDb = repoFxDb(jobStartCountersRepoFx);
+export const jobStartLimitsRepoFx = repoFx(() => jobStartLimitsRepo);
+export const jobStartLimitsRepoFxDb = repoFxDb(jobStartLimitsRepoFx);
+export const organizationSettingsRepoFx = repoFx(
+  () => organizationSettingsRepo
+);
+export const organizationSettingsRepoFxDb = repoFxDb(
+  organizationSettingsRepoFx
+);
+export const playbookRunsRepoFx = repoFx(() => playbookRunsRepo);
+export const playbookRunsRepoFxDb = repoFxDb(playbookRunsRepoFx);
+export const proposalsRepoFx = repoFx(() => proposalsRepo);
+export const proposalsRepoFxDb = repoFxDb(proposalsRepoFx);
+export const providerCallsRepoFx = repoFx(() => providerCallsRepo);
+export const providerCallsRepoFxDb = repoFxDb(providerCallsRepoFx);
+export const questionsRepoFx = repoFx(() => questionsRepo);
+export const questionsRepoFxDb = repoFxDb(questionsRepoFx);
+export const tasksRepoFx = repoFx(() => tasksRepo);
+export const tasksRepoFxDb = repoFxDb(tasksRepoFx);
+const usersRepoFx = repoFx(() => usersRepo);
+export const usersRepoFxDb = repoFxDb(usersRepoFx);

@@ -1,6 +1,11 @@
 import { ListFilterIcon } from "lucide-react";
 import { lazy, Suspense, useState, type Ref } from "react";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "#ui/components/popover";
 import { activeFilterKeys } from "@/shared/lib/list/list-filters";
 import { isFilterKey, isQueryValue } from "@/shared/lib/list/list-guards";
 import type { AnyFilterSource, ListHandle } from "@/shared/lib/list/list-types";
@@ -14,12 +19,7 @@ import {
   isActiveFilterValue,
   type AnyListDef,
   type FilterKey,
-} from "@watchdog/schemas/shared";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
+} from "@watchdog/domain/schemas/shared";
 
 const LoadedFiltersBody = lazy(loadFiltersBody);
 

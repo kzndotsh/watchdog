@@ -16,8 +16,8 @@ import {
 import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
 import { buildEntityRecord } from "@/testing/records";
-import { entityList } from "@watchdog/schemas/graph";
-import { testId } from "@watchdog/test-kit";
+import { entityList } from "@watchdog/domain/schemas/graph";
+import { testId } from "@watchdog/domain/test-kit";
 
 const getEntity = procedureDouble("entities.get");
 const pickerPage = procedureDouble("entities.pickerPage");

@@ -1,13 +1,13 @@
 # Caps guide
 
-> Scope: `packages/caps` (Caps, Playbooks, the Cap SDK in `src/sdk/`). Inherits the root [AGENTS.md](../../AGENTS.md); outbound HTTP rules: [`packages/core/AGENTS.md`](../core/AGENTS.md#outbound-http-packagestools-packagesai).
+> Scope: `packages/caps`: Caps, Playbooks and the Cap SDK (`src/`, SDK in `src/sdk/`), the provider tools (`tools/`) and the model calls (`ai/`). Inherits the root [AGENTS.md](../../AGENTS.md).
 
 A Cap never writes the Graph: `run` collects, `interpret` returns Proposal ops, and Triage Accept applies them. A new Cap starts with `/create-cap`; naming, layers and the D1–D5 ship decisions are in [`caps-lexicon`](../../docs/reference/platform/caps-lexicon.md).
 
 ## Rules
 
 - `run` is an Effect (`CapRun`) whose only vendor error family is `ToolsTag`. `interpret(report, opts)` is pure and synchronous and returns typed `PatchOp`s; an op the union refuses fails the stage and no Proposal is made.
-- Caps import no `@watchdog/db`, `drizzle-orm`, `postgres` or `pg` (`check:boundaries`). Secrets come from `ctx.getCredential`, the one missing-key failure; a Vault slot's label and description live on the Cap's `credentials` declaration, and a slot several Caps read is one constant in `src/credentials.ts`. A config-only slot sets `secret: false`.
+- Caps, tools and ai import no `@watchdog/server`, `drizzle-orm`, `postgres` or `pg` (the `check:boundaries` deny list). Secrets come from `ctx.getCredential`, the one missing-key failure; a Vault slot's label and description live on the Cap's `credentials` declaration, and a slot several Caps read is one constant in `src/credentials.ts`. A config-only slot sets `secret: false`.
 - State a fact once: `flags` holds `slow` / `invasive` only; `needs_key`, `third_party`, the egress classes and the lane derive from `credentials`, `contacts` and the kind. Set `lane` only to override; an `act` Cap runs at most once per Job.
 - Every Cap declares `contacts` (`[]` for one that stays on the install). A Job's `Egress` refuses anything the contacts do not admit, on every redirect hop: fix a refusal by correcting the declaration, never the policy. A new Cap adds a case to `src/__tests__/declaration/` and its classes to `cap-egress-classes.test.ts`.
 - Every Cap has a `provider` read from the provider's own terms (`commercialUse: "unknown"` when unclear, never a guess), and every fixed host it declares has a reviewed redistribution verdict in that provider's `hosts`. The owner reviews these by hand, quoting the deciding text.
@@ -25,5 +25,11 @@ A Cap never writes the Graph: `run` collects, `interpret` returns Proposal ops, 
 
 - One folder per Cap id, dots to path segments (`network/dns.lookup/{cap,interpret,input}.ts`). Inside this package import the SDK by relative path (Vite does not resolve package self-references); inside `playbooks/` import Caps from `../registry`, not the barrel.
 - Collect input seeds use the `*SeedSchema` helpers; interpret emits identifiers normalized like an Identifier write. A batch limit that drops values says so with `identifierTruncationNote`, never a hand-written note.
-- Producer Zod lives in `@watchdog/tools/<domain>`: import it, never re-export or retype it.
+- Producer Zod lives in `tools/` (`#tools/<domain>`): import it, never re-export or retype it.
 - A Playbook emits step 0 only; later steps are created once their sources settle, and a failed step skips only its dependents. Playbook ids are kebab-case and start with `seedKinds[0]`. Keep harvest + `extract.ai` and act Caps out of default books.
+
+## Outbound HTTP (`tools/`, `ai/`)
+
+- Every request goes through `OutboundClient` / the Job's `Egress` (DNS, TLS and model calls too); the client validates each address and redirect hop. Pass `limits` for different bounds; never add a per-call host guard ([outbound HTTP](../../docs/reference/platform/caps-boundary.md#outbound-http)).
+- A tool takes the user agent and any key as parameters, names no Cap id or Vault slot, and owns its producer Zod. A model call inside a Cap uses the `fetch` from `Egress.llmFetchFor(origin)`.
+- A `ValidationVendorError` message is a fixed sentence (it reaches clients); its `cause` holds upstream diagnostics only (`upstreamDiagnostic`), never the caller's input or free upstream text.

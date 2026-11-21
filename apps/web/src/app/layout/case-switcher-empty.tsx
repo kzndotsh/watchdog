@@ -6,7 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
+} from "#ui/components/sidebar";
 
 export function CaseSwitcherEmpty({ isCollapsed }: { isCollapsed: boolean }) {
   if (isCollapsed) {

@@ -8,7 +8,7 @@ import {
   peerKindAllowedForPhrase,
   preferredEdgePhrase,
 } from "@/shared/ui/vocab/edge-predicate";
-import { edgePhraseValue } from "@watchdog/schemas/shared";
+import { edgePhraseValue } from "@watchdog/domain/schemas/shared";
 
 function requirePhrase(hit: ReturnType<typeof preferredEdgePhrase>) {
   expect(hit).toBeDefined();

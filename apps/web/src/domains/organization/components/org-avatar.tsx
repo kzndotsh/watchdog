@@ -1,9 +1,5 @@
+import { Avatar, AvatarFallback, AvatarImage } from "#ui/components/avatar";
 import { orgInitials } from "@/domains/organization/lib/org-logo";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@watchdog/ui/components/avatar";
 
 type OrgAvatarProps = {
   name: string;

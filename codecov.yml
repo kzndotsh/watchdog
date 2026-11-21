@@ -58,9 +58,9 @@ ignore:
   - "**/drizzle/**"
   - docs/
   - scripts/
-  # Vendored shadcn primitives (packages/ui, generated and locked by ui:sync): not our code to cover.
-  - packages/ui/src/components/
-  - packages/ui/src/hooks/
+  # Vendored shadcn primitives (apps/web/ui, generated and locked by ui:sync): not our code to cover.
+  - apps/web/ui/src/components/
+  - apps/web/ui/src/hooks/
   - apps/site/
   - "*.md"
   - "*.yml"

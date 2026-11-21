@@ -15,7 +15,7 @@ import {
   type AnyListDef,
   type FilterKey,
   type ListQuery,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * THE hook a list screen calls. It owns what used to be per screen:

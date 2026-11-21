@@ -6,7 +6,7 @@ import { useRouteCase } from "@/shared/hooks/use-route-case";
 import {
   entityDisplayLabel,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 type NameSize = "sm" | "md";
 

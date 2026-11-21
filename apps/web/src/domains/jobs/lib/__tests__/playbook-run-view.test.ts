@@ -7,9 +7,9 @@ import {
   runStepTally,
   stepOutcomeDisplay,
 } from "@/domains/jobs/lib/playbook-run-view";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 function run(overrides: Partial<PlaybookRunView> = {}): PlaybookRunView {
   return {

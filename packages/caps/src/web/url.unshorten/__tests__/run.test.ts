@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
-import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
+import { testId } from "@watchdog/domain/test-kit";
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { itRunsCollectCap } from "../../../testing";
 import { urlUnshorten } from "../cap.ts";

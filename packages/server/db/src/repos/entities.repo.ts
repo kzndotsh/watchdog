@@ -1,0 +1,411 @@
+import { and, asc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+
+import {
+  type CaseId,
+  type OrganizationId,
+  ENTITY_KIND_LABELS,
+  ENTITY_KINDS,
+  ARRAY_MAX,
+  normalizeUuidList,
+  slugifyName,
+} from "@watchdog/domain/schemas/shared";
+
+import type { DbExec } from "../exec";
+import { cases } from "../schema/cases";
+import { edges } from "../schema/edges";
+import { entities } from "../schema/entities";
+import { entitySlugIlikePatterns, exactPattern } from "./_ilike";
+import {
+  inArrayForDisplayLabelMatch,
+  sqlInDisplayLabelMatch,
+} from "./_label-search";
+import { clampSearchLimit } from "./_limits";
+import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { slugForLookup } from "./_slug-lookup";
+import { updateVersionedInCase } from "./_version";
+import { visibleCase } from "./_visible-case";
+
+export const entityColumns = {
+  id: entities.id,
+  caseId: entities.caseId,
+  kind: entities.kind,
+  name: entities.name,
+  slug: entities.slug,
+  summary: entities.summary,
+  notes: entities.notes,
+  createdAt: entities.createdAt,
+  updatedAt: entities.updatedAt,
+  createdBy: entities.createdBy,
+  updatedBy: entities.updatedBy,
+  version: entities.version,
+} as const;
+
+export type EntityRow = {
+  [K in keyof typeof entityColumns]: (typeof entities.$inferSelect)[K &
+    keyof typeof entities.$inferSelect];
+};
+
+export type EntityPeerRow = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type EntityWithCaseRow = EntityRow & {
+  caseSlug: string;
+  caseName: string;
+  caseOrganizationId: OrganizationId;
+};
+
+export type NewEntity = Pick<
+  typeof entities.$inferInsert,
+  "caseId" | "kind" | "name" | "slug"
+> &
+  Partial<Pick<typeof entities.$inferInsert, "id" | "summary" | "notes">>;
+
+export type EntityPatch = Partial<
+  Pick<typeof entities.$inferInsert, "kind" | "name" | "summary" | "notes">
+>;
+
+export const entitiesRepo = {
+  async listForCase(exec: DbExec, caseId: CaseId): Promise<EntityRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select(entityColumns)
+      .from(entities)
+      .where(eq(entities.caseId, scopedCaseId))
+      .orderBy(asc(entities.name));
+  },
+
+  async searchForCase(
+    exec: DbExec,
+    caseId: CaseId,
+    term: string,
+    limit: number
+  ): Promise<EntityRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const safeLimit = clampSearchLimit(limit);
+    const slugPatterns = entitySlugIlikePatterns(term);
+    if (slugPatterns.length === 0) return [];
+    const pattern = slugPatterns[0];
+    const entitySlugMatches = slugPatterns.map((p) => ilike(entities.slug, p));
+    const kindLabelMatch = inArrayForDisplayLabelMatch(
+      entities.kind,
+      ENTITY_KINDS,
+      ENTITY_KIND_LABELS,
+      term
+    );
+    const peerKindLabelMatch = sqlInDisplayLabelMatch(
+      "peer.kind",
+      ENTITY_KINDS,
+      ENTITY_KIND_LABELS,
+      term
+    );
+    const peerFieldMatches = [
+      sql`peer.name ilike ${pattern}`,
+      sql`peer.slug ilike ${pattern}`,
+      ...slugPatterns.slice(1).map((p) => sql`peer.slug ilike ${p}`),
+      sql`peer.summary ilike ${pattern}`,
+      sql`peer.notes ilike ${pattern}`,
+      sql`peer.kind::text ilike ${pattern}`,
+      ...(peerKindLabelMatch ? [peerKindLabelMatch] : []),
+      sql`e.notes ilike ${pattern}`,
+    ];
+    return exec
+      .select(entityColumns)
+      .from(entities)
+      .where(
+        and(
+          eq(entities.caseId, scopedCaseId),
+          or(
+            ilike(entities.name, pattern),
+            ...entitySlugMatches,
+            ilike(entities.summary, pattern),
+            ilike(entities.notes, pattern),
+            ilike(entities.kind, pattern),
+            ...(kindLabelMatch ? [kindLabelMatch] : []),
+            sql`exists (
+              select 1 from ${edges} e
+              inner join ${entities} peer on peer.id = case
+                when e.from_id = ${entities.id} then e.to_id
+                else e.from_id
+              end
+              where (e.from_id = ${entities.id} or e.to_id = ${entities.id})
+                and peer.case_id = ${scopedCaseId}
+                and (${sql.join(peerFieldMatches, sql` or `)})
+            )`
+          )
+        )
+      )
+      .orderBy(asc(entities.name))
+      .limit(safeLimit);
+  },
+
+  async listPeersForCase(
+    exec: DbExec,
+    caseId: CaseId
+  ): Promise<EntityPeerRow[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    return exec
+      .select({
+        id: entities.id,
+        name: entities.name,
+        slug: entities.slug,
+      })
+      .from(entities)
+      .where(eq(entities.caseId, scopedCaseId));
+  },
+
+  async getInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    entityId: string
+  ): Promise<EntityRow | null> {
+    const scoped = trimScopedCaseIds(caseId, entityId);
+    if (!scoped) return null;
+    const [row] = await exec
+      .select(entityColumns)
+      .from(entities)
+      .where(
+        and(
+          eq(entities.id, scoped.resourceId),
+          eq(entities.caseId, scoped.caseId)
+        )
+      )
+      .limit(1);
+    return row ?? null;
+  },
+
+  async getById(exec: DbExec, entityId: string): Promise<EntityRow | null> {
+    const scopedEntityId = trimResourceId(entityId);
+    if (scopedEntityId === undefined) return null;
+    const [row] = await exec
+      .select(entityColumns)
+      .from(entities)
+      .where(eq(entities.id, scopedEntityId))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async getWithCase(
+    exec: DbExec,
+    entityId: string
+  ): Promise<EntityWithCaseRow | null> {
+    const scopedEntityId = trimResourceId(entityId);
+    if (scopedEntityId === undefined) return null;
+    const [row] = await exec
+      .select({
+        ...entityColumns,
+        caseSlug: cases.slug,
+        caseName: cases.name,
+        caseOrganizationId: cases.organizationId,
+      })
+      .from(entities)
+      .innerJoin(cases, eq(cases.id, entities.caseId))
+      .where(and(eq(entities.id, scopedEntityId), visibleCase))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async getByCaseSlug(
+    exec: DbExec,
+    caseId: CaseId,
+    slug: string
+  ): Promise<EntityRow | null> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedSlug = slugForLookup(slug);
+    if (scopedCaseId === undefined || scopedSlug === undefined) return null;
+    const [row] = await exec
+      .select(entityColumns)
+      .from(entities)
+      .where(
+        and(eq(entities.caseId, scopedCaseId), eq(entities.slug, scopedSlug))
+      )
+      .limit(1);
+    return row ?? null;
+  },
+
+  async listSlugsInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    slugs: string[]
+  ): Promise<{ slug: string }[]> {
+    const scopedCaseId = trimCaseId(caseId);
+    const normalized = [
+      ...new Set(
+        slugs.flatMap((slug) => {
+          const normalizedSlug = slugForLookup(slug);
+          return normalizedSlug === undefined ? [] : [normalizedSlug];
+        })
+      ),
+    ];
+    if (scopedCaseId === undefined || normalized.length === 0) return [];
+    return exec
+      .select({ slug: entities.slug })
+      .from(entities)
+      .where(
+        and(
+          eq(entities.caseId, scopedCaseId),
+          inArray(entities.slug, normalized)
+        )
+      );
+  },
+
+  async listNamesByIdsInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    entityIds: string[]
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      summary: string | null;
+      notes: string | null;
+    }[]
+  > {
+    const scopedCaseId = trimCaseId(caseId);
+    const normalized = normalizeUuidList(entityIds);
+    if (scopedCaseId === undefined || normalized.length === 0) return [];
+    return exec
+      .select({
+        id: entities.id,
+        name: entities.name,
+        slug: entities.slug,
+        summary: entities.summary,
+        notes: entities.notes,
+      })
+      .from(entities)
+      .where(
+        and(eq(entities.caseId, scopedCaseId), inArray(entities.id, normalized))
+      );
+  },
+
+  /**
+   * The Case's Entities a list of pasted names may mean: the name equals one of them ignoring case
+   * (`entities_name_trgm_idx` serves the ILIKE), or the slug equals the name slugified
+   * (`entities_case_slug_uidx`). A superset by design: the caller applies its own match rule to
+   * these rows, so an ambiguous name still shows both Entities.
+   */
+  async listMatchingNamesInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    names: readonly string[]
+  ): Promise<
+    { id: string; name: string; slug: string; kind: EntityRow["kind"] }[]
+  > {
+    const scopedCaseId = trimCaseId(caseId);
+    if (scopedCaseId === undefined) return [];
+    const patterns = [
+      ...new Set(names.flatMap((name) => exactPattern(name) ?? [])),
+    ];
+    const slugs = [
+      ...new Set(
+        names.flatMap((name) => {
+          const slug = slugifyName(name.trim());
+          return slug === "" ? [] : [slug];
+        })
+      ),
+    ];
+    if (patterns.length === 0 && slugs.length === 0) return [];
+    return exec
+      .select({
+        id: entities.id,
+        name: entities.name,
+        slug: entities.slug,
+        kind: entities.kind,
+      })
+      .from(entities)
+      .where(
+        and(
+          eq(entities.caseId, scopedCaseId),
+          or(
+            ...patterns.map((pattern) => ilike(entities.name, pattern)),
+            slugs.length === 0 ? undefined : inArray(entities.slug, slugs)
+          )
+        )
+      )
+      .orderBy(entities.id)
+      .limit(ARRAY_MAX);
+  },
+
+  async create(exec: DbExec, values: NewEntity): Promise<EntityRow | null> {
+    const scopedCaseId = trimCaseId(values.caseId);
+    if (scopedCaseId === undefined) return null;
+    const [created] = await exec
+      .insert(entities)
+      .values({ ...values, caseId: scopedCaseId })
+      .returning(entityColumns);
+    return created ?? null;
+  },
+
+  async update(
+    exec: DbExec,
+    entityId: string,
+    patch: EntityPatch
+  ): Promise<EntityRow | null> {
+    const scopedEntityId = trimResourceId(entityId);
+    if (scopedEntityId === undefined) return null;
+    const [updated] = await exec
+      .update(entities)
+      .set(patch)
+      .where(eq(entities.id, scopedEntityId))
+      .returning(entityColumns);
+    return updated ?? null;
+  },
+
+  async updateInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    entityId: string,
+    patch: EntityPatch,
+    expectedVersion?: number
+  ): Promise<EntityRow | null> {
+    return updateVersionedInCase(
+      exec,
+      {
+        table: entities,
+        idColumn: entities.id,
+        versionColumn: entities.version,
+        columns: entityColumns,
+        inCase: (id) => eq(entities.caseId, id),
+      },
+      caseId,
+      entityId,
+      patch,
+      expectedVersion
+    );
+  },
+
+  async delete(exec: DbExec, entityId: string): Promise<boolean> {
+    const scopedEntityId = trimResourceId(entityId);
+    if (scopedEntityId === undefined) return false;
+    const deleted = await exec
+      .delete(entities)
+      .where(eq(entities.id, scopedEntityId))
+      .returning({ id: entities.id });
+    return deleted.length > 0;
+  },
+
+  async deleteInCase(
+    exec: DbExec,
+    caseId: CaseId,
+    entityId: string
+  ): Promise<EntityRow | null> {
+    const scoped = trimScopedCaseIds(caseId, entityId);
+    if (!scoped) return null;
+    const [deleted] = await exec
+      .delete(entities)
+      .where(
+        and(
+          eq(entities.id, scoped.resourceId),
+          eq(entities.caseId, scoped.caseId)
+        )
+      )
+      .returning(entityColumns);
+    return deleted ?? null;
+  },
+};

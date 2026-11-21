@@ -73,7 +73,7 @@ jobs:
             # tests run the gate scripts and their tests); `config_core` does not, so a
             # scripts-only change does not start Integration or test (e2e).
             config_core: &config_core
-              - 'packages/ui/vendor.json'
+              - 'apps/web/ui/vendor.json'
               # Any workspace manifest (root, apps/*, packages/*): a dependency, script or
               # export edit there changes what every dependent job installs and runs.
               - '**/package.json'
@@ -114,27 +114,25 @@ jobs:
               - 'env.production.example'
               - 'scripts/s3-init.sh'
               - 'apps/web/**'
-              - 'apps/worker/**'
               - 'packages/**'
             caps:
+              # Caps with their tools and ai folders.
               - 'packages/caps/**'
-              # A Cap's version fingerprints the tools, schemas and ai modules it reaches.
-              - 'packages/tools/**'
-              - 'packages/schemas/**'
-              - 'packages/ai/**'
+              # A Cap's version fingerprints the schemas modules it reaches.
+              - 'packages/domain/schemas/**'
               - 'docs/reference/platform/cap-register.md'
             api:
-              - 'packages/api/**'
-              - 'packages/client/**'
-              - 'packages/core/**'
+              - 'packages/server/api/**'
+              - 'apps/cli/client/**'
+              - 'packages/server/core/**'
             web:
               - 'apps/web/**'
             site:
               - 'apps/site/**'
             db:
-              - 'packages/db/**'
-              # db schema files import from @watchdog/schemas.
-              - 'packages/schemas/**'
+              - 'packages/server/db/**'
+              # db schema files import from @watchdog/domain/schemas.
+              - 'packages/domain/schemas/**'
             e2e:
               - 'e2e/**'
               - 'playwright.config.ts'
@@ -321,7 +319,7 @@ jobs:
         run: pnpm test-db
 
       # The list standard's plan gate (ADR-0007): EXPLAIN at audit scale in a scratch database,
-      # read by packages/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts.
+      # read by packages/server/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts.
       - name: Perf seed (list plan gate)
         if: matrix.part == 'scale'
         env:

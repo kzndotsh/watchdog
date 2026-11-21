@@ -1,8 +1,8 @@
 import { CheckIcon, InfoIcon, XIcon } from "lucide-react";
 
+import { TableCell } from "#ui/components/table";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { TableCell } from "@watchdog/ui/components/table";
 
 type DataTableComposerActionsProps = {
   isBusy: boolean;

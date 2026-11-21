@@ -1,8 +1,8 @@
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
-} from "@watchdog/schemas/jobs";
-import type { CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/jobs";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { api } from "./client";
 import { getManyChunked } from "./paging";

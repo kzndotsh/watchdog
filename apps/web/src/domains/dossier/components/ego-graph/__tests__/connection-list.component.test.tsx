@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { render, screen } from "@/testing/render-in-case";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (

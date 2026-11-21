@@ -7,7 +7,7 @@ import type { DeletedCaseRecord } from "@/domains/cases/types";
 import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
+import { deleteCaseInputSchema } from "@watchdog/domain/schemas/cases";
 
 /**
  * Purge a deleted Case now (owner or admin, session only): its content and files are erased and

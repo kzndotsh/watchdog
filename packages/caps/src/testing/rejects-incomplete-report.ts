@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import type { JsonObject } from "@watchdog/schemas/shared";
+import type { JsonObject } from "@watchdog/domain/schemas/shared";
 
 type InterpretableCap = {
   id: string;

@@ -1,17 +1,17 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
-import { ValidationVendorError } from "@watchdog/tools/errors";
+import { ValidationVendorError } from "#tools/errors";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const { structuredExtractEffect } = vi.hoisted(() => ({
   structuredExtractEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/ai", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/ai")>();
+vi.mock("#ai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#ai")>();
   return { ...actual, structuredExtractEffect };
 });
 

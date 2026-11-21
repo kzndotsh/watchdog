@@ -26,7 +26,10 @@ import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { useList } from "@/shared/hooks/list/use-list";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import type { CollectQueueItem, JobListRecord } from "@watchdog/core/jobs";
+import type {
+  CollectQueueItem,
+  JobListRecord,
+} from "@watchdog/server/core/jobs";
 
 export type UseCollectWorkspaceOptions = {
   caseId: string;

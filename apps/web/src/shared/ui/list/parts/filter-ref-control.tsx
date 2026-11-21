@@ -9,7 +9,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/shared/ui/primitives/combobox";
-import type { RefFilter } from "@watchdog/schemas/shared";
+import type { RefFilter } from "@watchdog/domain/schemas/shared";
 
 type FilterRefControlProps = {
   readonly filter: RefFilter;

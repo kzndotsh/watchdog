@@ -19,7 +19,7 @@ import {
   categoryLabel,
   PLAYBOOK_CATEGORY,
 } from "@/shared/lib/cap-category";
-import { isThirdPartyEgress } from "@watchdog/schemas/caps";
+import { isThirdPartyEgress } from "@watchdog/domain/schemas/caps";
 
 /** A step whose Cap the catalog does not list cannot be checked. */
 const MISSING_CAP_REASON = "This step's Cap is not in the catalog";

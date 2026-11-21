@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import type { CaseRecord } from "@watchdog/core/cases";
+import type { CaseRecord } from "@watchdog/server/core/cases";
 
 /**
  * The Case named by the URL (`/cases/$caseSlug/...`), provided by that route's layout.

@@ -1,6 +1,7 @@
 import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Collapsible, CollapsibleContent } from "#ui/components/collapsible";
 import { opLabel, proposalTitle } from "@/domains/triage/lib/filters";
 import {
   groupQueueByRun,
@@ -16,11 +17,7 @@ import { QueueRowInstantMeta } from "@/shared/ui/queue-row-instant-meta";
 import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { StatusDot } from "@/shared/ui/status-dot";
 import { playbookLabel } from "@/shared/ui/vocab";
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@watchdog/ui/components/collapsible";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 
 type TriageQueueListProps = {
   proposals: readonly ProposalQueueItem[];

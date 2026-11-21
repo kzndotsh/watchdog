@@ -10,7 +10,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HttpResponse, http, mockServer } from "@watchdog/test-kit/http";
+import { HttpResponse, http, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { downloadToFile } from "../download";
 import { API_KEY, API_URL, failureOf, standInApi } from "./stand-in-api";

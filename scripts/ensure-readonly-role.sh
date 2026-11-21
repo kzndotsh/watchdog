@@ -16,7 +16,7 @@
 # (current and, via default privileges for the migrating role, future), and
 # nothing else. The credential tables below are then revoked.
 # Keep that list in sync with docs/how-to/local-dev.md and
-# packages/db/src/__tests__/readonly-role.int.test.ts.
+# packages/server/db/src/__tests__/readonly-role.int.test.ts.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

@@ -4,7 +4,7 @@ import {
   describeCredential,
   describeReuse,
   type DehashedLookupSnapshot,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

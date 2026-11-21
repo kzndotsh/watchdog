@@ -2,8 +2,8 @@ import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId, testHttpUrl } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId, testHttpUrl } from "@watchdog/domain/test-kit";
 
 const useQueryMock = vi.hoisted(() => vi.fn());
 

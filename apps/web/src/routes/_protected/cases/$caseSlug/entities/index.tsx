@@ -3,7 +3,7 @@ import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import { EntityTable } from "@/domains/entities/components/entity-table";
 import { warmEntitiesQueries } from "@/domains/entities/lib/prefetch-entities";
 import { usePatchSearch } from "@/shared/hooks/list/use-patch-search";
-import { entityList } from "@watchdog/schemas/graph";
+import { entityList } from "@watchdog/domain/schemas/graph";
 
 /** The Entities table's view (ADR-0007): the Kind filter, `q` and sort, a bad value dropped. */
 const entitiesSearchSchema = entityList.searchWith({});

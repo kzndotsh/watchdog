@@ -3,6 +3,8 @@
 import { useSession } from "@better-auth-ui/react";
 import { useQuery } from "@tanstack/react-query";
 
+import { DropdownMenuItem } from "#ui/components/dropdown-menu";
+import { Spinner } from "#ui/components/spinner";
 import { authClient } from "@/auth/client";
 import { useDisableUser } from "@/domains/settings/hooks/use-disable-user";
 import { useEnableUser } from "@/domains/settings/hooks/use-enable-user";
@@ -16,9 +18,7 @@ import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { isInstanceAdminRole } from "@watchdog/schemas/shared";
-import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
-import { Spinner } from "@watchdog/ui/components/spinner";
+import { isInstanceAdminRole } from "@watchdog/domain/schemas/shared";
 
 type ListedUser = {
   id: string;

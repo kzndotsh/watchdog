@@ -5,13 +5,13 @@ import path from "node:path";
 import {
   confirmFileUploadInputSchema,
   presignUploadInputSchema,
-} from "@watchdog/schemas/evidence";
+} from "@watchdog/domain/schemas/evidence";
 import {
   MAX_UPLOAD_BYTES,
   mimeInputSchema,
   sha256HexSchema,
-} from "@watchdog/schemas/shared";
-import type { CaseId } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";

@@ -7,7 +7,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 // Only the network boundary is faked: the settings `*.functions` module, the oRPC client and the Markdown
 // export request. The menu, the hook, the dialog and the settings query run for real

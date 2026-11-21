@@ -2,8 +2,8 @@ import {
   blockedEgressClasses,
   egressDestinations,
   type CapContact,
-} from "@watchdog/schemas/caps";
-import { parseCapJobInput } from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/caps";
+import { parseCapJobInput } from "@watchdog/domain/schemas/jobs";
 import {
   EGRESS_CLASSES,
   parseGraphUuidList,
@@ -12,7 +12,7 @@ import {
   type JobPivots,
   type JsonObject,
   type PlaybookSeedKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { CAPABILITIES, requireCapability, type CapId } from "../registry";
 import type { CapDescriptorCredential, CapFlag, CapIoKind } from "../sdk";

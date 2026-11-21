@@ -3,15 +3,15 @@
 import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 import { type SyntheticEvent, useState } from "react";
 
+import { Field, FieldError } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Label } from "#ui/components/label";
+import { Skeleton } from "#ui/components/skeleton";
+import { Spinner } from "#ui/components/spinner";
 import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
 import { FormSection } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
-import { Field, FieldError } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Label } from "@watchdog/ui/components/label";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 import { formString } from "../../form-data";
 import { ChangeAvatar } from "./change-avatar";

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Spinner } from "#ui/components/spinner";
 import { authClient } from "@/auth/client";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
 import { OrgAvatar } from "@/domains/organization/components/org-avatar";
@@ -24,7 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 type UserInvitation = {
   id: string;

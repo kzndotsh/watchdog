@@ -1,6 +1,6 @@
 import { describe, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { itRunsCollectCap } from "../../../testing";
 import { dnsLookup } from "../cap.ts";

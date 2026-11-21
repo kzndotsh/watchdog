@@ -1,18 +1,18 @@
 import { ChevronsUpDownIcon, FolderIcon } from "lucide-react";
 
-import { CaseNavLinks } from "@/app/layout/case-nav-links";
-import type { CaseRecord } from "@/domains/cases/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
+} from "#ui/components/dropdown-menu";
 import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
+} from "#ui/components/sidebar";
+import { CaseNavLinks } from "@/app/layout/case-nav-links";
+import type { CaseRecord } from "@/domains/cases/types";
 
 import { CasePickerItems } from "./case-picker-items";
 

@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { taskList } from "@watchdog/schemas/feed";
+import { taskList } from "@watchdog/domain/schemas/feed";
 import {
   optionalUuidSchema,
   type UnfixedSearch,
   type UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** The board's Done column: the Task list with `status` fixed (never in the URL). */
 export const DONE_COLUMN = { status: ["done"] } as const;

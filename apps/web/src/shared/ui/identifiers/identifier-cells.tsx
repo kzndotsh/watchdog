@@ -41,11 +41,7 @@ import {
   IDENTIFIER_TYPE_OPTIONS,
   identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
-import type {
-  CaseIdentifierRecord,
-  IdentifierRecord,
-} from "@watchdog/core/graph";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
@@ -53,7 +49,11 @@ import {
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type {
+  CaseIdentifierRecord,
+  IdentifierRecord,
+} from "@watchdog/server/core/graph";
 
 export function IdentifierValueCopyControl({ value }: { value: string }) {
   return (

@@ -6,7 +6,7 @@ import {
   patchOpLabel,
   PATCH_RESOURCE_META,
 } from "@/shared/ui/vocab/patch-op.lib";
-import { patchOpVerbLabel } from "@watchdog/schemas/graph";
+import { patchOpVerbLabel } from "@watchdog/domain/schemas/graph";
 
 describe("patch-op vocab", () => {
   it("labels patch operations and resources", () => {

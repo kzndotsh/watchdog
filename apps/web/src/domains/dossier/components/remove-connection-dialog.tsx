@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { FieldError } from "#ui/components/field";
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { useDeleteConnection } from "@/domains/entities/edges/mutations";
 import {
@@ -12,7 +13,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
-import { FieldError } from "@watchdog/ui/components/field";
 
 type RemoveConnectionDialogProps = {
   scope: DossierEntityScope;

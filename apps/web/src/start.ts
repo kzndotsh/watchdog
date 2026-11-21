@@ -17,12 +17,12 @@ const CLIENT_CLOSED_REQUEST = 499;
 
 /**
  * Resolve the `Server-Timing` gate once per request: dev and test only, never
- * production (validated `NODE_ENV` from `@watchdog/env`, not raw `process.env`).
+ * production (validated `NODE_ENV` from `@watchdog/server/env`, not raw `process.env`).
  */
 async function serverTimingEnabled(): Promise<boolean> {
   const [{ env }, { shouldEmitServerTiming }] = await Promise.all([
-    import("@watchdog/env/server"),
-    import("@watchdog/log"),
+    import("@watchdog/server/env/server"),
+    import("@watchdog/server/log"),
   ]);
   return shouldEmitServerTiming(env.NODE_ENV);
 }
@@ -65,7 +65,7 @@ const evlogRequestMiddleware = createMiddleware().server(
       serverTimingHeader,
       startRequestTiming,
       withServerTiming,
-    } = await import("@watchdog/log");
+    } = await import("@watchdog/server/log");
 
     const headers = extractSafeHeaders(request.headers);
     const { logger, finish, finishResponse, skipped } = createMiddlewareLogger({

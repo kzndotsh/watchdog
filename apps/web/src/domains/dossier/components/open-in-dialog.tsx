@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { OPEN_IN_DESTINATION_LABELS } from "@watchdog/schemas/shared";
+import { OPEN_IN_DESTINATION_LABELS } from "@watchdog/domain/schemas/shared";
 
 type OpenInDialogProps = {
   /** The Open in waiting for confirmation; `null` keeps the dialog closed. */

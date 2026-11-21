@@ -4,14 +4,14 @@
  *
  * The crawl starts at each Cap's `cap.ts` and follows every runtime import to the module that
  * DEFINES the imported symbol (a barrel is looked through, not hashed), so editing one vendor
- * in `@watchdog/tools/network` moves only the Caps that import that vendor. What is hashed:
+ * in `#tools/network` moves only the Caps that import that vendor. What is hashed:
  *
- * - every reached source module of this repo, `@watchdog/schemas` included, by path and content;
+ * - every reached source module of this repo, `@watchdog/domain/schemas` included, by path and content;
  * - for each npm package a reached module imports, its name and the version the lockfile
  *   resolves for the workspace package that imports it.
  *
  * What is not: generated files, `__tests__`, type-only imports (they cannot change what runs),
- * and the HTTP transport files of `packages/tools/src/http` (the SSRF guard, redirect loop, body
+ * and the HTTP transport files of `packages/caps/tools/src/http` (the SSRF guard, redirect loop, body
  * cap and client layer, which every Cap shares; a transport change is not a change of what a
  * Cap asks or how it reads the answer). An excluded module is not crawled either. The logic
  * files in that folder (http-probe, unshorten, page-enrich, oembed, fetch-json, ...) count.
@@ -30,7 +30,7 @@ import { z } from "zod";
 const VERSION_HEX_LENGTH = 12;
 
 /**
- * `packages/tools/src/http` modules that are transport; a module whose name starts with
+ * `packages/caps/tools/src/http` modules that are transport; a module whose name starts with
  * `outbound-` or `egress` is too (the egress door, its ledger, and its DNS, TLS and model doors).
  */
 const TRANSPORT_FILES: ReadonlySet<string> = new Set([
@@ -46,7 +46,7 @@ const TRANSPORT_FILES: ReadonlySet<string> = new Set([
   "provider-call",
   "redact-url",
 ]);
-const TRANSPORT_DIR = "packages/tools/src/http";
+const TRANSPORT_DIR = "packages/caps/tools/src/http";
 const TRANSPORT_PREFIXES = ["outbound-", "egress"] as const;
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".json"] as const;
@@ -102,18 +102,12 @@ const TSCONFIG_PATHS = z.object({
 const kindOf = (kind: string): string => kind;
 
 type PathAlias = { prefix: string; suffix: string; targets: string[] };
+type Aliases = { exact: Map<string, string>; patterns: PathAlias[] };
 
-function readPathAliases(root: string): {
-  exact: Map<string, string>;
-  patterns: PathAlias[];
-} {
-  const raw = readFileSync(path.join(root, "tsconfig.json"), "utf-8");
-  const parsed = TSCONFIG_PATHS.parse(JSON.parse(stripJsonComments(raw)));
+function aliasesOf(paths: Record<string, string[]>): Aliases {
   const exact = new Map<string, string>();
   const patterns: PathAlias[] = [];
-  for (const [key, targets] of Object.entries(
-    parsed.compilerOptions?.paths ?? {}
-  )) {
+  for (const [key, targets] of Object.entries(paths)) {
     const star = key.indexOf("*");
     if (star === -1) {
       exact.set(key, targets[0] ?? "");
@@ -128,6 +122,53 @@ function readPathAliases(root: string): {
   // Longest prefix first, as TypeScript picks.
   patterns.sort((a, b) => b.prefix.length - a.prefix.length);
   return { exact, patterns };
+}
+
+function readPathAliases(root: string): Aliases {
+  const raw = readFileSync(path.join(root, "tsconfig.json"), "utf-8");
+  const parsed = TSCONFIG_PATHS.parse(JSON.parse(stripJsonComments(raw)));
+  return aliasesOf(parsed.compilerOptions?.paths ?? {});
+}
+
+const PACKAGE_IMPORTS = z.object({
+  imports: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.record(z.string(), z.unknown())])
+    )
+    .optional(),
+});
+
+type PackageImports = NonNullable<z.infer<typeof PACKAGE_IMPORTS>["imports"]>;
+
+/**
+ * A workspace's subpath imports as repo-relative targets. A conditional entry resolves through its
+ * `import` target, else `default` (what this source tree loads); one with neither is refused,
+ * because skipping it would leave its files out of every Cap fingerprint that reaches it.
+ */
+export function packageImportTargets(
+  pkgDir: string,
+  imports: PackageImports
+): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(imports).map(([key, entry]) => {
+      const target =
+        typeof entry === "string" ? entry : (entry.import ?? entry.default);
+      if (typeof target !== "string") {
+        throw new TypeError(
+          `${pkgDir}/package.json imports "${key}": no import or default target to fingerprint`
+        );
+      }
+      return [key, [path.posix.join(pkgDir, target)]];
+    })
+  );
+}
+
+/** A workspace package's subpath imports (`#db/...`), with targets relative to the repo root. */
+function readPackageImports(root: string, pkgDir: string): Aliases {
+  const raw = readFileSync(path.join(root, pkgDir, "package.json"), "utf-8");
+  const parsed = PACKAGE_IMPORTS.parse(JSON.parse(raw));
+  return aliasesOf(packageImportTargets(pkgDir, parsed.imports ?? {}));
 }
 
 /** `importers:` of pnpm-lock.yaml: workspace package dir to `dependency name -> resolved version`. */
@@ -230,7 +271,8 @@ function dynamicRequests(mod: ParsedModule): string[] {
  */
 export class CapCrawler {
   private readonly root: string;
-  private readonly aliases: ReturnType<typeof readPathAliases>;
+  private readonly aliases: Aliases;
+  private readonly packageImports = new Map<string, Aliases>();
   private readonly lockfile: Map<string, Map<string, string>>;
   private readonly parsed = new Map<string, ParsedModule>();
   private readonly packageDirs = new Map<string, string>();
@@ -262,10 +304,13 @@ export class CapCrawler {
       return { file };
     }
     if (specifier.startsWith("node:") || BUILTINS.has(specifier)) return null;
-    const alias = this.aliases.exact.get(specifier);
+    const aliases = specifier.startsWith("#")
+      ? this.importsOf(this.packageDirOf(from))
+      : this.aliases;
+    const alias = aliases.exact.get(specifier);
     const targets =
       alias === undefined
-        ? this.aliases.patterns.flatMap((p) =>
+        ? aliases.patterns.flatMap((p) =>
             specifier.startsWith(p.prefix) &&
             specifier.endsWith(p.suffix) &&
             specifier.length >= p.prefix.length + p.suffix.length
@@ -285,9 +330,9 @@ export class CapCrawler {
       const file = probeSource(path.resolve(this.root, target));
       if (file !== undefined) return { file };
     }
-    if (specifier.startsWith("@watchdog/")) {
+    if (specifier.startsWith("@watchdog/") || specifier.startsWith("#")) {
       throw new Error(
-        `cap fingerprint: "${specifier}" matches no tsconfig path (imported from ${this.rel(from)})`
+        `cap fingerprint: "${specifier}" matches no tsconfig path or package import (imported from ${this.rel(from)})`
       );
     }
     return { pkg: packageNameOf(specifier) };
@@ -380,6 +425,14 @@ export class CapCrawler {
       if (found !== null) return found;
     }
     return null;
+  }
+
+  private importsOf(pkgDir: string): Aliases {
+    const cached = this.packageImports.get(pkgDir);
+    if (cached !== undefined) return cached;
+    const imports = readPackageImports(this.root, pkgDir);
+    this.packageImports.set(pkgDir, imports);
+    return imports;
   }
 
   private packageDirOf(file: string): string {

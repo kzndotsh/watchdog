@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { CensysLookupSnapshot } from "@watchdog/tools/network";
+import type { CensysLookupSnapshot } from "#tools/network";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

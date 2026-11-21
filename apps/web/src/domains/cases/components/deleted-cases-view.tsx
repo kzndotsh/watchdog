@@ -23,8 +23,11 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import type { deletedCaseList } from "@watchdog/schemas/cases";
-import type { ListSearch, ListSearchPatch } from "@watchdog/schemas/shared";
+import type { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import type {
+  ListSearch,
+  ListSearchPatch,
+} from "@watchdog/domain/schemas/shared";
 
 // The purge confirmation opens on a click, so it loads then.
 const LoadedPurgeDialog = lazy(async () => {

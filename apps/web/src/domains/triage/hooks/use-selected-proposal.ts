@@ -5,7 +5,7 @@ import { proposalByIdQuery } from "@/domains/triage/queries";
 import { couldnt, errMessage } from "@/lib/utils";
 import { TOAST_PROPOSAL_SELECTION_GONE } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 type SelectedProposalArgs = {
   readonly caseId: string;

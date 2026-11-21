@@ -3,12 +3,12 @@ import type { Session } from "better-auth";
 import { parse as parseUserAgent } from "bowser";
 import { LogOut, Monitor, Smartphone, X } from "lucide-react";
 
+import { Card, CardContent } from "#ui/components/card";
+import { Spinner } from "#ui/components/spinner";
 import { firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { toast } from "@/shared/ui/toast";
-import { Card, CardContent } from "@watchdog/ui/components/card";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 export interface ActiveSessionProps {
   activeSession: Session;

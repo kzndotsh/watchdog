@@ -1,7 +1,7 @@
 import { PlusIcon } from "lucide-react";
 
+import { TableCell, TableRow } from "#ui/components/table";
 import { Button } from "@/shared/ui/primitives/button";
-import { TableCell, TableRow } from "@watchdog/ui/components/table";
 
 type DataTableAddRowProps = {
   colSpan: number;

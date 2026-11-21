@@ -2,6 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "#ui/components/command";
+import { Spinner } from "#ui/components/spinner";
 import { TRIAGE_PENDING_SEARCH, WORK_TO, workSearch } from "@/config/nav";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
@@ -34,20 +46,8 @@ import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
-} from "@watchdog/schemas/cases";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@watchdog/ui/components/command";
-import { Spinner } from "@watchdog/ui/components/spinner";
+} from "@watchdog/domain/schemas/cases";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 function taskHitShortcut(hit: {
   status: SearchCaseResult["tasks"][number]["status"];

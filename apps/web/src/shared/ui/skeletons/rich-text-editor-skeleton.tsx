@@ -1,3 +1,4 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 import {
@@ -5,7 +6,6 @@ import {
   shellMinHeight,
 } from "@/shared/ui/rich-text/rich-text-shell";
 import { RICH_TEXT_SKELETON_TOOLBAR_BUTTON_COUNT } from "@/shared/ui/skeletons/constants";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 type RichTextEditorSkeletonProps = {
   variant?: "default" | "seamless";

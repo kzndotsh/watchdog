@@ -1,6 +1,11 @@
 import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
 import { lazy, Suspense, useId } from "react";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "#ui/components/popover";
 import { cn } from "@/lib/utils";
 import type { PickerSource } from "@/shared/hooks/use-picker-source";
 import { prefetchImport } from "@/shared/lib/preload-import";
@@ -12,11 +17,6 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { EVIDENCE_PICKER_TRIGGER_CLASS } from "@/shared/ui/intake/evidence-picker-trigger-class";
 import { PopoverBodyFallback } from "@/shared/ui/list/parts/popover-body-fallback";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
 
 export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 

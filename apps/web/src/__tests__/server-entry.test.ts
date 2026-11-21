@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { REQUEST_BODY_MAX_BYTES } from "@watchdog/schemas/shared";
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { REQUEST_BODY_MAX_BYTES } from "@watchdog/domain/schemas/shared";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const handlerFetch = vi.hoisted(() =>
   vi.fn(async (_request: Request) => new Response("handled"))
@@ -14,7 +14,7 @@ vi.mock("@tanstack/react-start/server-entry", () => ({
 
 const TRUSTED = "https://app.example.test";
 
-vi.mock("@watchdog/env/server", () => ({
+vi.mock("@watchdog/server/env/server", () => ({
   env: {
     NODE_ENV: "production",
     S3_ENDPOINT: "https://s3.example.test",
@@ -22,7 +22,7 @@ vi.mock("@watchdog/env/server", () => ({
   },
 }));
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   configuredTrustedOrigins: () => [TRUSTED],
 }));
 

@@ -1,16 +1,16 @@
 import { ChevronDownIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
-import { Chip } from "@/shared/ui/chip";
-import { CodeBlock } from "@/shared/ui/code-block";
-import { JsonView } from "@/shared/ui/json-view";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@watchdog/ui/components/collapsible";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
+} from "#ui/components/collapsible";
+import { Skeleton } from "#ui/components/skeleton";
+import { cn } from "@/lib/utils";
+import { Chip } from "@/shared/ui/chip";
+import { CodeBlock } from "@/shared/ui/code-block";
+import { JsonView } from "@/shared/ui/json-view";
 
 export type ArtifactPreviewBody =
   | { kind: "loading" }

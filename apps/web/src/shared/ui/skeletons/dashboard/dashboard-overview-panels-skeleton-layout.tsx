@@ -1,5 +1,5 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function DashboardPanelSkeleton({
   titleWidth = "w-12",

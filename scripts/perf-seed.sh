@@ -103,9 +103,9 @@ SQL
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements
 SQL
     fi
-    DATABASE_URL_MIGRATE="$BASE/$NAME" pnpm --filter @watchdog/db migrate
+    DATABASE_URL_MIGRATE="$BASE/$NAME" pnpm --filter @watchdog/server db:migrate
     psql "$BASE/$NAME" -v ON_ERROR_STOP=1 -v "div=$DIV" -f scripts/perf-seed/seed.sql
-    DATABASE_URL_MIGRATE="$BASE/$NAME" pnpm --filter @watchdog/db exec tsx scripts/check-seed-patches.ts
+    DATABASE_URL_MIGRATE="$BASE/$NAME" pnpm --filter @watchdog/server db:check-seed-patches
     psql "$BASE/$NAME" -v ON_ERROR_STOP=1 <<'SQL'
 GRANT USAGE, CREATE ON SCHEMA public, auth TO watchdog_app;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public, auth TO watchdog_app;

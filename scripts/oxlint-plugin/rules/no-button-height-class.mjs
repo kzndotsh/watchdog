@@ -7,7 +7,7 @@ import { lexicalInits } from "../lib/scope.mjs";
 
 /** Modules whose `Button` export is the control: the wrapper and the vanilla primitive. */
 const BUTTON_MODULE =
-  /(?:^@\/shared\/ui\/primitives\/button$|^@watchdog\/ui\/components\/button$|\/primitives\/button$)/;
+  /(?:^@\/shared\/ui\/primitives\/button$|^#ui\/components\/button$|\/primitives\/button$)/;
 
 /** A height utility: `h-*`, `min-h-*`, `max-h-*`, `size-*` (which sets height too). */
 const HEIGHT_UTILITY = /^(?:(?:min-|max-)?h|size)-/;

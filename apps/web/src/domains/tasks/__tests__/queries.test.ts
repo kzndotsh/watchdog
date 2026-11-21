@@ -15,9 +15,9 @@ import {
 import type { TaskBoardRecord } from "@/domains/tasks/types";
 import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
-import { taskList } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { taskList } from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const getTask = procedureDouble("tasks.get");
 const board = procedureDouble("tasks.board");

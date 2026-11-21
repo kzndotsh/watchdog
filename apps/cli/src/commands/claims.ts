@@ -6,14 +6,14 @@ import {
   createClaimInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   type CaseId,
   optionalClaimClassSchema,
   trimmedClaimClassSchema,
   trimmedConfidenceTierSchema,
   trimmedRetractKindSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import {

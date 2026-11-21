@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { processExtractDraftSchema } from "@watchdog/ai";
+import { processExtractDraftSchema } from "#ai";
 
 /** Process report body — draft fields plus sha256 for hash playbook pivots. */
 export const fileAnalyzeReportSchema = processExtractDraftSchema.extend({

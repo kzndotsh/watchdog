@@ -3,12 +3,14 @@ import type {
   CapProviderInfo,
   PlaybookListItem,
 } from "@/domains/jobs/types";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit/fixtures";
 import type {
   DeletedCaseRecord,
   RestoredCaseRecord,
-} from "@watchdog/core/case-deletion";
-import type { CaseRecord } from "@watchdog/core/cases";
-import type { EvidenceRecord } from "@watchdog/core/evidence";
+} from "@watchdog/server/core/case-deletion";
+import type { CaseRecord } from "@watchdog/server/core/cases";
+import type { EvidenceRecord } from "@watchdog/server/core/evidence";
 import type {
   CaseEdgeRecord,
   CaseIdentifierRecord,
@@ -18,20 +20,18 @@ import type {
   QuestionRecord,
   EntityListItem,
   EntityRecord,
-} from "@watchdog/core/graph";
+} from "@watchdog/server/core/graph";
 import type {
   JobListRecord,
   JobRecord,
   ProviderCallList,
   ProviderCallRecord,
-} from "@watchdog/core/jobs";
+} from "@watchdog/server/core/jobs";
 import type {
   ProposalQueueItem,
   ProposalRecord,
-} from "@watchdog/core/proposals";
-import type { TaskListItem } from "@watchdog/core/tasks";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit/fixtures";
+} from "@watchdog/server/core/proposals";
+import type { TaskListItem } from "@watchdog/server/core/tasks";
 
 /**
  * In-memory record builders for web tests: one valid default per record, any field

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("buildUpdateEntityFieldsData", () => {
   it("trims entity name and clears blank summary", () => {

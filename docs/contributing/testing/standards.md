@@ -24,9 +24,9 @@ A mock replaces something the code under test talks to. It earns its place only 
 
 | Boundary | How | Example |
 | --- | --- | --- |
-| Network and vendor clients | MSW through `@watchdog/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/tools/src/http/__tests__/page-enrich.test.ts` |
-| Database | A real Postgres through `@watchdog/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
-| Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `apps/worker/src/__tests__/maintenance.test.ts` |
+| Network and vendor clients | MSW through `@watchdog/domain/test-kit/http` (`mockServer`, `http`, `mockJson`); a vendor SDK is faked at its package edge | `packages/caps/tools/src/http/__tests__/page-enrich.test.ts` |
+| Database | A real Postgres through `@watchdog/server/test-db` in `*.int.test.ts`; in a unit test, the `Db` service layer (`Db.layerOf(spy)`) | `packages/server/core/src/cases/__tests__/cases-db-layer.int.test.ts` |
+| Clock and timers | Effect `TestClock` in `it.effect`; `vi.useFakeTimers()` in a DOM test, restored in `afterEach` | `packages/server/worker/src/__tests__/maintenance.test.ts` |
 | Framework seams | The router, `window`, `EventSource`, the toast and auth server modules, through the shared doubles below | `apps/web/src/testing/` |
 | The oRPC client (`@/lib/orpc-client`) in a web component or hook test: it is the network boundary of the web app (there are no server functions) | `vi.mock` with `orpcClientModuleDouble` (`apps/web/src/testing/orpc-client.ts`): the real client and Query utils over one `vi.fn` per procedure (`procedureDouble`; `memoryListProcedure` for a list, `sessionInOrganization` for `auth.whoami`) | `apps/web/src/domains/dossier/components/__tests__/claims-section.component.test.tsx` |
 
@@ -35,7 +35,7 @@ A mock replaces something the code under test talks to. It earns its place only 
 - **An internal module the code under test owns** (a sibling `lib/`, a helper, a child component, `@/app/lib/query-invalidation`). Call it. If it is slow or awkward to call, the design is the problem: move the seam to a real boundary or lift the test one tier.
 - **A data-fetching hook** (`useQuery`, `useMutation`, `useSuspenseQuery`, a domain `use*` query hook). Render under a real `QueryClientProvider` (`createAppQueryClient()`) and fake only the procedure the query function calls (`procedureDouble`). A faked hook cannot see a wrong key, a wrong invalidation or an optimistic-update bug.
 - **A query key.** Import the key factory from the domain's `queries.ts` (`jobsKeys`, `casesKeys`, ...) and use it in the assertion. A key copied into a test or a mock factory stays green when the real key changes: that is the defect to avoid.
-- **A custody or policy rule** (`@watchdog/policy`, `acceptGate`). Run the real rule; assert its outcome.
+- **A custody or policy rule** (`@watchdog/domain/policy`, `acceptGate`). Run the real rule; assert its outcome.
 
 **Effect services:** prefer a test double built as a Layer (`Layer.succeed(Service, impl)`, `Db.layerOf(exec)`, `BlobStore` layers) over `vi.mock` of the module that exports the service. The layer is typed against the service interface, so a changed interface fails the typecheck instead of slipping through. Provide it with `runDomainWith(layer)(effect)` or `it.effect`.
 
@@ -78,7 +78,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 
 | Suffix | Tier |
 | --- | --- |
-| `*.test.ts` | Unit: small, in-process, no database or spawned process. Under `packages/*`, `apps/worker` and `apps/cli` it runs in the `unit` project; under `apps/web` in `web-unit` (node), except the hook and DOM files listed as `webDomTestGlobs` in `vitest.config.ts`, which run in `component`. `pnpm test:unit` runs `unit` and `web-unit`. |
+| `*.test.ts` | Unit: small, in-process, no database or spawned process. Under `packages/*`, `packages/server/worker` and `apps/cli` it runs in the `unit` project; under `apps/web` in `web-unit` (node), except the hook and DOM files listed as `webDomTestGlobs` in `vitest.config.ts`, which run in `component`. `pnpm test:unit` runs `unit` and `web-unit`. |
 | `*.property.test.ts` | fast-check |
 | `*.gate.test.ts` | Medium: a gate script run as a CLI, or oxlint run over a fixture, in a temp git repo (`scripts/__tests__/`), named after the script; needs a must-fail test (guidance). Never writes into the working tree |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
@@ -86,13 +86,13 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `*.compiled.test.tsx` | Small: as `*.component.test.tsx`, transformed by React Compiler (`component-compiled` project). Use it only when the bug needs the memoization; a stale cell or skipped re-render passes in `component` |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
-## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `packages/caps/src/testing`)
+## Helpers (`@watchdog/domain/test-kit`, `@watchdog/server/test-db`, `@watchdog/domain/schemas/testing`, `packages/caps/src/testing`)
 
 | Prefix / name | Meaning |
 | --- | --- |
-| `build*` | Pure in-memory value (`@watchdog/schemas/testing`) |
-| `seed*` | Persist via real repos, from `@watchdog/test-db` (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
-| `testId(seed)` | From `@watchdog/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
+| `build*` | Pure in-memory value (`@watchdog/domain/schemas/testing`) |
+| `seed*` | Persist via real repos, from `@watchdog/server/test-db` (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
+| `testId(seed)` | From `@watchdog/domain/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
 | `withTestTx(fn)` | Always-rollback transaction |
 | `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*`. The integration project's `scripts/vitest/settle-export-writes.ts` waits after every test for detached Export writes, so a reset never deadlocks against their reads (#379); a test never needs its own wait |
 | `expectQueries` / `captureStatements` / `expectNoSeqScanOn` | Statement-count budget and `EXPLAIN` assertions ([below](#query-count-budgets-and-plan-assertions)) |
@@ -100,18 +100,18 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `expect*` | Assert inside an existing `it` (Cap helpers in `packages/caps/src/testing`) |
 | `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`; `packages/caps/src/testing`) |
 | `createCapRunHarness` | Fake `CapContext` (upload / credentials) for Cap `run()` |
-| `mockServer` / `mockJson` / `http` | MSW via `@watchdog/test-kit/http` |
+| `mockServer` / `mockJson` / `http` | MSW via `@watchdog/domain/test-kit/http` |
 | `listenFetchable(server, host?)` | Listen a real test server on a free loopback port that `fetch` will call; never `listen(0)` directly (an ephemeral port on the fetch bad-port list fails every request to it, where the OS port range starts low) |
 
 Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/URLs live in test-kit; helpers that need a workspace package live with it (see above).
 
-Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Row-level security ([`custody`](../../reference/contracts/custody.md#organization-isolation)) shows the application role no row of a Case-scoped table without an organization: `testDb` and `withTestTx` are in `TEST_ORGANIZATION_ID`'s scope, another organization's rows need `withOrganizationScope`, `withCaseOrganizationScope`, `withJobOrganizationScope` or `insertCasesInScope` (the seeds scope themselves to their Case's organization; `listAllActivity` and `listAllGraphHistory` read every organization as the owner), a core stage called directly (not through its Job run) needs a scoped pool (`Db.layerOf(testDb)`), and the raw `db` from `@watchdog/db` is unscoped (it sees nothing, like a path that forgot its scope). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
+Import `fc` from `@watchdog/domain/test-kit/fc` (and `testId` from `@watchdog/domain/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/server/test-db` (`testDb`, seeds). Row-level security ([`custody`](../../reference/contracts/custody.md#organization-isolation)) shows the application role no row of a Case-scoped table without an organization: `testDb` and `withTestTx` are in `TEST_ORGANIZATION_ID`'s scope, another organization's rows need `withOrganizationScope`, `withCaseOrganizationScope`, `withJobOrganizationScope` or `insertCasesInScope` (the seeds scope themselves to their Case's organization; `listAllActivity` and `listAllGraphHistory` read every organization as the owner), a core stage called directly (not through its Job run) needs a scoped pool (`Db.layerOf(testDb)`), and the raw `db` from `@watchdog/server/db` is unscoped (it sees nothing, like a path that forgot its scope). Do not import `@watchdog/server/db` from `@watchdog/server/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
-Do not add tests for generated client JSON, `packages/ui` (generated primitives), pass-through query wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
+Do not add tests for generated client JSON, `apps/web/ui` (generated primitives), pass-through query wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
 
 ## Query-count budgets and plan assertions
 
-Two integration-test assertions keep a data-path change from regressing quietly: how many SQL statements a code path runs, and which plan Postgres picks. Both live in `@watchdog/test-db` and see every statement on the shared test connection, so they work through core's `tryDb` / `tryDbWith` without changing the code under test.
+Two integration-test assertions keep a data-path change from regressing quietly: how many SQL statements a code path runs, and which plan Postgres picks. Both live in `@watchdog/server/test-db` and see every statement on the shared test connection, so they work through core's `tryDb` / `tryDbWith` without changing the code under test.
 
 | Helper | Use |
 | --- | --- |
@@ -129,7 +129,7 @@ Rules:
 - **One capture at a time, and `await` everything.** The hook is global to the test client (nested captures throw); work the path starts and does not await is counted late or not at all.
 - **Budget hot paths and findings, not everything.** A Case-scoped list, an Accept, a feed. Large-data plan checks (an external sort, a seq scan only at scale) need the synthetic dataset instead: [`perf-baseline`](../../how-to/perf-baseline.md).
 
-The worked example is `packages/core/src/evidence/__tests__/evidence-list-queries.int.test.ts`, the Case-scoped Evidence list:
+The worked example is `packages/server/core/src/evidence/__tests__/evidence-list-queries.int.test.ts`, the Case-scoped Evidence list:
 
 ```ts
 it("runs a fixed number of statements however many rows it returns", async () => {
@@ -147,7 +147,7 @@ it("reads Evidence and the Case guard through indexes", async () => {
 });
 ```
 
-Dropping `evidence_case_captured_idx` from the test database fails the second test with `Seq Scan on "evidence" (an index should serve this query)`. The helpers' own tests are `packages/test-db/src/db/__tests__/query-shape.test.ts` (pure, unit) and `query-count.int.test.ts` (against Postgres).
+Dropping `evidence_case_captured_idx` from the test database fails the second test with `Seq Scan on "evidence" (an index should serve this query)`. The helpers' own tests are `packages/server/test-db/src/db/__tests__/query-shape.test.ts` (pure, unit) and `query-count.int.test.ts` (against Postgres).
 
 ## Anti-cheat
 
@@ -161,7 +161,7 @@ Custody-critical modules (`applyPatch`, Triage Accept, `validateIdentifierWrite`
 
 Required for user/agent input and custody: empty/null/undefined, boundaries (min/max, empty string, huge string, unicode, case), duplicate/dedup, malformed-but-schema-valid, smuggled fields (`confidence` on agent patches), authorization/custody (`userOverride`, confirmed-without-evidence).
 
-TX-guarded paths: run two writers against the same row with `twoWriters` (`@watchdog/test-db`): writer A parks at a named point, writer B runs (or blocks on A's lock), then A continues, so the interleaving is forced, not left to timing. Assert which writer lost, its error, and the rows and entries left. Read the activity log with `listAllActivity()` (the table), not `activityLogRepo.drain`, which withholds rows behind any open transaction of the cluster (#276).
+TX-guarded paths: run two writers against the same row with `twoWriters` (`@watchdog/server/test-db`): writer A parks at a named point, writer B runs (or blocks on A's lock), then A continues, so the interleaving is forced, not left to timing. Assert which writer lost, its error, and the rows and entries left. Read the activity log with `listAllActivity()` (the table), not `activityLogRepo.drain`, which withholds rows behind any open transaction of the cluster (#276).
 
 No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion (job status, DB row, resolved promise). A flake that happens anyway follows the [flake policy](flaky-tests.md). A new `setTimeout`, `sleep` or `delay` in a test fails `pnpm check` (`watchdog/no-test-sleep`, shrink-only baseline: 35 left in 15 files on 2026-10-14, mostly the activity tailer, consumer and retention integration tests, which assert that nothing arrived and so need a clock). Replace one with fake timers, `rendezvous` or polling when you touch the file.
 
@@ -184,7 +184,7 @@ Two readiness flags on `<html>`: `data-hydrated` (root providers mounted, set in
 
 The route guard's request budget is a smoke spec (`navigation/gate-requests.spec.ts`): a tour of sidebar links (hover, then click) on a warm session records every `/api/auth/*` request and every organization-state call (`auth.whoami`, `/api/rpc/auth/whoami`) and allows one session refresh per elapsed 60 s (`STALE_SESSION`), so a normal run allows none. Settings and Cases are left out of the tour because they read Better Auth data of their own.
 
-The Case delete flow is an e2e (`cases/delete-case.spec.ts`: delete from the Cases list, the Restore toast, the Deleted Cases list (a declared list: its blank state is "No Deleted Cases Yet"), the deleted-Case URL screen) because it crosses the list, the toast, Settings and a Case URL; `CasesPage` carries its actions (`deleteCase`, `openDeletedCases`, `deletedRowFor`). Purge now and the scheduled purge are not browser specs: they erase object storage, so the integration tests (`packages/core/src/cases/__tests__/tombstone.int.test.ts`, with a fake `BlobStore`) and the component tests own them.
+The Case delete flow is an e2e (`cases/delete-case.spec.ts`: delete from the Cases list, the Restore toast, the Deleted Cases list (a declared list: its blank state is "No Deleted Cases Yet"), the deleted-Case URL screen) because it crosses the list, the toast, Settings and a Case URL; `CasesPage` carries its actions (`deleteCase`, `openDeletedCases`, `deletedRowFor`). Purge now and the scheduled purge are not browser specs: they erase object storage, so the integration tests (`packages/server/core/src/cases/__tests__/tombstone.int.test.ts`, with a fake `BlobStore`) and the component tests own them.
 
 A declared list screen ([`lists.md`](../../reference/web/lists.md)) gets one smoke spec that drives its toolbar in a real browser and reloads to prove the view lives in the URL: `cases/identifiers-list.spec.ts` seeds Identifiers through the API (`createIdentifier`), filters by Type from the Filters popover, searches, and reloads; `IdentifiersPage` carries the toolbar actions (`filterByType`, `search`, `visibleValues`). `triage/triage-list.spec.ts` seeds Proposals (`createProposal`), opens Triage from the sidebar (the link carries `status=pending`), searches, and reloads (`TriagePage.search`, `queueRows`). Search, sort, paging and empty states are component tests, not e2e.
 
@@ -218,7 +218,7 @@ Every Vitest project (unit, web-unit, property, component, integration) runs wit
 What this means when writing tests:
 
 - **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.useFakeTimers` + `vi.useRealTimers`). `vi.stubGlobal` and `vi.stubEnv` are undone after every test by `unstubGlobals` / `unstubEnvs` in `vitest.config.ts` (a leaked `fetch` stub once made msw-backed suites fail depending on file order); a direct assignment such as `globalThis.fetch = ...` or `process.env.X = ...` is not undone, so restore it yourself.
-- **Tests never read `.env`.** `@watchdog/env` skips the repo `.env` under Vitest (`VITEST` is set), so a developer's `WD_*` values cannot change a result. A test that depends on a setting stubs it with `vi.stubEnv`; the default is what the schema says.
+- **Tests never read `.env`.** `@watchdog/server/env` skips the repo `.env` under Vitest (`VITEST` is set), so a developer's `WD_*` values cannot change a result. A test that depends on a setting stubs it with `vi.stubEnv`; the default is what the schema says.
 - **The leak canary fails the file that leaks.** `scripts/vitest/leak-canary.ts` is the last setup file of every `isolate: false` project. It snapshots the shared globals (`globalThis`, `console`, `Math`, `Date`, `document`, `history`, `navigator`, `location`, the DOM prototypes, `process.env`, fake timers) before a file's imports run and compares them after its last test, so a spy on `document.querySelector` that is never restored, `globalThis.fetch = ...`, a module-scope `Object.defineProperty(window, ...)` (including a getter defined over a plain property), a `process.env.X = ...` or `vi.useFakeTimers()` with no `useRealTimers` fails that file with the property named. It does not depend on file order, which is why it replaces waiting for a shuffled run to trip over the leak. Browser APIs happy-dom lacks (`getAnimations`, `scrollIntoView`) are set once in `apps/web/src/test-setup.ts`, never on the prototype from a test. A name that a library registers by itself on first import goes in the canary's tooling list with a reason; a test's own global never does. A leak the canary cannot see (a module-level store a test mutates) still shows up as an order-dependent failure.
 - **Mock history is cleared before every test** (`clearMocks: true` in each project the nightly shuffle runs; integration keeps the old default). A `vi.fn()` call count therefore starts at zero in each test, repeat and shuffled order. A suite that asserts a call made at import time (a script entry, a module that registers or initializes on import) must re-run that import per test: `vi.resetModules()` in `beforeEach` plus a dynamic `await import(...)` in the test, or `vi.doMock` when the mock factory itself carries state (a `vi.mock` factory's result is cached across `resetModules`). Module-level state a test mutates (an in-memory fake, a global regex's `lastIndex`, a loader cache) is reset in `beforeEach` for the same reason: `--repeats` and `--sequence.shuffle.tests` run the same tests again in the same worker.
 - **A leak that slips through shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.

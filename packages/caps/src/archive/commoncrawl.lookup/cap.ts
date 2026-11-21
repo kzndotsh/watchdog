@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import {
   fetchCommoncrawlLookupEffect,
   commoncrawlLookupSnapshotSchema,
-} from "@watchdog/tools/archive";
-import { normalizeHost } from "@watchdog/tools/normalize";
+} from "#tools/archive";
+import { normalizeHost } from "#tools/normalize";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commonCrawl } from "../../providers";

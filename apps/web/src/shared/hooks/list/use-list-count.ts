@@ -4,7 +4,7 @@ import { listPending } from "@/shared/lib/list-pending";
 import { listStateOf } from "@/shared/lib/list/list-state";
 import type { ListCountValue } from "@/shared/lib/list/list-types";
 import type { ListView } from "@/shared/lib/list/list-view";
-import type { AnyListDef, ListQuery } from "@watchdog/schemas/shared";
+import type { AnyListDef, ListQuery } from "@watchdog/domain/schemas/shared";
 
 /**
  * The count of one view of a list from its first page's `total`: a tab's count pill

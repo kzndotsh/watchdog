@@ -2,6 +2,14 @@ import { SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, type KeyboardEvent } from "react";
 
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from "#ui/components/input-group";
+import { Kbd } from "#ui/components/kbd";
+import {
   chordMatcher,
   hotkeyDef,
   isEditableTarget,
@@ -12,15 +20,7 @@ import { CONTROL_HEIGHT, CONTROL_TEXT } from "@/shared/ui/control-chrome";
 import {
   LIST_SEARCH_MIN_LENGTH,
   type AnyListDef,
-} from "@watchdog/schemas/shared";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-  InputGroupText,
-} from "@watchdog/ui/components/input-group";
-import { Kbd } from "@watchdog/ui/components/kbd";
+} from "@watchdog/domain/schemas/shared";
 
 /** The search part of a list's controls: free of the list's filter types. */
 export type ListSearchControls = Pick<

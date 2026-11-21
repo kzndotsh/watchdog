@@ -6,7 +6,7 @@ import { LoadingRegion, TableBodySkeletonLayout } from "@/shared/ui/skeletons";
 import {
   IDENTIFIER_STATUS_LABELS,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 const NO_SEARCH = {};
 

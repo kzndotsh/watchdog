@@ -20,11 +20,11 @@ import { couldnt, errMessage } from "@/lib/utils";
 import { useList } from "@/shared/hooks/list/use-list";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { toast } from "@/shared/ui/toast";
-import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+import { patchNeedsConfidence } from "@watchdog/domain/policy/patch-needs-confidence";
 import {
   acceptProposalInputSchema,
   rejectProposalInputSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 
 export type UseTriageWorkspaceOptions = {
   /** The route's validated search: the queue's view and `proposalId`. */

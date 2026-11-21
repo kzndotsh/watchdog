@@ -11,7 +11,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { edgeList } from "@watchdog/schemas/graph";
+import { edgeList } from "@watchdog/domain/schemas/graph";
 
 /**
  * Connections keys are the oRPC procedure keys: `all(caseId)` is `[["edges"], { input: { caseId } }]`,

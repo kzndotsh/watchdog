@@ -16,7 +16,7 @@ import {
   type EvidenceKind,
   type IdentifierType,
   titleCase,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Entity / evidence / identifier kinds — not claim classes. */
 export type KindValue = EntityKind | EvidenceKind | IdentifierType;

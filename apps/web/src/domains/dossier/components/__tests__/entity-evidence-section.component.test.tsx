@@ -21,9 +21,9 @@ import {
   memoryListProcedure,
 } from "@/testing/memory-list";
 import { buildEvidenceRecord } from "@/testing/records";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@/shared/ui/toast", async () => {
   const { toastModuleDouble } = await import("@/testing/toast-double");

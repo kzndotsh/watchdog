@@ -9,7 +9,7 @@ import type { ServerTableFeatures } from "@/shared/ui/data-table/server-table-fe
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ListEmpty } from "@/shared/ui/list/list-empty";
 import { ListFooter } from "@/shared/ui/list/list-footer";
-import type { AnyListDef, FilterKey } from "@watchdog/schemas/shared";
+import type { AnyListDef, FilterKey } from "@watchdog/domain/schemas/shared";
 
 type ListTableProps<
   D extends AnyListDef,

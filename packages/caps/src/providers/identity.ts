@@ -1,4 +1,4 @@
-import { PGP_KEYSERVERS } from "@watchdog/tools/identity";
+import { PGP_KEYSERVERS } from "#tools/identity";
 
 import { defineProvider } from "../sdk";
 

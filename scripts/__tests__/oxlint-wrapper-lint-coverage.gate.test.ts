@@ -58,8 +58,11 @@ beforeAll(() => {
   for (const module of Object.keys(WRAPPERS)) {
     fixture.repo.copyFromRepo(`${PRIMITIVES}/${module}.tsx`);
   }
-  // The linter reads the shadcn project config, its aliases and its stylesheet.
+  // The linter reads the shadcn project config, its aliases (the web package's subpath
+  // imports, `#ui/...`, into the vendored primitives) and its stylesheet.
   for (const rel of [
+    "apps/web/package.json",
+    "apps/web/ui/src",
     "apps/web/tsconfig.json",
     "tsconfig.base.json",
     "apps/web/components.json",
@@ -68,7 +71,7 @@ beforeAll(() => {
   ]) {
     fixture.repo.copyFromRepo(rel);
   }
-  // The wrappers import `@watchdog/ui`, a workspace link under apps/web/node_modules.
+  // The vendored primitives import their npm dependencies from apps/web/node_modules.
   symlinkSync(
     path.join(repoRoot, "apps/web/node_modules"),
     path.join(fixture.repo.dir, "apps/web/node_modules"),

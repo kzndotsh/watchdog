@@ -14,7 +14,7 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   entityDisplayLabel,
   parseOptionalTrimmedUuid,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 function attachedEntityLabel(
   attachedId: string,

@@ -8,7 +8,7 @@ import {
 import type { CaseRecord } from "@/domains/cases/types";
 import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
+import { parseOptionalTrimmedUuid } from "@watchdog/domain/schemas/shared";
 
 /** The one failure copy for switching the Active Case (house style: errMessage adds "Try again." on a 500). */
 export const ACTIVE_CASE_SWITCH_ERROR = `${couldnt("switch", "Case")}.`;

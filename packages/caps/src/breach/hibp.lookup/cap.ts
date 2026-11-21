@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchHibpBreachedAccountEffect,
   hibpLookupSnapshotSchema,
-} from "@watchdog/tools/identity";
+} from "#tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hibp } from "../../providers";

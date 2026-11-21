@@ -1,11 +1,11 @@
 import { proposalPatch } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   CONFIDENCE_GATED_RESOURCES,
   patchOpResource,
   type PatchOp,
-} from "@watchdog/schemas/graph";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 export { evidenceLabel } from "@/shared/ui/intake/evidence-option";
 

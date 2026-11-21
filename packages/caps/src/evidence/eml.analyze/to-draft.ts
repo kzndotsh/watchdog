@@ -1,5 +1,5 @@
-import type { ProcessExtractDraft } from "@watchdog/ai";
-import type { EmlAnalyzeSnapshot } from "@watchdog/tools/file";
+import type { ProcessExtractDraft } from "#ai";
+import type { EmlAnalyzeSnapshot } from "#tools/file";
 
 import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 

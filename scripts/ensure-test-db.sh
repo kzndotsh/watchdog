@@ -6,7 +6,7 @@
 # and has only data privileges, and the worker role `watchdog_worker` (the same without Graph
 # writes, #720) for the tests that switch to it. This script creates the logins and lets them
 # connect; the grants (and their re-application after each migration) are the migrator's,
-# packages/db/src/app-role.ts.
+# packages/server/db/src/app-role.ts.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -53,8 +53,8 @@ ensure_db watchdog_test
 ensure_db watchdog_e2e
 
 # The migrator installs pg-boss's schema and grants watchdog_app and watchdog_worker (see above).
-DATABASE_URL_MIGRATE="${BASE}/watchdog_test" pnpm --filter @watchdog/db migrate
-DATABASE_URL_MIGRATE="${BASE}/watchdog_e2e" pnpm --filter @watchdog/db migrate
+DATABASE_URL_MIGRATE="${BASE}/watchdog_test" pnpm --filter @watchdog/server db:migrate
+DATABASE_URL_MIGRATE="${BASE}/watchdog_e2e" pnpm --filter @watchdog/server db:migrate
 
 # Local-only read-only role (dev MCP Postgres). After migrations so every table is covered.
 bash "$ROOT/scripts/ensure-readonly-role.sh" watchdog_test watchdog_e2e

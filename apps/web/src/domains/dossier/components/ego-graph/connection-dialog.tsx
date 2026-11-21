@@ -2,6 +2,13 @@
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useMemo, useState, type SubmitEvent } from "react";
 
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import type {
   ConnectionFormValues,
   EdgeRecord,
@@ -30,7 +37,7 @@ import {
   peerKindAllowedForPhrase,
   predicateLabel,
 } from "@/shared/ui/vocab/edge-predicate";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import {
   parseOptionalTrimmedUuid,
   trimmedConfidenceTierSchema,
@@ -41,14 +48,7 @@ import {
   ENTITY_KINDS,
   edgePhraseValue,
   parseEdgePhraseValue,
-} from "@watchdog/schemas/shared";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
+} from "@watchdog/domain/schemas/shared";
 
 /** The peer the form names: picked from the server-searched picker, or the edited edge's. */
 type ConnectionPeer = {

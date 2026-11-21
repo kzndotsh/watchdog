@@ -1,0 +1,66 @@
+import { createRouterClient } from "@orpc/server";
+import { Effect } from "effect";
+import { describe, expect, it, vi } from "vitest";
+
+const { listRecentActivityEffect } = vi.hoisted(() => ({
+  listRecentActivityEffect: vi.fn(),
+}));
+
+vi.mock("#core/feed", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("#core/feed")>();
+  return {
+    ...actual,
+    listRecentActivityEffect,
+  };
+});
+
+import {
+  TEST_ORGANIZATION_ID,
+  testActor,
+} from "@watchdog/domain/schemas/testing";
+
+import { listRecent } from "../activity";
+
+const actor = testActor();
+
+describe("activity procedures", () => {
+  it("lists recent activity for the authenticated actor", async () => {
+    listRecentActivityEffect.mockReturnValueOnce(
+      Effect.succeed({
+        items: [
+          {
+            id: "10",
+            kind: "job",
+            action: "succeeded",
+            caseId: "00000000-0000-4000-8000-000000000001",
+            caseName: "Alpha",
+            label: "DNS lookup",
+            at: "2026-01-01T12:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+        total: { count: 1, isCapped: false },
+      })
+    );
+
+    const client = createRouterClient(
+      { listRecent },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          credential: { kind: "session" },
+        },
+      }
+    );
+
+    await expect(client.listRecent({ limit: 5 })).resolves.toHaveProperty(
+      "items.length",
+      1
+    );
+    expect(listRecentActivityEffect).toHaveBeenCalledWith({
+      organizationId: TEST_ORGANIZATION_ID,
+      input: { limit: 5 },
+    });
+  });
+});

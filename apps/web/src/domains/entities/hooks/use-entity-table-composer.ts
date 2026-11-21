@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { couldnt, errMessage } from "@/lib/utils";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 type CreateEntityFn = (name: string, kind: EntityKind) => Promise<void>;
 

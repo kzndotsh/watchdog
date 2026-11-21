@@ -21,7 +21,7 @@ import {
   type AnyListDef,
   type FilterKey,
   type SortKey,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 type UseListTableOptions<D extends AnyListDef, Item extends RowData> = {
   readonly columns: readonly ColumnDef<ServerTableFeatures, Item>[];

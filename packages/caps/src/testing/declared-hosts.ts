@@ -1,6 +1,6 @@
-import type { CapContact } from "@watchdog/schemas/caps";
-import type { ProviderCall } from "@watchdog/tools/http";
-import { contactAdmits } from "@watchdog/tools/http";
+import type { ProviderCall } from "#tools/http";
+import { contactAdmits } from "#tools/http";
+import type { CapContact } from "@watchdog/domain/schemas/caps";
 
 /** A host or DNS name a recorded call touched, and where in its call it was. */
 export type TouchedHost = {
@@ -96,7 +96,7 @@ export function unusedContacts(
 /**
  * The hosts the calls touched that no contact admits, as `transport host` strings (empty when
  * every touched host is declared). The rules are the ones a Job's `Egress` enforces
- * (`contactAdmits` in `@watchdog/tools/http`, per contact kind).
+ * (`contactAdmits` in `#tools/http`, per contact kind).
  */
 export function undeclaredHosts(
   contacts: readonly CapContact[],

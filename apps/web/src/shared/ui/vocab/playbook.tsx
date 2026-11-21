@@ -1,4 +1,4 @@
-import { playbookIdLabel } from "@watchdog/schemas/caps";
+import { playbookIdLabel } from "@watchdog/domain/schemas/caps";
 
 /** Human label for a playbook id when catalog title is unavailable. */
 export function playbookLabel(

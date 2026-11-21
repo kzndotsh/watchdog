@@ -1,8 +1,8 @@
 import {
   updateCaseInputSchema,
   type UpdateCaseInput,
-} from "@watchdog/schemas/cases";
-import type { EgressClass } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/cases";
+import type { EgressClass } from "@watchdog/domain/schemas/shared";
 
 export type UpdateCasePatch = {
   name?: string;

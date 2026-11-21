@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { Alert, AlertAction, AlertDescription } from "#ui/components/alert";
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import { deletionPolicyQuery } from "@/domains/cases/queries";
 import type { CaseEgress } from "@/domains/cases/types";
@@ -8,12 +9,7 @@ import {
   type EgressBlock,
 } from "@/domains/jobs/lib/egress-block";
 import { Button } from "@/shared/ui/primitives/button";
-import { normalizeAllowedEgress } from "@watchdog/schemas/caps";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-} from "@watchdog/ui/components/alert";
+import { normalizeAllowedEgress } from "@watchdog/domain/schemas/caps";
 
 type EgressBlockNoticeProps = {
   caseEgress: CaseEgress;

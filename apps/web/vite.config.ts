@@ -90,18 +90,12 @@ const config = defineConfig({
       process.env.WD_BUNDLE_SSR === "1"
         ? true
         : [
-            "@watchdog/ai",
-            "@watchdog/api",
-            "@watchdog/auth",
+            "@watchdog/caps/ai",
             "@watchdog/caps",
-            "@watchdog/core",
-            "@watchdog/db",
-            "@watchdog/env",
-            "@watchdog/log",
-            "@watchdog/policy",
-            "@watchdog/schemas",
-            "@watchdog/tools",
-            "@watchdog/ui",
+            "@watchdog/domain",
+            "@watchdog/server",
+            "@watchdog/caps/tools",
+            "#ui",
           ],
   },
   server: {
@@ -117,7 +111,7 @@ const config = defineConfig({
   },
   optimizeDeps: {
     // Belt for residual HMR / server-fn discovery after client code stays on
-    // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).
+    // `@watchdog/domain/policy/patch-needs-confidence` (do not import Effect in browser UI).
     include: ["effect"],
     // The dependency scan reads source before TanStack Start strips server code, so it follows
     // server function bodies, `api/` route handlers and `*.server.ts` files into the workspace

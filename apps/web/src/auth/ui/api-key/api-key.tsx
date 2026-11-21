@@ -5,11 +5,11 @@ import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
 import { Key, X } from "lucide-react";
 import { useState } from "react";
 
+import { Badge } from "#ui/components/badge";
+import { Card, CardContent } from "#ui/components/card";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
-import { Badge } from "@watchdog/ui/components/badge";
-import { Card, CardContent } from "@watchdog/ui/components/card";
 
 import { DeleteApiKeyDialog } from "./delete-api-key-dialog";
 import {

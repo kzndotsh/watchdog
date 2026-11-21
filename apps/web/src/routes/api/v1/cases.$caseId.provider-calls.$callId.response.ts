@@ -3,7 +3,12 @@ import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { providerResponseHeaders } from "@/lib/provider-response-headers.server";
-import { runAppAs } from "@watchdog/api";
+import {
+  parseTrimmedCaseId,
+  parseTrimmedUuid,
+  requireScope,
+} from "@watchdog/domain/schemas/shared";
+import { runAppAs } from "@watchdog/server/api";
 /**
  * GET /api/v1/cases/:caseId/provider-calls/:callId/response
  *
@@ -14,12 +19,7 @@ import { runAppAs } from "@watchdog/api";
  * not exist is the same 404.
  * Auth: session cookie or API key (`cases:read`).
  */
-import { getProviderCallResponseEffect } from "@watchdog/core/jobs";
-import {
-  parseTrimmedCaseId,
-  parseTrimmedUuid,
-  requireScope,
-} from "@watchdog/schemas/shared";
+import { getProviderCallResponseEffect } from "@watchdog/server/core/jobs";
 
 export const Route = createFileRoute(
   "/api/v1/cases/$caseId/provider-calls/$callId/response"

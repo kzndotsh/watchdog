@@ -5,7 +5,7 @@ import { ClaimClassBadge } from "@/shared/ui/vocab/claim-class-badge";
 import { EntityKindGlyph } from "@/shared/ui/vocab/entity-kind-glyph";
 import { KindBadge } from "@/shared/ui/vocab/kind-badge";
 import { isEntityKind, kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { ENTITY_KIND_LABELS } from "@watchdog/schemas/shared";
+import { ENTITY_KIND_LABELS } from "@watchdog/domain/schemas/shared";
 
 describe("kind vocab", () => {
   it("detects entity kinds and labels unknown values", () => {

@@ -1,6 +1,6 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_METRIC_TILE_COUNT } from "@/shared/ui/skeletons/constants";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Metric tile grid — shared by dashboard overview and case overview. */
 export function MetricTilesSkeletonLayout({

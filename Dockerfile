@@ -33,9 +33,9 @@ RUN pnpm install --offline --frozen-lockfile --ignore-scripts --store-dir /pnpm/
 RUN WD_BUNDLE_SSR=1 pnpm --filter @watchdog/web build \
     && pnpm --filter @watchdog/web build:serve
 # Worker, migrator, the first-admin command and the vault rotation command: single-file bundles.
-RUN pnpm --filter @watchdog/worker build && pnpm --filter @watchdog/db build:migrate \
-    && pnpm --filter @watchdog/auth build:bootstrap \
-    && pnpm --filter @watchdog/core build:rekey
+RUN pnpm --filter @watchdog/server worker:build && pnpm --filter @watchdog/server db:build:migrate \
+    && pnpm --filter @watchdog/server auth:build:bootstrap \
+    && pnpm --filter @watchdog/server core:build:rekey
 
 # ---- runtime: what both targets share ----
 FROM node-base AS runtime
@@ -45,8 +45,8 @@ ENV NODE_ENV=production \
     WD_EXPORT_DIR=/data/export \
     WD_LOG_DIR=/tmp/evlog
 WORKDIR /app
-COPY --from=build /repo/packages/db/dist/migrate.mjs ./migrate.mjs
-COPY --from=build /repo/packages/db/drizzle ./drizzle
+COPY --from=build /repo/packages/server/db/dist/migrate.mjs ./migrate.mjs
+COPY --from=build /repo/packages/server/db/drizzle ./drizzle
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 # Nothing at runtime needs a package manager: drop npm, npx, corepack and yarn, which carry their
 # own dependency tree (and with it scanner findings) that is not Watchdog's.
@@ -66,9 +66,9 @@ LABEL org.opencontainers.image.title="watchdog-web"
 COPY --from=build /repo/apps/web/dist/serve.mjs ./serve.mjs
 COPY --from=build /repo/apps/web/dist/client ./client
 # The first-admin command: `node bootstrap-admin.mjs --email you@example.com` (docs/how-to/self-host.md).
-COPY --from=build /repo/packages/auth/dist/bootstrap-admin.mjs ./bootstrap-admin.mjs
+COPY --from=build /repo/packages/server/auth/dist/bootstrap-admin.mjs ./bootstrap-admin.mjs
 # Vault master-key rotation: `node vault-rekey.mjs` (docs/how-to/backup-restore.md).
-COPY --from=build /repo/packages/core/dist/vault-rekey.mjs ./vault-rekey.mjs
+COPY --from=build /repo/packages/server/core/dist/vault-rekey.mjs ./vault-rekey.mjs
 ENV PORT=3000 \
     WD_CLIENT_DIR=/app/client
 EXPOSE 3000
@@ -82,7 +82,7 @@ CMD ["node", "serve.mjs"]
 # No HEALTHCHECK: it serves no HTTP. A crash exits non-zero and the restart policy handles it.
 FROM runtime AS worker
 LABEL org.opencontainers.image.title="watchdog-worker"
-COPY --from=build /repo/apps/worker/dist/worker.mjs ./worker.mjs
+COPY --from=build /repo/packages/server/worker/dist/worker.mjs ./worker.mjs
 # The web container migrates; set WD_SKIP_MIGRATIONS=0 to make a worker migrate too.
 ENV WD_SKIP_MIGRATIONS=1
 CMD ["node", "worker.mjs"]

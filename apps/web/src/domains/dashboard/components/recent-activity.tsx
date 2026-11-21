@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
+import { ScrollArea } from "#ui/components/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#ui/components/select";
 import { activityListView } from "@/domains/activity/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { useListFeed } from "@/shared/hooks/list/use-list-feed";
@@ -28,21 +36,13 @@ import {
   activityList,
   type ActivityItem,
   type ActivityKind,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import {
   JOB_STATUSES,
   PROPOSAL_STATUSES,
   TASK_STATUSES,
   type TaskStatus,
-} from "@watchdog/schemas/shared";
-import { ScrollArea } from "@watchdog/ui/components/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@watchdog/ui/components/select";
+} from "@watchdog/domain/schemas/shared";
 
 const ALL_CASES = "__all__";
 const EMPTY_ACTIVITY_ITEMS: ActivityItem[] = [];

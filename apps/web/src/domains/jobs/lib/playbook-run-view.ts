@@ -1,13 +1,13 @@
 import { capabilityLabel } from "@/shared/ui/vocab";
 import type { DisplayStatus } from "@/shared/ui/vocab/status.lib";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
 import {
   PLAYBOOK_RUN_OUTCOME_LABELS,
   PLAYBOOK_STEP_STATE_LABELS,
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
   type PlaybookStepState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** A status chip or ink: the vocab status that carries the colour and glyph, and the word shown. */
 export type OutcomeDisplay = {

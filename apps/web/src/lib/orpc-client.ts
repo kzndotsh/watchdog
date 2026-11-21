@@ -5,7 +5,7 @@ import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 
 import { RPC_PREFIX } from "@/lib/rpc-prefix";
-import type { AppRouter } from "@watchdog/api";
+import type { AppRouter } from "@watchdog/server/api";
 
 /**
  * The app's oRPC client, one per tab: `RPCLink` to `/api/rpc` with the session cookie and the

@@ -1,4 +1,4 @@
-import type { CapContact } from "@watchdog/schemas/caps";
+import type { CapContact } from "@watchdog/domain/schemas/caps";
 
 /**
  * How a Cap declares who it talks to (`contacts` on `defineCapability`). Authors write these

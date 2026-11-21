@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { ScrollArea } from "#ui/components/scroll-area";
 import { workHref } from "@/config/nav";
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
 import { tileCount } from "@/domains/cases/lib/case-counts";
@@ -19,9 +20,8 @@ import { RelativeTime } from "@/shared/ui/relative-time";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
-import type { ActivityKind } from "@watchdog/schemas/feed";
-import type { ListTotal } from "@watchdog/schemas/shared";
-import { ScrollArea } from "@watchdog/ui/components/scroll-area";
+import type { ActivityKind } from "@watchdog/domain/schemas/feed";
+import type { ListTotal } from "@watchdog/domain/schemas/shared";
 
 function inboxMetricTone(
   isStatsPending: boolean,

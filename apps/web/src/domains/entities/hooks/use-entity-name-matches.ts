@@ -3,7 +3,7 @@ import { useMemo } from "react";
 
 import { entityNameMatchesQuery } from "@/domains/entities/queries";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { ENTITY_NAME_LOOKUP_MAX } from "@watchdog/schemas/graph";
+import { ENTITY_NAME_LOOKUP_MAX } from "@watchdog/domain/schemas/graph";
 
 const NO_ENTITIES: readonly EntityOption[] = [];
 

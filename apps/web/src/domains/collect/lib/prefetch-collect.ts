@@ -11,7 +11,7 @@ import {
 } from "@/domains/jobs/queries";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { collectList } from "@watchdog/schemas/jobs";
+import { collectList } from "@watchdog/domain/schemas/jobs";
 
 /** Warm uri-backed Evidence text (JSON/XML) when a row's Evidence is selected. */
 export function prefetchCollectEvidenceBlob(

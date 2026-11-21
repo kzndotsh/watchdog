@@ -1,12 +1,12 @@
 import {
   confirmedNeedsEvidence,
   type ConfirmedEvidenceInput,
-} from "@watchdog/policy/confirmed-evidence";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/policy/confirmed-evidence";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 
 /**
  * Web adapter over the shared rule: counts a form's evidence ids (or takes a
- * precomputed count) and asks `@watchdog/policy/confirmed-evidence`. The
+ * precomputed count) and asks `@watchdog/domain/policy/confirmed-evidence`. The
  * threshold and message live there, not here.
  *
  * @canonical `isConfirmedBlocked`: Confirmed-blocked check over a web form's evidence ids

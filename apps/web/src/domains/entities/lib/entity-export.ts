@@ -4,7 +4,7 @@ import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { dossierPath } from "@/shared/lib/case-path";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import type { OpenInDestination } from "@watchdog/schemas/shared";
+import type { OpenInDestination } from "@watchdog/domain/schemas/shared";
 
 const EXTERNAL_AI_URL_MAX = 1800;
 

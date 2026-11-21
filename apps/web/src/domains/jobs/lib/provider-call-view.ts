@@ -1,8 +1,11 @@
-import type { ProviderCallBody, ProviderCallRecord } from "@watchdog/core/jobs";
 import type {
   ProviderBodyReason,
   ProviderCallTransport,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type {
+  ProviderCallBody,
+  ProviderCallRecord,
+} from "@watchdog/server/core/jobs";
 
 const KIB = 1024;
 const MIB = KIB * 1024;

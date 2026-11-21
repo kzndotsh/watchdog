@@ -9,7 +9,7 @@
 - The Query cache is the source of truth: a server read is a `useQuery` keyed by all its inputs; never copy loader or query data into state, never fetch in an effect. Loaders await identity only and warm lists with `void prefetchQuery`.
 - Lists read a page at a time through `listView` + `useList` (or `useListFeed` / `useListFirstPage`): no hand-built infinite query, no whole-list read, no tile count from `array.length` ([`lists.md`](../../docs/reference/web/lists.md)). A picker searches on the server through a `PickerPort`.
 - Invalidate through the named contracts in `app/lib/query-invalidation.ts`, never an ad-hoc `invalidateQueries` list.
-- Keep server code off the client graph. Browser code imports `@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence` and `@watchdog/core/job-display`, never those package roots (no lint covers it).
+- Keep server code off the client graph. Browser code imports `@watchdog/domain/policy/patch-needs-confidence`, `@watchdog/domain/policy/confirmed-evidence` and `@watchdog/server/core/job-display`, never those package roots (no lint covers it).
 - Parse route, search, cookie and SSE ids at the edge with `parseTrimmedCaseId` / `parseTrimmedUuid` and the Case id schemas; never cast a brand.
 
 ## Components and effects

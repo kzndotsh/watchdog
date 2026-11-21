@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Alert, AlertDescription } from "#ui/components/alert";
+import { Separator } from "#ui/components/separator";
 import { BreachDisabledNote } from "@/domains/jobs/components/breach-disabled-note";
 import { SettingsCredentialsDialogs } from "@/domains/settings/components/settings-credentials-dialogs";
 import {
@@ -28,9 +30,7 @@ import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { SettingsCredentialsSkeleton } from "@/shared/ui/skeletons";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { CredentialSlot } from "@watchdog/core/vault";
-import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
-import { Separator } from "@watchdog/ui/components/separator";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 
 const EMPTY_CREDENTIAL_SLOTS: CredentialSlot[] = [];
 

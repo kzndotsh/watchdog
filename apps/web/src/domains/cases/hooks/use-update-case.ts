@@ -9,7 +9,7 @@ import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import type { EgressClass } from "@watchdog/schemas/shared";
+import type { EgressClass } from "@watchdog/domain/schemas/shared";
 
 /** Update a Case (name, description, allowed egress). A rename can change the slug, so it re-routes. */
 export function useUpdateCase(caseId: string, currentSlug: string | undefined) {

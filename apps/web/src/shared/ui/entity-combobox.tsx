@@ -12,11 +12,11 @@ import {
   ComboboxList,
 } from "@/shared/ui/primitives/combobox";
 import { EntityKindIcon } from "@/shared/ui/vocab";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 import {
   entityDisplayLabel,
   trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export type EntityOption = {
   id: string;

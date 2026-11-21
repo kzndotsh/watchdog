@@ -1,4 +1,4 @@
-import type { CredentialFingerprint } from "@watchdog/tools/breach";
+import type { CredentialFingerprint } from "#tools/breach";
 
 import { CAPABILITIES } from "../registry";
 import { isBreachCapId } from "../sdk";

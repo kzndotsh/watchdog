@@ -11,7 +11,7 @@ import { DashboardHome } from "@/domains/dashboard/components/dashboard-home";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { RouteError } from "@/shared/layout/route-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { optionalCaseIdSchema } from "@watchdog/schemas/shared";
+import { optionalCaseIdSchema } from "@watchdog/domain/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/");
 

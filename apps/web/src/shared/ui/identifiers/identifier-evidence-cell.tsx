@@ -1,6 +1,13 @@
 import { LinkIcon, PencilIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "#ui/components/popover";
 import { cn } from "@/lib/utils";
 import type { PickerPort } from "@/shared/hooks/use-picker-source";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
@@ -13,15 +20,8 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
-import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 
 const PREVIEW_CHIP_MAX = 1;
 

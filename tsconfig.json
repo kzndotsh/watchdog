@@ -7,59 +7,191 @@
     "paths": {
       "@/*": ["./apps/web/src/*"],
 
-      "@watchdog/ai": ["./packages/ai/src/index.ts"],
-      "@watchdog/ai/*": ["./packages/ai/src/*"],
-
-      "@watchdog/api": ["./packages/api/src/index.ts"],
-      "@watchdog/api/*": ["./packages/api/src/*"],
-
-      "@watchdog/auth/*": ["./packages/auth/src/*"],
-
       "@watchdog/caps": ["./packages/caps/src/index.ts"],
+      "@watchdog/caps/ai": ["./packages/caps/ai/src/index.ts"],
       "@watchdog/caps/capabilities.gen.json": [
         "./packages/caps/capabilities.gen.json"
       ],
       "@watchdog/caps/sdk": ["./packages/caps/src/sdk/index.ts"],
-      "@watchdog/caps/*": ["./packages/caps/src/*"],
-
-      "@watchdog/cli/*": ["./apps/cli/src/*"],
-
-      "@watchdog/client": ["./packages/client/src/index.ts"],
-      "@watchdog/client/*": ["./packages/client/src/*"],
-
-      "@watchdog/core/blob": ["./packages/core/src/infra/blob.ts"],
-      "@watchdog/core/job-display": [
-        "./packages/core/src/display/job-display.ts"
+      "@watchdog/caps/tools/archive": [
+        "./packages/caps/tools/src/archive/index.ts"
       ],
-      "@watchdog/core/proposal-display": [
-        "./packages/core/src/display/proposal-display.ts"
+      "@watchdog/caps/tools/breach": [
+        "./packages/caps/tools/src/breach/index.ts"
       ],
-      "@watchdog/core/*": ["./packages/core/src/*"],
-
-      "@watchdog/db": ["./packages/db/src/index.ts"],
-      "@watchdog/db/*": ["./packages/db/src/*"],
-
-      "@watchdog/env/*": ["./packages/env/src/*"],
-
-      "@watchdog/log": ["./packages/log/src/index.ts"],
-      "@watchdog/log/*": ["./packages/log/src/*"],
-
-      "@watchdog/policy": ["./packages/policy/src/index.ts"],
-      "@watchdog/policy/*": ["./packages/policy/src/*"],
-
-      "@watchdog/schemas/*": ["./packages/schemas/src/*"],
-
-      "@watchdog/test-db": ["./packages/test-db/src/index.ts"],
-
-      "@watchdog/test-kit": ["./packages/test-kit/src/index.ts"],
-      "@watchdog/test-kit/http": [
-        "./packages/test-kit/src/http/mock-server.ts"
+      "@watchdog/caps/tools/cache": [
+        "./packages/caps/tools/src/cache/index.ts"
       ],
-      "@watchdog/test-kit/*": ["./packages/test-kit/src/*"],
+      "@watchdog/caps/tools/ct": ["./packages/caps/tools/src/ct/index.ts"],
+      "@watchdog/caps/tools/dns": ["./packages/caps/tools/src/dns/index.ts"],
+      "@watchdog/caps/tools/errors": [
+        "./packages/caps/tools/src/errors/index.ts"
+      ],
+      "@watchdog/caps/tools/file": ["./packages/caps/tools/src/file/index.ts"],
+      "@watchdog/caps/tools/html": ["./packages/caps/tools/src/html/index.ts"],
+      "@watchdog/caps/tools/http": ["./packages/caps/tools/src/http/index.ts"],
+      "@watchdog/caps/tools/identity": [
+        "./packages/caps/tools/src/identity/index.ts"
+      ],
+      "@watchdog/caps/tools/network": [
+        "./packages/caps/tools/src/network/index.ts"
+      ],
+      "@watchdog/caps/tools/normalize": [
+        "./packages/caps/tools/src/normalize/index.ts"
+      ],
+      "@watchdog/caps/tools/parse": [
+        "./packages/caps/tools/src/parse/index.ts"
+      ],
+      "@watchdog/caps/tools/testing": [
+        "./packages/caps/tools/src/testing/index.ts"
+      ],
+      "@watchdog/caps/tools/threat": [
+        "./packages/caps/tools/src/threat/index.ts"
+      ],
+      "@watchdog/caps/tools/tls": ["./packages/caps/tools/src/tls/index.ts"],
+      "@watchdog/caps/tools/wayback": [
+        "./packages/caps/tools/src/wayback/index.ts"
+      ],
+      "@watchdog/caps/tools/whois": [
+        "./packages/caps/tools/src/whois/index.ts"
+      ],
 
-      "@watchdog/tools/*": ["./packages/tools/src/*"],
+      "@watchdog/domain/policy": ["./packages/domain/policy/src/index.ts"],
+      "@watchdog/domain/policy/confirmed-evidence": [
+        "./packages/domain/policy/src/confirmed-evidence.ts"
+      ],
+      "@watchdog/domain/policy/patch-needs-confidence": [
+        "./packages/domain/policy/src/patch-needs-confidence.ts"
+      ],
+      "@watchdog/domain/schemas/caps": [
+        "./packages/domain/schemas/src/caps.ts"
+      ],
+      "@watchdog/domain/schemas/cases": [
+        "./packages/domain/schemas/src/cases.ts"
+      ],
+      "@watchdog/domain/schemas/egress-proxy": [
+        "./packages/domain/schemas/src/egress-proxy.ts"
+      ],
+      "@watchdog/domain/schemas/evidence": [
+        "./packages/domain/schemas/src/evidence.ts"
+      ],
+      "@watchdog/domain/schemas/feed": [
+        "./packages/domain/schemas/src/feed.ts"
+      ],
+      "@watchdog/domain/schemas/graph": [
+        "./packages/domain/schemas/src/graph.ts"
+      ],
+      "@watchdog/domain/schemas/ip": ["./packages/domain/schemas/src/ip.ts"],
+      "@watchdog/domain/schemas/jobs": [
+        "./packages/domain/schemas/src/jobs.ts"
+      ],
+      "@watchdog/domain/schemas/shared": [
+        "./packages/domain/schemas/src/shared.ts"
+      ],
+      "@watchdog/domain/schemas/testing": [
+        "./packages/domain/schemas/src/testing/index.ts"
+      ],
+      "@watchdog/domain/test-kit": ["./packages/domain/test-kit/src/index.ts"],
+      "@watchdog/domain/test-kit/fc": ["./packages/domain/test-kit/src/fc.ts"],
+      "@watchdog/domain/test-kit/fixtures": [
+        "./packages/domain/test-kit/src/fixtures.ts"
+      ],
+      "@watchdog/domain/test-kit/http": [
+        "./packages/domain/test-kit/src/http/mock-server.ts"
+      ],
 
-      "@watchdog/ui/*": ["./packages/ui/src/*"]
+      "@watchdog/server/api": ["./packages/server/api/src/index.ts"],
+      "@watchdog/server/auth/instance-admin": [
+        "./packages/server/auth/src/instance-admin.ts"
+      ],
+      "@watchdog/server/auth/invitation-url": [
+        "./packages/server/auth/src/invitation-url.ts"
+      ],
+      "@watchdog/server/auth/org-roles": [
+        "./packages/server/auth/src/org-roles.ts"
+      ],
+      "@watchdog/server/auth/server": ["./packages/server/auth/src/server.ts"],
+      "@watchdog/server/core/activity": [
+        "./packages/server/core/src/activity/index.ts"
+      ],
+      "@watchdog/server/core/actors": [
+        "./packages/server/core/src/actors/index.ts"
+      ],
+      "@watchdog/server/core/blob": [
+        "./packages/server/core/src/infra/blob.ts"
+      ],
+      "@watchdog/server/core/caps": [
+        "./packages/server/core/src/caps/index.ts"
+      ],
+      "@watchdog/server/core/case-deletion": [
+        "./packages/server/core/src/case-deletion/index.ts"
+      ],
+      "@watchdog/server/core/cases": [
+        "./packages/server/core/src/cases/index.ts"
+      ],
+      "@watchdog/server/core/errors": [
+        "./packages/server/core/src/errors/index.ts"
+      ],
+      "@watchdog/server/core/evidence": [
+        "./packages/server/core/src/evidence/index.ts"
+      ],
+      "@watchdog/server/core/export": [
+        "./packages/server/core/src/export/index.ts"
+      ],
+      "@watchdog/server/core/feed": [
+        "./packages/server/core/src/feed/index.ts"
+      ],
+      "@watchdog/server/core/graph": [
+        "./packages/server/core/src/graph/index.ts"
+      ],
+      "@watchdog/server/core/infra": [
+        "./packages/server/core/src/infra/index.ts"
+      ],
+      "@watchdog/server/core/job-display": [
+        "./packages/server/core/src/display/job-display.ts"
+      ],
+      "@watchdog/server/core/jobs": [
+        "./packages/server/core/src/jobs/index.ts"
+      ],
+      "@watchdog/server/core/maintenance": [
+        "./packages/server/core/src/maintenance/index.ts"
+      ],
+      "@watchdog/server/core/organization": [
+        "./packages/server/core/src/organization/index.ts"
+      ],
+      "@watchdog/server/core/proposal-display": [
+        "./packages/server/core/src/display/proposal-display.ts"
+      ],
+      "@watchdog/server/core/proposals": [
+        "./packages/server/core/src/proposals/index.ts"
+      ],
+      "@watchdog/server/core/search": [
+        "./packages/server/core/src/search/index.ts"
+      ],
+      "@watchdog/server/core/tasks": [
+        "./packages/server/core/src/tasks/index.ts"
+      ],
+      "@watchdog/server/core/vault": [
+        "./packages/server/core/src/vault/index.ts"
+      ],
+      "@watchdog/server/db": ["./packages/server/db/src/index.ts"],
+      "@watchdog/server/db/schema": [
+        "./packages/server/db/src/schema/index.ts"
+      ],
+      "@watchdog/server/db/testing": [
+        "./packages/server/db/src/testing/index.ts"
+      ],
+      "@watchdog/server/env/ai-origins": [
+        "./packages/server/env/src/ai-origins.ts"
+      ],
+      "@watchdog/server/env/breach-caps-mode": [
+        "./packages/server/env/src/breach-caps-mode.ts"
+      ],
+      "@watchdog/server/env/secrets": ["./packages/server/env/src/secrets.ts"],
+      "@watchdog/server/env/server": ["./packages/server/env/src/server.ts"],
+      "@watchdog/server/env/worker": ["./packages/server/env/src/worker.ts"],
+      "@watchdog/server/log": ["./packages/server/log/src/index.ts"],
+      "@watchdog/server/test-db": ["./packages/server/test-db/src/index.ts"]
     }
   }
 }

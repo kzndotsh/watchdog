@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useWorkCase } from "@/shared/hooks/use-route-case";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 type ConnectionRowProps = {
   edge: EdgeRecord;

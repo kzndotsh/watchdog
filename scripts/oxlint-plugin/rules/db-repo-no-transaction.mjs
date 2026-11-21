@@ -11,6 +11,6 @@ export const dbRepoNoTransaction = bansNode({
   test: (node) =>
     memberName(node.callee) === "transaction" ||
     calleeName(node) === "transact",
-  description: "Ban .transaction() and transact() in packages/db repos.",
+  description: "Ban .transaction() and transact() in packages/server/db repos.",
   message: `Repos must not open transactions: take exec: DbExec first and let the calling service own the boundary (transact) (${REPO_CONTRACT}).`,
 });

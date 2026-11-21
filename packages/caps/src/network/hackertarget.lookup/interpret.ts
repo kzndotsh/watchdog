@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { HackertargetLookupSnapshot } from "@watchdog/tools/network";
+import type { HackertargetLookupSnapshot } from "#tools/network";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

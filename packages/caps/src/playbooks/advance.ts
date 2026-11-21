@@ -4,7 +4,7 @@ import {
   type JsonObject,
   type PlaybookRunOutcome,
   type PlaybookStepState,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { playbookStepDependencies } from "./dependencies";
 import {

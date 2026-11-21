@@ -1,5 +1,7 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 
+import { Field, FieldLabel } from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -10,8 +12,6 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 type DestructiveConfirmDialogProps = {
   open: boolean;

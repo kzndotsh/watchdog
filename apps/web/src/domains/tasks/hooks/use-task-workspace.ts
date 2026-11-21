@@ -43,12 +43,12 @@ import {
   taskDeleteInputSchema as deleteTaskInputSchema,
   taskReorderInputSchema as reorderTasksInputSchema,
   type taskList,
-} from "@watchdog/schemas/feed";
+} from "@watchdog/domain/schemas/feed";
 import {
   isOpenTaskStatus,
   type FilterKey,
   type TaskStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 type TaskListDef = typeof taskList;
 

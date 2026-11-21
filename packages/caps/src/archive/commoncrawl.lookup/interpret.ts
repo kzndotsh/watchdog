@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { CommoncrawlLookupSnapshot } from "@watchdog/tools/archive";
+import type { CommoncrawlLookupSnapshot } from "#tools/archive";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

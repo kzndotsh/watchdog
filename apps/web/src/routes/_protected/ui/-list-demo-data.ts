@@ -1,6 +1,6 @@
 import { listView } from "@/shared/lib/list/list-view";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import { identifierList } from "@watchdog/schemas/graph";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { identifierList } from "@watchdog/domain/schemas/graph";
 import {
   CONFIDENCE_TIERS,
   EVIDENCE_KINDS,
@@ -12,7 +12,7 @@ import {
   type IdentifierStatus,
   type IdentifierType,
   type ListPage,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /*
  * In-memory lists for the `/ui` gallery: the real declarations (`identifierList`,

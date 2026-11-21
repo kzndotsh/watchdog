@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+import { Field, FieldError, FieldLabel } from "#ui/components/field";
+import { Textarea } from "#ui/components/textarea";
 import { BulkAddMapStage } from "@/domains/entities/components/bulk-add-map-stage";
 import { useBulkAddIdentifiersImport } from "@/domains/entities/hooks/use-bulk-add-identifiers-import";
 import { useBulkAddIdentifiersPaste } from "@/domains/entities/hooks/use-bulk-add-identifiers-paste";
@@ -22,8 +24,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 import { toast } from "@/shared/ui/toast";
-import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
-import { Textarea } from "@watchdog/ui/components/textarea";
 
 type Props = {
   open: boolean;

@@ -217,7 +217,7 @@ A kanban work item on a Case (backlog, in_progress, blocked, done, dropped); not
 _Avoid_: Job, ticket, to-do
 
 **Declared list**:
-A list screen or read whose filters, sorts and search are declared once in `@watchdog/schemas` (`defineList`), so the API, SQL, URL, CLI and toolbar share one canonical query. Search needs at least `SEARCH_MIN_QUERY_LENGTH` (2) characters; the first page carries a capped total. Detail: [`ADR-0007`](adr/0007-list-standard.md).
+A list screen or read whose filters, sorts and search are declared once in `@watchdog/domain/schemas` (`defineList`), so the API, SQL, URL, CLI and toolbar share one canonical query. Search needs at least `SEARCH_MIN_QUERY_LENGTH` (2) characters; the first page carries a capped total. Detail: [`ADR-0007`](adr/0007-list-standard.md).
 _Avoid_: Table, grid
 
 **Activity**:

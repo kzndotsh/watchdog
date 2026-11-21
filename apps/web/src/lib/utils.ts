@@ -1,4 +1,4 @@
-import { slugifyName as schemaSlugifyName } from "@watchdog/schemas/shared";
+import { slugifyName as schemaSlugifyName } from "@watchdog/domain/schemas/shared";
 
 /**
  * @canonical `cn`: Class merging

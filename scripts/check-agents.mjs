@@ -30,11 +30,10 @@ const MAX_ROOT_LINES = 120;
 const MAX_NESTED_LINES = 100;
 
 /**
- * The only directories with a nested guide: server-side code (`packages/core` covers core,
- * api, db, auth, policy, tools, log, env, schemas, the test harnesses and the worker), Caps
- * and web. Everything else an agent learns from the code, the root guide or a gate message.
+ * The only directories with a nested guide: the server workspace (`packages/server`, which
+ * also covers the server-facing parts of `packages/domain`), Caps and web. Everything else an agent learns from the code, the root guide or a gate message.
  */
-const NESTED_GUIDES = ["packages/core", "packages/caps", "apps/web"];
+const NESTED_GUIDES = ["packages/server", "packages/caps", "apps/web"];
 
 /** Source files that may carry an `@canonical` tag. */
 const CANONICAL_SOURCE = /^(apps|packages|scripts)\/.*\.(ts|tsx|mts|mjs)$/;

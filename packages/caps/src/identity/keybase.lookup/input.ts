@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { keybaseQuerySeedSchema } from "@watchdog/schemas/caps";
-import { optionalUuidSchema } from "@watchdog/schemas/shared";
+import { keybaseQuerySeedSchema } from "@watchdog/domain/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
 
 export const keybaseLookupInput = z.object({
   query: keybaseQuerySeedSchema.describe("Keybase username or domain"),

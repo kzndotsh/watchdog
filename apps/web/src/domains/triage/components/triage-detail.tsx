@@ -7,7 +7,7 @@ import { useTriageDetailForms } from "@/domains/triage/hooks/use-triage-detail-f
 import type { AcceptFormValues } from "@/domains/triage/types";
 import { useRecordsByIdsState } from "@/shared/hooks/use-picker-source";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 type TriageDetailProps = {
   proposal: ProposalRecord | null;

@@ -24,7 +24,7 @@ Which atom for which need, the keyboard contracts, and the traps. The atoms them
 
 Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dense icon actions use `xs`. Button icons use `data-icon="inline-start|inline-end"`. The full scale is `xs` h-5, `sm` h-6, default h-7, `lg` h-8 (a primary action in a card or a filter bar), the square `icon-xs` h-5, `icon-sm` h-6, `icon` h-7, `icon-lg` h-8, and `inline` (h-auto, no padding, with `variant="link"`, or `variant="link-muted"` for a quiet secondary link such as a section header's "Open") for a text link that sits in running text. Same-role buttons use the same size in every domain; the specimens are on `/ui` (Atoms, "Button").
 
-**Labels:** display labels for schema enums live in `shared/ui/vocab/` (exhaustive label and tone maps). `@watchdog/schemas` stays free of UI and the CLI emits raw enums. Tone maps reuse the existing `--status-*` tokens; a badge is named for its meaning (`ConfidenceBadge`), never its color. There is no fictional vocab (`probable`, `dormant`, `merged`): the label and tone maps are exhaustive `Record`s over the schema unions, so typecheck enforces it for them.
+**Labels:** display labels for schema enums live in `shared/ui/vocab/` (exhaustive label and tone maps). `@watchdog/domain/schemas` stays free of UI and the CLI emits raw enums. Tone maps reuse the existing `--status-*` tokens; a badge is named for its meaning (`ConfidenceBadge`), never its color. There is no fictional vocab (`probable`, `dormant`, `merged`): the label and tone maps are exhaustive `Record`s over the schema unions, so typecheck enforces it for them.
 
 ## Lists
 
@@ -47,7 +47,7 @@ Every declared list uses the same parts (`shared/ui/list/`, modelled on Cloudfla
 - `HOTKEYS` (`shared/lib/hotkeys.ts`) is the only definition of a shortcut: id, label, chord, description, and an `owner` saying who attaches the listener (`global`, `sidebar-provider`, `queue-keyboard`, `data-hotkey`). An `AppAction` names its chord with `hotkey: <id>` (never a chord string); `SearchChrome` builds its bindings with `hotkeyBindings` (the `global` owners, Mod+K and `?`), the palette lists the entries flagged `isPalette`, and the Shortcuts dialog renders every entry. The registry centralizes shortcut metadata only: a new entry still needs its owner-specific implementation (a runner in `SearchChrome`'s `hotkeyBindings` call for `global`, `hotkeyAttrs(id)` on a control for `data-hotkey`, the queue listener for `queue-keyboard`).
 - The composer's Mod+Enter save (`questions-section.tsx`) is a component-local shortcut outside the registry on purpose: it is not bound globally and is not listed in the Shortcuts dialog, and a registry entry would add it to that list. Its label still uses `useModKeyLabel`.
 - Mod+B is `sidebar-provider`: the vendored `SidebarProvider` binds it ([`vendor.md`](vendor.md)), so `hotkeyBindings` skips it and the menu/palette action only runs `toggleSidebar`. Don't bind it again (two listeners toggle twice and cancel out).
-- Mod-key text: `useModKeyLabel` / `formatChord(chord, label)`; never type `Ctrl` or the Apple glyph. The search minimum is `SEARCH_MIN_QUERY_LENGTH` (`@watchdog/schemas`), also in copy.
+- Mod-key text: `useModKeyLabel` / `formatChord(chord, label)`; never type `Ctrl` or the Apple glyph. The search minimum is `SEARCH_MIN_QUERY_LENGTH` (`@watchdog/domain/schemas`), also in copy.
 
 ## Accessibility
 

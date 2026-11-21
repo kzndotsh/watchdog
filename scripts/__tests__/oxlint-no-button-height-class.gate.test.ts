@@ -47,7 +47,7 @@ const FAIL = {
   "const-cn-ref.tsx": `${IMPORT}${CN}const CLS = cn("px-2", "h-8");\nexport const X = () => <Button className={CLS}>a</Button>;\n`,
   "aliased.tsx": `import { Button as Btn } from "${WRAPPER}";\nexport const X = () => <Btn className="h-8">a</Btn>;\n`,
   "namespace.tsx": `import * as B from "${WRAPPER}";\nexport const X = () => <B.Button className="h-8">a</B.Button>;\n`,
-  "vanilla.tsx": `import { Button } from "@watchdog/ui/components/button";\nexport const X = () => <Button className="h-8">a</Button>;\n`,
+  "vanilla.tsx": `import { Button } from "#ui/components/button";\nexport const X = () => <Button className="h-8">a</Button>;\n`,
   "spread-object.tsx": `${IMPORT}export const X = () => <Button {...{ className: "h-8" }}>a</Button>;\n`,
   "render-prop.tsx": `${IMPORT}export const X = () => <Trigger render={<Button className="h-7" />} />;\nfunction Trigger(_p: { render: unknown }) { return null; }\n`,
   "multiline.tsx": `${IMPORT}export const X = () => (\n  <Button\n    variant="ghost"\n    className="text-xs\n      h-6"\n  >\n    a\n  </Button>\n);\n`,
@@ -91,7 +91,7 @@ beforeAll(() => {
   fixture.write(`${SRC}/shared/ui/primitives/own.tsx`, FAIL["literal.tsx"]);
   fixture.write(`${DIR}/__tests__/probe.test.tsx`, FAIL["literal.tsx"]);
   fixture.write(`${DIR}/probe.test.tsx`, FAIL["literal.tsx"]);
-  fixture.write("packages/ui/src/probe.tsx", FAIL["literal.tsx"]);
+  fixture.write("apps/web/ui/src/probe.tsx", FAIL["literal.tsx"]);
 
   result = fixture.lint([SRC, "packages"]);
 }, LINT_TIMEOUT_MS);
@@ -128,6 +128,6 @@ describe("no height utilities on Button (no-button-height-class)", () => {
     expect(hits(`${SRC}/shared/ui/primitives/own.tsx`)).toHaveLength(0);
     expect(hits(`${DIR}/__tests__/probe.test.tsx`)).toHaveLength(0);
     expect(hits(`${DIR}/probe.test.tsx`)).toHaveLength(0);
-    expect(hits("packages/ui/src/probe.tsx")).toHaveLength(0);
+    expect(hits("apps/web/ui/src/probe.tsx")).toHaveLength(0);
   });
 });

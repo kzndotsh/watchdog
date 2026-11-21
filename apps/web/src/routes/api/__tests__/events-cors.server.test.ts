@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -11,19 +11,23 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   configuredTrustedOrigins: () => ["https://app.example.test"],
   createApiContext: vi.fn().mockResolvedValue({ actor: null }),
 }));
 
-vi.mock("@watchdog/api", () => ({ runAppAs: () => vi.fn() }));
-vi.mock("@watchdog/core/activity", () => ({
+vi.mock("@watchdog/server/api", () => ({ runAppAs: () => vi.fn() }));
+vi.mock("@watchdog/server/core/activity", () => ({
   ActivityTailer: {},
   replayActivityEffect: vi.fn(),
 }));
-vi.mock("@watchdog/core/graph", () => ({ assertCaseInOrgEffect: vi.fn() }));
-vi.mock("@watchdog/core/cases", () => ({ listVisibleCaseIdsEffect: vi.fn() }));
-vi.mock("@watchdog/log", () => ({ createLogger: vi.fn() }));
+vi.mock("@watchdog/server/core/graph", () => ({
+  assertCaseInOrgEffect: vi.fn(),
+}));
+vi.mock("@watchdog/server/core/cases", () => ({
+  listVisibleCaseIdsEffect: vi.fn(),
+}));
+vi.mock("@watchdog/server/log", () => ({ createLogger: vi.fn() }));
 
 import { Route } from "@/routes/api/events";
 

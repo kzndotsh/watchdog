@@ -1,4 +1,4 @@
-import { fixedContactHost } from "@watchdog/schemas/caps";
+import { fixedContactHost } from "@watchdog/domain/schemas/caps";
 
 import { CAPABILITIES } from "./registry";
 import type { CapProvider, RedistributionVerdict } from "./sdk";

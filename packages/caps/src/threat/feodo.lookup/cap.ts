@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { normalizeIp } from "@watchdog/tools/normalize";
+import { normalizeIp } from "#tools/normalize";
 import {
   fetchFeodoLookupEffect,
   feodoLookupSnapshotSchema,
-} from "@watchdog/tools/threat";
+} from "#tools/threat";
 
 import { abuseChAuthKey } from "../../credentials";
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";

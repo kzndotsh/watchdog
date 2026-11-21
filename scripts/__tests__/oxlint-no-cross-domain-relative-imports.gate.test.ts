@@ -61,7 +61,7 @@ const OK: Record<string, string> = {
   "domains/entities/claims/same-domain-child.ts": imp("../edges/types"),
   "domains/cases/components/alias-domain.ts": imp("@/domains/entities/lib/a"),
   "domains/cases/components/alias-shared.ts": imp("@/shared/ui/a"),
-  "domains/cases/components/package.ts": imp("@watchdog/schemas/shared"),
+  "domains/cases/components/package.ts": imp("@watchdog/domain/schemas/shared"),
   "domains/cases/components/bare.ts": imp("zod"),
   "domains/cases/components/outside-src.ts": imp("../../../../e2e/a"),
   "domains/cases/components/dynamic-variable.ts":
@@ -82,7 +82,7 @@ beforeAll(() => {
     fixture.write(`${SRC}/${name}`, source);
   }
   fixture.write(
-    "packages/core/src/domains/cases/x.ts",
+    "packages/server/core/src/domains/cases/x.ts",
     imp("../../entities/lib/a")
   );
   result = fixture.lint([SRC, "packages"]);
@@ -111,7 +111,7 @@ describe("cross-domain imports use the alias (no-cross-domain-relative-imports)"
 
   it("ignores trees outside apps/web/src/domains", () => {
     expect(
-      findingsFor(result, "packages/core/src/domains/cases/x.ts", RULE)
+      findingsFor(result, "packages/server/core/src/domains/cases/x.ts", RULE)
     ).toHaveLength(0);
   });
 });

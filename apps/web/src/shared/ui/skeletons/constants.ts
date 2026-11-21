@@ -1,4 +1,4 @@
-import { TASK_STATUSES } from "@watchdog/schemas/shared";
+import { TASK_STATUSES } from "@watchdog/domain/schemas/shared";
 
 /** Median visible rows for entity/identifier tables. */
 export const TABLE_BODY_SKELETON_ROW_COUNT = 8;

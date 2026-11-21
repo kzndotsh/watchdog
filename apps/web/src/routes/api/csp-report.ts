@@ -10,7 +10,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { handleCspReport, type CspViolation } from "@/lib/csp-report.server";
-import { createLogger } from "@watchdog/log";
+import { createLogger } from "@watchdog/server/log";
 
 function logViolation(violation: CspViolation): void {
   const log = createLogger({ scope: "csp.report" });

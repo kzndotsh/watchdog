@@ -1,7 +1,7 @@
 import { partialMatchKey, type QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/domain/schemas/shared";
 
 const streamMock = vi.hoisted(() => ({
   handlers: undefined as
@@ -34,10 +34,13 @@ import { proposalsKeys } from "@/domains/triage/queries";
 import {
   ACTIVITY_ENTRY_ACTIONS,
   ACTIVITY_ENTRY_KINDS,
-} from "@watchdog/schemas/feed";
-import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+} from "@watchdog/domain/schemas/feed";
+import type {
+  ActivityEntry,
+  ActivityEntryKind,
+} from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const CASE_A = testCaseId(10);
 const CASE_B = testCaseId(11);

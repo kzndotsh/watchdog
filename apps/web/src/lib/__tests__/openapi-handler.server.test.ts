@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const { handleMock, OpenAPIHandler } = vi.hoisted(() => {
   const handleMock = vi.fn();
@@ -30,14 +30,14 @@ vi.mock("@orpc/zod/zod4", () => ({
   ZodToJsonSchemaConverter: vi.fn(),
 }));
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   configuredTrustedOrigins: () => [
     "https://app.example.test",
     "https://admin.example.test",
   ],
 }));
 
-vi.mock("@watchdog/api", () => ({
+vi.mock("@watchdog/server/api", () => ({
   router: {},
   openApiSpecGenerateOptions: () => ({}),
   responsePlugins: () => [],

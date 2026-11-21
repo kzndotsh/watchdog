@@ -17,7 +17,7 @@ Open flakes:
 
 | Issue | Test | Symptom |
 | --- | --- | --- |
-| [#276](https://github.com/kzndotsh/watchdog/issues/276) | `packages/core/src/graph/__tests__/graph-activity.int.test.ts` "a failing op leaves no entry from the ops before it" | 7 activity entries where 6 were expected, once in about 87 integration runs |
+| [#276](https://github.com/kzndotsh/watchdog/issues/276) | `packages/server/core/src/graph/__tests__/graph-activity.int.test.ts` "a failing op leaves no entry from the ops before it" | 7 activity entries where 6 were expected, once in about 87 integration runs |
 
 Add a row when you file a flake and delete it when its issue closes with a fix.
 

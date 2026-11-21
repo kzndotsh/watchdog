@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveEgressClasses } from "@watchdog/schemas/caps";
-import { PGP_KEYSERVERS } from "@watchdog/tools/identity";
+import { PGP_KEYSERVERS } from "#tools/identity";
+import { deriveEgressClasses } from "@watchdog/domain/schemas/caps";
 
 import { redistributionVerdictFor } from "../../../redistribution";
 import { pgpLookup } from "../cap.ts";

@@ -1,0 +1,233 @@
+import { beforeEach, describe, expect, it } from "vitest";
+
+import { activityLogRepo, jobsRepo } from "#db";
+import {
+  listCaseEvidence,
+  resetTestDb,
+  seedCase,
+  seedEvidence,
+  seedJob,
+  testDb as db,
+} from "#test-db";
+import { requireCapability } from "@watchdog/caps";
+
+import { Db } from "../../infra/db-service";
+import { runDomainWith } from "../../infra/run-domain";
+import { createJobLog } from "../job-log.ts";
+import type { CollectResult } from "../stages/collect.ts";
+import { landEvidenceEffect } from "../stages/land-evidence.ts";
+import type { PreflightState } from "../stages/preflight.ts";
+
+// The landing and cache stages run inside a Job's organization scope (`inJobOrganization`, #719):
+// these tests call them directly, so the pool is in the test organization's scope.
+const runDomain = runDomainWith(Db.layerOf(db));
+
+async function evidenceEntries() {
+  const rows = await activityLogRepo.drain(db, {
+    after: { xid: "0", id: 0 },
+    limit: 1000,
+  });
+  return rows.filter((row) => row.kind === "evidence");
+}
+
+function sha(): string {
+  return "cd".repeat(32);
+}
+
+async function stateFor(jobId: string): Promise<PreflightState> {
+  const job = await jobsRepo.get(db, jobId);
+  if (!job) throw new Error("job missing");
+  const cap = requireCapability("network.dns.lookup");
+  return {
+    jobId,
+    job,
+    capVersion: "test-version",
+    cap,
+    policy: cap.jobPolicy ?? {},
+    input: { host: "example.com" },
+    reclaimArtifacts: null,
+    reclaimEvidenceIds: [],
+  };
+}
+
+function collected(overrides: Partial<CollectResult> = {}): CollectResult {
+  const jobLog = createJobLog();
+  return {
+    artifacts: [
+      {
+        name: "snapshot.html",
+        mime: "text/html",
+        uri: "case/snap.html",
+        sha256: sha(),
+      },
+      {
+        name: "report.json",
+        mime: "application/json",
+        uri: "case/report.json",
+        sha256: sha(),
+      },
+    ],
+    evidenceIds: [],
+    fromCache: false,
+    reclaim: false,
+    providerCallIds: [],
+    cacheSourceJobId: null,
+    runtime: {
+      scratchDir: "/tmp",
+      signal: new AbortController().signal,
+      jobLog,
+      evidenceSnapshot: undefined,
+      linkedSource: undefined,
+      cacheTtlMs: null,
+      inputHash: null,
+    },
+    ...overrides,
+  };
+}
+
+describe("landEvidence", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("lands non-internal artifacts and skips report.json", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const result = collected();
+
+    const ids = await runDomain(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
+
+    expect(ids).toHaveLength(1);
+    const rows = await listCaseEvidence(db, cased.id);
+    expect(rows.some((row) => row.label === "snapshot.html")).toBe(true);
+    expect(rows.some((row) => row.label === "report.json")).toBe(false);
+
+    const updated = await jobsRepo.get(db, job.id);
+    expect(updated?.evidenceIds).toEqual(ids);
+  });
+
+  it("is a no-op for reclaim", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const existing = ["11111111-1111-4111-8111-000000000099"];
+    const result = collected({
+      reclaim: true,
+      evidenceIds: existing,
+    });
+
+    const ids = await runDomain(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
+    expect(ids).toEqual(existing);
+
+    const rows = await listCaseEvidence(db, cased.id);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("lands cached artifacts when the source Job has no evidenceIds", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const result = collected({
+      fromCache: true,
+      evidenceIds: [],
+    });
+
+    const ids = await runDomain(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
+
+    expect(ids).toHaveLength(1);
+    const rows = await listCaseEvidence(db, cased.id);
+    expect(rows.some((row) => row.label === "snapshot.html")).toBe(true);
+
+    const updated = await jobsRepo.get(db, job.id);
+    expect(updated?.evidenceIds).toEqual(ids);
+  });
+
+  it("is a no-op for cache hits", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const existing = ["11111111-1111-4111-8111-000000000098"];
+    const result = collected({
+      fromCache: true,
+      evidenceIds: existing,
+    });
+
+    const ids = await runDomain(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
+    expect(ids).toEqual(existing);
+
+    const rows = await listCaseEvidence(db, cased.id);
+    expect(rows).toHaveLength(0);
+  });
+
+  it("appends one captured entry per landed Evidence row", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+
+    const ids = await runDomain(
+      landEvidenceEffect(await stateFor(job.id), collected())
+    );
+
+    const rows = await evidenceEntries();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      action: "captured",
+      subjectId: ids[0],
+      caseId: cased.id,
+      label: "snapshot.html",
+      actorId: job.actorId,
+    });
+  });
+
+  it("appends nothing when only linking source evidence", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const sourceId = (await seedEvidence(db, cased.id)).id;
+    const before = await evidenceEntries();
+
+    await runDomain(
+      landEvidenceEffect(
+        await stateFor(job.id),
+        collected({
+          artifacts: [
+            {
+              name: "report.json",
+              mime: "application/json",
+              uri: "case/report.json",
+              sha256: sha(),
+            },
+          ],
+          runtime: {
+            ...collected().runtime,
+            linkedSource: sourceId,
+          },
+        })
+      )
+    );
+
+    expect(await evidenceEntries()).toEqual(before);
+  });
+
+  it("appends nothing when reusing cached evidence ids", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const cachedId = (await seedEvidence(db, cased.id)).id;
+    const before = await evidenceEntries();
+
+    await runDomain(
+      landEvidenceEffect(
+        await stateFor(job.id),
+        collected({
+          fromCache: true,
+          evidenceIds: [cachedId],
+        })
+      )
+    );
+
+    expect(await evidenceEntries()).toEqual(before);
+  });
+});

@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchLeakradarLookupEffect,
   leakradarLookupSnapshotSchema,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { leakradar } from "../../providers";

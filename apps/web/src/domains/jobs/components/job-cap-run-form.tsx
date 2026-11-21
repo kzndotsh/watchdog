@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import type { SubmitEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
+import { Input } from "#ui/components/input";
 import type { CaseEgress } from "@/domains/cases/types";
 import { CapCapabilitySelect } from "@/domains/jobs/components/cap-capability-select";
 import { EgressBlockNotice } from "@/domains/jobs/components/egress-block-notice";
@@ -20,8 +22,6 @@ import { Button } from "@/shared/ui/primitives/button";
 import { SearchedEntityCombobox } from "@/shared/ui/searched-entity-combobox";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { FieldError } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
 
 type CapRunFormValues = {
   capabilityId: string;

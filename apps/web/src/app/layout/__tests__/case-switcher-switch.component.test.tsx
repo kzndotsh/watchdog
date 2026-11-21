@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LAST_CASE_STORAGE_KEY } from "@/domains/cases/lib/active-case";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
@@ -35,7 +35,7 @@ vi.mock("@/app/lib/query-invalidation", () => ({
   invalidateAfterCaseSwitch: vi.fn(),
 }));
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -60,7 +60,7 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   useSidebar: () => ({ state: "expanded", isMobile: false }),
 }));
 
-vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
+vi.mock("#ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

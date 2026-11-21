@@ -3,6 +3,14 @@ import { format, isValid, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
+import { Calendar } from "#ui/components/calendar";
+import { FieldError } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "#ui/components/popover";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { RowHistory } from "@/domains/dossier/components/row-history";
@@ -31,16 +39,8 @@ import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
-import type { eventList } from "@watchdog/schemas/graph";
-import type { UnfixedSearchPatch } from "@watchdog/schemas/shared";
-import { Calendar } from "@watchdog/ui/components/calendar";
-import { FieldError } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
+import type { eventList } from "@watchdog/domain/schemas/graph";
+import type { UnfixedSearchPatch } from "@watchdog/domain/schemas/shared";
 
 type EventFormValues = {
   when: string;

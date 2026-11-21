@@ -1,7 +1,7 @@
 /**
  * Proves the real `oxlint.config.ts` only lets tests and test-helper trees import the
  * unvalidated brand stampers `untrustedCaseId` / `untrustedOrganizationId` from
- * `@watchdog/schemas/testing` (ADR-0003). Probe files are written into a throwaway
+ * `@watchdog/domain/schemas/testing` (ADR-0003). Probe files are written into a throwaway
  * repo that carries the real config and plugin (helpers/oxlint-fixture.ts).
  */
 import { beforeAll, describe, expect, it } from "vitest";
@@ -14,18 +14,18 @@ import {
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const RULE = "watchdog/no-untrusted-id-import";
-const PROD = "packages/core/src/probe";
-const SCHEMAS_TESTING = "packages/schemas/src/testing/probe";
+const PROD = "packages/server/core/src/probe";
+const SCHEMAS_TESTING = "packages/domain/schemas/src/testing/probe";
 const CAPS_TESTING = "packages/caps/src/testing/probe";
 
 const IMPORT =
-  'import { untrustedCaseId } from "@watchdog/schemas/testing";\n\nexport const a = untrustedCaseId("x");\n';
+  'import { untrustedCaseId } from "@watchdog/domain/schemas/testing";\n\nexport const a = untrustedCaseId("x");\n';
 const IMPORT_FIXTURES =
-  'import { untrustedOrganizationId as o } from "@watchdog/schemas/testing";\n\nexport const a = o("x");\n';
+  'import { untrustedOrganizationId as o } from "@watchdog/domain/schemas/testing";\n\nexport const a = o("x");\n';
 const REEXPORT =
-  'export { untrustedOrganizationId } from "@watchdog/schemas/testing";\n';
+  'export { untrustedOrganizationId } from "@watchdog/domain/schemas/testing";\n';
 const SAFE =
-  'import { testCaseId } from "@watchdog/schemas/testing";\n\nexport const a = testCaseId(1);\n';
+  'import { testCaseId } from "@watchdog/domain/schemas/testing";\n\nexport const a = testCaseId(1);\n';
 
 const createFixture = oxlintFixtureFactory();
 
@@ -62,7 +62,7 @@ describe("untrusted id helper import ban (oxlint.config.ts)", () => {
   it("allows __tests__ directories", () => {
     expect(hitsFor(`${PROD}/__tests__/in-tests-dir.ts`)).toHaveLength(0);
   });
-  it("allows packages/schemas testing and caps testing helpers", () => {
+  it("allows packages/domain/schemas testing and caps testing helpers", () => {
     expect(hitsFor(`${SCHEMAS_TESTING}/kit.ts`)).toHaveLength(0);
     expect(hitsFor(`${CAPS_TESTING}/helper.ts`)).toHaveLength(0);
   });

@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { EvidenceCiteChips } from "@/domains/triage/components/evidence-cite-chips";
 import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const OPTION = {
   id: testId(1),

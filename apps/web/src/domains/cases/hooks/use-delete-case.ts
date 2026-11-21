@@ -7,7 +7,7 @@ import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { orpc } from "@/lib/orpc-client";
 import { couldnt, errMessage } from "@/lib/utils";
-import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
+import { deleteCaseInputSchema } from "@watchdog/domain/schemas/cases";
 
 /**
  * Delete a Case (a tombstone: it moves to Deleted Cases and can be restored), then take it out

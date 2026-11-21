@@ -7,9 +7,9 @@ vi.mock("@/lib/orpc-client", async () =>
 
 import { claimListView, claimsKeys } from "@/domains/entities/claims/queries";
 import { procedureDouble } from "@/testing/orpc-client";
-import { claimList } from "@watchdog/schemas/graph";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { claimList } from "@watchdog/domain/schemas/graph";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listClaims = procedureDouble("claims.list");
 

@@ -5,7 +5,7 @@ import {
   graphCanvasDotStyle,
 } from "@/shared/ui/graph/graph-canvas-background";
 import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/domain/schemas/shared";
 
 /** Triangle scatter — center points in % of canvas (x, y). */
 const SKELETON_NODES = [

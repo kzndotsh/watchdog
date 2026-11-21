@@ -1,20 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { FolderIcon, LayoutDashboardIcon } from "lucide-react";
 
-import { CASE_NAV_ITEMS, WORK_TO } from "@/config/nav";
-import type { CaseRecord } from "@/domains/cases/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
+} from "#ui/components/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@watchdog/ui/components/sidebar";
+} from "#ui/components/sidebar";
+import { CASE_NAV_ITEMS, WORK_TO } from "@/config/nav";
+import type { CaseRecord } from "@/domains/cases/types";
 
 import { CasePickerItems } from "./case-picker-items";
 

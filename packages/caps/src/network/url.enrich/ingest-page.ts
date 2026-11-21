@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
-import type { ToolsTag } from "@watchdog/tools/errors";
+import type { ToolsTag } from "#tools/errors";
 import {
   decodeHtml,
   extractOutboundFromHtml,
@@ -11,8 +11,8 @@ import {
   htmlToText,
   isHtml,
   isMarkdown,
-} from "@watchdog/tools/html";
-import type { FetchBytesResult } from "@watchdog/tools/http";
+} from "#tools/html";
+import type { FetchBytesResult } from "#tools/http";
 
 import type { CapArtifact } from "../../sdk";
 import { fetchBytesEffect } from "./fetch-bytes";

@@ -1,7 +1,7 @@
 import { isRecord } from "../lib/ast.mjs";
 
 const MESSAGE =
-  "A Job's status changes only through the lifecycle module (packages/core/src/jobs/lifecycle/: settleJobEffect, cancelWithin, stop, run, reconcileJobsEffect); only `jobsRepo.settle` (db jobs-settle.repo.ts; also through `jobsRepoFx`) writes it, and only lifecycle/settle.ts calls that. Admission may insert a `queued` Job.";
+  "A Job's status changes only through the lifecycle module (packages/server/core/src/jobs/lifecycle/: settleJobEffect, cancelWithin, stop, run, reconcileJobsEffect); only `jobsRepo.settle` (db jobs-settle.repo.ts; also through `jobsRepoFx`) writes it, and only lifecycle/settle.ts calls that. Admission may insert a `queued` Job.";
 
 /** The repo that settles, and its Effect modules (`infra/repos-fx.ts`), which make the same write. */
 const SETTLE_REPOS = new Set([

@@ -1,5 +1,12 @@
 import { ClipboardIcon, DownloadIcon } from "lucide-react";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "#ui/components/dropdown-menu";
 import { OpenInDialog } from "@/domains/dossier/components/open-in-dialog";
 import { useOpenIn } from "@/domains/dossier/hooks/use-open-in";
 import { copyEntityMarkdown } from "@/domains/entities/lib/entity-export";
@@ -7,13 +14,6 @@ import { couldnt, errMessage } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
 
 async function handleCopyMarkdown(caseId: string, entitySlug: string) {
   try {

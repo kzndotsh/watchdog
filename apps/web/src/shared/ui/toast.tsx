@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { toast as toastManager, Toaster } from "@watchdog/ui/components/toast";
+import { toast as toastManager, Toaster } from "#ui/components/toast";
 
 export { Toaster };
 

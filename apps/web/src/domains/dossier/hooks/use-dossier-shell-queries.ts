@@ -11,14 +11,14 @@ import { evidenceByIdQuery, evidenceListView } from "@/domains/intake/queries";
 import { taskBoardCount } from "@/domains/tasks/lib/board-count";
 import { taskBoardQuery } from "@/domains/tasks/queries";
 import { useListCount } from "@/shared/hooks/list/use-list-count";
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 import {
   claimList,
   edgeList,
   eventList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 /**
  * The Dossier shell's reads: each list tab's count is the first page's `total` of the tab's

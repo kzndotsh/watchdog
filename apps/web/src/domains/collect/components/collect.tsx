@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "@tanstack/react-router";
 import { useMemo, type ReactNode } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "#ui/components/alert";
+import { FieldError } from "#ui/components/field";
+import { Separator } from "#ui/components/separator";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
 import { CollectDetail } from "@/domains/collect/components/collect-detail";
@@ -48,13 +51,6 @@ import {
 } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
 import { capabilityLabel, playbookLabel } from "@/shared/ui/vocab";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@watchdog/ui/components/alert";
-import { FieldError } from "@watchdog/ui/components/field";
-import { Separator } from "@watchdog/ui/components/separator";
 
 const EMPTY_CAPS: CapListItem[] = [];
 const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];

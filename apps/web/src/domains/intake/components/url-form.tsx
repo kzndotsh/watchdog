@@ -1,15 +1,15 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
-import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
-import { Button } from "@/shared/ui/primitives/button";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
+} from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
+import { Button } from "@/shared/ui/primitives/button";
 
 export type UrlFormProps = {
   disabled: boolean;

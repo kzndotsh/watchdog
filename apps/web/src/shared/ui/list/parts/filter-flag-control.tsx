@@ -1,5 +1,5 @@
-import type { FlagFilter } from "@watchdog/schemas/shared";
-import { Switch } from "@watchdog/ui/components/switch";
+import { Switch } from "#ui/components/switch";
+import type { FlagFilter } from "@watchdog/domain/schemas/shared";
 
 type FilterFlagControlProps = {
   readonly filter: FlagFilter;

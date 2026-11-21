@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react";
 
+import { ComboboxInput as BaseComboboxInput } from "#ui/components/combobox";
 import { cn } from "@/lib/utils";
-import { ComboboxInput as BaseComboboxInput } from "@watchdog/ui/components/combobox";
 
-export * from "@watchdog/ui/components/combobox";
+export * from "#ui/components/combobox";
 
 /** Upstream ComboboxInput + `tone="warning"` (needs attention, e.g. third-party egress). */
 export function ComboboxInput({

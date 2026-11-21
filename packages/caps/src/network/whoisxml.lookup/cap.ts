@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import { normalizeHost } from "@watchdog/tools/normalize";
-import {
-  fetchWhoisXmlEffect,
-  whoisSnapshotSchema,
-} from "@watchdog/tools/whois";
+import { normalizeHost } from "#tools/normalize";
+import { fetchWhoisXmlEffect, whoisSnapshotSchema } from "#tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisxml } from "../../providers";

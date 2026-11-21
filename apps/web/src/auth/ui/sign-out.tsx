@@ -4,8 +4,8 @@ import { useAuth, useSignOut } from "@better-auth-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
+import { Spinner } from "#ui/components/spinner";
 import { cn } from "@/lib/utils";
-import { Spinner } from "@watchdog/ui/components/spinner";
 
 export interface SignOutProps {
   className?: string;

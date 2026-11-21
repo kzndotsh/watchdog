@@ -2,6 +2,14 @@ import { useSelector } from "@tanstack/react-form";
 import { LinkIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "#ui/components/popover";
+import { TableCell } from "#ui/components/table";
 import { cn } from "@/lib/utils";
 import {
   useRecordsByIds,
@@ -39,26 +47,18 @@ import {
   identifierPlatformOptionMatchesQuery,
   CONFIDENCE_OPTIONS,
 } from "@/shared/ui/vocab";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import {
   validateIdentifierWrite,
   HANDLE_REQUIRES_PLATFORM,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
-import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@watchdog/ui/components/popover";
-import { TableCell } from "@watchdog/ui/components/table";
+} from "@watchdog/domain/schemas/shared";
 
 function identifierWriteError(
   type: IdentifierType,

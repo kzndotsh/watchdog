@@ -41,7 +41,7 @@ pre-push:
     gate-tests:
       glob:
         - "scripts/**"
-        - "packages/db/scripts/**"
+        - "packages/server/db/scripts/**"
         - "lefthook.yml"
         - ".github/workflows/**"
         - "vitest.config.ts"

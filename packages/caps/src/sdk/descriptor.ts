@@ -4,13 +4,13 @@ import {
   deriveEgressClasses,
   isThirdPartyEgress,
   type CapContact,
-} from "@watchdog/schemas/caps";
+} from "@watchdog/domain/schemas/caps";
 import {
   isJsonObject,
   type EgressClass,
   type JsonObject,
   type JsonValue,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type {
   CapAuthoredFlag,

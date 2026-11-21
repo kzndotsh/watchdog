@@ -4,8 +4,8 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   DEFAULT_ALLOWED_EGRESS,
   allowsEgressClass,
-} from "@watchdog/schemas/caps";
-import type { EgressClass } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/caps";
+import type { EgressClass } from "@watchdog/domain/schemas/shared";
 
 type EvidenceHeaderActionsProps = {
   isHidden: boolean;

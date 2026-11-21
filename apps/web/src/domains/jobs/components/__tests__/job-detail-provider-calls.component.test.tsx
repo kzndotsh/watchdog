@@ -16,7 +16,7 @@ import {
   buildProviderCallRecord,
 } from "@/testing/records";
 import { RouteCaseProvider } from "@/testing/route-case";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listJobProviderCallsFn = procedureDouble("jobs.listProviderCalls");
 

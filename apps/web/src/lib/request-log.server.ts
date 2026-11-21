@@ -1,6 +1,6 @@
 /**
  * One wide event per HTTP request at the edge of the production server (`scripts/serve.mjs`),
- * through `@watchdog/log` like every other process log. Fields are method, path, status,
+ * through `@watchdog/server/log` like every other process log. Fields are method, path, status,
  * `durationMs` and the caller's `x-request-id` when it is a plain token. The path never carries a
  * query string, and request headers (cookies, authorization), the query and bodies are never
  * read into the event.
@@ -72,7 +72,7 @@ async function emitRequestLog(
   level: "debug" | "info"
 ): Promise<void> {
   await import("../evlog-init.server");
-  const { createLogger } = await import("@watchdog/log");
+  const { createLogger } = await import("@watchdog/server/log");
   const log = createLogger({ scope: "http.request" });
   if (fields.status >= 500) log.setLevel("error");
   else if (fields.status >= 400) log.setLevel("warn");

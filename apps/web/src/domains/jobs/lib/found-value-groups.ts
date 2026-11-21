@@ -1,8 +1,8 @@
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 import {
   IDENTIFIER_TYPE_LABELS,
   type IdentifierType,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** A type group of the Found tab: "Domain (213)". */
 export type FoundValueGroup = {

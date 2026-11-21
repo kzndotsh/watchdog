@@ -8,9 +8,9 @@ import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-ac
 import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import { buildJobListRecord, buildJobRecord } from "@/testing/records";
 import { render, screen, within } from "@/testing/render-in-case";
-import type { PlaybookRunView } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import type { PlaybookRunView } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (

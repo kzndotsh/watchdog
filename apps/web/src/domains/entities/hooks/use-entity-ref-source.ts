@@ -4,7 +4,7 @@ import { entityPickerPort } from "@/domains/entities/queries";
 import { usePickerSource } from "@/shared/hooks/use-picker-source";
 import type { ListOption, ListRefSource } from "@/shared/lib/list/list-types";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { entityDisplayLabel } from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/domain/schemas/shared";
 
 function optionOf(entity: EntityOption): ListOption {
   return {

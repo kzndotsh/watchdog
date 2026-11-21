@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
-import { BlockedTargetError } from "@watchdog/tools/errors";
+import { BlockedTargetError } from "#tools/errors";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { createCapRunHarness, createRecordedRun } from "../../../testing";
 import { extractAi } from "../cap.ts";

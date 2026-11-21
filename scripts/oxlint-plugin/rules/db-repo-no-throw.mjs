@@ -4,6 +4,6 @@ import { bansNode, REPO_CONTRACT } from "../lib/db-repo.mjs";
 export const dbRepoNoThrow = bansNode({
   type: "ThrowStatement",
   test: () => true,
-  description: "Ban throw in packages/db repos.",
+  description: "Ban throw in packages/server/db repos.",
   message: `Repos must not throw: return null / [] and let the service decide 404 vs conflict; unique-violation mapping lives in core (tryDb / mapPostgresCatch) (${REPO_CONTRACT}).`,
 });

@@ -13,7 +13,7 @@ import {
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 
 /** Evidence rows the Case overview's Recent activity shows. */
 const RECENT_EVIDENCE_LIMIT = 12;

@@ -10,8 +10,8 @@ import { jobDetailQuery, jobsRecentQuery } from "@/domains/jobs/queries";
 import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
 import { buildJobListRecord, buildJobRecord } from "@/testing/records";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listForCase = procedureDouble("jobs.listForCase");
 

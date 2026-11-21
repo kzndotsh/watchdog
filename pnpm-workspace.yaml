@@ -2,11 +2,10 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# Default catalog: every dependency declared by two or more workspace packages.
-# Packages reference it as `"name": "catalog:"`; change a version here, once.
-# A dependency used by a single package keeps its literal range in that package.
-# Peer ranges stay literal (a catalog would force the exact range on consumers).
-# `pnpm check:workspace` (sherif + scripts/check-catalog.mjs) fails on drift.
+# Default catalog: shared dependency versions. A workspace references an entry as
+# `"name": "catalog:"`; change a version here, once. Peer ranges stay literal (a catalog
+# would force the exact range on consumers). `pnpm check:workspace` (sherif) fails when two
+# workspaces declare different versions of one dependency.
 catalog:
   "@base-ui/react": "^1.9.0"
   "@better-auth/api-key": "1.7.25"

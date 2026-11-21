@@ -42,7 +42,8 @@ let configured: CorsAllowlist | undefined;
 /** The allowlist of this install: Better Auth's trusted origins, read once. */
 export async function configuredCorsAllowlist(): Promise<CorsAllowlist> {
   if (configured === undefined) {
-    const { configuredTrustedOrigins } = await import("@watchdog/auth/server");
+    const { configuredTrustedOrigins } =
+      await import("@watchdog/server/auth/server");
     configured = corsAllowlist(configuredTrustedOrigins());
   }
   return configured;

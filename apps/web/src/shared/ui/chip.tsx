@@ -1,8 +1,8 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- size tokens + chip component */
 import type { ComponentProps } from "react";
 
+import { Badge } from "#ui/components/badge";
 import { cn } from "@/lib/utils";
-import { Badge } from "@watchdog/ui/components/badge";
 
 export type ChipSize = "sm" | "md";
 

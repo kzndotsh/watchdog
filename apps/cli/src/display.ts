@@ -2,13 +2,13 @@ import {
   capabilityIdLabel,
   egressClassLabel,
   playbookIdLabel,
-} from "@watchdog/schemas/caps";
-import { type PatchOp, patchOpHeadline } from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/caps";
+import { type PatchOp, patchOpHeadline } from "@watchdog/domain/schemas/graph";
 import {
   proposalEntityName,
   summarizeJobInput,
   type PlaybookRunView,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   type EgressClass,
   type JobStatus,
@@ -30,7 +30,7 @@ import {
   parseTrimmedUuid,
   predicateLabel,
   titleCase,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 function labelFromMap(value: string, labels: Record<string, string>): string {
   return labels[value] ?? titleCase(value);

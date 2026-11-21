@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas/shared";
+import {
+  httpUrlSchema,
+  optionalUuidSchema,
+} from "@watchdog/domain/schemas/shared";
 
 import {
   AFTER_BEFORE_MESSAGE,

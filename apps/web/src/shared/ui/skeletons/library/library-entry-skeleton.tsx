@@ -1,3 +1,4 @@
+import { Skeleton } from "#ui/components/skeleton";
 import {
   LIBRARY_ENTRY_COLUMNS_CLASS,
   LIBRARY_ENTRY_PAGE_CLASS,
@@ -7,7 +8,6 @@ import {
   LIBRARY_ENTRY_BOX_CLASS,
   LIBRARY_ENTRY_MAIN_CLASS,
 } from "@/shared/ui/library-shell";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 const FLOW_BOX_COUNT = 3;
 const ASIDE_ROW_COUNT = 5;

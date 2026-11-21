@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import type { JobPivots } from "@watchdog/schemas/shared";
-import {
-  fetchUnshortenEffect,
-  unshortenSnapshotSchema,
-} from "@watchdog/tools/http";
+import { fetchUnshortenEffect, unshortenSnapshotSchema } from "#tools/http";
+import type { JobPivots } from "@watchdog/domain/schemas/shared";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { targetHost } from "../../providers";

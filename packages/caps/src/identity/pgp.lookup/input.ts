@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { pgpQuerySeedSchema } from "@watchdog/schemas/caps";
-import { optionalUuidSchema } from "@watchdog/schemas/shared";
+import { pgpQuerySeedSchema } from "@watchdog/domain/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
 
 export const pgpLookupInput = z.object({
   query: pgpQuerySeedSchema.describe(

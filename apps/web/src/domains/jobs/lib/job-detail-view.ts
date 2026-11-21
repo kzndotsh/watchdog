@@ -6,15 +6,15 @@ import {
   playbookWaitingOnNextStep,
 } from "@/domains/jobs/lib/status";
 import { caseExportDownloadPath } from "@/shared/lib/api-urls";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
-import { CASE_EXPORT_JOB_ID } from "@watchdog/schemas/caps";
-import { summarizeJobInput } from "@watchdog/schemas/jobs";
+import { CASE_EXPORT_JOB_ID } from "@watchdog/domain/schemas/caps";
+import { summarizeJobInput } from "@watchdog/domain/schemas/jobs";
 import {
   isLiveJobStatus,
   isTerminalJobStatus,
   trimmedOrNull,
   type PlaybookRunStatus,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type { JobListRecord, JobRecord } from "@watchdog/server/core/jobs";
 
 export type JobDetailTab = "log" | "input" | "output" | "found" | "calls";
 

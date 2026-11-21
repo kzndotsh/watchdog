@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { NotFoundError } from "@watchdog/core/errors";
-import { testApiKey } from "@watchdog/schemas/testing";
-import { testId, testHttpOrigin } from "@watchdog/test-kit";
+import { testApiKey } from "@watchdog/domain/schemas/testing";
+import { testId, testHttpOrigin } from "@watchdog/domain/test-kit";
+import { NotFoundError } from "@watchdog/server/core/errors";
 
 const createApiContextMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -28,38 +28,42 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: createApiContextMock,
 }));
 
-vi.mock("@watchdog/api", () => ({
+vi.mock("@watchdog/server/api", () => ({
   runAppAs: () => (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
 
 // The route scopes its reads to the caller's organization (row-level security, #718); the
 // database is not part of this test, so the scope passes the Effect through.
-vi.mock("@watchdog/core/infra", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/infra")>();
+vi.mock("@watchdog/server/core/infra", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/server/core/infra")>();
   return {
     ...actual,
     inOrganization: (_organizationId: string, effect: unknown) => effect,
   };
 });
 
-vi.mock("@watchdog/core/cases", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/cases")>();
+vi.mock("@watchdog/server/core/cases", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/server/core/cases")>();
   return {
     ...actual,
     getCaseByIdEffect: getCaseByIdEffectMock,
   };
 });
 
-vi.mock("@watchdog/core/graph", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
+vi.mock("@watchdog/server/core/graph", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/server/core/graph")>();
   return {
     ...actual,
     getEntityByCaseSlugEffect: getEntityByCaseSlugEffectMock,
   };
 });
 
-vi.mock("@watchdog/core/export", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/export")>();
+vi.mock("@watchdog/server/core/export", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/server/core/export")>();
   return {
     ...actual,
     renderEntityMarkdownEffect: renderEntityMarkdownEffectMock,

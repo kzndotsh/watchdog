@@ -7,12 +7,12 @@ import { useLayoutEffect, useState } from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import type { CollectQueueItem } from "@watchdog/core/jobs";
-import { collectList } from "@watchdog/schemas/jobs";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { collectList } from "@watchdog/domain/schemas/jobs";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
+import type { CollectQueueItem } from "@watchdog/server/core/jobs";
 
-vi.mock("@watchdog/ui/components/sidebar", () => ({
+vi.mock("#ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 

@@ -2,23 +2,23 @@ import {
   deleteCaseInputSchema,
   getCaseBySlugInputSchema,
   searchCaseInputSchema,
-} from "@watchdog/schemas/cases";
+} from "@watchdog/domain/schemas/cases";
 import {
   caseScopeInputSchema,
   entityScopeInputSchema,
   entitySlugScopeInputSchema,
   evidenceScopeInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   getJobInputSchema,
   getPlaybookRunInputSchema,
-} from "@watchdog/schemas/jobs";
+} from "@watchdog/domain/schemas/jobs";
 import {
   entitySlugSchema,
   parseOptionalTrimmedUuid,
   parseTrimmedCaseId,
   parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** Normalize query keys; strict parse happens again in queryFn. */
 export function scopeCaseSlugSegment(caseSlug: string): string {

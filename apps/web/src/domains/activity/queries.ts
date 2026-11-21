@@ -1,7 +1,7 @@
 import { orpc } from "@/lib/orpc-client";
 import { listView } from "@/shared/lib/list/list-view";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { activityList, type ActivityItem } from "@watchdog/schemas/feed";
+import { activityList, type ActivityItem } from "@watchdog/domain/schemas/feed";
 
 /** Recent activity keys are the oRPC procedure keys: `all` is every `activity.*` query. */
 export const activityKeys = {

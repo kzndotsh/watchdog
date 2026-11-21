@@ -1,3 +1,4 @@
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { SKELETON_DELAY_CLASS } from "@/shared/lib/skeleton-delay";
 import {
@@ -6,7 +7,6 @@ import {
   LIBRARY_RAIL_LIST_CLASS,
   LIBRARY_RAIL_NAV_CLASS,
 } from "@/shared/ui/library-shell";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 const RAIL_LABEL_WIDTHS = [
   "w-8",

@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   emailosintLookupSnapshotSchema,
   fetchEmailosintLookupEffect,
-} from "@watchdog/tools/breach";
+} from "#tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailosint } from "../../providers";

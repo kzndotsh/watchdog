@@ -12,7 +12,7 @@ import {
   flag,
   tags,
   type ListQuery,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** The longest input kind the `kind` filter takes (`email`, `url_archive`). */
 const INPUT_KIND_MAX = 40;
@@ -21,7 +21,7 @@ const INPUT_KIND_MAX = 40;
  * The Library's list declaration (#573, ADR-0007): a BOUNDED list, so its data is the registry
  * read the page already holds (`capabilities.list`, `capabilities.listPlaybooks`) and it is
  * filtered in the browser (`filterLibraryEntries`). It is declared here, not in
- * `@watchdog/schemas`, because no procedure serves it. The declaration gives the screen what a
+ * `@watchdog/domain/schemas`, because no procedure serves it. The declaration gives the screen what a
  * server list has: the canonical query, the URL (`libraryList.searchWith`), and the standard
  * toolbar's Filters popover, chips and Display options (`useBoundedList`).
  *

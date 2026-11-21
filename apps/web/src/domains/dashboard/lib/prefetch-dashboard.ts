@@ -8,7 +8,7 @@ import {
   warmEnsureInfiniteQueryData,
   warmEnsureQueryData,
 } from "@/shared/lib/warm-query";
-import { activityList } from "@watchdog/schemas/feed";
+import { activityList } from "@watchdog/domain/schemas/feed";
 
 /** Warm Dashboard panels / activity without blocking shell paint. */
 export function warmDashboardQueries(

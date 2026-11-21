@@ -2,7 +2,7 @@ import {
   PLAYBOOK_SEED_KINDS,
   type JsonObject,
   type PlaybookSeedKind,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import type { CapIoKind } from "../sdk";
 

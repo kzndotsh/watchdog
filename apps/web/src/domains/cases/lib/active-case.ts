@@ -1,4 +1,4 @@
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
+import { parseOptionalTrimmedUuid } from "@watchdog/domain/schemas/shared";
 
 /**
  * The Active Case is the URL's Case (`/cases/$caseSlug/...`). A screen whose URL names no Case

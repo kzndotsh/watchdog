@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 
-import { mapToolsCatch, ValidationVendorError } from "@watchdog/tools/errors";
+import { mapToolsCatch, ValidationVendorError } from "#tools/errors";
 import {
   analyzeEmlText,
   EML_MAX_INPUT_BYTES,
   inputLimitMessage,
-} from "@watchdog/tools/file";
+} from "#tools/file";
 
 import { localAnalysis } from "../../providers";
 import { defineCapability } from "../../sdk";

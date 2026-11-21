@@ -5,7 +5,7 @@ import {
   optionalText,
   optionalUuidSchema,
   trimmedUuidSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const evidenceExtractAiInput = z.object({
   evidenceId: trimmedUuidSchema.describe("Evidence id"),

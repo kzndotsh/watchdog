@@ -1,4 +1,4 @@
-import type { JobListRecord } from "@watchdog/core/jobs";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 type AttemptRow = Pick<JobListRecord, "id" | "retryOfJobId" | "createdAt">;
 

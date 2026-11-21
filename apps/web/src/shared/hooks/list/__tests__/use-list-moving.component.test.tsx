@@ -8,8 +8,8 @@ import {
   testQueryClient,
   withClient,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
-import { collectList } from "@watchdog/schemas/jobs";
-import type { ListPage } from "@watchdog/schemas/shared";
+import { collectList } from "@watchdog/domain/schemas/jobs";
+import type { ListPage } from "@watchdog/domain/schemas/shared";
 
 type Row = { readonly id: string };
 

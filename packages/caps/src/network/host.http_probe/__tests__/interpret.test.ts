@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { claimText, itRejectsIncompleteReport } from "../../../testing";
 import { httpProbe } from "../cap.ts";

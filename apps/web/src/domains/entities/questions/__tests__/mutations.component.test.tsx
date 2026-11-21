@@ -22,7 +22,7 @@ import {
   useUpdateQuestion,
 } from "@/domains/entities/questions/mutations";
 import { procedureDouble } from "@/testing/orpc-client";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const procedures = {
   createQuestionFn: procedureDouble("questions.create"),

@@ -9,12 +9,12 @@ import {
   NORTH_ID,
   type harnessView,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
-import type { evidenceList } from "@watchdog/schemas/evidence";
+import type { evidenceList } from "@watchdog/domain/schemas/evidence";
 import type {
   ListSearch,
   UnfixedSearch,
   UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 function entitySource(
   selectedId: string | null,

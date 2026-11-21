@@ -5,8 +5,8 @@ import { useLayoutEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 /** The summary the editor showed on each committed render. */
 const committedSummaries = vi.hoisted(() => [] as string[]);

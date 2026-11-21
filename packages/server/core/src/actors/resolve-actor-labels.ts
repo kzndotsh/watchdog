@@ -1,0 +1,35 @@
+import { Effect } from "effect";
+
+import type { UserDisplayRow } from "#db";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
+
+import type { DomainTag } from "../errors/tagged-errors";
+import type { Db } from "../infra/db-service";
+import { usersRepoFxDb } from "../infra/repos-fx";
+import { formatActorLabel, type ActorUser } from "./format-actor-label";
+
+export function loadActorUsersEffect(
+  actorIds: Iterable<string | null | undefined>
+): Effect.Effect<Map<string, ActorUser>, DomainTag, Db> {
+  const ids = normalizeUuidList(actorIds);
+  if (ids.length === 0) {
+    return Effect.succeed(new Map<string, ActorUser>());
+  }
+  return usersRepoFxDb.getByIds(ids).pipe(
+    Effect.map((rows: UserDisplayRow[]) => {
+      const map = new Map<string, ActorUser>();
+      for (const row of rows) {
+        map.set(row.id, { name: row.name, email: row.email });
+      }
+      return map;
+    })
+  );
+}
+
+export function labelForActor(
+  actorId: string,
+  users: ReadonlyMap<string, ActorUser>,
+  storedLabel?: string | null
+): string {
+  return formatActorLabel(actorId, users.get(actorId), storedLabel);
+}

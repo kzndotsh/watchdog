@@ -1,21 +1,21 @@
 import type { z } from "zod";
 
 import type {
-  CaseEdgeRecord as CoreCaseEdgeRecord,
-  EdgeRecord as CoreEdgeRecord,
-  GraphEgo as CoreGraphEgo,
-  GraphSnapshot as CoreGraphSnapshot,
-} from "@watchdog/core/graph";
-import type {
   createEdgeInputSchema,
   edgeScopeInputSchema,
   updateEdgeInputSchema,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import type {
   ConfidenceTier,
   EdgeOrientation,
   EdgePredicate,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
+import type {
+  CaseEdgeRecord as CoreCaseEdgeRecord,
+  EdgeRecord as CoreEdgeRecord,
+  GraphEgo as CoreGraphEgo,
+  GraphSnapshot as CoreGraphSnapshot,
+} from "@watchdog/server/core/graph";
 
 /** A Connection seen from one Entity: its peer and direction (writes return it). */
 export type EdgeRecord = CoreEdgeRecord;

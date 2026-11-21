@@ -3,16 +3,13 @@ import { createHash } from "node:crypto";
 import { Clock, Effect } from "effect";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
-import {
-  RateLimitedError,
-  ValidationVendorError,
-} from "@watchdog/tools/errors";
+import { RateLimitedError, ValidationVendorError } from "#tools/errors";
 import {
   waybackHistorySnapshotSchema,
   type WaybackHistorySnapshot,
-} from "@watchdog/tools/wayback";
+} from "#tools/wayback";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { createCapRunHarness, runCap } from "../../../testing";
 import { pageHistoryInput } from "../input";

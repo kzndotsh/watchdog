@@ -10,7 +10,7 @@ import { placeholderDataForScope } from "@/shared/lib/query-placeholder";
 import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
-} from "@watchdog/schemas/cases";
+} from "@watchdog/domain/schemas/cases";
 
 /** Search keys are the oRPC procedure keys: `all` is every `search.*` query. */
 export const searchKeys = {

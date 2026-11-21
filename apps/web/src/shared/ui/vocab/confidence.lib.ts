@@ -5,7 +5,7 @@ import {
   CONFIDENCE_TIER_LABELS,
   type ConfidenceTier,
   titleCase,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const CONFIDENCE_LABELS = CONFIDENCE_TIER_LABELS;
 

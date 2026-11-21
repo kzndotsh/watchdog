@@ -70,7 +70,7 @@ const MOCK_OK: Record<string, string> = {
   ),
   "package.test.ts": lines(
     HEAD,
-    'vi.mock("@watchdog/core/cases", () => ({}));',
+    'vi.mock("@watchdog/server/core/cases", () => ({}));',
     'vi.mock("@tanstack/react-router", () => ({}));',
     'vi.mock("node:fs", () => ({}));'
   ),
@@ -176,10 +176,10 @@ beforeAll(() => {
 
   // Applies in every test tree (packages, scripts, helpers under __tests__), not in production.
   const mockSource = lines(HEAD, 'vi.mock("./thing", () => ({}));');
-  fixture.write("packages/core/src/__tests__/x.test.ts", mockSource);
-  fixture.write("packages/core/src/__tests__/helpers/y.ts", mockSource);
-  fixture.write("packages/core/src/x.spec.ts", mockSource);
-  fixture.write("apps/worker/src/prod.ts", mockSource);
+  fixture.write("packages/server/core/src/__tests__/x.test.ts", mockSource);
+  fixture.write("packages/server/core/src/__tests__/helpers/y.ts", mockSource);
+  fixture.write("packages/server/core/src/x.spec.ts", mockSource);
+  fixture.write("packages/server/worker/src/prod.ts", mockSource);
 
   result = fixture.lint(["apps", "packages"]);
 
@@ -256,10 +256,12 @@ describe("no-internal-module-mock", () => {
 
   it("applies in every test tree and never to production files", () => {
     const at = (file: string) => findingsFor(result, file, MOCK);
-    expect(at("packages/core/src/__tests__/x.test.ts")).toHaveLength(1);
-    expect(at("packages/core/src/__tests__/helpers/y.ts")).toHaveLength(1);
-    expect(at("packages/core/src/x.spec.ts")).toHaveLength(1);
-    expect(at("apps/worker/src/prod.ts")).toHaveLength(0);
+    expect(at("packages/server/core/src/__tests__/x.test.ts")).toHaveLength(1);
+    expect(at("packages/server/core/src/__tests__/helpers/y.ts")).toHaveLength(
+      1
+    );
+    expect(at("packages/server/core/src/x.spec.ts")).toHaveLength(1);
+    expect(at("packages/server/worker/src/prod.ts")).toHaveLength(0);
   });
 });
 

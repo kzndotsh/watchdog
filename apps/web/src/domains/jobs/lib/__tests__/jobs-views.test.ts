@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildJobListRecord } from "@/testing/records";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 import { artifactDefaultOpen, orderJobArtifacts } from "../artifacts.ts";
 import { buildCapRunInput, capPrimaryField } from "../cap-run-input.ts";

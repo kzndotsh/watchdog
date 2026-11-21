@@ -1,8 +1,8 @@
 import { Data, Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testApiKey } from "@watchdog/schemas/testing";
-import { testHttpOrigin, testId } from "@watchdog/test-kit";
+import { testApiKey } from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin, testId } from "@watchdog/domain/test-kit";
 
 class NotFoundError extends Data.TaggedError("NotFoundError")<{
   readonly entity: string;
@@ -70,7 +70,7 @@ vi.mock("@/lib/api-cors.server", () => ({
   corsPreflightResponse: corsPreflightResponseMock,
 }));
 
-vi.mock("@watchdog/api", () => ({
+vi.mock("@watchdog/server/api", () => ({
   runAppAs:
     () =>
     (
@@ -95,17 +95,17 @@ vi.mock("@watchdog/api", () => ({
       ),
 }));
 
-vi.mock("@watchdog/core/activity", () => ({
+vi.mock("@watchdog/server/core/activity", () => ({
   ActivityTailer: ActivityTailerTag,
   replayActivityEffect: replayActivityEffectMock,
 }));
 
-vi.mock("@watchdog/core/cases", () => ({
+vi.mock("@watchdog/server/core/cases", () => ({
   assertCaseInOrgEffect: assertCaseInOrgEffectMock,
   listVisibleCaseIdsEffect: listVisibleCaseIdsEffectMock,
 }));
 
-vi.mock("@watchdog/log", () => ({ createLogger: createLoggerMock }));
+vi.mock("@watchdog/server/log", () => ({ createLogger: createLoggerMock }));
 
 import { Route } from "@/routes/api/events";
 

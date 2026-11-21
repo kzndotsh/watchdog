@@ -5,9 +5,9 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { presignUploadInputSchema } from "@watchdog/schemas/evidence";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { HttpResponse, http, mockServer } from "@watchdog/test-kit/http";
+import { presignUploadInputSchema } from "@watchdog/domain/schemas/evidence";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { HttpResponse, http, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { uploadEvidenceFile } from "../upload-file";
 import { failureOf, standInApi } from "./stand-in-api";

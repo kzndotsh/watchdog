@@ -1,8 +1,8 @@
-import type { PatchOp } from "@watchdog/schemas/graph";
+import type { PatchOp } from "@watchdog/domain/schemas/graph";
 import {
   patchOpDependents,
   withPatchDependencies,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 
 /**
  * Unticks an op with every op that needs it, or ticks it with every op it needs: a partial

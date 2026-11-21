@@ -2,11 +2,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const narrow = vi.hoisted(() => ({ value: false }));
-vi.mock("@watchdog/ui/hooks/use-mobile", () => ({
+vi.mock("#ui/hooks/use-mobile", () => ({
   useIsMobile: () => narrow.value,
 }));
 
-vi.mock("@watchdog/ui/components/resizable", () => ({
+vi.mock("#ui/components/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="split-group">{children}</div>
   ),

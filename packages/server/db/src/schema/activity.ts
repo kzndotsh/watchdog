@@ -1,0 +1,138 @@
+import { sql } from "drizzle-orm";
+import {
+  bigint,
+  boolean,
+  check,
+  foreignKey,
+  index,
+  pgTable,
+  text,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+import {
+  ACTIVITY_ENTRY_ACTIONS,
+  ACTIVITY_ENTRY_KINDS,
+} from "@watchdog/domain/schemas/feed";
+import type { ActivityEntryKind } from "@watchdog/domain/schemas/feed";
+import type { CaseId, OrganizationId } from "@watchdog/domain/schemas/shared";
+
+import { createdAt, timestamptz, xid8 } from "./_helpers";
+import { organizationIsolation } from "./_organization-policy";
+import { vocabCheck } from "./_vocab";
+import { cases } from "./cases";
+
+/** Every verb of every kind, deduplicated. */
+const ALL_ACTIVITY_ACTIONS: readonly string[] = [
+  ...new Set(Object.values(ACTIVITY_ENTRY_ACTIONS).flat()),
+];
+
+/**
+ * The activity log (ADR-0005): append-only, one row per domain change, written
+ * in the same transaction as the change by `activityLogRepo.append`. The
+ * `AFTER INSERT` trigger `activity_notify` sends the NOTIFY (the baseline
+ * migration, `0000_baseline`), so a rolled-back write leaves neither a
+ * row nor a signal. Not a Graph audit (see `graph_history` and `changesets`).
+ *
+ * `(xid, id)` is the commit-safe cursor: `xid` is the writing transaction, and
+ * the tailer only reads rows whose xid is below every still-running transaction.
+ */
+export const activity = pgTable(
+  "activity",
+  {
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity(),
+    xid: xid8("xid")
+      .notNull()
+      .default(sql`pg_current_xact_id()`),
+    caseId: uuid("case_id")
+      .$type<CaseId>()
+      .notNull()
+      .references(() => cases.id, { onDelete: "cascade" }),
+    /**
+     * The Case's organization, copied at append and held to the Case's own by `activity_case_organization_fk`: the lead
+     * column of the Recent activity list's indexes, so the organization-wide feed reads one
+     * btree instead of joining every Case.
+     */
+    organizationId: text("organization_id").$type<OrganizationId>().notNull(),
+    /** The subject noun (`ACTIVITY_ENTRY_KINDS`). */
+    kind: text("kind").$type<ActivityEntryKind>().notNull(),
+    /** A verb from the closed list for the kind (`ACTIVITY_ENTRY_ACTIONS`). */
+    action: text("action").notNull(),
+    subjectId: uuid("subject_id"),
+    /** The playbook run, so the feed can collapse step Jobs (S2). */
+    groupId: uuid("group_id"),
+    /** Display snapshot, at most 200 characters; never a body, patch or secret. */
+    label: text("label"),
+    actorId: text("actor_id"),
+    actorLabel: text("actor_label"),
+    /** The API key (no FK: a deleted key keeps its entries) that made the change; null for a session or a system write. */
+    actorKeyId: text("actor_key_id"),
+    fromValue: text("from_value"),
+    toValue: text("to_value"),
+    createdAt,
+  },
+  (t) => [
+    organizationIsolation("activity", t.organizationId),
+    index("activity_xid_id_idx").on(t.xid, t.id),
+    index("activity_case_id_id_idx").on(t.caseId, t.id.desc()),
+    // Recent activity (`activityList`, ADR-0007): each sort is a btree led by the organization;
+    // the Case filter has its own, and the collapse of a run to its newest entry probes the group.
+    index("activity_org_created_idx").on(
+      t.organizationId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("activity_org_case_created_idx").on(
+      t.organizationId,
+      t.caseId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("activity_group_created_idx")
+      .on(t.groupId, t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst())
+      .where(sql`${t.groupId} IS NOT NULL`),
+    // The copied organization must be the Case's own.
+    foreignKey({
+      name: "activity_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    check("activity_label_len", sql`char_length(${t.label}) <= 200`),
+    vocabCheck(t.kind, ACTIVITY_ENTRY_KINDS),
+    // The verb must belong to some kind; the (kind, verb) pairing stays in `appendActivityEffect`.
+    vocabCheck(t.action, ALL_ACTIVITY_ACTIONS),
+  ]
+);
+
+/**
+ * A durable read position in the log, one row per consumer (ADR-0005 decision
+ * 4, S5): the worker export consumer resumes from it after a restart.
+ * `(xid, id)` is the last entry the consumer finished handling. Not a Graph
+ * table and not an audit: a consumer with no row starts at the head.
+ */
+export const activityCursors = pgTable("activity_cursors", {
+  consumer: text("consumer").primaryKey(),
+  xid: xid8("xid").notNull(),
+  id: bigint("id", { mode: "number" }).notNull(),
+  updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+});
+
+/**
+ * The retention floor (ADR-0005 decision 8, S7): the newest `(xid, id)` the
+ * prune job has ever deleted, one row. A reader whose cursor is below it may
+ * have missed pruned entries and is told to `resync`. It only moves forward,
+ * in the same transaction as the delete (`activityFloorRepo.raise`). No row
+ * means nothing was ever pruned.
+ */
+export const activityFloor = pgTable(
+  "activity_floor",
+  {
+    singleton: boolean("singleton").primaryKey().default(true),
+    xid: xid8("xid").notNull(),
+    id: bigint("id", { mode: "number" }).notNull(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (t) => [check("activity_floor_singleton", sql`${t.singleton}`)]
+);

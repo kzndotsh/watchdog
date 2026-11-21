@@ -14,8 +14,8 @@ import { toast } from "@/shared/ui/toast";
 import {
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-} from "@watchdog/schemas/evidence";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/evidence";
+import { parseOptionalTrimmedUuid } from "@watchdog/domain/schemas/shared";
 
 export type UseDumpEvidenceOptions = {
   caseId: string;

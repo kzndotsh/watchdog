@@ -1,9 +1,9 @@
 import { forwardRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
+import { Input } from "#ui/components/input";
 import { cn } from "@/lib/utils";
 import { CONTROL_CELL } from "@/shared/ui/control-chrome";
-import { Input } from "@watchdog/ui/components/input";
 
 type Props = {
   value: string;

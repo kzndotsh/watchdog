@@ -1,0 +1,86 @@
+import { DateTime, Effect } from "effect";
+import type { z } from "zod";
+
+import type { caseCountsSchema } from "@watchdog/domain/schemas/cases";
+import {
+  LIST_TOTAL_CAP,
+  type CaseId,
+  type ListTotal,
+  type OrganizationId,
+} from "@watchdog/domain/schemas/shared";
+
+import type { DomainTag } from "../errors/tagged-errors";
+import { DAY_MS, nowDateEffect } from "../infra/clock";
+import type { Db } from "../infra/db-service";
+import { inOrganization } from "../infra/organization-scope";
+import { caseCountsRepoFxDb } from "../infra/repos-fx";
+import { assertCaseInOrgEffect } from "./access";
+
+/** A Case's tile counts, each exact below `LIST_TOTAL_CAP` and capped at it above (#571). */
+export type CaseCounts = z.output<typeof caseCountsSchema>;
+
+/** A task is "due soon" through this many calendar days after today. */
+export const TASK_DUE_SOON_DAYS = 7;
+
+function totalOf(count: number): ListTotal {
+  return count > LIST_TOTAL_CAP
+    ? { count: LIST_TOTAL_CAP, isCapped: true }
+    : { count, isCapped: false };
+}
+
+/** The server's UTC midnight, the day start when the caller sends none. */
+function utcDayStart(now: Date): Date {
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+}
+
+/**
+ * The window the Task counts and the due list read (#571, #569): the caller's day start (the
+ * server's UTC day when it sends none) and the end of "due soon", `TASK_DUE_SOON_DAYS` later.
+ */
+export function taskDueWindowEffect(
+  dayStart: Date | undefined
+): Effect.Effect<{ readonly dayStart: Date; readonly soonEnd: Date }> {
+  return Effect.gen(function* taskDueWindowGen() {
+    const start = dayStart ?? utcDayStart(yield* nowDateEffect);
+    return {
+      dayStart: start,
+      soonEnd: DateTime.toDate(
+        DateTime.add(DateTime.fromDateUnsafe(start), {
+          milliseconds: (TASK_DUE_SOON_DAYS + 1) * DAY_MS,
+        })
+      ),
+    };
+  });
+}
+
+/**
+ * The Case's tile counts in one read (#571): the Overview and Dashboard tiles ask for these, never
+ * for a whole list. Each count scans at most `LIST_TOTAL_CAP + 1` rows, like a list's `total`.
+ * `dayStart` is the start of the caller's calendar day (their time zone decides "overdue").
+ */
+export function getCaseCountsEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  opts: { readonly dayStart?: Date } = {}
+): Effect.Effect<CaseCounts, DomainTag, Db> {
+  const program = Effect.gen(function* getCaseCountsGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const row = yield* caseCountsRepoFxDb.countCapped(
+      scopedCaseId,
+      LIST_TOTAL_CAP,
+      yield* taskDueWindowEffect(opts.dayStart)
+    );
+    return {
+      entities: totalOf(row.entities),
+      identifiers: totalOf(row.identifiers),
+      connections: totalOf(row.connections),
+      evidence: totalOf(row.evidence),
+      liveJobs: totalOf(row.liveJobs),
+      tasksOverdue: totalOf(row.tasksOverdue),
+      tasksDueSoon: totalOf(row.tasksDueSoon),
+    };
+  });
+  return inOrganization(organizationId, program);
+}

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "#ui/components/alert";
 import { LazyEvidencePreviewDrawer } from "@/domains/triage/components/evidence-preview-drawer-lazy";
 import {
   PatchOpList,
@@ -19,18 +20,13 @@ import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   isPatchOpOf,
   listInvalidIdentifierOps,
   patchOpText,
-} from "@watchdog/schemas/graph";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@watchdog/ui/components/alert";
+} from "@watchdog/domain/schemas/graph";
+import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 function summaryIsRedundant(proposal: ProposalRecord): boolean {
   const summary = proposal.summary?.trim();

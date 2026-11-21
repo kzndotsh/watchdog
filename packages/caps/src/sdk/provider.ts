@@ -1,4 +1,4 @@
-import { fixedContactHost } from "@watchdog/schemas/caps";
+import { fixedContactHost } from "@watchdog/domain/schemas/caps";
 
 /**
  * Who a Cap gets its data from, and on what terms. Required on every Cap

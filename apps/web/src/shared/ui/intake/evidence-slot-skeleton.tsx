@@ -1,10 +1,10 @@
 import { PaperclipIcon } from "lucide-react";
 
+import { Skeleton } from "#ui/components/skeleton";
 import { cn } from "@/lib/utils";
 import { EVIDENCE_PICKER_TRIGGER_CLASS } from "@/shared/ui/intake/evidence-picker-trigger-class";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 type EvidenceSlotSkeletonProps = {
   mode: "cite" | "pick";

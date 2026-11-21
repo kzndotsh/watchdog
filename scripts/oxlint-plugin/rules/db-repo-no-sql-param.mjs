@@ -11,7 +11,9 @@ import { REPO_CONTRACT } from "../lib/db-repo.mjs";
 export const dbRepoNoSqlParam = {
   meta: {
     type: "problem",
-    docs: { description: "Ban the drizzle SQL type in packages/db repos." },
+    docs: {
+      description: "Ban the drizzle SQL type in packages/server/db repos.",
+    },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */
   create(context) {

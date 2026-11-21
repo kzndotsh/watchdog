@@ -5,7 +5,7 @@ import {
   CONFIDENCE_LABELS,
   CONFIDENCE_TONES,
 } from "@/shared/ui/vocab/confidence.lib";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 
 type ConfidenceBadgeProps = Omit<
   ComponentProps<typeof Chip>,

@@ -6,7 +6,12 @@ import {
   useBoundedList,
   useLocalListSearch,
 } from "@/shared/hooks/list/use-bounded-list";
-import { choices, defineList, flag, opsOf } from "@watchdog/schemas/shared";
+import {
+  choices,
+  defineList,
+  flag,
+  opsOf,
+} from "@watchdog/domain/schemas/shared";
 
 const catalog = defineList({
   name: "test-catalog",

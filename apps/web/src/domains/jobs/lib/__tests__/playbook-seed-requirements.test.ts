@@ -5,7 +5,7 @@ import {
   playbookSeedRequirements,
 } from "@/domains/jobs/lib/playbook-seed-requirements";
 import type { PlaybookListItem } from "@/domains/jobs/types";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const urlEvidencePlaybook = {
   id: "url-resolve",

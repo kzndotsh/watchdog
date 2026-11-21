@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Codemod (#445, spec #442): move hand wrappers around repo calls in `packages/core/src`
+ * Codemod (#445, spec #442): move hand wrappers around repo calls in `packages/server/core/src`
  * onto the Effect repo modules of `infra/repos-fx.ts`.
  *
  *   tryDb(() => xRepo.m(EXEC, ...args))            -> xRepoFx.m(EXEC, ...args)
@@ -30,7 +30,7 @@ import path from "node:path";
 import { parseSync } from "oxc-parser";
 
 const root = path.resolve(import.meta.dirname, "../..");
-const CORE_SRC = "packages/core/src";
+const CORE_SRC = "packages/server/core/src";
 const REPOS_FX = `${CORE_SRC}/infra/repos-fx.ts`;
 const REPO_FX = `${CORE_SRC}/infra/repo-fx.ts`;
 const POSTGRES_EFFECT = `${CORE_SRC}/infra/postgres-effect.ts`;
@@ -213,7 +213,7 @@ function repoCallOf(fn, repos) {
 
 /**
  * @param {Node} program
- * @returns {Set<string>} `xRepo` names imported from `@watchdog/db`
+ * @returns {Set<string>} `xRepo` names imported from `@watchdog/server/db`
  */
 function importedRepos(program) {
   /** @type {Set<string>} */
@@ -221,7 +221,7 @@ function importedRepos(program) {
   for (const stmt of program.body) {
     if (
       stmt.type === "ImportDeclaration" &&
-      stmt.source.value === "@watchdog/db" &&
+      stmt.source.value === "@watchdog/server/db" &&
       stmt.importKind !== "type"
     ) {
       for (const el of stmt.specifiers) {
@@ -511,7 +511,7 @@ for (const file of files) {
     allNeeds.set(repo, all);
   }
   const repos = [...importedRepos(parse(file, text))];
-  text = fixImports(file, text, "@watchdog/db", [], repos);
+  text = fixImports(file, text, "@watchdog/server/db", [], repos);
   text = fixImports(file, text, relativeSpec(file, REPOS_FX), repoFxNames, []);
   if (usesOnExec) {
     text = fixImports(file, text, relativeSpec(file, REPO_FX), ["onExec"], []);
@@ -567,7 +567,7 @@ for (const file of files) {
     }
   }
   if (appended !== "") {
-    text = fixImports(REPOS_FX, text, "@watchdog/db", dbImports, []);
+    text = fixImports(REPOS_FX, text, "@watchdog/server/db", dbImports, []);
     text = `${text.trimEnd()}\n${appended}`;
   }
   if (!dry && text !== readFileSync(abs, "utf-8")) writeFileSync(abs, text);

@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useState } from "react";
 
+import { FieldError } from "#ui/components/field";
 import { invalidateAfterEntityChanged } from "@/app/lib/query-invalidation";
 import { useLiveWorkCase } from "@/domains/cases/hooks/use-live-work-case";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -21,7 +22,6 @@ import { warmComposer } from "@/shared/ui/identifiers/identifier-composer-load";
 import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { ListCount, ListTable, ListToolbar } from "@/shared/ui/list";
 import { Button } from "@/shared/ui/primitives/button";
-import { FieldError } from "@watchdog/ui/components/field";
 
 // The two dialogs open on a click, so they load then (the bulk one warmed on hover or focus).
 const LoadedDeleteDialog = lazy(async () => {

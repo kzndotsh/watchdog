@@ -13,7 +13,7 @@ import {
   scopeOptionalUuid,
   scopeSearchCaseInput,
 } from "@/shared/lib/query-ingress";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("query ingress helpers", () => {
   it("normalizes padded case ids for query keys", () => {

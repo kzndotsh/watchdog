@@ -4,7 +4,7 @@ import type {
   FilterKey,
   QueryValue,
   SortValue,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * Runtime checks that recover a list's typed values in generic UI (the Filters popover, the

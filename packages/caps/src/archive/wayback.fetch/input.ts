@@ -5,7 +5,7 @@ import {
   NAME_MAX,
   optionalText,
   optionalUuidSchema,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 export const waybackFetchInput = z.object({
   url: httpUrlSchema.describe("URL"),

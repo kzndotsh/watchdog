@@ -1,8 +1,8 @@
 import { ClipboardPasteIcon, FileUpIcon, LinkIcon } from "lucide-react";
 
+import { ButtonGroup } from "#ui/components/button-group";
 import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { Button } from "@/shared/ui/primitives/button";
-import { ButtonGroup } from "@watchdog/ui/components/button-group";
 
 export function CollectDumpButtons({
   disabled,

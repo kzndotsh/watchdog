@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ActivityEntry } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
+import type { ActivityEntry } from "@watchdog/domain/schemas/feed";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
 
 type Listener = (event: Event) => void;
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { matchPasteEntity } from "@/domains/entities/lib/match-paste-entity";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 describe("match-paste-entity", () => {
   const E1 = testId(1);

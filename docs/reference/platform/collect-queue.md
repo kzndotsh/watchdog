@@ -29,7 +29,7 @@ Every function pins `search_path` and is SECURITY DEFINER where it writes. The a
 
 ## How it is read
 
-`collectList` (`@watchdog/schemas/jobs`) is the declared list over `collect_queue`; `collectListRepo` binds it (`packages/db/src/repos/collect-list.repo.ts`), and `collect.list` (`GET /cases/{caseId}/collect`) and `wd collect list` read it.
+`collectList` (`@watchdog/domain/schemas/jobs`) is the declared list over `collect_queue`; `collectListRepo` binds it (`packages/server/db/src/repos/collect-list.repo.ts`), and `collect.list` (`GET /cases/{caseId}/collect`) and `wd collect list` read it.
 
 - **Filters.** `hidden` (the Evidence the user hid; no Jobs, no state), `state`, `kind`, `unprocessed`, `unattached`, `capability` (a Cap or playbook id, any member), `entityId`, and `q` over `search_text` plus the state labels. `hidden` excludes `state`, `kind`, `unprocessed`, `unattached` and `capability`; `unattached` excludes `entityId`.
 - **Sorts.** `activity.desc` (the default) and `started.desc` / `started.asc`, each ending in the id. `activity` is a _moving_ key (`moving: true`, descending only): a row rises when a Job starts or finishes and drops when a step attaches to Evidence. The cursor carries the value the row had when the page was read, so a row that rose past the cursor is skipped by a walk in progress and a row that dropped comes back on a later page. A view that pages it keeps the first occurrence of an id and re-reads its loaded pages when a change arrives.
@@ -43,7 +43,7 @@ The worker's reconcile tick (`reconcileJobsEffect`) calls `findCollectQueueDrift
 
 ## Changing a rule
 
-A rule lives twice: in SQL (`collect_queue_cand`, `collect_queue_memberships`, `collect_queue_compute`, `collect_input_*`) and in TypeScript (`collectQueueReference`, `@watchdog/schemas/testing`). Change both in one PR, as a migration with `CREATE OR REPLACE` followed by the backfill statement (`SELECT public.collect_queue_rebuild(c.id) FROM public.cases c WHERE c.deleted_at IS NULL`). The tests fail until both agree:
+A rule lives twice: in SQL (`collect_queue_cand`, `collect_queue_memberships`, `collect_queue_compute`, `collect_input_*`) and in TypeScript (`collectQueueReference`, `@watchdog/domain/schemas/testing`). Change both in one PR, as a migration with `CREATE OR REPLACE` followed by the backfill statement (`SELECT public.collect_queue_rebuild(c.id) FROM public.cases c WHERE c.deleted_at IS NULL`). The tests fail until both agree:
 
 - `collect-queue-fixture.int.test.ts` (db): the 12-case fixture's hand-written rows and orders, and the reference on every column.
 - `collect-queue-model.int.test.ts` (db): random committed command sequences; after each, the projection equals the reference and a full rebuild.

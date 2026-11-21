@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fixedContactHost } from "@watchdog/schemas/caps";
+import { fixedContactHost } from "@watchdog/domain/schemas/caps";
 
 import { redistributionVerdictFor } from "../redistribution";
 import { CAPABILITIES } from "../registry";

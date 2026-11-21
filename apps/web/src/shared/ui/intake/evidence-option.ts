@@ -1,7 +1,7 @@
 import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import type { EvidenceKind } from "@watchdog/schemas/shared";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
+import type { EvidenceKind } from "@watchdog/domain/schemas/shared";
 
 /** Case Evidence option for pickers / composers (parent owns fetch). */
 export type EvidenceOption = {

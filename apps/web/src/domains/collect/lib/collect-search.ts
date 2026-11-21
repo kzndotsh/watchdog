@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 import { parseCollectRunTarget } from "@/domains/collect/lib/collect-run-target";
-import { collectList } from "@watchdog/schemas/jobs";
+import { collectList } from "@watchdog/domain/schemas/jobs";
 import {
   optionalUuidSchema,
   type ListSearch,
   type UnfixedSearchPatch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /**
  * The Collect route's search (ADR-0007): the queue's view (`q`, `sort`, the filters) plus the

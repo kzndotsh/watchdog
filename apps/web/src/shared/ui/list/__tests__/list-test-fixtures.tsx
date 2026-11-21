@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 import { listView, type ListPageRequest } from "@/shared/lib/list/list-view";
-import { evidenceList } from "@watchdog/schemas/evidence";
-import type { EvidenceKind, ListPage } from "@watchdog/schemas/shared";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import type { EvidenceKind, ListPage } from "@watchdog/domain/schemas/shared";
 
 /** A fake Evidence row: only what the harness filters and shows. */
 export type HarnessRow = {

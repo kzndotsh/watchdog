@@ -22,7 +22,7 @@ import {
   ComboboxList,
   ComboboxSeparator,
 } from "@/shared/ui/primitives/combobox";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/domain/schemas/shared";
 
 type CapCapabilitySelectProps = {
   caps: readonly CapListItem[];

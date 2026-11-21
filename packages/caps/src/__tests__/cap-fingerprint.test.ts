@@ -8,6 +8,7 @@ import {
   CapCrawler,
   capEntryFiles,
   isExcludedFromFingerprint,
+  packageImportTargets,
   parseLockfileImporters,
 } from "../cap-fingerprint";
 import { CAPABILITIES } from "../registry";
@@ -27,7 +28,7 @@ importers:
 
   .: {}
 
-  packages/tools:
+  packages/caps/tools:
     dependencies:
       zod:
         specifier: 'catalog:'
@@ -44,28 +45,31 @@ function buildFixture(): void {
     "tsconfig.json",
     `{
   // comment
-  "compilerOptions": { "paths": { "@fx/lib": ["./packages/tools/src/index.ts"], "@fx/safe-fetch": ["./packages/tools/src/http/safe-fetch.ts"] } },
+  "compilerOptions": { "paths": { "@fx/lib": ["./packages/caps/tools/src/index.ts"], "@fx/safe-fetch": ["./packages/caps/tools/src/http/safe-fetch.ts"] } },
 }`
   );
   write("pnpm-lock.yaml", lockfile("4.0.0"));
-  write("packages/tools/package.json", "{}");
+  write("packages/caps/tools/package.json", "{}");
   write("packages/caps/package.json", "{}");
   write(
-    "packages/tools/src/index.ts",
+    "packages/caps/tools/src/index.ts",
     'export { vendorA } from "./vendor-a";\nexport { vendorB } from "./vendor-b";\nexport * from "./star";\n'
   );
   write(
-    "packages/tools/src/vendor-a.ts",
+    "packages/caps/tools/src/vendor-a.ts",
     'import { z } from "zod";\nexport const vendorA = z.string();\n'
   );
   write(
-    "packages/tools/src/vendor-b.ts",
+    "packages/caps/tools/src/vendor-b.ts",
     'import { fetchIt } from "./http/fetch-json";\nexport const vendorB = fetchIt;\n'
   );
-  write("packages/tools/src/star.ts", "export const starred = 1;\n");
-  write("packages/tools/src/http/fetch-json.ts", "export const fetchIt = 1;\n");
+  write("packages/caps/tools/src/star.ts", "export const starred = 1;\n");
   write(
-    "packages/tools/src/http/safe-fetch.ts",
+    "packages/caps/tools/src/http/fetch-json.ts",
+    "export const fetchIt = 1;\n"
+  );
+  write(
+    "packages/caps/tools/src/http/safe-fetch.ts",
     'import { Agent } from "undici";\nexport const guard = Agent;\n'
   );
   write(
@@ -107,19 +111,19 @@ describe("cap fingerprint crawl", () => {
     const a = crawler.crawl(path.join(root, "packages/caps/src/a/cap.ts"));
     expect(a.files).toEqual([
       "packages/caps/src/a/cap.ts",
-      "packages/tools/src/vendor-a.ts",
+      "packages/caps/tools/src/vendor-a.ts",
     ]);
     const b = crawler.crawl(path.join(root, "packages/caps/src/b/cap.ts"));
     expect(b.files).toEqual([
       "packages/caps/src/b/cap.ts",
-      "packages/tools/src/http/fetch-json.ts",
-      "packages/tools/src/vendor-b.ts",
+      "packages/caps/tools/src/http/fetch-json.ts",
+      "packages/caps/tools/src/vendor-b.ts",
     ]);
     // `export *` is followed too, and a type-only import reaches nothing.
     const c = crawler.crawl(path.join(root, "packages/caps/src/c/cap.ts"));
     expect(c.files).toEqual([
       "packages/caps/src/c/cap.ts",
-      "packages/tools/src/star.ts",
+      "packages/caps/tools/src/star.ts",
     ]);
   });
 
@@ -153,7 +157,7 @@ describe("cap fingerprint crawl", () => {
   it("editing one vendor changes that Cap's version and no unrelated Cap's", () => {
     const before = fingerprints();
     write(
-      "packages/tools/src/vendor-a.ts",
+      "packages/caps/tools/src/vendor-a.ts",
       'import { z } from "zod";\nexport const vendorA = z.number();\n'
     );
     const after = fingerprints();
@@ -165,18 +169,21 @@ describe("cap fingerprint crawl", () => {
   it("does not hash a barrel, a transport module or a __tests__ file", () => {
     const before = fingerprints();
     write(
-      "packages/tools/src/index.ts",
+      "packages/caps/tools/src/index.ts",
       'export { vendorA } from "./vendor-a";\nexport { vendorB } from "./vendor-b";\nexport * from "./star";\n// edited\n'
     );
     write(
-      "packages/tools/src/http/safe-fetch.ts",
+      "packages/caps/tools/src/http/safe-fetch.ts",
       'import { Agent } from "undici";\nexport const guard = Agent; // edited\n'
     );
-    write("packages/tools/src/__tests__/x.test.ts", "export const t = 1;\n");
+    write(
+      "packages/caps/tools/src/__tests__/x.test.ts",
+      "export const t = 1;\n"
+    );
     expect(fingerprints()).toEqual(before);
     // A logic module of the same folder does count.
     write(
-      "packages/tools/src/http/fetch-json.ts",
+      "packages/caps/tools/src/http/fetch-json.ts",
       "export const fetchIt = 2;\n"
     );
     const after = fingerprints();
@@ -198,7 +205,7 @@ describe("cap fingerprint crawl", () => {
 
   it("fails loudly on a package the lockfile does not list for the importer", () => {
     write(
-      "packages/tools/src/star.ts",
+      "packages/caps/tools/src/star.ts",
       'import "left-pad";\nexport const starred = 1;\n'
     );
     expect(() => fingerprints()).toThrow(/left-pad/);
@@ -208,12 +215,12 @@ describe("cap fingerprint crawl", () => {
 describe("cap fingerprint helpers", () => {
   it("parses importer versions and drops the peer suffix", () => {
     const parsed = parseLockfileImporters(lockfile("4.0.0"));
-    expect(parsed.get("packages/tools")?.get("undici")).toBe("8.0.0");
-    expect(parsed.get("packages/tools")?.get("zod")).toBe("4.0.0");
+    expect(parsed.get("packages/caps/tools")?.get("undici")).toBe("8.0.0");
+    expect(parsed.get("packages/caps/tools")?.get("zod")).toBe("4.0.0");
   });
 
   it("excludes only the transport files of tools/http", () => {
-    const http = "packages/tools/src/http";
+    const http = "packages/caps/tools/src/http";
     for (const name of [
       "safe-fetch",
       "capped-body",
@@ -247,7 +254,7 @@ describe("cap fingerprint helpers", () => {
       isExcludedFromFingerprint("packages/caps/capabilities.gen.json")
     ).toBe(true);
     expect(
-      isExcludedFromFingerprint("packages/tools/src/network/whoxy.ts")
+      isExcludedFromFingerprint("packages/caps/tools/src/network/whoxy.ts")
     ).toBe(false);
   });
 
@@ -256,5 +263,27 @@ describe("cap fingerprint helpers", () => {
     expect([...entries.keys()].sort()).toEqual(
       CAPABILITIES.map((c) => c.id).sort()
     );
+  });
+});
+
+describe("packageImportTargets", () => {
+  it("maps a plain and a conditional subpath import to repo-relative targets", () => {
+    expect(
+      packageImportTargets("packages/caps", {
+        "#tools/*": "./tools/src/*.ts",
+        "#ai": { import: "./ai/src/index.ts", default: "./ai/dist/index.js" },
+        "#fallback": { default: "./fallback.ts" },
+      })
+    ).toEqual({
+      "#tools/*": ["packages/caps/tools/src/*.ts"],
+      "#ai": ["packages/caps/ai/src/index.ts"],
+      "#fallback": ["packages/caps/fallback.ts"],
+    });
+  });
+
+  it("refuses an entry with no import or default target, rather than skip its files", () => {
+    expect(() =>
+      packageImportTargets("packages/caps", { "#x": { browser: "./x.ts" } })
+    ).toThrow(/#x/);
   });
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 /**
- * Vendor lock for `packages/ui` (shadcn primitives, byte-identical to CLI output).
+ * Vendor lock for `apps/web/ui` (shadcn primitives, byte-identical to CLI output).
  *
  *   node scripts/ui-vendor.mjs check          offline: every vendored file matches vendor.json
  *   node scripts/ui-vendor.mjs sync           re-run the shadcn CLI for every component, re-lock
@@ -24,12 +24,12 @@ import {
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const pkg = path.join(root, "packages/ui");
+const pkg = path.join(root, "apps/web/ui");
 const lockPath = path.join(pkg, "vendor.json");
 /**
  * Exact shadcn CLI version every `sync`/`add` runs, so output is reproducible. It is
  * recorded in vendor.json and `check` fails if the two differ. Bump both together
- * (edit this, run `pnpm ui:sync`, review `git diff packages/ui`).
+ * (edit this, run `pnpm ui:sync`, review `git diff apps/web/ui`).
  */
 const SHADCN_VERSION = "4.22.1";
 /** Directories whose contents are owned by the shadcn CLI. */
@@ -68,7 +68,7 @@ function readLock() {
     parsed.files === null ||
     typeof parsed.files !== "object"
   ) {
-    throw new TypeError("packages/ui/vendor.json is malformed");
+    throw new TypeError("apps/web/ui/vendor.json is malformed");
   }
   const style =
     "style" in parsed && typeof parsed.style === "string"
@@ -131,13 +131,27 @@ function readStyle() {
   return "base-mira";
 }
 
+/**
+ * The shadcn CLI needs a package.json beside components.json to recognise the project. The
+ * vendored tree is a folder of the web app, not a workspace package, so the CLI runs against a
+ * throwaway manifest that is removed (with what the CLI installs next to it) afterwards.
+ */
+const CLI_SCRATCH = ["package.json", "pnpm-lock.yaml", "node_modules"];
+
 /** @param {string[]} names */
 function runCli(names) {
+  writeFileSync(
+    path.join(pkg, "package.json"),
+    `${JSON.stringify({ name: "watchdog-ui-vendor", private: true, type: "module" })}\n`
+  );
   const result = spawnSync(
     "pnpm",
     ["dlx", `shadcn@${SHADCN_VERSION}`, "add", ...names, "--overwrite", "-y"],
-    { cwd: pkg, stdio: "inherit" }
+    { cwd: pkg, stdio: ["ignore", "inherit", "inherit"] }
   );
+  for (const entry of CLI_SCRATCH) {
+    rmSync(path.join(pkg, entry), { force: true, recursive: true });
+  }
   if (result.status !== 0) {
     console.error("✗ shadcn CLI failed; vendor.json left unchanged");
     process.exit(result.status ?? 1);
@@ -148,7 +162,7 @@ function check() {
   const lock = readLock();
   if (!lock) {
     console.error(
-      "✗ packages/ui/vendor.json missing — run `ui-vendor.mjs init`"
+      "✗ apps/web/ui/vendor.json missing — run `ui-vendor.mjs init`"
     );
     process.exit(1);
   }
@@ -207,7 +221,7 @@ if (cmd === "check") {
   runCli(onDiskComponents());
   writeLock(readStyle(), onDiskComponents());
   console.log(
-    "vendor.json updated — review `git diff packages/ui`, then update wrappers if a component's API changed"
+    "vendor.json updated — review `git diff apps/web/ui`, then update wrappers if a component's API changed"
   );
 } else if (cmd === "remove") {
   const lock = readLock();

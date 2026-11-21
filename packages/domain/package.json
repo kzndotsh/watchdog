@@ -1,0 +1,49 @@
+{
+  "name": "@watchdog/domain",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "imports": {
+    "#schemas/graph": "./schemas/src/graph.ts",
+    "#schemas/shared": "./schemas/src/shared.ts",
+    "#test-kit": "./test-kit/src/index.ts",
+    "#test-kit/fc": "./test-kit/src/fc.ts",
+    "#test-kit/fixtures": "./test-kit/src/fixtures.ts"
+  },
+  "exports": {
+    "./schemas/caps": "./schemas/src/caps.ts",
+    "./schemas/cases": "./schemas/src/cases.ts",
+    "./schemas/evidence": "./schemas/src/evidence.ts",
+    "./schemas/feed": "./schemas/src/feed.ts",
+    "./schemas/graph": "./schemas/src/graph.ts",
+    "./schemas/ip": "./schemas/src/ip.ts",
+    "./schemas/jobs": "./schemas/src/jobs.ts",
+    "./schemas/shared": "./schemas/src/shared.ts",
+    "./schemas/testing": "./schemas/src/testing/index.ts",
+    "./policy": "./policy/src/index.ts",
+    "./policy/patch-needs-confidence": "./policy/src/patch-needs-confidence.ts",
+    "./policy/confirmed-evidence": "./policy/src/confirmed-evidence.ts",
+    "./test-kit": "./test-kit/src/index.ts",
+    "./test-kit/fc": "./test-kit/src/fc.ts",
+    "./test-kit/fixtures": "./test-kit/src/fixtures.ts",
+    "./test-kit/http": "./test-kit/src/http/mock-server.ts",
+    "./schemas/egress-proxy": "./schemas/src/egress-proxy.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"
+  },
+  "dependencies": {
+    "effect": "catalog:",
+    "fast-check": "^4.10.3",
+    "msw": "^3.0.7",
+    "vitest": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "zod": "^4.4.3"
+  }
+}

@@ -1,5 +1,8 @@
 import { CheckIcon, GaugeIcon, XIcon } from "lucide-react";
 
+import { FieldError } from "#ui/components/field";
+import { Kbd } from "#ui/components/kbd";
+import { Textarea } from "#ui/components/textarea";
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
 import { EvidenceCiteChips } from "@/domains/triage/components/evidence-cite-chips";
 import { UntickedOutcomeSelect } from "@/domains/triage/components/unticked-outcome-select";
@@ -28,13 +31,10 @@ import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton"
 import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import type { ProposalRecord } from "@watchdog/core/proposals";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
-import { FieldError } from "@watchdog/ui/components/field";
-import { Kbd } from "@watchdog/ui/components/kbd";
-import { Textarea } from "@watchdog/ui/components/textarea";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
+import { patchNeedsConfidence } from "@watchdog/domain/policy/patch-needs-confidence";
+import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 /** Inline shortcut hint inside a Button: inherits the button's ink. */
 const BUTTON_KBD_CLASS = "-mr-0.5 ml-0.5 h-4 min-w-4";

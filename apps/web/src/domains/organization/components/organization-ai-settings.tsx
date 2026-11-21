@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { useUpdateOrganizationSettings } from "@/domains/organization/hooks/use-update-organization-settings";
-import { organizationSettingsQuery } from "@/domains/organization/queries";
-import { couldnt, errMessage } from "@/lib/utils";
-import { FormSection } from "@/shared/ui/form-section";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "@watchdog/ui/components/field";
-import { Switch } from "@watchdog/ui/components/switch";
+} from "#ui/components/field";
+import { Switch } from "#ui/components/switch";
+import { useUpdateOrganizationSettings } from "@/domains/organization/hooks/use-update-organization-settings";
+import { organizationSettingsQuery } from "@/domains/organization/queries";
+import { couldnt, errMessage } from "@/lib/utils";
+import { FormSection } from "@/shared/ui/form-section";
 
 /**
  * The organization's Open in switch (default on). Off hides "Open in

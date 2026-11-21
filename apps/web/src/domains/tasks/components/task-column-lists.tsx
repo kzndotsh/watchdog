@@ -7,8 +7,8 @@ import type { ListHandle } from "@/shared/lib/list/list-types";
 import { ListBody } from "@/shared/ui/list/list-body";
 import { ListCount } from "@/shared/ui/list/list-count";
 import { TaskColumnCardsSkeleton } from "@/shared/ui/skeletons";
-import type { taskList } from "@watchdog/schemas/feed";
-import type { FilterKey, TaskStatus } from "@watchdog/schemas/shared";
+import type { taskList } from "@watchdog/domain/schemas/feed";
+import type { FilterKey, TaskStatus } from "@watchdog/domain/schemas/shared";
 
 function columnListOf<K extends FilterKey<typeof taskList>>(
   list: ListHandle<typeof taskList, TaskListItem, K>

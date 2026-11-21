@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
-import { testHttpOrigin } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { testHttpOrigin } from "@watchdog/domain/test-kit";
 
 const createApiContext = vi.hoisted(() => vi.fn());
 
 // Who is calling is resolved by the auth package (session cookie or API key); the handler,
 // its plugins and the router run for real.
-vi.mock("@watchdog/auth/server", () => ({ createApiContext }));
+vi.mock("@watchdog/server/auth/server", () => ({ createApiContext }));
 
 import { handleRpcRequest } from "@/lib/rpc-handler.server";
 

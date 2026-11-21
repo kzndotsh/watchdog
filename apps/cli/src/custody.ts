@@ -1,10 +1,10 @@
 /** Custody gates for dossier-child Graph writes from the CLI. */
 
-import { childWriteViolation } from "@watchdog/policy";
+import { childWriteViolation } from "@watchdog/domain/policy";
 import {
   trimmedConfidenceTierSchema,
   type ConfidenceTier,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { fail } from "./io";
 import { parseOptionalCliEnum } from "./parse-cli";

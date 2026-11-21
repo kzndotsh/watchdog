@@ -17,7 +17,7 @@ import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const TEST_RULE = "watchdog/no-test-imports-in-production";
 const EXT_RULE = "watchdog/no-ts-extension-import";
-const PROBE = "packages/core/src/probe";
+const PROBE = "packages/server/core/src/probe";
 
 const TEST_IMPORT_FAILS = {
   vitest: 'import { vi } from "vitest";\nexport const a = vi;\n',
@@ -26,12 +26,12 @@ const TEST_IMPORT_FAILS = {
   "testing-library":
     'import { render } from "@testing-library/react";\nexport const a = render;\n',
   "test-db":
-    'import { seedCase } from "@watchdog/test-db";\nexport const a = seedCase;\n',
+    'import { seedCase } from "@watchdog/server/test-db";\nexport const a = seedCase;\n',
   "test-kit-subpath":
-    'import { server } from "@watchdog/test-kit/http";\nexport const a = server;\n',
+    'import { server } from "@watchdog/domain/test-kit/http";\nexport const a = server;\n',
   "type-only": 'import type { Mock } from "vitest";\nexport type A = Mock;\n',
   "re-export": 'export { vi } from "vitest";\n',
-  dynamic: 'export const a = () => import("@watchdog/test-db");\n',
+  dynamic: 'export const a = () => import("@watchdog/server/test-db");\n',
   "test-module": 'import { x } from "./x.test";\nexport const a = x;\n',
   "test-module-ext":
     'import type { x } from "../util.test.ts";\nexport type A = typeof x;\n',
@@ -47,7 +47,7 @@ const TEST_IMPORT_PASSES = {
     'import { x } from "./vitest-config-note";\nexport const a = x;\n',
   package: 'import { Effect } from "effect";\nexport const a = Effect;\n',
   "workspace-package":
-    'import { log } from "@watchdog/log";\nexport const a = log;\n',
+    'import { log } from "@watchdog/server/log";\nexport const a = log;\n',
 } as const;
 
 const EXT_FAILS = {
@@ -66,11 +66,11 @@ const EXT_PASSES = {
 
 /** The same violating sources in trees where the rules are off. */
 const EXEMPT = [
-  "packages/core/src/__tests__/probe.ts",
-  "packages/core/src/probe.test.ts",
-  "packages/schemas/src/testing/probe.ts",
-  "packages/test-db/src/probe.ts",
-  "packages/test-kit/src/probe.ts",
+  "packages/server/core/src/__tests__/probe.ts",
+  "packages/server/core/src/probe.test.ts",
+  "packages/domain/schemas/src/testing/probe.ts",
+  "packages/server/test-db/src/probe.ts",
+  "packages/domain/test-kit/src/probe.ts",
   "apps/web/src/test-setup.ts",
 ] as const;
 
@@ -98,7 +98,10 @@ beforeAll(() => {
   // apps/web may import `.ts` (its tsconfig.json allows it) but not test code.
   fixture.write("apps/web/src/probe-ext.ts", EXT_FAILS["value-import"]);
   fixture.write("apps/web/src/probe-test.ts", TEST_IMPORT_FAILS.vitest);
-  fixture.write("apps/worker/src/probe-test.ts", TEST_IMPORT_FAILS["test-db"]);
+  fixture.write(
+    "packages/server/worker/src/probe-test.ts",
+    TEST_IMPORT_FAILS["test-db"]
+  );
   result = fixture.lint(["packages", "apps"]);
 }, LINT_TIMEOUT_MS);
 
@@ -115,7 +118,7 @@ describe("production source imports no test-only code (oxlint.config.ts)", () =>
   });
   it("covers apps too", () => {
     expect(
-      findingsFor(result, "apps/worker/src/probe-test.ts", TEST_RULE)
+      findingsFor(result, "packages/server/worker/src/probe-test.ts", TEST_RULE)
     ).toHaveLength(1);
     expect(
       findingsFor(result, "apps/web/src/probe-test.ts", TEST_RULE)
@@ -123,7 +126,7 @@ describe("production source imports no test-only code (oxlint.config.ts)", () =>
   });
   it("reports the fix and the location", () => {
     const [hit] = findingsFor(result, `${PROBE}/t-dynamic.ts`, TEST_RULE);
-    expect(hit?.message).toContain("@watchdog/test-db");
+    expect(hit?.message).toContain("@watchdog/server/test-db");
     expect(hit?.message).toContain("move this file into a test tree");
     expect(hit?.line).toBe(1);
   });

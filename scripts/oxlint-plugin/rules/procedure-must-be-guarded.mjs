@@ -31,10 +31,10 @@ import { isShadowedBinding } from "../lib/scope.mjs";
 
 /**
  * Modules that export the builders: `os.ts` itself, the API barrel `src/index.ts`
- * (`../index`, `..`, `../..`, `./index`) and the package `@watchdog/api`.
+ * (`../index`, `..`, `../..`, `./index`) and the package entry (`#api`, `@watchdog/server/api`).
  */
 const OS_MODULE =
-  /^(?:@watchdog\/api(?:\/os)?|.*\/os(?:\.(?:ts|mjs|js))?|os|\.{1,2}(?:\/\.\.)*(?:\/index(?:\.(?:ts|mjs|js))?)?\/?)$/;
+  /^(?:(?:@watchdog\/server\/api|#api)(?:\/os)?|.*\/os(?:\.(?:ts|mjs|js))?|os|\.{1,2}(?:\/\.\.)*(?:\/index(?:\.(?:ts|mjs|js))?)?\/?)$/;
 
 /** `// public: <reason>`; the reason must be non-empty. */
 const JUSTIFICATION = /^[\s*]*public:\s*\S/;
@@ -89,7 +89,7 @@ const topLevelStatement = (node) => {
  * `pub` (imported, aliased, namespaced, destructured, re-exported or wrapped in a
  * helper) and a raw `os` from `@orpc/server` build unguarded procedures, so each use
  * needs a `// public: <reason>` comment on the line(s) directly above its top-level
- * statement (or on the same line). Scoped to `packages/api/src/procedures` (not its
+ * statement (or on the same line). Scoped to `packages/server/api/src/procedures` (not its
  * tests) in `oxlint.config.ts`. Uses are resolved by lexical binding: a parameter or
  * local that shadows an imported `pub` / namespace name is not the builder and is not
  * reported. Re-exports and the `@orpc/server` `os` import are import-site checks.

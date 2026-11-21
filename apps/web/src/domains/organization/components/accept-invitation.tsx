@@ -4,6 +4,12 @@ import { useSession } from "@better-auth-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { Alert, AlertDescription } from "#ui/components/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "#ui/components/card";
+import { Field, FieldGroup } from "#ui/components/field";
+import { Input } from "#ui/components/input";
+import { Label } from "#ui/components/label";
+import { Spinner } from "#ui/components/spinner";
 import { authClient } from "@/auth/client";
 import { fetchInvitationPreview } from "@/auth/invitation-api";
 import { PasswordStrengthMeter } from "@/auth/ui/password-strength-meter";
@@ -17,18 +23,7 @@ import { queryLoadError } from "@/shared/lib/query-load-error";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
-import { invitationAcceptPath } from "@watchdog/auth/invitation-url";
-import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@watchdog/ui/components/card";
-import { Field, FieldGroup } from "@watchdog/ui/components/field";
-import { Input } from "@watchdog/ui/components/input";
-import { Label } from "@watchdog/ui/components/label";
-import { Spinner } from "@watchdog/ui/components/spinner";
+import { invitationAcceptPath } from "@watchdog/server/auth/invitation-url";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const { data: session, isPending: sessionPending } = useSession(authClient);

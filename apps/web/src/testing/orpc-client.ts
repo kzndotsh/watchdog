@@ -3,7 +3,7 @@ import type { RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { vi, type Mock } from "vitest";
 
-import type { AppRouter } from "@watchdog/api";
+import type { AppRouter } from "@watchdog/server/api";
 
 /**
  * Harness for screens and hooks that call the API through `@/lib/orpc-client`: the real oRPC

@@ -4,8 +4,11 @@ import { claimListView } from "@/domains/entities/claims/queries";
 import { useList } from "@/shared/hooks/list/use-list";
 import { ListBody } from "@/shared/ui/list";
 import { ClaimClassBadge, StatusBadge } from "@/shared/ui/vocab";
-import type { claimList } from "@watchdog/schemas/graph";
-import type { RetractKind, UnfixedSearch } from "@watchdog/schemas/shared";
+import type { claimList } from "@watchdog/domain/schemas/graph";
+import type {
+  RetractKind,
+  UnfixedSearch,
+} from "@watchdog/domain/schemas/shared";
 
 /** Most recently added first: the latest retraction reads at the top. */
 const NEWEST_FIRST: UnfixedSearch<typeof claimList, "entityId" | "retracted"> =

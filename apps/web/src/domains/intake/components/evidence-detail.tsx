@@ -1,6 +1,7 @@
 import { DownloadIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { Tabs, TabsContent } from "#ui/components/tabs";
 import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
 import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
 import { EvidenceOutputTab } from "@/domains/intake/components/evidence-output-tab";
@@ -52,14 +53,13 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import type { JobListRecord } from "@watchdog/core/jobs";
-import type { FoundValueRecord } from "@watchdog/schemas/jobs";
+import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 import {
   isLiveJobStatus,
   isOpenJobStatus,
   type EgressClass,
-} from "@watchdog/schemas/shared";
-import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
+} from "@watchdog/domain/schemas/shared";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 type DetailTab = "content" | "output" | "jobs" | "found" | "calls";
 

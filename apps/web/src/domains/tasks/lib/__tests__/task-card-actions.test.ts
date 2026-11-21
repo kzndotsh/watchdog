@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 import type { TaskRecord } from "../../types.ts";
 import { taskCardActions } from "../task-card-actions.ts";

@@ -1,4 +1,4 @@
-import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Skeleton } from "#ui/components/skeleton";
 
 export function StackBodySkeletonLayout({
   sections = 3,

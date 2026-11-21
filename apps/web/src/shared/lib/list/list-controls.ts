@@ -5,7 +5,7 @@ import {
   type FilterKey,
   type FixedFilters,
   type ListQuery,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 import { isQueryValue } from "./list-guards";
 import type { ListControls } from "./list-types";

@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
-import { testId } from "@watchdog/test-kit";
-import { HttpResponse, http, mockServer } from "@watchdog/test-kit/http";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/domain/schemas/jobs";
+import { testId } from "@watchdog/domain/test-kit";
+import { HttpResponse, http, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { runCap } from "../../../sdk";
 import { createCapRunHarness } from "../../../testing";

@@ -14,9 +14,9 @@ import {
 } from "@/domains/entities/edges/queries";
 import { procedureDouble } from "@/testing/orpc-client";
 import { placeholderFor } from "@/testing/query-placeholder";
-import { edgeList } from "@watchdog/schemas/graph";
-import { testCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
+import { edgeList } from "@watchdog/domain/schemas/graph";
+import { testCaseId } from "@watchdog/domain/schemas/testing";
+import { testId } from "@watchdog/domain/test-kit";
 
 const listEdges = procedureDouble("edges.list");
 const getEdges = procedureDouble("edges.getMany");

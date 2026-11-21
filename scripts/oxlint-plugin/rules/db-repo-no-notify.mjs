@@ -10,7 +10,9 @@ const NOTIFY = /\bpg_notify\b/i;
 export const dbRepoNoNotify = {
   meta: {
     type: "problem",
-    docs: { description: "Ban pg_notify and .notify() in packages/db repos." },
+    docs: {
+      description: "Ban pg_notify and .notify() in packages/server/db repos.",
+    },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */
   create(context) {

@@ -5,8 +5,8 @@ import {
   entityList,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
-} from "@watchdog/schemas/graph";
-import { trimmedEntityKindSchema } from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/graph";
+import { trimmedEntityKindSchema } from "@watchdog/domain/schemas/shared";
 
 import { api, emit, emitList, fail } from "../client";
 import { entityKindLabel, enrichEntityDisplay } from "../display";

@@ -1,5 +1,5 @@
-import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import { collectList } from "@watchdog/schemas/jobs";
+import { evidenceDisplayLabel } from "@watchdog/domain/schemas/evidence";
+import { collectList } from "@watchdog/domain/schemas/jobs";
 
 import { api, emitList, truncText } from "../client";
 import { requireCaseId } from "../ids";

@@ -1,5 +1,5 @@
-import type { JsonValue } from "@watchdog/schemas/shared";
-import { waybackHistorySnapshotSchema } from "@watchdog/tools/wayback";
+import { waybackHistorySnapshotSchema } from "#tools/wayback";
+import type { JsonValue } from "@watchdog/domain/schemas/shared";
 
 import { internetArchive } from "../../providers";
 import { contact, defineCapability } from "../../sdk";

@@ -1,6 +1,7 @@
 import { KeyboardIcon, PanelLeftIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
+import { useSidebar } from "#ui/components/sidebar";
 import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
 import { useDataHotkeys } from "@/domains/search/hooks/use-data-hotkeys";
 import { useGlobalHotkeys } from "@/domains/search/hooks/use-global-hotkeys";
@@ -9,7 +10,6 @@ import type { AppAction } from "@/shared/lib/app-action";
 import { hotkeyBindings, hotkeyDef, type HotkeyId } from "@/shared/lib/hotkeys";
 import { lazyOverlay } from "@/shared/lib/lazy-overlay";
 import { memoizeImport } from "@/shared/lib/preload-import";
-import { useSidebar } from "@watchdog/ui/components/sidebar";
 
 /**
  * The palette (cmdk, a dialog and their dependencies) is its own chunk, kept out of the

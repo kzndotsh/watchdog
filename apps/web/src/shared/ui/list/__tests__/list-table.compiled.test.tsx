@@ -19,8 +19,8 @@ import {
   type HarnessRow,
 } from "@/shared/ui/list/__tests__/list-test-fixtures";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import type { evidenceList } from "@watchdog/schemas/evidence";
-import type { ListSearch } from "@watchdog/schemas/shared";
+import type { evidenceList } from "@watchdog/domain/schemas/evidence";
+import type { ListSearch } from "@watchdog/domain/schemas/shared";
 
 function labelHeader({
   column,

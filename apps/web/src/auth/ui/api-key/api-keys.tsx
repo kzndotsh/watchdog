@@ -2,14 +2,14 @@ import { useAuthPlugin } from "@better-auth-ui/react";
 import { useListApiKeys } from "@better-auth-ui/react/plugins/api-key";
 import { useState } from "react";
 
+import { Card, CardContent } from "#ui/components/card";
+import { Separator } from "#ui/components/separator";
 import { authClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { DelayedSkeleton } from "@/auth/ui/delayed-skeleton";
 import { cn } from "@/lib/utils";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
-import { Card, CardContent } from "@watchdog/ui/components/card";
-import { Separator } from "@watchdog/ui/components/separator";
 
 import { ApiKey } from "./api-key";
 import { ApiKeySkeleton } from "./api-key-skeleton";

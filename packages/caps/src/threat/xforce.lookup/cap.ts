@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchXforceLookupEffect,
   xforceLookupSnapshotSchema,
-} from "@watchdog/tools/threat";
+} from "#tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ibmXforce } from "../../providers";

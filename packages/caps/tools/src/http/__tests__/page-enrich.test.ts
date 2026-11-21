@@ -1,0 +1,69 @@
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+} from "@effect/vitest";
+import { Effect } from "effect";
+
+import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
+
+import { toolsHttpClientLayer } from "../http-client-layer";
+import { fetchPageEnrichEffect } from "../page-enrich.ts";
+
+describe("fetchPageEnrichEffect", () => {
+  beforeAll(() => {
+    mockServer.listen({ onUnhandledFrame: "error" });
+  });
+  afterEach(() => {
+    mockServer.resetHandlers();
+  });
+  afterAll(() => {
+    mockServer.close();
+  });
+
+  it.effect("extracts the title from live HTML", () =>
+    Effect.gen(function* fetchPageEnrichTitleGen() {
+      mockServer.use(
+        http.get("https://mailhost.test/page", () =>
+          HttpResponse.text("<html><title>Ada</title></html>", {
+            headers: { "content-type": "text/html" },
+          })
+        )
+      );
+      const snap = yield* fetchPageEnrichEffect(
+        "https://mailhost.test/page",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.title).toBe("Ada");
+      expect(snap.ok).toBe(true);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("blocks private and loopback URLs", () =>
+    Effect.gen(function* fetchPageEnrichBlockedGen() {
+      const snap = yield* fetchPageEnrichEffect(
+        "http://127.0.0.1/page",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.ok).toBe(false);
+      expect(snap.error).toMatch(/Blocked target/);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("rejects non-http(s) URLs before fetching", () =>
+    Effect.gen(function* fetchPageEnrichBadSchemeGen() {
+      const snap = yield* fetchPageEnrichEffect(
+        "file:///etc/passwd",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.ok).toBe(false);
+      expect(snap.error).toMatch(/http or https/i);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+});

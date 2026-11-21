@@ -12,7 +12,7 @@ import {
   pickerTestWrapper,
 } from "@/testing/memory-picker-port";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import { testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/domain/test-kit";
 
 const PASSPORT = {
   id: testId(1),

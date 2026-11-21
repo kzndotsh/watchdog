@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { PasteForm } from "@/domains/intake/components/paste-form";
-import { testHttpUrl } from "@watchdog/test-kit";
+import { testHttpUrl } from "@watchdog/domain/test-kit";
 
 describe("PasteForm", () => {
   it("submits pasted content and optional metadata", async () => {

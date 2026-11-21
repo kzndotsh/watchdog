@@ -8,9 +8,9 @@ Zod (`zod` 4, from the pnpm catalog) defines every schema that crosses a boundar
 
 - oRPC contracts and the generated OpenAPI document and client
 - TanStack Form and server-function validators
-- environment configuration (`@watchdog/env`)
-- Cap input, output and report schemas (`@watchdog/caps`, `@watchdog/tools`)
-- the shared vocabulary and input schemas in `@watchdog/schemas`
+- environment configuration (`@watchdog/server/env`)
+- Cap input, output and report schemas (`@watchdog/caps`, `@watchdog/caps/tools`)
+- the shared vocabulary and input schemas in `@watchdog/domain/schemas`
 
 Effect Schema is allowed only for Effect-native internals that never cross a boundary, such as `Schema.TaggedError` classes, and only where it earns its keep. It is not used to define a second copy of a boundary shape. When a value needs both, Zod is the source and the Effect-side type is derived from the Zod output type.
 
@@ -18,10 +18,10 @@ This departs from `node_modules/effect/AGENTS.md`, which tells agents to use Eff
 
 ## Why
 
-- **Our OpenAPI depends on Zod.** `packages/api/src/openapi.ts` and the web OpenAPI handler use oRPC's `ZodToJsonSchemaConverter`. oRPC documents converters for Zod, Valibot and ArkType, not Effect. An Effect schema would validate through Standard Schema, but OpenAPI generation from it is unproven.
+- **Our OpenAPI depends on Zod.** `packages/server/api/src/openapi.ts` and the web OpenAPI handler use oRPC's `ZodToJsonSchemaConverter`. oRPC documents converters for Zod, Valibot and ArkType, not Effect. An Effect schema would validate through Standard Schema, but OpenAPI generation from it is unproven.
 - **Every integration speaks Zod natively:** oRPC, TanStack Form, `@t3-oss/env-core`, Drizzle's schema generators, the AI SDK.
 - **The bridge from Effect Schema is lossy.** `Schema.toStandardSchemaV1` accepts only schemas with no required services, can return a Promise, and loses paths on defects. TanStack Form does not hand back transformed values, so a transforming schema behaves differently on the form side. A known TanStack DB issue shows the failure mode for consumers that assume input and output types match.
-- **Size of the move.** At the time of writing, 275 files and about 1,780 `z.` call sites use Zod (`packages/caps` 128 files, `packages/tools` 59, `packages/schemas` 37) and none use Effect Schema.
+- **Size of the move.** At the time of writing, 275 files and about 1,780 `z.` call sites use Zod (`packages/caps` 128 files, `packages/caps/tools` 59, `packages/domain/schemas` 37) and none use Effect Schema.
 - **Weight on the client.** Zod 4 core is about 5 kB gzipped, and the web client needs validation without pulling in more of Effect.
 
 ## Consequences

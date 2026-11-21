@@ -74,7 +74,7 @@ beforeAll(() => {
   fixture.write(`${DOMAIN_LIB}/__tests__/helper.test.ts`, FAIL["arrow.ts"]);
   fixture.write(`${SRC}/shared/lib/__tests__/helper.ts`, FAIL["arrow.ts"]);
   fixture.write(`${DOMAIN_LIB}/with.test.ts`, FAIL["arrow.ts"]);
-  fixture.write("packages/core/src/lib/hook.ts", FAIL["arrow.ts"]);
+  fixture.write("packages/server/core/src/lib/hook.ts", FAIL["arrow.ts"]);
   fixture.write("apps/web/e2e/lib/hook.ts", FAIL["arrow.ts"]);
 
   result = fixture.lint([SRC, "packages", "apps/web/e2e"]);
@@ -122,7 +122,7 @@ describe("no hooks in lib/ (no-hooks-in-lib)", () => {
     expect(hits(`${DOMAIN_LIB}/__tests__/helper.test.ts`)).toHaveLength(0);
     expect(hits(`${SRC}/shared/lib/__tests__/helper.ts`)).toHaveLength(0);
     expect(hits(`${DOMAIN_LIB}/with.test.ts`)).toHaveLength(0);
-    expect(hits("packages/core/src/lib/hook.ts")).toHaveLength(0);
+    expect(hits("packages/server/core/src/lib/hook.ts")).toHaveLength(0);
     expect(hits("apps/web/e2e/lib/hook.ts")).toHaveLength(0);
   });
 });

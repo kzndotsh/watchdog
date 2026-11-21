@@ -2,19 +2,19 @@ import type { SearchSchemaInput } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { tabSearchParam } from "@/shared/lib/tab-search";
-import { evidenceList } from "@watchdog/schemas/evidence";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
 import {
   claimList,
   edgeList,
   eventList,
   identifierList,
   questionList,
-} from "@watchdog/schemas/graph";
+} from "@watchdog/domain/schemas/graph";
 import {
   optionalUuidSchema,
   type ListSearch,
   type UnfixedSearch,
-} from "@watchdog/schemas/shared";
+} from "@watchdog/domain/schemas/shared";
 
 /** The one definition of the Dossier tabs, in display order. Types and parsers derive from it. */
 export const DOSSIER_TABS = [
