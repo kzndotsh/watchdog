@@ -21,7 +21,7 @@ export type ApiCredential =
   | { kind: "apiKey"; keyId: string; scopes: ReadonlySet<Scope> };
 
 /**
- * Who is calling and how they authenticated; the logger is added by `@watchdog/api`'s `ApiContext`.
+ * Who is calling and how they authenticated; the logger is added by `@watchdog/server/api`'s `ApiContext`.
  * An actor always comes with its credential; an anonymous caller has neither.
  */
 export type ApiCaller = {

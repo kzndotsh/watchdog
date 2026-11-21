@@ -1,0 +1,123 @@
+import { Effect } from "effect";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import {
+  createCaseEffect,
+  getCaseByIdEffect,
+  listCasesEffect,
+} from "#core/cases";
+import { isDomainTag } from "#core/errors";
+import { listEvidenceEffect } from "#core/evidence";
+import { listRecentActivityEffect } from "#core/feed";
+import { listEntitiesForCaseEffect } from "#core/graph";
+import { runDomain } from "#core/infra";
+import { listJobsForCaseEffect } from "#core/jobs";
+import { resetTestDb, seedCase, testDb } from "#test-db";
+import { evidenceList } from "@watchdog/domain/schemas/evidence";
+import { activityList } from "@watchdog/domain/schemas/feed";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+} from "@watchdog/domain/schemas/testing";
+
+const OTHER_ORG_ID = TEST_OTHER_ORGANIZATION_ID;
+
+describe("case organization isolation", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("does not list or fetch a case from another organization", async () => {
+    const ours = await seedCase(testDb, {
+      name: "Ours",
+      slug: "ours-iso",
+      organizationId: TEST_ORGANIZATION_ID,
+    });
+    const theirs = await seedCase(testDb, {
+      name: "Theirs",
+      slug: "theirs-iso",
+      organizationId: OTHER_ORG_ID,
+    });
+
+    const listed = await runDomain(
+      listCasesEffect(TEST_ORGANIZATION_ID).pipe(
+        Effect.map((page) => page.items)
+      )
+    );
+    expect(listed.map((row) => row.id)).toEqual([ours.id]);
+
+    const visible = await runDomain(
+      getCaseByIdEffect(ours.id, TEST_ORGANIZATION_ID)
+    );
+    expect(visible.id).toBe(ours.id);
+
+    await expect(
+      runDomain(getCaseByIdEffect(theirs.id, TEST_ORGANIZATION_ID))
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+
+    await runDomain(
+      createCaseEffect({
+        name: "Also ours",
+        slug: "also-ours-iso",
+        organizationId: TEST_ORGANIZATION_ID,
+      })
+    );
+    const afterCreate = await runDomain(
+      listCasesEffect(OTHER_ORG_ID).pipe(Effect.map((page) => page.items))
+    );
+    expect(afterCreate.map((row) => row.id)).toEqual([theirs.id]);
+  });
+
+  it("returns not_found for foreign-org case child lists", async () => {
+    const theirs = await seedCase(testDb, {
+      name: "Foreign child",
+      slug: "foreign-child-iso",
+      organizationId: OTHER_ORG_ID,
+    });
+
+    await expect(
+      runDomain(
+        listJobsForCaseEffect(theirs.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+
+    await expect(
+      runDomain(
+        listEntitiesForCaseEffect(theirs.id, TEST_ORGANIZATION_ID).pipe(
+          Effect.map((page) => page.items)
+        )
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+
+    await expect(
+      runDomain(
+        listEvidenceEffect(
+          theirs.id,
+          TEST_ORGANIZATION_ID,
+          evidenceList.input.parse({ caseId: theirs.id })
+        ).pipe(Effect.map((page) => page.items))
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+
+    await expect(
+      runDomain(
+        listRecentActivityEffect({
+          organizationId: TEST_ORGANIZATION_ID,
+          input: activityList.input.parse({ caseId: theirs.id }),
+        }).pipe(Effect.map((page) => page.items))
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+  });
+});

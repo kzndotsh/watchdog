@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { JobDetail } from "@/domains/jobs/components/job-detail";
 import { render } from "@/testing/render-in-case";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
+import type { JobListRecord, JobRecord } from "@watchdog/server/core/jobs";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({

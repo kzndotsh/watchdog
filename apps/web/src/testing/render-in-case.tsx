@@ -5,7 +5,7 @@ import {
 import type { ReactElement, ReactNode } from "react";
 
 import { RouteCaseProvider } from "@/testing/route-case";
-import type { CaseRecord } from "@watchdog/core/cases";
+import type { CaseRecord } from "@watchdog/server/core/cases";
 
 // oxlint-disable-next-line react/only-export-components -- test helper: re-exports the testing library next to the wrapped render
 export * from "@testing-library/react";

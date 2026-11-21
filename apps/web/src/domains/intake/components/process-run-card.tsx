@@ -12,8 +12,8 @@ import { CollapsibleRowTrigger } from "@/shared/ui/collapsible-row-trigger";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core/jobs";
 import { isLiveJobStatus } from "@watchdog/domain/schemas/shared";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 import {
   Collapsible,
   CollapsibleContent,

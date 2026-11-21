@@ -121,7 +121,10 @@ beforeAll(() => {
   );
   fixture.write(`${SRC}/shared/ui/primitives/glass.tsx`, jsx("backdrop-blur"));
   fixture.write(`${SRC}/auth/ui/glass.tsx`, jsx("backdrop-blur"));
-  fixture.write("packages/core/src/probe/glass.tsx", jsx("backdrop-blur"));
+  fixture.write(
+    "packages/server/core/src/probe/glass.tsx",
+    jsx("backdrop-blur")
+  );
 
   for (const [name, source] of Object.entries(SURFACE_FAIL)) {
     fixture.write(`${DOMAIN}/${name}`, source);
@@ -213,9 +216,9 @@ describe("decorative class ban (no-decorative-class)", () => {
       hits(`${SRC}/shared/ui/primitives/glass.tsx`, DECORATIVE)
     ).toHaveLength(0);
     expect(hits(`${SRC}/auth/ui/glass.tsx`, DECORATIVE)).toHaveLength(0);
-    expect(hits("packages/core/src/probe/glass.tsx", DECORATIVE)).toHaveLength(
-      0
-    );
+    expect(
+      hits("packages/server/core/src/probe/glass.tsx", DECORATIVE)
+    ).toHaveLength(0);
   });
 });
 

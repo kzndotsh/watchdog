@@ -10,8 +10,8 @@ import { afterAll, afterEach } from "vitest";
 // the module empty and returns at once.
 afterEach(async () => {
   const [{ exportWritesSettledEffect }, { runDomain }] = await Promise.all([
-    import("../../packages/core/src/export/index"),
-    import("../../packages/core/src/infra/index"),
+    import("../../packages/server/core/src/export/index"),
+    import("../../packages/server/core/src/infra/index"),
   ]);
   await runDomain(exportWritesSettledEffect);
 });

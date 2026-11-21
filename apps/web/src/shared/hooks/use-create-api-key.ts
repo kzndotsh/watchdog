@@ -10,7 +10,7 @@ export type CreatedApiKey = { id: string; name: string | null; key: string };
 
 /**
  * Create an API key through the session-only Better Auth endpoint
- * (`/api-key/create-scoped`, `@watchdog/auth`: scopes and organization are set on the server),
+ * (`/api-key/create-scoped`, `@watchdog/server/auth`: scopes and organization are set on the server),
  * then refresh the key list. The result carries the plaintext key once.
  */
 export function useCreateApiKey(userId: string | undefined) {

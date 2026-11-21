@@ -19,7 +19,8 @@
     "#test-kit": "./test-kit/src/index.ts",
     "#test-kit/fc": "./test-kit/src/fc.ts",
     "#test-kit/fixtures": "./test-kit/src/fixtures.ts",
-    "#test-kit/http": "./test-kit/src/http/mock-server.ts"
+    "#test-kit/http": "./test-kit/src/http/mock-server.ts",
+    "#schemas/egress-proxy": "./schemas/src/egress-proxy.ts"
   },
   "exports": {
     "./schemas/caps": "./schemas/src/caps.ts",
@@ -37,7 +38,8 @@
     "./test-kit": "./test-kit/src/index.ts",
     "./test-kit/fc": "./test-kit/src/fc.ts",
     "./test-kit/fixtures": "./test-kit/src/fixtures.ts",
-    "./test-kit/http": "./test-kit/src/http/mock-server.ts"
+    "./test-kit/http": "./test-kit/src/http/mock-server.ts",
+    "./schemas/egress-proxy": "./schemas/src/egress-proxy.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"

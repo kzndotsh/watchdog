@@ -1,7 +1,7 @@
 import { lookup as dnsLookup } from "node:dns/promises";
 import { isIP, type LookupFunction } from "node:net";
 
-import { parseEgressProxyUrl } from "@watchdog/env/egress-proxy";
+import { parseEgressProxyUrl } from "@watchdog/domain/schemas/egress-proxy";
 
 import { BlockedTargetError } from "../errors/tagged-errors";
 import { isBlockedAddress, isBlockedHostName } from "./blocked-address";

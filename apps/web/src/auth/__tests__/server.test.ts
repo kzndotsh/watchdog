@@ -4,13 +4,13 @@ const createAuth = vi.hoisted(() =>
   vi.fn((options: unknown) => ({ api: {}, $Infer: {}, options }))
 );
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   createAuth,
   resolveActorOrganizationId: vi.fn(),
 }));
 const sharedDb = vi.hoisted(() => vi.fn(() => ({ marker: "shared-pool" })));
 
-vi.mock("@watchdog/core/infra", () => ({ sharedDb }));
+vi.mock("@watchdog/server/core/infra", () => ({ sharedDb }));
 vi.mock("better-auth/tanstack-start", () => ({
   tanstackStartCookies: vi.fn(() => ({ id: "tanstack-start-cookies" })),
 }));
@@ -48,10 +48,10 @@ describe("auth server", () => {
   it("deletes an organization's Cases before the organization goes", async () => {
     const deleteOrganizationCasesEffect = vi.fn((...args: unknown[]) => args);
     const runApp = vi.fn(async () => 2);
-    vi.doMock("@watchdog/core/case-deletion", () => ({
+    vi.doMock("@watchdog/server/core/case-deletion", () => ({
       deleteOrganizationCasesEffect,
     }));
-    vi.doMock("@watchdog/api", () => ({ runApp }));
+    vi.doMock("@watchdog/server/api", () => ({ runApp }));
     await import("@/auth/server");
 
     const options = createAuth.mock.calls[0]?.[0] as {

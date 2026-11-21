@@ -114,7 +114,7 @@ jobs:
               - 'env.production.example'
               - 'scripts/s3-init.sh'
               - 'apps/web/**'
-              - 'apps/worker/**'
+              - 'packages/server/worker/**'
               - 'packages/**'
             caps:
               - 'packages/caps/**'
@@ -124,15 +124,15 @@ jobs:
               - 'packages/ai/**'
               - 'docs/reference/platform/cap-register.md'
             api:
-              - 'packages/api/**'
+              - 'packages/server/api/**'
               - 'packages/client/**'
-              - 'packages/core/**'
+              - 'packages/server/core/**'
             web:
               - 'apps/web/**'
             site:
               - 'apps/site/**'
             db:
-              - 'packages/db/**'
+              - 'packages/server/db/**'
               # db schema files import from @watchdog/domain/schemas.
               - 'packages/domain/schemas/**'
             e2e:
@@ -321,7 +321,7 @@ jobs:
         run: pnpm test-db
 
       # The list standard's plan gate (ADR-0007): EXPLAIN at audit scale in a scratch database,
-      # read by packages/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts.
+      # read by packages/server/core/src/infra/__tests__/list-conformance-plans.scale.int.test.ts.
       - name: Perf seed (list plan gate)
         if: matrix.part == 'scale'
         env:

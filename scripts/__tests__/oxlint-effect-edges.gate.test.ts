@@ -17,7 +17,7 @@ const TRY = "watchdog/effect-try-requires-catch";
 const UNKNOWN_CATCH = "effecttsgo/unknown-in-effect-catch";
 const RUN_INSIDE = "effecttsgo/run-effect-inside-effect";
 
-const PROBE = "packages/core/src/probe";
+const PROBE = "packages/server/core/src/probe";
 const IMPORT = 'import { Effect } from "effect";\n';
 
 const RUN_FAIL = {
@@ -93,17 +93,17 @@ const TRY_PASS = {
 } as const;
 
 const SANCTIONED = [
-  "packages/api/src/runtime.ts",
-  "apps/worker/src/boot-worker.ts",
-  "packages/core/src/infra/run-domain.ts",
-  "packages/core/src/infra/postgres-tx.ts",
+  "packages/server/api/src/runtime.ts",
+  "packages/server/worker/src/boot-worker.ts",
+  "packages/server/core/src/infra/run-domain.ts",
+  "packages/server/core/src/infra/postgres-tx.ts",
   "packages/caps/src/sdk/run.ts",
 ] as const;
 
 const OUT_OF_SCOPE = [
-  "packages/core/src/__tests__/probe.ts",
-  "packages/core/src/probe.test.ts",
-  "packages/api/src/nested/__tests__/deep/probe.ts",
+  "packages/server/core/src/__tests__/probe.ts",
+  "packages/server/core/src/probe.test.ts",
+  "packages/server/api/src/nested/__tests__/deep/probe.ts",
   "apps/web/src/probe.test.tsx",
   "packages/domain/schemas/src/probe.ts",
   "packages/domain/test-kit/src/probe.ts",
@@ -117,16 +117,16 @@ const EDGE_SOURCE = `${IMPORT}export const a = () => Effect.runPromise(Effect.vo
 
 /** Production roots the old script walked, one probe file per root. */
 const ROOTS = [
-  "packages/core/src",
-  "packages/api/src",
+  "packages/server/core/src",
+  "packages/server/api/src",
   "packages/tools/src",
   "packages/domain/policy/src",
   "packages/caps/src",
   "packages/ai/src",
-  "packages/db/src",
+  "packages/server/db/src",
   "apps/cli/src",
-  "packages/log/src",
-  "apps/worker/src",
+  "packages/server/log/src",
+  "packages/server/worker/src",
   "apps/web/src",
 ] as const;
 
@@ -171,11 +171,11 @@ beforeAll(() => {
     fixture.write(`${root}/edge-probe.ts`, EDGE_SOURCE);
   }
   for (const [name, src] of Object.entries(LANG_SERVICE)) {
-    fixture.write(`packages/api/src/lang/${name}.ts`, src);
-    fixture.write(`packages/core/src/lang/${name}.ts`, src);
+    fixture.write(`packages/server/api/src/lang/${name}.ts`, src);
+    fixture.write(`packages/server/core/src/lang/${name}.ts`, src);
   }
   fixture.write(
-    "packages/core/src/lang/__tests__/unknown-catch.ts",
+    "packages/server/core/src/lang/__tests__/unknown-catch.ts",
     LANG_SERVICE["unknown-catch"]
   );
   result = fixture.lint(["packages", "apps", "scripts/probe.ts"]);
@@ -254,7 +254,7 @@ describe("Effect language-service rules over the edge roots", () => {
   it("ignores tests", () => {
     expect(
       hitsFor(
-        "packages/core/src/lang/__tests__/unknown-catch.ts",
+        "packages/server/core/src/lang/__tests__/unknown-catch.ts",
         UNKNOWN_CATCH
       )
     ).toHaveLength(0);

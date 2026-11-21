@@ -6,7 +6,7 @@ import { TimelineDot } from "@/shared/ui/timeline-dot";
 import { TimelineSpine } from "@/shared/ui/timeline-spine";
 import { statusLabel } from "@/shared/ui/vocab";
 import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
-import type { JobListRecord } from "@watchdog/core/jobs";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 type JobAttemptsProps = {
   /** Every attempt, oldest first (see `attemptChain`). Renders nothing for one. */

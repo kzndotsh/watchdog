@@ -52,7 +52,7 @@ apps/web/todos.json
 
 # evlog / audit drains
 apps/web/.evlog/
-apps/worker/.evlog/
+packages/server/.evlog/
 apps/web/.audit/
 
 # Nix
@@ -69,7 +69,7 @@ CLAUDE.local.md
 lefthook-local.yml
 
 # Vendored Effect source for agents (nested clone; never commit).
-# Anchored to repo root so packages/db/src/repos/ stays trackable.
+# Anchored to repo root so packages/server/db/src/repos/ stays trackable.
 /repos/
 
 # Scratch / batch assessment output

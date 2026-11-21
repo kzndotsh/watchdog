@@ -4,7 +4,7 @@
  * `dist/client`, everything else through the SSR fetch handler in `dist/server/server.js`.
  * The container image runs this file; `vite dev` stays the dev server.
  *
- * Each request is logged once as an `@watchdog/log` wide event (`createRequestLogMiddleware`); static
+ * Each request is logged once as an `@watchdog/server/log` wide event (`createRequestLogMiddleware`); static
  * files come from `dist/client` with precompressed `.br` / `.gz` siblings (`createStaticAssetsMiddleware`).
  * Request bodies are capped at BODY_LIMIT_BYTES (REQUEST_BODY_MAX_BYTES, exported by the server entry).
  * PORT (default 3000) and HOST (default 0.0.0.0) pick the listen address. srvx drains in-flight

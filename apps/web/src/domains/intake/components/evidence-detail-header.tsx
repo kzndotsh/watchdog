@@ -12,7 +12,7 @@ import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core/jobs";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 import { TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
 type EvidenceDetailHeaderProps = {

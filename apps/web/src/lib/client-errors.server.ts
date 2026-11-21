@@ -1,7 +1,7 @@
 /**
  * Browser error reports (`POST /api/client-errors`). The browser never talks to the error tracker:
  * it posts a short, same-origin report here, and the server logs it as an error event, which the
- * logger's drain forwards to the tracker when one is configured (`@watchdog/log` error reporting).
+ * logger's drain forwards to the tracker when one is configured (`@watchdog/server/log` error reporting).
  * Unauthenticated by design (a crash can happen signed out), so the body is size capped, the request
  * must be same-origin, the report is rate limited, every field is truncated, and every answer has an
  * empty body.

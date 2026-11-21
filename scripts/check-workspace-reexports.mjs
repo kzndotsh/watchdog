@@ -11,9 +11,9 @@
  * apps/web/src/shared/ui/primitives/ and in exactly apps/web/src/shared/ui/toast.tsx, the web
  * wrappers that re-export a ui component module beside their override.
  *
- * Sanctioned seam (not a re-export, so not flagged): packages/test-db/src/index.ts
+ * Sanctioned seam (not a re-export, so not flagged): packages/server/test-db/src/index.ts
  * `export const testDb = db`. It exposes the db handle to api/caps tests so they never
- * depend on @watchdog/db directly; test-db is the single package allowed to hold that edge.
+ * depend on @watchdog/server/db directly; test-db is the single package allowed to hold that edge.
  *
  *   node scripts/check-workspace-reexports.mjs
  */

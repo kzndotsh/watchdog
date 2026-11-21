@@ -1,7 +1,6 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core/jobs";
 import type { EvidenceTitleRow } from "@watchdog/domain/schemas/evidence";
 import {
   ENRICHED_MD_ARTIFACT,
@@ -9,6 +8,7 @@ import {
   type JobInputRecord,
 } from "@watchdog/domain/schemas/jobs";
 import { isOpenJobStatus, isTextMime } from "@watchdog/domain/schemas/shared";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 /** Whether dossier/intake previews should render stored `text` inline. */
 export function evidenceShowsInlineText(evidence: EvidenceRecord): boolean {

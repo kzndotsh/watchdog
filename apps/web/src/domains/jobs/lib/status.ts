@@ -1,4 +1,3 @@
-import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   CANCELLABLE_JOB_STATUSES,
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
@@ -7,6 +6,7 @@ import {
   type PlaybookRunOutcome,
   type PlaybookRunStatus,
 } from "@watchdog/domain/schemas/shared";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 /** Trim playbook run id; blank / whitespace → null. */
 export function normalizedPlaybookRunId(

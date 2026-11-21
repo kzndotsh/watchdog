@@ -24,7 +24,10 @@ function fixture() {
   ]);
   repo.write("package.json", '{"name":"root"}');
   repo.write("apps/web/package.json", pkg("@wd/web", ["@wd/core"]));
-  repo.write("packages/core/package.json", pkg("@wd/core", ["@wd/schemas"]));
+  repo.write(
+    "packages/server/core/package.json",
+    pkg("@wd/core", ["@wd/schemas"])
+  );
   repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
   repo.write("packages/tools/package.json", pkg("@wd/tools"));
   repo.write("packages/tools/src/gone.ts", "export {};\n");
@@ -64,7 +67,7 @@ describe("verify (changed)", () => {
       / packages\/schemas\/src\/a\.ts$/
     );
     expect(steps.get("tests (affected)")).toBe(
-      "pnpm exec vitest run --passWithNoTests --project unit --project web-unit --project property apps/web packages/core packages/domain/schemas"
+      "pnpm exec vitest run --passWithNoTests --project unit --project web-unit --project property apps/web packages/server/core packages/domain/schemas"
     );
     expect(steps.get("typecheck")).toBe("pnpm run --silent typecheck");
     expect(steps.get("check:boundaries")).toBe(

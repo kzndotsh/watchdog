@@ -6,7 +6,7 @@
 #    connects with DATABASE_URL_MIGRATE (the owner role), else DATABASE_URL, and holds a Postgres
 #    advisory lock while it works, so replicas starting together take turns instead of racing.
 #    After the migrations it installs pg-boss's schema and re-applies the application role's
-#    grants (packages/db/src/app-role.ts).
+#    grants (packages/server/db/src/app-role.ts).
 # 2. A failed migration exits non-zero here, before the app starts: the container never serves
 #    against a half-migrated schema, and a restart policy retries.
 # 3. The owner's credentials stay out of the app: the owner-run commands below (first admin,

@@ -274,7 +274,7 @@ describe("check-boundaries gate", () => {
           db: {},
           caps: {
             deps: ["db"],
-            files: { "src/a.ts": 'import { x } from "@watchdog/db";\n' },
+            files: { "src/a.ts": 'import { x } from "@watchdog/server/db";\n' },
           },
         },
         {}
@@ -314,7 +314,7 @@ describe("check-boundaries gate", () => {
           api: {
             deps: ["db"],
             files: {
-              "src/a.ts": 'import { x } from "@watchdog/db";\n',
+              "src/a.ts": 'import { x } from "@watchdog/server/db";\n',
               "src/b.ts": 'import { sql } from "drizzle-orm";\n',
             },
           },
@@ -325,9 +325,15 @@ describe("check-boundaries gate", () => {
         {}
       ).run(GATE);
       expect(res.code).toBe(1);
-      expect(res.output).toContain('packages/api/src/a.ts:1: "@watchdog/db"');
-      expect(res.output).toContain('packages/api/src/b.ts:1: "drizzle-orm"');
-      expect(res.output).toContain('packages/core/src/b.ts:1: "drizzle-orm"');
+      expect(res.output).toContain(
+        'packages/server/api/src/a.ts:1: "@watchdog/server/db"'
+      );
+      expect(res.output).toContain(
+        'packages/server/api/src/b.ts:1: "drizzle-orm"'
+      );
+      expect(res.output).toContain(
+        'packages/server/core/src/b.ts:1: "drizzle-orm"'
+      );
     });
 
     it("lets other packages use the database, ORM and driver, and core use the database package", () => {
@@ -341,7 +347,7 @@ describe("check-boundaries gate", () => {
           },
           core: {
             deps: ["db"],
-            files: { "src/b.ts": 'import { x } from "@watchdog/db";\n' },
+            files: { "src/b.ts": 'import { x } from "@watchdog/server/db";\n' },
           },
         },
         {}
@@ -522,10 +528,10 @@ describe("check-boundaries gate", () => {
         "cases, graph, jobs import each other in a cycle"
       );
       expect(res.output).toContain(
-        'cases -> jobs (packages/core/src/cases/a.ts:1 "../jobs/b")'
+        'cases -> jobs (packages/server/core/src/cases/a.ts:1 "../jobs/b")'
       );
       expect(res.output).toContain(
-        'graph -> cases (packages/core/src/graph/c.ts:1 "../cases/a")'
+        'graph -> cases (packages/server/core/src/graph/c.ts:1 "../cases/a")'
       );
     });
 
@@ -538,7 +544,7 @@ describe("check-boundaries gate", () => {
       expect(res.output).toContain("cases, jobs import each other in a cycle");
     });
 
-    it("counts a self-import through a public subpath (`@watchdog/core/jobs`) as a folder edge", () => {
+    it("counts a self-import through a public subpath (`@watchdog/server/core/jobs`) as a folder edge", () => {
       const res = workspace(
         {
           core: {
@@ -549,9 +555,9 @@ describe("check-boundaries gate", () => {
             },
             files: {
               "src/jobs/index.ts":
-                'import { a } from "@watchdog/core/cases";\nexport const j = a;\n',
+                'import { a } from "@watchdog/server/core/cases";\nexport const j = a;\n',
               "src/cases/index.ts":
-                'import { j } from "@watchdog/core/jobs";\nexport const a = j;\n',
+                'import { j } from "@watchdog/server/core/jobs";\nexport const a = j;\n',
             },
           },
         },
@@ -580,7 +586,7 @@ describe("check-boundaries gate", () => {
       });
       expect(res.code).toBe(1);
       expect(res.output).toContain(
-        'packages/core/src/infra/db.ts:1: "../export/settings": infra holds no domain'
+        'packages/server/core/src/infra/db.ts:1: "../export/settings": infra holds no domain'
       );
     });
 
@@ -597,7 +603,7 @@ describe("check-boundaries gate", () => {
       expect(res.code).toBe(0);
     });
 
-    it("does not apply outside packages/core", () => {
+    it("does not apply outside packages/server/core", () => {
       const res = workspace(
         {
           other: {

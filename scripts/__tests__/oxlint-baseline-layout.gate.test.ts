@@ -84,9 +84,12 @@ describe("committed baselines", { timeout: LINT_TIMEOUT_MS }, () => {
   it("flags entries for a missing file, a wrong count and an unconfigured rule", () => {
     const fixture = fixtureWithRule();
     fixture.write(A, withLegacy(1));
-    fixture.write(BASELINE, `{ "${A}": 2, "packages/core/src/gone.ts": 1 }\n`);
+    fixture.write(
+      BASELINE,
+      `{ "${A}": 2, "packages/server/core/src/gone.ts": 1 }\n`
+    );
     expect(unmatchedEntries(fixture.repo.dir, FIXTURE_CONFIG)).toEqual([
-      "no-legacy-marker: packages/core/src/gone.ts does not exist",
+      "no-legacy-marker: packages/server/core/src/gone.ts does not exist",
       `no-legacy-marker: ${A} baselines 2 but the rule finds 1`,
     ]);
     fixture.write(BASELINE, `{ "${A}": 1 }\n`);

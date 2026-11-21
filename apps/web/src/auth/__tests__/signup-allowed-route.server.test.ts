@@ -9,7 +9,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@watchdog/env/server", () => ({
+vi.mock("@watchdog/server/env/server", () => ({
   env: { BETTER_AUTH_ALLOW_SIGNUP: false },
 }));
 

@@ -16,7 +16,7 @@ import { QueueRowInstantMeta } from "@/shared/ui/queue-row-instant-meta";
 import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { StatusDot } from "@/shared/ui/status-dot";
 import { playbookLabel } from "@/shared/ui/vocab";
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 import {
   Collapsible,
   CollapsibleContent,

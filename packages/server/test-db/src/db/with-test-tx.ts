@@ -1,0 +1,141 @@
+import { TransactionRollbackError } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+import {
+  db,
+  setGraphHistoryContext,
+  setOrganizationContext,
+  type Db,
+  type DbTx,
+} from "#db";
+import * as schema from "#db/schema";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+
+/**
+ * The tests connect as the application role (`DATABASE_URL`), which cannot TRUNCATE. Wiping
+ * tables is the owner's job, as in production: a small client on `DATABASE_URL_MIGRATE` (the owner
+ * URL; `DATABASE_URL` for a database that is not split).
+ */
+let ownerClient: postgres.Sql | undefined;
+/**
+ * The owner connection (one connection). For what only the owner may do in a test: read the
+ * projection's bookkeeping, or swap a database function for a fault and back.
+ */
+export function owner(): postgres.Sql {
+  const url = process.env.DATABASE_URL_MIGRATE ?? process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL_MIGRATE or DATABASE_URL is required");
+  ownerClient ??= postgres(url, {
+    max: 1,
+    idle_timeout: 2,
+    onnotice: () => {},
+  });
+  return ownerClient;
+}
+
+let ownerHandle: Db | undefined;
+/**
+ * The owner connection as a Drizzle handle: for test readers of a whole table across
+ * organizations (`listAllActivity`, `listAllGraphHistory`), which row-level security (#719) would
+ * otherwise show only one organization's rows. Never for the code under test.
+ */
+export function ownerDb(): Db {
+  ownerHandle ??= drizzle(owner(), { schema });
+  return ownerHandle;
+}
+
+/**
+ * Wipe public Case Graph tables (keeps drizzle migrations + `auth.*`).
+ * Used when a test must COMMIT (races, service-level `db.transaction`).
+ * `graph_history` is append-only: its TRUNCATE guard needs the transaction to opt in, which this
+ * owner-run statement does (the same opt-in `just wipe` uses).
+ */
+export async function resetTestDb(): Promise<void> {
+  await owner().unsafe(`
+    SET LOCAL watchdog.allow_history_truncate = 'on';
+    DO $$
+    DECLARE
+      stmts text;
+    BEGIN
+      SELECT 'TRUNCATE TABLE ' || string_agg(format('%I.%I', schemaname, tablename), ', ')
+        || ' CASCADE'
+      INTO stmts
+      FROM pg_tables
+      WHERE schemaname = 'public'
+        AND tablename NOT LIKE '__drizzle%';
+      IF stmts IS NOT NULL THEN
+        EXECUTE stmts;
+      END IF;
+    END $$;
+  `);
+}
+
+/**
+ * Wipe public + Better Auth (`auth.*`) for Playwright.
+ * Each e2e signup must be a true first-user bootstrap; leaving orgs across
+ * tests leaves later users without membership → oRPC Forbidden.
+ * Do not use from integration tests — those keep `auth.*` via `seedAuthUser`.
+ */
+export async function resetE2eDb(): Promise<void> {
+  await owner().unsafe(`
+    SET LOCAL watchdog.allow_history_truncate = 'on';
+    DO $$
+    DECLARE
+      stmts text;
+    BEGIN
+      SELECT 'TRUNCATE TABLE ' || string_agg(format('%I.%I', schemaname, tablename), ', ')
+        || ' CASCADE'
+      INTO stmts
+      FROM pg_tables
+      WHERE (
+          (schemaname = 'public'
+                AND tablename NOT LIKE '__drizzle%')
+          OR schemaname = 'auth'
+        );
+      IF stmts IS NOT NULL THEN
+        EXECUTE stmts;
+      END IF;
+    END $$;
+  `);
+}
+
+/**
+ * Truncate, then run `fn` inside a transaction that always rolls back.
+ * Use for repo / applyPatch(tx) tests that never need committed rows. The transaction is in
+ * `TEST_ORGANIZATION_ID`'s row-level security scope, like `testDb`.
+ */
+export async function withTestTx<T>(fn: (tx: DbTx) => Promise<T>): Promise<T> {
+  await resetTestDb();
+  let stored: { value: T } | undefined;
+  try {
+    await db.transaction(async (tx) => {
+      // Row-level security (#718): the default organization, as `testDb` has.
+      await setOrganizationContext(tx, TEST_ORGANIZATION_ID);
+      stored = { value: await fn(tx) };
+      tx.rollback();
+    });
+  } catch (error) {
+    if (error instanceof TransactionRollbackError && stored !== undefined) {
+      return stored.value;
+    }
+    if (error instanceof Error) throw error;
+    throw new Error("withTestTx: thrown non-Error", { cause: error });
+  }
+  throw new Error("withTestTx: expected rollback");
+}
+
+/**
+ * `withTestTx` for repository-level tests that write Graph rows through repos directly: the whole
+ * body runs under the explicit `system` history context (`withSystemHistoryContext`), because the
+ * application role the tests connect as is refused a Graph write with none (issue #352). Plain
+ * `withTestTx` sets no context, so code that must set its own (a core write path) still fails
+ * when it forgets.
+ */
+export async function withSystemTestTx<T>(
+  fn: (tx: DbTx) => Promise<T>
+): Promise<T> {
+  return withTestTx(async (tx) => {
+    await setGraphHistoryContext(tx, { channel: "system" });
+    return fn(tx);
+  });
+}

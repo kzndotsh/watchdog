@@ -6,7 +6,7 @@
  * import rule code: they exercise the rule exactly as `pnpm check` does.
  *
  * Fixture paths are repo-relative because the config's `files` globs are
- * (`packages/core/src/**`, `packages/domain/schemas/src/testing/**`, ...).
+ * (`packages/server/core/src/**`, `packages/domain/schemas/src/testing/**`, ...).
  */
 import { spawnSync } from "node:child_process";
 import { rmSync } from "node:fs";

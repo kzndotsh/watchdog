@@ -8,7 +8,7 @@ import { z } from "zod";
  *   and a keyed reuse fingerprint. The value never reaches the artifact.
  *
  * The fingerprint is computed by the caller of this module (`CredentialFingerprint`): the key
- * behind it lives in `@watchdog/core` and never enters the Caps or tools.
+ * behind it lives in `@watchdog/server/core` and never enters the Caps or tools.
  */
 export const BREACH_CREDENTIAL_MODES = ["safe", "full"] as const;
 

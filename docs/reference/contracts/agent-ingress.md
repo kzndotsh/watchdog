@@ -12,7 +12,7 @@
 
 ## Key scopes
 
-An API key carries scopes (`resource:level`); a session carries none and is never scope-checked. Every procedure declares what it needs (`.meta({ scope })`), and one middleware in `authed` (`packages/api/src/os.ts`) refuses a key that lacks it before input validation. A write scope implies `cases:read`.
+An API key carries scopes (`resource:level`); a session carries none and is never scope-checked. Every procedure declares what it needs (`.meta({ scope })`), and one middleware in `authed` (`packages/server/api/src/os.ts`) refuses a key that lacks it before input validation. A write scope implies `cases:read`.
 
 | Scope | Grants |
 | --- | --- |
@@ -49,4 +49,4 @@ An API key carries scopes (`resource:level`); a session carries none and is neve
 
 ## Enforced by
 
-oRPC `graphChildWrite` middleware and the CLI custody envelopes (`apps/cli`, unit-tested); `sessionAuthed` on `proposals.accept` / `proposals.reject` (key path of the isolation matrix) and on the other session-only actions (`session-only.int.test.ts`); changeset atomicity and `idempotencyKey` replay by `packages/api` integration tests. Cap Jobs and agents share `suppressAndProposeStageEffect` finding suppression (see [`../platform/caps-boundary.md`](../platform/caps-boundary.md)). This page is the single home for these rules; other docs link here.
+oRPC `graphChildWrite` middleware and the CLI custody envelopes (`apps/cli`, unit-tested); `sessionAuthed` on `proposals.accept` / `proposals.reject` (key path of the isolation matrix) and on the other session-only actions (`session-only.int.test.ts`); changeset atomicity and `idempotencyKey` replay by `packages/server/api` integration tests. Cap Jobs and agents share `suppressAndProposeStageEffect` finding suppression (see [`../platform/caps-boundary.md`](../platform/caps-boundary.md)). This page is the single home for these rules; other docs link here.

@@ -31,7 +31,7 @@ These hold everywhere. The structure enforces most of them; never route around i
 - Agents and the CLI propose by default. A direct Graph write needs `userOverride`, lands `unverified` and is recorded by its `agent_write` changeset ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)).
 - Organization isolation is row-level security keyed on the organization: a Case-scoped read runs in the caller's organization, and a foreign or missing Case is `not_found`, never a distinct signal.
 - Secrets live in the vault and reach a Cap through `ctx.getCredential`: never in env, `Job.input`, the Export or a log.
-- Process logs go through `@watchdog/log`, never with secrets or Evidence bodies. evlog is not Graph audit: `Job.logs`, `changesets` and `graph_history` are ([`evlog`](docs/reference/contracts/evlog.md)).
+- Process logs go through `@watchdog/server/log`, never with secrets or Evidence bodies. evlog is not Graph audit: `Job.logs`, `changesets` and `graph_history` are ([`evlog`](docs/reference/contracts/evlog.md)).
 - Never claim without evidence; cite everything; disclose uncertainty. A breach hit proves a record exists in a dump, not control of the account.
 
 ## Judgement rules
@@ -53,13 +53,13 @@ No tool checks these; review does.
 
 Read the nested guide before editing its tree, as an explicit step: auto-attachment is not reliable. There are three:
 
-- [`packages/core/AGENTS.md`](packages/core/AGENTS.md): every server-side package (`core`, `api`, `db`, `auth`, `policy`, `tools`, `log`, `env`, `schemas`, `ai`, `test-db`, `test-kit`) and `apps/worker`.
+- [`packages/server/AGENTS.md`](packages/server/AGENTS.md): every server-side package (`core`, `api`, `db`, `auth`, `policy`, `tools`, `log`, `env`, `schemas`, `ai`, `test-db`, `test-kit`) and `packages/server/worker`.
 - [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md): Caps, Playbooks and the Cap SDK.
 - [`apps/web/AGENTS.md`](apps/web/AGENTS.md): the web app (UI contracts: [`docs/reference/web/`](docs/reference/web/README.md)).
 
 The rest of the tree has none:
 
-- `apps/cli` (`wd`) reaches the API only through `@watchdog/client`. Its stdout is the agent contract: compact JSON, failures as `{ ok: false, error: { code, message } }`, exit 1 on error and 3 on a server failure ([`agent-cli`](docs/how-to/agent-cli.md)). It and `@watchdog/client` never depend on `@watchdog/log`.
+- `apps/cli` (`wd`) reaches the API only through `@watchdog/client`. Its stdout is the agent contract: compact JSON, failures as `{ ok: false, error: { code, message } }`, exit 1 on error and 3 on a server failure ([`agent-cli`](docs/how-to/agent-cli.md)). It and `@watchdog/client` never depend on `@watchdog/server/log`.
 - `packages/client`'s `src/generated/` is gitignored build output of `pnpm generate:client` (install, `typecheck` and `build:cli` run it). Never hand-roll an `/api/v1` path.
 - `apps/site` is a static Astro page with no `@watchdog/*` runtime dependency; its tokens are copied from `apps/web/src/styles/`, and its copy comes from `README.md` and `docs/explanation/product.md`.
 - `packages/ui` is the shadcn CLI's output, hashed by `pnpm check:vendor`. Change a token or wrap the primitive in `apps/web/src/shared/ui/primitives/`.

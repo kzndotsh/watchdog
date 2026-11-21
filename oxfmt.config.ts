@@ -14,7 +14,7 @@ const watchdogIgnores = [
   "**/routeTree.gen.ts",
   "packages/client/src/generated/**",
   "packages/caps/capabilities.gen.json",
-  "packages/db/drizzle/**",
+  "packages/server/db/drizzle/**",
   "**/dist/**",
   "node_modules/**",
   "pnpm-lock.yaml",

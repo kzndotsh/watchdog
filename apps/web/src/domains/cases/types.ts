@@ -1,18 +1,18 @@
 import type { z } from "zod";
 
 import type {
-  DeletedCaseRecord as CoreDeletedCaseRecord,
-  DeletionPolicy as CoreDeletionPolicy,
-  RestoredCaseRecord as CoreRestoredCaseRecord,
-} from "@watchdog/core/case-deletion";
-import type {
-  CaseCounts as CoreCaseCounts,
-  CaseRecord as CoreCaseRecord,
-} from "@watchdog/core/cases";
-import type {
   getCaseBySlugInputSchema,
   DeleteCaseInput,
 } from "@watchdog/domain/schemas/cases";
+import type {
+  DeletedCaseRecord as CoreDeletedCaseRecord,
+  DeletionPolicy as CoreDeletionPolicy,
+  RestoredCaseRecord as CoreRestoredCaseRecord,
+} from "@watchdog/server/core/case-deletion";
+import type {
+  CaseCounts as CoreCaseCounts,
+  CaseRecord as CoreCaseRecord,
+} from "@watchdog/server/core/cases";
 
 export type CaseRecord = CoreCaseRecord;
 

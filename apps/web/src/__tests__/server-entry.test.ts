@@ -14,7 +14,7 @@ vi.mock("@tanstack/react-start/server-entry", () => ({
 
 const TRUSTED = "https://app.example.test";
 
-vi.mock("@watchdog/env/server", () => ({
+vi.mock("@watchdog/server/env/server", () => ({
   env: {
     NODE_ENV: "production",
     S3_ENDPOINT: "https://s3.example.test",
@@ -22,7 +22,7 @@ vi.mock("@watchdog/env/server", () => ({
   },
 }));
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   configuredTrustedOrigins: () => [TRUSTED],
 }));
 

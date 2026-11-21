@@ -13,7 +13,7 @@ import { MetaGrid } from "@/shared/ui/meta-grid";
 import { MetaGridItem } from "@/shared/ui/meta-grid-item";
 import { Button } from "@/shared/ui/primitives/button";
 import { capabilityLabel } from "@/shared/ui/vocab";
-import type { ProviderCallRecord } from "@watchdog/core/jobs";
+import type { ProviderCallRecord } from "@watchdog/server/core/jobs";
 
 type ProviderCallRowProps = {
   caseId: string;

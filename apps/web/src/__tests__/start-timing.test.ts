@@ -23,7 +23,7 @@ vi.mock("@tanstack/react-start", () => ({
 
 vi.mock("./evlog-init.server", () => ({}));
 
-vi.mock("@watchdog/env/server", () => ({
+vi.mock("@watchdog/server/env/server", () => ({
   get env() {
     return { NODE_ENV: state.nodeEnv };
   },
@@ -53,8 +53,8 @@ vi.mock("evlog/toolkit", async () => {
   };
 });
 
-vi.mock("@watchdog/log", async (importActual) => {
-  const actual = await importActual<typeof import("@watchdog/log")>();
+vi.mock("@watchdog/server/log", async (importActual) => {
+  const actual = await importActual<typeof import("@watchdog/server/log")>();
   return {
     ...actual,
     // Capture what a server-function wide event carries when it is emitted.
@@ -69,7 +69,7 @@ vi.mock("@watchdog/log", async (importActual) => {
   };
 });
 
-import { timedDbCall } from "@watchdog/log";
+import { timedDbCall } from "@watchdog/server/log";
 import "@/start";
 
 // requestMiddleware: [securityHeaders, evlog]

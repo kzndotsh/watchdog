@@ -14,7 +14,7 @@ import {
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const RULE = "watchdog/no-untrusted-id-import";
-const PROD = "packages/core/src/probe";
+const PROD = "packages/server/core/src/probe";
 const SCHEMAS_TESTING = "packages/domain/schemas/src/testing/probe";
 const CAPS_TESTING = "packages/caps/src/testing/probe";
 

@@ -29,7 +29,7 @@ vi.mock("evlog/toolkit", () => ({
   extractSafeHeaders: vi.fn(() => ({})),
 }));
 
-vi.mock("@watchdog/log", () => ({
+vi.mock("@watchdog/server/log", () => ({
   createLogger: vi.fn(() => ({
     set: vi.fn(),
     setLevel: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock("@watchdog/log", () => ({
   ),
 }));
 
-vi.mock("@watchdog/env/server", () => ({
+vi.mock("@watchdog/server/env/server", () => ({
   env: {
     NODE_ENV: "production",
     S3_ENDPOINT: "https://files.example.test",

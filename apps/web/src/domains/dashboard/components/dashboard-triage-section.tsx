@@ -6,7 +6,7 @@ import { proposalTitle } from "@/domains/triage/lib/filters";
 import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 
 function TriageBody({
   caseSlug,

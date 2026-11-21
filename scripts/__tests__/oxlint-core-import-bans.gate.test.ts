@@ -1,9 +1,9 @@
 /**
- * Proves the real `oxlint.config.ts` keeps infrastructure clients out of `packages/core/src`
+ * Proves the real `oxlint.config.ts` keeps infrastructure clients out of `packages/server/core/src`
  * (static, aliased, namespace and dynamic imports), so each is built in one place and read
  * from a service:
  *
- * - the global `db` client from `@watchdog/db` (use the `Db` service); type and repo imports
+ * - the global `db` client from `@watchdog/server/db` (use the `Db` service); type and repo imports
  *   stay allowed;
  * - `S3Client` and `S3` from `@aws-sdk/client-s3`, outside `infra/blob-store.ts` (use the
  *   `BlobStore` service); command and type imports stay allowed.
@@ -20,9 +20,9 @@ import {
 } from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const DB_PROBE = "packages/core/src/probe-db";
-const S3_PROBE = "packages/core/src/probe-s3";
-const BLOB_STORE = "packages/core/src/infra/blob-store.ts";
+const DB_PROBE = "packages/server/core/src/probe-db";
+const S3_PROBE = "packages/server/core/src/probe-s3";
+const BLOB_STORE = "packages/server/core/src/infra/blob-store.ts";
 
 type Ban = {
   readonly title: string;
@@ -40,18 +40,23 @@ const BANS: readonly Ban[] = [
     dynamicRule: "watchdog/no-core-db-dynamic-import",
     fix: "Db service",
     fail: {
-      named: 'import { db } from "@watchdog/db";\nexport const a = db;\n',
-      aliased: 'import { db as x } from "@watchdog/db";\nexport const a = x;\n',
-      namespace: 'import * as m from "@watchdog/db";\nexport const a = m;\n',
-      dynamic: 'export const a = async () => await import("@watchdog/db");\n',
-      "dynamic-bare": 'export const a = () => import("@watchdog/db");\n',
+      named:
+        'import { db } from "@watchdog/server/db";\nexport const a = db;\n',
+      aliased:
+        'import { db as x } from "@watchdog/server/db";\nexport const a = x;\n',
+      namespace:
+        'import * as m from "@watchdog/server/db";\nexport const a = m;\n',
+      dynamic:
+        'export const a = async () => await import("@watchdog/server/db");\n',
+      "dynamic-bare": 'export const a = () => import("@watchdog/server/db");\n',
     },
     pass: {
       "type-import":
-        'import type { DbExec } from "@watchdog/db";\nexport type A = DbExec;\n',
+        'import type { DbExec } from "@watchdog/server/db";\nexport type A = DbExec;\n',
       "repo-import":
-        'import { casesRepo } from "@watchdog/db";\n\nexport const a = casesRepo;\n',
-      "other-dynamic": 'export const a = () => import("@watchdog/log");\n',
+        'import { casesRepo } from "@watchdog/server/db";\n\nexport const a = casesRepo;\n',
+      "other-dynamic":
+        'export const a = () => import("@watchdog/server/log");\n',
     },
   },
   {
@@ -77,7 +82,8 @@ const BANS: readonly Ban[] = [
         'import { GetObjectCommand } from "@aws-sdk/client-s3";\n\nexport const a = GetObjectCommand;\n',
       "type-import":
         'import type { S3Client } from "@aws-sdk/client-s3";\nexport type A = S3Client;\n',
-      "other-dynamic": 'export const a = () => import("@watchdog/log");\n',
+      "other-dynamic":
+        'export const a = () => import("@watchdog/server/log");\n',
       "other-package":
         'import { Effect } from "effect";\n\nexport const a = Effect;\n',
     },
@@ -133,9 +139,9 @@ describe("core S3Client import ban exemption", () => {
 });
 
 /**
- * #443: the process pool has one owner (`Db.owned`), so production code outside `packages/db` and
+ * #443: the process pool has one owner (`Db.owned`), so production code outside `packages/server/db` and
  * the owner never imports the global client, the pool accessors or `withPool`. Core and auth are
- * the only packages that depend on `@watchdog/db` besides test-db.
+ * the only packages that depend on `@watchdog/server/db` besides test-db.
  */
 describe("global pool import ban (oxlint.config.ts)", () => {
   const POOL_NAMES = [
@@ -146,12 +152,12 @@ describe("global pool import ban (oxlint.config.ts)", () => {
     "withPool",
   ];
   const POOL_PROBES = [
-    "packages/core/src/probe-pool",
-    "packages/auth/src/probe-pool",
+    "packages/server/core/src/probe-pool",
+    "packages/server/auth/src/probe-pool",
   ];
-  const OWNER = "packages/core/src/infra/db-service.ts";
-  const FIRST_ADMIN_CLI = "packages/auth/src/bootstrap-admin-cli.ts";
-  const AUTH_TEST = "packages/auth/src/__tests__/probe-pool.int.test.ts";
+  const OWNER = "packages/server/core/src/infra/db-service.ts";
+  const FIRST_ADMIN_CLI = "packages/server/auth/src/bootstrap-admin-cli.ts";
+  const AUTH_TEST = "packages/server/auth/src/__tests__/probe-pool.int.test.ts";
   let pool: LintResult;
 
   beforeAll(() => {
@@ -160,25 +166,25 @@ describe("global pool import ban (oxlint.config.ts)", () => {
       for (const name of POOL_NAMES) {
         fixture.write(
           `${probe}/${name}.ts`,
-          `import { ${name} } from "@watchdog/db";\nexport const a = ${name};\n`
+          `import { ${name} } from "@watchdog/server/db";\nexport const a = ${name};\n`
         );
       }
       fixture.write(
         `${probe}/type-import.ts`,
-        'import type { Pool } from "@watchdog/db";\nexport type A = Pool;\n'
+        'import type { Pool } from "@watchdog/server/db";\nexport type A = Pool;\n'
       );
     }
     fixture.write(
       OWNER,
-      'import { acquirePool } from "@watchdog/db";\nexport const a = acquirePool;\n'
+      'import { acquirePool } from "@watchdog/server/db";\nexport const a = acquirePool;\n'
     );
     fixture.write(
       FIRST_ADMIN_CLI,
-      'import { withPool } from "@watchdog/db";\nexport const a = withPool;\n'
+      'import { withPool } from "@watchdog/server/db";\nexport const a = withPool;\n'
     );
     fixture.write(
       AUTH_TEST,
-      'import { db } from "@watchdog/db";\nexport const a = db;\n'
+      'import { db } from "@watchdog/server/db";\nexport const a = db;\n'
     );
     pool = fixture.lint([...POOL_PROBES, OWNER, FIRST_ADMIN_CLI, AUTH_TEST]);
   }, LINT_TIMEOUT_MS);

@@ -8,7 +8,7 @@ import {
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { CredentialSlot } from "@watchdog/core/vault";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 
 class ResizeObserverMock {
   observe() {}

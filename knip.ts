@@ -86,7 +86,7 @@ const config: KnipConfig = {
         "playwright",
       ],
     },
-    "apps/worker": {
+    "packages/server/worker": {
       entry: [
         "src/main.ts",
         "scripts/build.mjs",
@@ -108,11 +108,11 @@ const config: KnipConfig = {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/api": {
+    "packages/server/api": {
       entry: ["src/index.ts", "scripts/**/*.ts", "src/**/__tests__/**/*.ts"],
       project: ["src/**/*.ts", "scripts/**/*.ts"],
     },
-    "packages/auth": {
+    "packages/server/auth": {
       entry: [
         "src/server.ts",
         "src/instance-admin.ts",
@@ -130,11 +130,11 @@ const config: KnipConfig = {
       entry: ["src/index.ts"],
       project: ["src/**/*.ts", "!src/generated/**"],
     },
-    "packages/core": {
+    "packages/server/core": {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/db": {
+    "packages/server/db": {
       // The container's migrator: src/migrate-cli.ts (bundled by build-migrate.mjs).
       entry: [
         "src/index.ts",
@@ -156,11 +156,11 @@ const config: KnipConfig = {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/log": {
+    "packages/server/log": {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/test-db": {
+    "packages/server/test-db": {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },

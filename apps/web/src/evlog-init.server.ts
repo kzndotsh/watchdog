@@ -8,8 +8,8 @@ import {
   errorReportingSettings,
   otlpSettings,
   startupWarnings,
-} from "@watchdog/env/server";
-import { initWatchdogLogger, logStartupWarnings } from "@watchdog/log";
+} from "@watchdog/server/env/server";
+import { initWatchdogLogger, logStartupWarnings } from "@watchdog/server/log";
 
 initWatchdogLogger({
   service: "watchdog-web",

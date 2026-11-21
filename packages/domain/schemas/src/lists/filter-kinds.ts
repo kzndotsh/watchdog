@@ -6,7 +6,7 @@ import { trimmedUuidSchema } from "../primitives";
 /**
  * The closed set of four filter kinds a list can declare (ADR-0007). Every surface interprets
  * KINDS, never lists: the wire, URL and CLI schemas and the canonical form here; the SQL
- * predicate in `@watchdog/db`; the row control in web's Filters popover. Each of those is one
+ * predicate in `@watchdog/server/db`; the row control in web's Filters popover. Each of those is one
  * exhaustive `switch (filter.kind)` ending in `assertNeverFilter`, so a fifth kind fails
  * typecheck in every interpreter until it is handled. No operators, no nesting, no defaults.
  *

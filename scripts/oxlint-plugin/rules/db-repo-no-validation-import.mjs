@@ -7,7 +7,7 @@ const VALIDATION = /^(?:zod|drizzle-zod)(?:\/|$)/;
 export const dbRepoNoValidationImport = {
   meta: {
     type: "problem",
-    docs: { description: "Ban zod imports in packages/db repos." },
+    docs: { description: "Ban zod imports in packages/server/db repos." },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */
   create(context) {

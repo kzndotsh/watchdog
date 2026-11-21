@@ -1,6 +1,6 @@
 /**
- * Shared pieces of the `db-repo-*` rules: the packages/db repo contract
- * (stated in packages/core/AGENTS.md, Database) as AST checks on `src/repos/*.repo.ts`.
+ * Shared pieces of the `db-repo-*` rules: the packages/server/db repo contract
+ * (stated in packages/server/AGENTS.md, Database) as AST checks on `src/repos/*.repo.ts`.
  * Scope is set by the `overrides` entry in `oxlint.config.ts`, not here.
  */
 import { isRecord } from "./ast.mjs";
@@ -11,7 +11,8 @@ import { isRecord } from "./ast.mjs";
  */
 
 /** Pointer every message ends with, so the agent knows where the contract is stated. */
-export const REPO_CONTRACT = "repo contract: packages/core/AGENTS.md, Database";
+export const REPO_CONTRACT =
+  "repo contract: packages/server/AGENTS.md, Database";
 
 /** Lookup-only methods where `trimmedOrUndefined` is allowed (not display write validation). */
 export const TRIM_LOOKUP_METHODS = new Set([

@@ -1,14 +1,14 @@
 import type { z } from "zod";
 
 import type {
-  CaseIdentifierRecord as CoreCaseIdentifierRecord,
-  IdentifierRecord as CoreIdentifierRecord,
-} from "@watchdog/core/graph";
-import type {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
   updateIdentifierInputSchema,
 } from "@watchdog/domain/schemas/graph";
+import type {
+  CaseIdentifierRecord as CoreCaseIdentifierRecord,
+  IdentifierRecord as CoreIdentifierRecord,
+} from "@watchdog/server/core/graph";
 
 export type IdentifierRecord = CoreIdentifierRecord;
 export type CaseIdentifierRecord = CoreCaseIdentifierRecord;

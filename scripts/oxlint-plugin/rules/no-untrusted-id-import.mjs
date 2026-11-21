@@ -34,7 +34,9 @@ export const noUntrustedIdImport = {
         typeof source.value !== "string" ||
         !(
           source.value.startsWith("@watchdog/domain/test-kit") ||
-          source.value === "@watchdog/domain/schemas/testing"
+          source.value.startsWith("#test-kit") ||
+          source.value === "@watchdog/domain/schemas/testing" ||
+          source.value === "#schemas/testing"
         )
       ) {
         return;
@@ -45,7 +47,7 @@ export const noUntrustedIdImport = {
         if (name !== null && UNTRUSTED_ID_HELPERS.has(name)) {
           context.report({
             node: spec,
-            message: `${name} stamps an unvalidated brand and is for tests only: mint ids with asCaseId / asOrganizationId or a schema parse (ADR-0003). Allowed in __tests__, *.test.ts, testing/ helper dirs and packages/test-db/src.`,
+            message: `${name} stamps an unvalidated brand and is for tests only: mint ids with asCaseId / asOrganizationId or a schema parse (ADR-0003). Allowed in __tests__, *.test.ts, testing/ helper dirs and packages/server/test-db/src.`,
           });
         }
       }

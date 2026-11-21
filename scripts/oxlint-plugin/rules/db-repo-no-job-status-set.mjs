@@ -40,7 +40,7 @@ export const dbRepoNoJobStatusSet = {
     type: "problem",
     docs: {
       description:
-        "Ban array literals of two or more job statuses in packages/db repos.",
+        "Ban array literals of two or more job statuses in packages/server/db repos.",
     },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */

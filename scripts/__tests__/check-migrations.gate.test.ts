@@ -7,8 +7,14 @@ const createGateRepo = gateRepoFactory();
 /** Stand-in for `drizzle-kit generate`: writes whatever the test asks for. */
 function repoWithGenerator(shell: string) {
   const repo = createGateRepo(["check-migrations.mjs"]);
-  repo.write("packages/db/drizzle/0000_baseline.sql", "CREATE TABLE a ();\n");
-  repo.write("packages/db/drizzle/meta/_journal.json", '{"entries":[]}\n');
+  repo.write(
+    "packages/server/db/drizzle/0000_baseline.sql",
+    "CREATE TABLE a ();\n"
+  );
+  repo.write(
+    "packages/server/db/drizzle/meta/_journal.json",
+    '{"entries":[]}\n'
+  );
   repo.commitAll("baseline");
   return { repo, env: { WD_MIGRATIONS_GENERATE_CMD: shell } };
 }
@@ -23,7 +29,7 @@ describe("check-migrations", () => {
 
   it("fails when generate writes a new migration, and rolls it back", () => {
     const { repo, env } = repoWithGenerator(
-      "echo 'ALTER TABLE a ADD b int;' > packages/db/drizzle/0001_migration_drift_check.sql"
+      "echo 'ALTER TABLE a ADD b int;' > packages/server/db/drizzle/0001_migration_drift_check.sql"
     );
     const res = repo.run("check-migrations.mjs", [], env);
     expect(res.code).toBe(1);
@@ -34,7 +40,7 @@ describe("check-migrations", () => {
 
   it("fails when generate changes the journal, and restores it", () => {
     const { repo, env } = repoWithGenerator(
-      "echo '{\"entries\":[1]}' > packages/db/drizzle/meta/_journal.json"
+      "echo '{\"entries\":[1]}' > packages/server/db/drizzle/meta/_journal.json"
     );
     const res = repo.run("check-migrations.mjs", [], env);
     expect(res.code).toBe(1);

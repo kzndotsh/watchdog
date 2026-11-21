@@ -18,8 +18,11 @@ function fixture() {
   repo.write("package.json", '{"name":"root"}');
   repo.write("apps/web/package.json", pkg("@wd/web", ["@wd/api"]));
   repo.write("apps/cli/package.json", pkg("@wd/cli", ["@wd/schemas"]));
-  repo.write("packages/api/package.json", pkg("@wd/api", ["@wd/core"]));
-  repo.write("packages/core/package.json", pkg("@wd/core", ["@wd/schemas"]));
+  repo.write("packages/server/api/package.json", pkg("@wd/api", ["@wd/core"]));
+  repo.write(
+    "packages/server/core/package.json",
+    pkg("@wd/core", ["@wd/schemas"])
+  );
   repo.write("packages/domain/schemas/package.json", pkg("@wd/schemas"));
   repo.write("packages/tools/package.json", pkg("@wd/tools"));
   repo.write("docs/readme.md", "docs\n");
@@ -50,7 +53,7 @@ describe("changed-packages", () => {
 
   it("does not select dependencies or unrelated packages", () => {
     const repo = fixture();
-    repo.write("packages/api/src/a.ts", "export {};\n");
+    repo.write("packages/server/api/src/a.ts", "export {};\n");
     repo.commitAll("change api");
 
     expect(names(repo.run(GATE).output)).toEqual(["@wd/api", "@wd/web"]);

@@ -25,10 +25,10 @@ import {
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const outDir = path.join(root, "packages/db/drizzle");
+const outDir = path.join(root, "packages/server/db/drizzle");
 const GENERATE_CMD =
   process.env.WD_MIGRATIONS_GENERATE_CMD ??
-  "pnpm --filter @watchdog/db generate --name=migration_drift_check";
+  "pnpm --filter @watchdog/server db:generate --name=migration_drift_check";
 
 /**
  * @param {string} dir

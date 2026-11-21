@@ -7,7 +7,7 @@ import {
   type CapRunPrefill,
 } from "@/domains/jobs/lib/cap-run-input";
 import type { CapListItem } from "@/domains/jobs/types";
-import type { JobRecord } from "@watchdog/core/jobs";
+import type { JobRecord } from "@watchdog/server/core/jobs";
 
 /**
  * The Run popover's state: its mode, whether it is open, and what it starts on (a Library link's

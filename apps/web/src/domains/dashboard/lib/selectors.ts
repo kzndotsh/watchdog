@@ -1,4 +1,4 @@
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 
 const MAX_LIST_ROWS = 8;
 

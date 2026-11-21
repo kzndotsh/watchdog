@@ -32,7 +32,7 @@ const CLEAN = [
 
 describe("check-tagged-errors gate", () => {
   it("passes when every tagged error ends in Error and declares a code", () => {
-    const repo = repoWith({ "packages/core/src/errors.ts": CLEAN });
+    const repo = repoWith({ "packages/server/core/src/errors.ts": CLEAN });
 
     const res = repo.run(GATE, STRICT);
 
@@ -42,7 +42,7 @@ describe("check-tagged-errors gate", () => {
 
   it("fails when a tagged error class lacks the Error suffix", () => {
     const repo = repoWith({
-      "packages/core/src/bad-name.ts": [
+      "packages/server/core/src/bad-name.ts": [
         'export class ScratchCleanupFailed extends Data.TaggedError("ScratchCleanupFailed")<{',
         "  readonly cause: unknown;",
         "}> {",
@@ -60,7 +60,7 @@ describe("check-tagged-errors gate", () => {
 
   it("fails when a tagged error class declares no code", () => {
     const repo = repoWith({
-      "apps/worker/src/no-code.ts": [
+      "packages/server/worker/src/no-code.ts": [
         'class WorkerBossError extends Data.TaggedError("WorkerBossError")<{',
         "  readonly cause: unknown;",
         "}> {}",
@@ -76,7 +76,7 @@ describe("check-tagged-errors gate", () => {
 
   it("fails when two tagged error classes share a code", () => {
     const repo = repoWith({
-      "packages/core/src/a.ts": CLEAN,
+      "packages/server/core/src/a.ts": CLEAN,
       "packages/tools/src/b.ts": [
         'export class OtherError extends Data.TaggedError("OtherError")<{}> {',
         '  readonly code = "vault" as const;',
@@ -120,7 +120,7 @@ describe("check-tagged-errors gate", () => {
         "",
       ].join("\n");
     const missing = repoWith({
-      "packages/core/src/w.ts": wrapped([]),
+      "packages/server/core/src/w.ts": wrapped([]),
     }).run(GATE, STRICT);
     expect(missing.code).toBe(1);
     expect(missing.output).toContain(
@@ -128,7 +128,7 @@ describe("check-tagged-errors gate", () => {
     );
 
     const present = repoWith({
-      "packages/core/src/w.ts": wrapped([
+      "packages/server/core/src/w.ts": wrapped([
         '  readonly code = "wrapped" as const;',
       ]),
     }).run(GATE, STRICT);
@@ -143,7 +143,7 @@ describe("check-tagged-errors gate", () => {
       "",
     ];
     const unclosed = repoWith({
-      "packages/core/src/u.ts": [
+      "packages/server/core/src/u.ts": [
         'export class OpenError extends Data.TaggedError("OpenError")<{',
         "  readonly reason: string;",
         // no closing line at this indent
@@ -155,7 +155,7 @@ describe("check-tagged-errors gate", () => {
     expect(unclosed.output).toContain("cannot find the end of the class body");
 
     const closed = repoWith({
-      "packages/core/src/u.ts": [
+      "packages/server/core/src/u.ts": [
         'export class OpenError extends Data.TaggedError("OpenError")<{',
         "  readonly reason: string;",
         "}> {",
@@ -181,9 +181,9 @@ describe("check-tagged-errors gate", () => {
 
   it("ignores tests and __tests__ fixtures", () => {
     const repo = repoWith({
-      "packages/core/src/__tests__/fixture.ts":
+      "packages/server/core/src/__tests__/fixture.ts":
         'class FakeFailed extends Data.TaggedError("FakeFailed")<{}> {}\n',
-      "packages/core/src/x.test.ts":
+      "packages/server/core/src/x.test.ts":
         'class OtherFailed extends Data.TaggedError("OtherFailed")<{}> {}\n',
     });
 
@@ -194,7 +194,7 @@ describe("check-tagged-errors gate", () => {
 
   it("only warns without --strict", () => {
     const repo = repoWith({
-      "packages/core/src/bad.ts":
+      "packages/server/core/src/bad.ts":
         'class BadFailed extends Data.TaggedError("BadFailed")<{}> {}\n',
     });
 

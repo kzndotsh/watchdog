@@ -12,9 +12,9 @@ import type {
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { memoryPickerPort } from "@/testing/memory-picker-port";
 import { render, screen } from "@/testing/render-in-case";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 vi.mock("@/domains/intake/components/evidence-preview-drawer", () => ({
   EvidencePreviewDrawer: () => null,

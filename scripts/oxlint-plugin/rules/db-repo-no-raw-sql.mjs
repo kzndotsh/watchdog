@@ -4,7 +4,7 @@ import { collectImports, isDrizzleModule } from "../lib/db-imports.mjs";
 import { memberName } from "../lib/db-repo.mjs";
 
 const MESSAGE =
-  "Repos use the drizzle builder API: replace this raw sql fragment with builder operators (eq, and, inArray, ilike, ...) so a repo stays plain values over the typed schema (packages/core/AGENTS.md, Database).";
+  "Repos use the drizzle builder API: replace this raw sql fragment with builder operators (eq, and, inArray, ilike, ...) so a repo stays plain values over the typed schema (packages/server/AGENTS.md, Database).";
 
 /**
  * Repos use the builder API; a raw `sql` template is a hand-written fragment. Follows
@@ -16,7 +16,8 @@ export const dbRepoNoRawSql = withBaseline("db-repo-no-raw-sql", {
   meta: {
     type: "problem",
     docs: {
-      description: "Ban raw sql template fragments in packages/db repos.",
+      description:
+        "Ban raw sql template fragments in packages/server/db repos.",
     },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */

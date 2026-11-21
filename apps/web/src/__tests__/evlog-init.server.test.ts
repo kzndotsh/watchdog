@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const initWatchdogLoggerMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@watchdog/env/server", () => ({
+vi.mock("@watchdog/server/env/server", () => ({
   errorReportingSettings: () => ({ dsn: undefined }),
   otlpSettings: () => ({ endpoint: undefined }),
   startupWarnings: () => ["DATABASE_URL test warning"],
@@ -10,7 +10,7 @@ vi.mock("@watchdog/env/server", () => ({
 
 const logStartupWarningsMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@watchdog/log", () => ({
+vi.mock("@watchdog/server/log", () => ({
   initWatchdogLogger: initWatchdogLoggerMock,
   logStartupWarnings: logStartupWarningsMock,
 }));

@@ -5,7 +5,7 @@
 --     when the data volume is first created. psql is connected to POSTGRES_DB as POSTGRES_USER.
 --   * docker/smoke.sh runs it against its empty database.
 -- Neither role owns anything or has DDL, CREATE or superuser attributes. What they may do to tables
--- is granted by the migrator after every run (packages/db/src/app-role.ts), not here, so a table
+-- is granted by the migrator after every run (packages/server/db/src/app-role.ts), not here, so a table
 -- added later is covered: the app role reads and writes rows (never the audit tables), and the
 -- worker role has the same minus any write to the Graph (#720). The migrator also lets
 -- watchdog_app switch to watchdog_worker for an API-key request.

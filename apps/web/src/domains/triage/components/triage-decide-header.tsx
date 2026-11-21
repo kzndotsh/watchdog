@@ -17,7 +17,7 @@ import { EntityMention } from "@/shared/ui/entity-mention";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusInk } from "@/shared/ui/vocab";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 function ProducingCapLink({
   jobId,

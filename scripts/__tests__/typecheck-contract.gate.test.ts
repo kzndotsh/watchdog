@@ -43,7 +43,7 @@ const scriptsOf = (rel: string): Record<string, string> => {
  */
 const MAIN_INCLUDES_TESTS = new Set([
   "apps/web",
-  "packages/test-db",
+  "packages/server/test-db",
   "packages/domain/test-kit",
 ]);
 

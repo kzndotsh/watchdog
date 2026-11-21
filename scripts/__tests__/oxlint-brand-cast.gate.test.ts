@@ -15,7 +15,7 @@ import {
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const RULE = "watchdog/no-brand-cast";
-const PROBE = "packages/core/src/probe";
+const PROBE = "packages/server/core/src/probe";
 const EXEMPT = "packages/domain/schemas/src/testing/probe";
 
 const TYPES =

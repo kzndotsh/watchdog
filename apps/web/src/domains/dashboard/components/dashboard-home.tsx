@@ -30,7 +30,7 @@ import {
   DashboardActivityPanelSkeleton,
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
-import type { ProposalQueueItem } from "@watchdog/core/proposals";
+import type { ProposalQueueItem } from "@watchdog/server/core/proposals";
 import {
   ResizableHandle,
   ResizablePanel,

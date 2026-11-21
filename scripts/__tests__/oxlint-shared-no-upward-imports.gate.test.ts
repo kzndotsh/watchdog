@@ -112,7 +112,7 @@ beforeAll(() => {
     'import { a } from "@/domains/entities/lib/a";\nexport { a };\n'
   );
   fixture.write(
-    "packages/core/src/shared/ui/outside-web.ts",
+    "packages/server/core/src/shared/ui/outside-web.ts",
     'import { a } from "@/domains/entities/lib/a";\nexport { a };\n'
   );
 
@@ -153,6 +153,8 @@ describe("shared imports no domain, app or route (shared-no-upward-imports)", ()
       0
     );
     expect(hits(`${SRC}/routes/route.ts`)).toHaveLength(0);
-    expect(hits("packages/core/src/shared/ui/outside-web.ts")).toHaveLength(0);
+    expect(
+      hits("packages/server/core/src/shared/ui/outside-web.ts")
+    ).toHaveLength(0);
   });
 });

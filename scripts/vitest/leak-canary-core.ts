@@ -44,7 +44,7 @@ const TOOLING_PREFIXES = [
 ];
 const TOOLING_PROPERTIES = new Set([
   "globalThis.IS_REACT_ACT_ENVIRONMENT",
-  // @watchdog/db keeps one Postgres pool per process on globalThis.
+  // @watchdog/server/db keeps one Postgres pool per process on globalThis.
   "globalThis.__watchdogPool",
   // Third-party singletons registered on first import.
   "globalThis.__SEROVAL_REFS__",
@@ -234,7 +234,7 @@ export const diffSnapshots = (before: Snapshot, after: Snapshot): string[] => {
   for (const key of new Set([...before.env.keys(), ...after.env.keys()])) {
     const was = before.env.get(key);
     // The env validator (@t3-oss/env-core, emptyStringAsUndefined) unsets empty variables
-    // when a file first imports @watchdog/env: normalisation, not test state.
+    // when a file first imports @watchdog/server/env: normalisation, not test state.
     if (was !== after.env.get(key) && !(was === "" && !after.env.has(key))) {
       leaks.push(`process.env.${key} was changed`);
     }

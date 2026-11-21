@@ -1,8 +1,4 @@
 import { PATCH_RESOURCE_META, proposalHeadlineLabel } from "@/shared/ui/vocab";
-import type {
-  ProposalQueueItem,
-  ProposalRecord,
-} from "@watchdog/core/proposals";
 import {
   patchOpHeadline,
   type PatchOp,
@@ -12,6 +8,10 @@ import {
   proposalEntityName as coreProposalEntityName,
   proposalEntitySlug as coreProposalEntitySlug,
 } from "@watchdog/domain/schemas/jobs";
+import type {
+  ProposalQueueItem,
+  ProposalRecord,
+} from "@watchdog/server/core/proposals";
 
 /**
  * What the headline needs of a Proposal: a queue row (no patch, so no Entity name to fall back on)

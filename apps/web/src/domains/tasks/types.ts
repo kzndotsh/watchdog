@@ -4,7 +4,7 @@ import type {
   TaskEntityLabel as CoreTaskEntityLabel,
   TaskListItem as CoreTaskListItem,
   TaskRecord as CoreTaskRecord,
-} from "@watchdog/core/tasks";
+} from "@watchdog/server/core/tasks";
 
 export type TaskRecord = CoreTaskRecord;
 

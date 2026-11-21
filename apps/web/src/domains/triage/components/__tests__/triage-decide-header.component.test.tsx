@@ -30,7 +30,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { TriageDecideHeader } from "@/domains/triage/components/triage-decide-header";
-import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 function pendingProposal(
   overrides: Partial<ProposalRecord> = {}

@@ -18,7 +18,7 @@ import type { LintResult, OxlintFixture } from "./oxlint-fixture.ts";
 export const RULE = "watchdog/no-legacy-marker";
 export const BASELINE = "scripts/oxlint-plugin/baselines/no-legacy-marker.json";
 export const FIXTURE_CONFIG = "oxlint.fixture.config.ts";
-export const A = "packages/core/src/a.ts";
+export const A = "packages/server/core/src/a.ts";
 export const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
 const RULE_MODULE = `import { withBaseline } from "../lib/baseline.mjs";

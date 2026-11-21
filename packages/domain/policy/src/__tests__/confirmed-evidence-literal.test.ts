@@ -205,11 +205,11 @@ describe("message literal scanner", () => {
     try {
       for (const file of [
         "apps/web/a.ts",
-        "packages/core/b.mjs",
-        "packages/core/node_modules/dep/c.ts",
-        "packages/core/dist/d.js",
-        "packages/core/.git/e.ts",
-        "packages/core/notes.md",
+        "packages/server/core/b.mjs",
+        "packages/server/core/node_modules/dep/c.ts",
+        "packages/server/core/dist/d.js",
+        "packages/server/core/.git/e.ts",
+        "packages/server/core/notes.md",
       ]) {
         mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
         writeFileSync(path.join(root, file), "");
@@ -219,7 +219,7 @@ describe("message literal scanner", () => {
       });
       expect([...files].sort()).toEqual([
         "apps/web/a.ts",
-        "packages/core/b.mjs",
+        "packages/server/core/b.mjs",
       ]);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -243,11 +243,13 @@ describe("message literal scanner", () => {
 describe("message literals live only in their policy module", () => {
   const files = listSourceFiles(repoRoot);
 
-  it("scanned the policy modules and files under apps/web and packages/core", () => {
+  it("scanned the policy modules and files under apps/web and packages/server/core", () => {
     expect(files).toContain(EVIDENCE_RULE.ownModule);
     expect(files).toContain(CHILD_WRITE_RULE.ownModule);
     expect(files.some((file) => file.startsWith("apps/web/"))).toBe(true);
-    expect(files.some((file) => file.startsWith("packages/core/"))).toBe(true);
+    expect(files.some((file) => file.startsWith("packages/server/core/"))).toBe(
+      true
+    );
   });
 
   for (const rule of [EVIDENCE_RULE, CHILD_WRITE_RULE]) {

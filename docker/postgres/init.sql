@@ -11,7 +11,7 @@ CREATE SCHEMA IF NOT EXISTS auth;
 -- Application role. The stack runs the web app and worker as `watchdog_app`; this init (and every
 -- migration run after it) is done by the owner, the `postgres` superuser, which owns every table.
 -- The role has no DDL, no ownership and no CREATE anywhere. Its table grants (DML only, none on
--- the append-only audit tables) are applied by the migrator after each run (packages/db/src/
+-- the append-only audit tables) are applied by the migrator after each run (packages/server/db/src/
 -- app-role.ts), so this file only creates the login and lets it connect. Fixed local-dev password;
 -- production sets its own (docker/postgres/app-role.sql).
 DO $$

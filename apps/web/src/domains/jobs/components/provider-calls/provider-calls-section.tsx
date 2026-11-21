@@ -15,7 +15,7 @@ import { PendingRegion } from "@/shared/ui/pending-region";
 import type {
   ProviderCallCacheHit,
   ProviderCallList,
-} from "@watchdog/core/jobs";
+} from "@watchdog/server/core/jobs";
 
 type ProviderCallsSectionProps = {
   caseId: string;

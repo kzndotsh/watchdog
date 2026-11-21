@@ -3,7 +3,7 @@
 # GitHub Linguist: generated files are collapsed in pull request diffs and left out of the
 # language stats. Each is written by a tool and checked for drift in CI; review its source.
 pnpm-lock.yaml linguist-generated=true
-packages/db/drizzle/meta/** linguist-generated=true
+packages/server/db/drizzle/meta/** linguist-generated=true
 apps/web/src/routeTree.gen.ts linguist-generated=true
 packages/caps/capabilities.gen.json linguist-generated=true
 THIRD_PARTY_NOTICES.md linguist-generated=true

@@ -29,7 +29,7 @@ Every function pins `search_path` and is SECURITY DEFINER where it writes. The a
 
 ## How it is read
 
-`collectList` (`@watchdog/domain/schemas/jobs`) is the declared list over `collect_queue`; `collectListRepo` binds it (`packages/db/src/repos/collect-list.repo.ts`), and `collect.list` (`GET /cases/{caseId}/collect`) and `wd collect list` read it.
+`collectList` (`@watchdog/domain/schemas/jobs`) is the declared list over `collect_queue`; `collectListRepo` binds it (`packages/server/db/src/repos/collect-list.repo.ts`), and `collect.list` (`GET /cases/{caseId}/collect`) and `wd collect list` read it.
 
 - **Filters.** `hidden` (the Evidence the user hid; no Jobs, no state), `state`, `kind`, `unprocessed`, `unattached`, `capability` (a Cap or playbook id, any member), `entityId`, and `q` over `search_text` plus the state labels. `hidden` excludes `state`, `kind`, `unprocessed`, `unattached` and `capability`; `unattached` excludes `entityId`.
 - **Sorts.** `activity.desc` (the default) and `started.desc` / `started.asc`, each ending in the id. `activity` is a _moving_ key (`moving: true`, descending only): a row rises when a Job starts or finishes and drops when a step attaches to Evidence. The cursor carries the value the row had when the page was read, so a row that rose past the cursor is skipped by a walk in progress and a row that dropped comes back on a later page. A view that pages it keeps the first occurrence of an id and re-reads its loaded pages when a change arrives.

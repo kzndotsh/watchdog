@@ -14,9 +14,9 @@ import {
   pickerRouteCaseWrapper,
 } from "@/testing/memory-picker-port";
 import { render as baseRender, screen } from "@/testing/render-in-case";
-import type { JobListRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 import { Tabs } from "@watchdog/ui/components/tabs";
 
 vi.mock("@tanstack/react-router", () => ({

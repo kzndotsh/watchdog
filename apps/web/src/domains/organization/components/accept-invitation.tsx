@@ -17,7 +17,7 @@ import { queryLoadError } from "@/shared/lib/query-load-error";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
-import { invitationAcceptPath } from "@watchdog/auth/invitation-url";
+import { invitationAcceptPath } from "@watchdog/server/auth/invitation-url";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import {
   Card,

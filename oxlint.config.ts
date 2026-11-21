@@ -46,7 +46,7 @@ const effecttsgoTier2Warn = {
   "effecttsgo/abort-controller-in-effect": "warn",
 } as const;
 
-/** Re-enabled in packages/core — fix violations instead of blanket-off. */
+/** Re-enabled in packages/server/core — fix violations instead of blanket-off. */
 const effecttsgoTier1Warn = {
   "effecttsgo/unknown-in-effect-catch": "warn",
   "effecttsgo/any-unknown-in-error-context": "warn",
@@ -67,16 +67,16 @@ const effecttsgoTier1Warn = {
  * (`effecttsgo/unknown-in-effect-catch`, `effecttsgo/run-effect-inside-effect`).
  */
 const effectEdgeRoots = [
-  "packages/core/src/**/*.{ts,tsx}",
-  "packages/api/src/**/*.{ts,tsx}",
+  "packages/server/core/src/**/*.{ts,tsx}",
+  "packages/server/api/src/**/*.{ts,tsx}",
   "packages/tools/src/**/*.{ts,tsx}",
   "packages/domain/policy/src/**/*.{ts,tsx}",
   "packages/caps/src/**/*.{ts,tsx}",
   "packages/ai/src/**/*.{ts,tsx}",
-  "packages/db/src/**/*.{ts,tsx}",
-  "packages/log/src/**/*.{ts,tsx}",
+  "packages/server/db/src/**/*.{ts,tsx}",
+  "packages/server/log/src/**/*.{ts,tsx}",
   "apps/cli/src/**/*.{ts,tsx}",
-  "apps/worker/src/**/*.{ts,tsx}",
+  "packages/server/worker/src/**/*.{ts,tsx}",
   "apps/web/src/**/*.{ts,tsx}",
 ];
 
@@ -84,9 +84,9 @@ const effectEdgeRoots = [
 const effectEdgeTests = ["**/__tests__/**", "**/*.test.{ts,tsx}"];
 
 /**
- * `@watchdog/db` exports that reach the process-global Postgres pool (#443): the pool has one
- * owner per process (`Db.owned` in `@watchdog/core`), so production code outside `packages/db`
- * and that owner never imports them. Tests, `@watchdog/test-db` and the two one-shot CLIs
+ * `#db` exports that reach the process-global Postgres pool (#443): the pool has one
+ * owner per process (`Db.owned` in core), so production code outside `packages/server/db`
+ * and that owner never imports them. Tests, `#test-db` and the two one-shot CLIs
  * (`withPool`) are exempt.
  */
 const globalPoolImportNames = [
@@ -104,19 +104,19 @@ const globalPoolImportNames = [
  */
 const effectRunEdges = [
   // Process: the API ManagedRuntime and `runApp`.
-  "packages/api/src/runtime.ts",
+  "packages/server/api/src/runtime.ts",
   // Process: the worker boot (`NodeRuntime.runMain`).
-  "apps/worker/src/boot-worker.ts",
+  "packages/server/worker/src/boot-worker.ts",
   // `runDomain`, the test and script bridge for core programs.
-  "packages/core/src/infra/run-domain.ts",
+  "packages/server/core/src/infra/run-domain.ts",
   // `transact`: the driver's transaction API is promise-based, so the body runs
   // through `runPromiseExitWith` (caller services, abort signal) at this one edge.
-  "packages/core/src/infra/postgres-tx.ts",
+  "packages/server/core/src/infra/postgres-tx.ts",
   // `runCap`, the Promise edge for Cap `run()` tests.
   "packages/caps/src/sdk/run.ts",
   // Process: the vault rekey command, over the connection it owns (`Db.layerOf(db)`). Not
   // `runDomain`: its service Layer would bundle the S3 and outbound clients the command never uses.
-  "packages/core/src/vault-rekey-cli.ts",
+  "packages/server/core/src/vault-rekey-cli.ts",
 ];
 
 /**
@@ -145,7 +145,7 @@ const watchdogIgnores = [
   "**/routeTree.gen.ts",
   "packages/client/src/generated/**",
   "packages/caps/capabilities.gen.json",
-  "packages/db/drizzle/**",
+  "packages/server/db/drizzle/**",
   "**/dist/**",
   "node_modules/**",
   // Vendored shadcn primitives (@watchdog/ui): byte-identical to the CLI output, never linted.
@@ -198,9 +198,9 @@ const webImportRestrictions = (
 ) => ({
   paths: [
     {
-      name: "@watchdog/db",
+      name: "@watchdog/server/db",
       message:
-        "The browser calls oRPC (@watchdog/api) → core → repos. Auth's db access lives in @watchdog/auth.",
+        "The browser calls oRPC (@watchdog/server/api) → core → repos. Auth's db access lives in @watchdog/server/auth.",
     },
     ...(allowInfinite
       ? []
@@ -427,7 +427,7 @@ export default defineConfig({
     "unicorn/prefer-array-find": "error",
     "unicorn/prefer-export-from": [
       "error",
-      // Barrel files (e.g. packages/api/src/schemas.ts) legitimately both use
+      // Barrel files (e.g. packages/server/api/src/schemas.ts) legitimately both use
       // and re-export the same imported schema — don't flag those as
       // redundant just because a subset is also re-exported.
       { checkUsedVariables: false },
@@ -471,9 +471,9 @@ export default defineConfig({
   },
   overrides: [
     {
-      // packages/db repo contract (packages/core/AGENTS.md, Database): repo modules only,
+      // packages/server/db repo contract (packages/server/AGENTS.md, Database): repo modules only,
       // not the `_*.ts` helpers or tests beside them.
-      files: ["packages/db/src/repos/*.repo.ts"],
+      files: ["packages/server/db/src/repos/*.repo.ts"],
       rules: {
         "watchdog/db-repo-exec-first": "error",
         "watchdog/db-repo-no-dto-date": "error",
@@ -495,7 +495,7 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "packages/caps/src/testing/**",
         "packages/domain/schemas/src/testing/**",
-        "packages/test-db/src/**",
+        "packages/server/test-db/src/**",
       ],
       rules: { "watchdog/no-untrusted-id-import": "off" },
     },
@@ -519,8 +519,8 @@ export default defineConfig({
     },
     {
       files: [
-        "packages/core/src/errors/tagged-errors.ts",
-        "packages/core/src/infra/repo-layers.ts",
+        "packages/server/core/src/errors/tagged-errors.ts",
+        "packages/server/core/src/infra/repo-layers.ts",
         "packages/tools/src/errors/tagged-errors.ts",
         "packages/ai/src/structured-extract.ts",
       ],
@@ -543,7 +543,7 @@ export default defineConfig({
       },
     },
     {
-      // Web must not import @watchdog/db except auth adapter + SSE listen, and must use the
+      // Web must not import @watchdog/server/db except auth adapter + SSE listen, and must use the
       // Watchdog wrapper (not the vanilla @watchdog/ui primitive) wherever one exists.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
@@ -615,7 +615,7 @@ export default defineConfig({
         "**/*.int.test.{ts,tsx}",
         "**/testing/**",
         "apps/web/src/test-setup.ts",
-        "packages/test-db/**",
+        "packages/server/test-db/**",
         "packages/domain/test-kit/**",
       ],
       rules: {
@@ -820,7 +820,7 @@ export default defineConfig({
           {
             paths: [
               {
-                name: "@watchdog/db",
+                name: "@watchdog/server/db",
                 message: "UI wrappers never touch the database.",
               },
             ],
@@ -883,20 +883,20 @@ export default defineConfig({
     {
       // Promise repos, job Date interop, tools HTTP, TanStack/CLI edges, build scripts.
       files: [
-        "packages/db/src/**/*.{ts,tsx}",
-        "packages/db/drizzle.config.ts",
-        "packages/db/scripts/**/*.{mjs,ts}",
+        "packages/server/db/src/**/*.{ts,tsx}",
+        "packages/server/db/drizzle.config.ts",
+        "packages/server/db/scripts/**/*.{mjs,ts}",
         "packages/**/scripts/**/*.{mjs,ts}",
         "packages/caps/src/**/*.{ts,tsx}",
         "packages/ai/src/**/*.{ts,tsx}",
-        "packages/env/src/**/*.{ts,tsx}",
-        "packages/log/src/**/*.{ts,tsx}",
+        "packages/server/env/src/**/*.{ts,tsx}",
+        "packages/server/log/src/**/*.{ts,tsx}",
         "packages/domain/schemas/src/**/*.{ts,tsx}",
         "packages/domain/test-kit/src/**/*.{ts,tsx}",
-        "packages/test-db/src/**/*.{ts,tsx}",
+        "packages/server/test-db/src/**/*.{ts,tsx}",
         "packages/client/src/**/*.{ts,tsx}",
-        "packages/api/src/**/*.{ts,tsx}",
-        "packages/auth/src/**/*.{ts,tsx}",
+        "packages/server/api/src/**/*.{ts,tsx}",
+        "packages/server/auth/src/**/*.{ts,tsx}",
         "apps/**/*.{ts,tsx,mjs}",
         "e2e/**/*.{ts,tsx}",
         "scripts/**/*.{mjs,ts}",
@@ -1034,7 +1034,7 @@ export default defineConfig({
     },
     {
       // Core Effect pipeline — tier-1 rules stay on; boundary rules stay off.
-      files: ["packages/core/src/**/*.{ts,tsx}"],
+      files: ["packages/server/core/src/**/*.{ts,tsx}"],
       rules: {
         ...effecttsgoOff,
         ...effecttsgoTier1Warn,
@@ -1042,8 +1042,8 @@ export default defineConfig({
     },
     {
       files: [
-        "packages/core/src/**/__tests__/**/*.{ts,tsx}",
-        "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
+        "packages/server/core/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/server/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: effecttsgoOff,
     },
@@ -1078,29 +1078,29 @@ export default defineConfig({
       // (`tryDbWith`, `transact`), never the module-global client. Type imports
       // (`DbExec`, `DbTx`) and repo imports stay allowed. Phase 3: the S3 client
       // comes from the `BlobStore` service, so `new S3Client` lives in one file.
-      files: ["packages/core/src/**/*.{ts,tsx}"],
+      files: ["packages/server/core/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-restricted-imports": [
           "error",
           {
             paths: [
               {
-                name: "@watchdog/db",
+                name: "#db",
                 importNames: globalPoolImportNames,
                 message:
-                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it, so one pool per process ends cleanly at shutdown.",
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/server/AGENTS.md), not the global pool: Db.owned owns it, so one pool per process ends cleanly at shutdown.",
               },
               {
                 name: "@aws-sdk/client-s3",
                 importNames: ["S3Client", "S3"],
                 allowTypeImports: true,
                 message:
-                  "Core reads the S3 client from the BlobStore service (infra/blob-store.ts, see packages/core/AGENTS.md), not a module-level client.",
+                  "Core reads the S3 client from the BlobStore service (infra/blob-store.ts, see packages/server/AGENTS.md), not a module-level client.",
               },
             ],
           },
         ],
-        // `no-restricted-imports` does not see `import("@watchdog/db")`.
+        // `no-restricted-imports` does not see `import("#db")`.
         "watchdog/no-core-db-dynamic-import": "error",
         // Same gap for `import("@aws-sdk/client-s3")`.
         "watchdog/no-core-s3-dynamic-import": "error",
@@ -1120,9 +1120,9 @@ export default defineConfig({
     },
     {
       files: [
-        "packages/core/src/jobs/lifecycle/**",
-        "packages/db/src/repos/jobs-settle.repo.ts",
-        "packages/test-db/src/**",
+        "packages/server/core/src/jobs/lifecycle/**",
+        "packages/server/db/src/repos/jobs-settle.repo.ts",
+        "packages/server/test-db/src/**",
         "**/__tests__/**",
         "**/*.{test,spec,int.test}.{ts,tsx}",
       ],
@@ -1132,13 +1132,13 @@ export default defineConfig({
       // A repo call is not wrapped in tryDb / tryDbWith: the Effect repo modules
       // (`infra/repos-fx.ts`, `xRepoFx` / `xRepoFxDb`) are that seam, so the wrapper is a second
       // copy. A wrapper with `opts` (the conflict mapping) is allowed; the rule skips it.
-      files: ["packages/core/src/**/*.ts"],
+      files: ["packages/server/core/src/**/*.ts"],
       rules: { "watchdog/no-repo-wrapper": "error" },
     },
     {
       files: [
-        "packages/core/src/**/__tests__/**",
-        "packages/core/src/**/*.{test,spec,int.test}.ts",
+        "packages/server/core/src/**/__tests__/**",
+        "packages/server/core/src/**/*.{test,spec,int.test}.ts",
       ],
       rules: { "watchdog/no-repo-wrapper": "off" },
     },
@@ -1147,7 +1147,7 @@ export default defineConfig({
       files: [
         "packages/domain/schemas/src/*.ts",
         "packages/domain/schemas/src/lists/*.ts",
-        "packages/api/src/procedures/*.ts",
+        "packages/server/api/src/procedures/*.ts",
       ],
       rules: { "watchdog/bounded-input-schema": "error" },
     },
@@ -1155,16 +1155,16 @@ export default defineConfig({
       // API procedures are built from `authed`; the public builder needs a
       // `// public: <reason>` comment (health.ts and ready.ts are the only ones). Tests live in
       // `procedures/__tests__/`, which `*.ts` does not reach.
-      files: ["packages/api/src/procedures/*.ts"],
+      files: ["packages/server/api/src/procedures/*.ts"],
       rules: { "watchdog/procedure-must-be-guarded": "error" },
     },
     {
       // Exempt: the Db live Layer is the one place that wraps the global client;
       // tests seed and assert on the real connection.
       files: [
-        "packages/core/src/infra/db-service.ts",
-        "packages/core/src/**/__tests__/**/*.{ts,tsx}",
-        "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
+        "packages/server/core/src/infra/db-service.ts",
+        "packages/server/core/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/server/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: {
         "eslint/no-restricted-imports": "off",
@@ -1175,14 +1175,14 @@ export default defineConfig({
     {
       // #443: auth gets the pool injected (`createAuth({ db })`, `resolveActorOrganizationId(db, ...)`),
       // never the process-global one. The first-admin command is a process entry (`withPool`).
-      files: ["packages/auth/src/**/*.{ts,tsx}"],
+      files: ["packages/server/auth/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-restricted-imports": [
           "error",
           {
             paths: [
               {
-                name: "@watchdog/db",
+                name: "#db",
                 importNames: globalPoolImportNames,
                 message:
                   "Auth takes the database handle as a parameter (createAuth({ db })); the process pool is owned by Db.owned, so one pool per process ends cleanly at shutdown.",
@@ -1194,16 +1194,16 @@ export default defineConfig({
     },
     {
       files: [
-        "packages/auth/src/bootstrap-admin-cli.ts",
-        "packages/auth/src/__tests__/**/*.{ts,tsx}",
-        "packages/auth/src/**/*.{test,spec,int.test}.{ts,tsx}",
+        "packages/server/auth/src/bootstrap-admin-cli.ts",
+        "packages/server/auth/src/__tests__/**/*.{ts,tsx}",
+        "packages/server/auth/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: { "eslint/no-restricted-imports": "off" },
     },
     {
       // Exempt: the BlobStore live Layer (and its recording test Layer) is the one
       // place that constructs an `S3Client`; the global-db ban stays on.
-      files: ["packages/core/src/infra/blob-store.ts"],
+      files: ["packages/server/core/src/infra/blob-store.ts"],
       rules: {
         "watchdog/no-core-s3-dynamic-import": "off",
         "eslint/no-restricted-imports": [
@@ -1211,10 +1211,10 @@ export default defineConfig({
           {
             paths: [
               {
-                name: "@watchdog/db",
+                name: "#db",
                 importNames: globalPoolImportNames,
                 message:
-                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global pool: Db.owned owns it, so one pool per process ends cleanly at shutdown.",
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/server/AGENTS.md), not the global pool: Db.owned owns it, so one pool per process ends cleanly at shutdown.",
               },
             ],
           },
@@ -1224,8 +1224,8 @@ export default defineConfig({
     {
       // Job pipeline + evidence: promise chains avoid desloppify async_no_await churn.
       files: [
-        "packages/core/src/**/*.{ts,tsx}",
-        "packages/db/src/**/*.{ts,tsx}",
+        "packages/server/core/src/**/*.{ts,tsx}",
+        "packages/server/db/src/**/*.{ts,tsx}",
       ],
       rules: {
         "eslint/no-empty-function": "off",
@@ -1243,7 +1243,7 @@ export default defineConfig({
       // Integration helpers — intentional empty stubs in test kit.
       files: [
         "packages/domain/test-kit/src/**/*.{ts,tsx}",
-        "packages/test-db/src/**/*.{ts,tsx}",
+        "packages/server/test-db/src/**/*.{ts,tsx}",
         "packages/caps/src/testing/**/*.{ts,tsx}",
         "packages/domain/schemas/src/testing/**/*.{ts,tsx}",
       ],
@@ -1307,37 +1307,37 @@ export default defineConfig({
             patterns: [
               {
                 group: [
-                  "@watchdog/core/*",
-                  "@watchdog/db/*",
-                  "@watchdog/api/*",
+                  "@watchdog/server/core/*",
+                  "@watchdog/server/db/*",
+                  "@watchdog/server/api/*",
                 ],
                 message: "CLI talks HTTP via @watchdog/client only.",
               },
             ],
             paths: [
               {
-                name: "@watchdog/core",
+                name: "@watchdog/server/core",
                 message: "CLI talks HTTP via @watchdog/client only.",
               },
               {
-                name: "@watchdog/db",
+                name: "@watchdog/server/db",
                 message: "CLI talks HTTP via @watchdog/client only.",
               },
               {
-                name: "@watchdog/api",
+                name: "@watchdog/server/api",
                 message: "CLI talks HTTP via @watchdog/client only.",
               },
               {
-                name: "@watchdog/log",
+                name: "@watchdog/server/log",
                 message:
-                  "CLI stdout is the agent JSON contract — do not use @watchdog/log.",
+                  "CLI stdout is the agent JSON contract — do not use @watchdog/server/log.",
               },
               {
-                name: "@watchdog/env",
+                name: "@watchdog/server/env",
                 message: "CLI owns WD_API_* in apps/cli/src/env.ts.",
               },
               {
-                name: "@watchdog/env/server",
+                name: "@watchdog/server/env/server",
                 message: "CLI owns WD_API_* in apps/cli/src/env.ts.",
               },
             ],
@@ -1360,7 +1360,7 @@ export default defineConfig({
     },
     {
       // Worker boot: pg-boss handlers return void, not wrapped resolves.
-      files: ["apps/worker/src/**/*.{ts,tsx}"],
+      files: ["packages/server/worker/src/**/*.{ts,tsx}"],
       rules: {
         "promise/prefer-await-to-then": "off",
         "typescript/promise-function-async": "off",
@@ -1371,7 +1371,7 @@ export default defineConfig({
     {
       // Cap wrappers + OpenAPI generator: thin promise delegates.
       files: [
-        "packages/api/src/openapi.ts",
+        "packages/server/api/src/openapi.ts",
         "packages/caps/src/network/url.enrich/**/*.{ts,tsx}",
       ],
       rules: {

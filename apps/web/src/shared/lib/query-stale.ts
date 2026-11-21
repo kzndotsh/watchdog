@@ -20,7 +20,7 @@ export const STALE_STABLE = 300_000;
 
 /**
  * 60 s — the signed-in session. Equals the Better Auth cookie cache lifetime
- * (`SESSION_COOKIE_CACHE_SECONDS` in `@watchdog/auth`): a refetch inside that window
+ * (`SESSION_COOKIE_CACHE_SECONDS` in `@watchdog/server/auth`): a refetch inside that window
  * could only be answered from the cookie, so asking sooner buys nothing. A session
  * revoked elsewhere is noticed within this window on the next navigation, and at once
  * when a server function answers 401 (`createAppQueryClient`).

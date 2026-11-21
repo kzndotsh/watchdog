@@ -52,7 +52,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 1. Product: `jobs.status = cancelled` (authoritative).
 2. Delivery (#722): `cancelWithin` cancels the cancelled Jobs' pending pg-boss
    deliveries in the same transaction: `listPendingJobDeliveries(tx, ids)`
-   (`@watchdog/db`, by `singleton_key` = Job id, states `created`, `retry`,
+   (`@watchdog/server/db`, by `singleton_key` = Job id, states `created`, `retry`,
    `active`) then `JobQueue.cancel(jobQueueTx(tx), deliveries)`, which runs
    `boss.cancel(queue, ids, { db })` per queue. A rollback leaves the delivery
    pending; a queued delivery is never fetched; a running attempt's fenced
@@ -113,7 +113,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 - Cap `timeoutMs` also drives pg-boss expire, graceful stop, stale reclaim.
 - pg-boss `persistWarnings: true` (both roles): warnings (handler overrun,
   queue backlog, slow query, ...) are written to `pgboss.warning` (pg-boss
-  prunes it by `warningRetentionDays`) and logged through `@watchdog/log` at
+  prunes it by `warningRetentionDays`) and logged through `@watchdog/server/log` at
   `warn` level, scope `pg-boss:producer` / `pg-boss:worker`
   (`logProcessWarning`). A `handler_overrun` warning means a handler kept the
   worker slot after its job expired: the interrupt had not finished yet, or
@@ -124,7 +124,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
   `JobFibers`. A Cap that does non-Effect work (a promise, a child process)
   only stops if it honours `ctx.signal`.
 - Reconcile: `reconcileJobsEffect` keeps `DomainTag` in `E`; the worker edge
-  (`apps/worker/src/maintenance.ts`, task `JOB_RECONCILE`) catches and
+  (`packages/server/worker/src/maintenance.ts`, task `JOB_RECONCILE`) catches and
   logs. The worker schedules it (boot, then every `JOB_RECONCILE_INTERVAL`);
   core never forks a loop.
 - Playbook advance is `advancePlaybookRunEffect`: each step Job is created and
@@ -133,7 +133,7 @@ Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 
 ## Status lifecycle
 
-`packages/core/src/jobs/lifecycle/` owns how a Job's status moves. `decideJob`
+`packages/server/core/src/jobs/lifecycle/` owns how a Job's status moves. `decideJob`
 is a pure table over every status and event (`claim`, `succeed`, `fail`,
 `cancel`); a terminal Job has no move. `settleJobEffect` (`settleJobInTx` inside a
 caller's transaction) is the one writer for claim, finish, fail, cancel and

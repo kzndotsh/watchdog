@@ -2,7 +2,7 @@ import { KeyRoundIcon } from "lucide-react";
 
 import { ConfigureCredentialDialog } from "@/domains/settings/components/settings-configure-credential-dialog";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
-import type { CredentialSlot } from "@watchdog/core/vault";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 
 type SettingsCredentialsDialogsProps = {
   configureSlot: CredentialSlot | null;

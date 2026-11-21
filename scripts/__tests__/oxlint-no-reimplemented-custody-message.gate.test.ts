@@ -153,7 +153,7 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
 
   it("scans every real app and package directory", () => {
     expect(scopes).toEqual(
-      expect.arrayContaining(["apps/web", "apps/site", "packages/core"])
+      expect.arrayContaining(["apps/web", "apps/site", "packages/server/core"])
     );
   });
 

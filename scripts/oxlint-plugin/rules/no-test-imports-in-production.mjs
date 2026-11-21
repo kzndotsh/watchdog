@@ -6,7 +6,7 @@ import { moduleSourceVisitors } from "../lib/web-modules.mjs";
 
 /** Packages that only tests may load: runners, DOM test kits, and the repo's test helpers. */
 const TEST_ONLY_PACKAGE =
-  /^(@vitest\/|@testing-library\/)|^(vitest|@playwright\/test|fast-check|happy-dom|jsdom|@watchdog\/test-db|@watchdog\/test-kit)(\/|$)/;
+  /^(@vitest\/|@testing-library\/)|^(vitest|@playwright\/test|fast-check|happy-dom|jsdom|@watchdog\/server\/test-db|@watchdog\/domain\/test-kit|#test-db|#test-kit)(\/|$)/;
 
 /**
  * A workspace or relative specifier naming a test module: a `__tests__` or `testing`
@@ -18,7 +18,7 @@ const TEST_MODULE =
 /**
  * Production source never imports test-only code. This replaces the guard the second
  * `tsc -p tsconfig.json` pass gave for free: `tsconfig.json` leaves out tests, test types
- * and `allowImportingTsExtensions`, so a production file that pulled in `@watchdog/test-db`
+ * and `allowImportingTsExtensions`, so a production file that pulled in `#test-db`
  * or a test module failed there. The one-pass typecheck checks `src` with the test config,
  * so the rule states it directly. Scope (production trees only) is set in `oxlint.config.ts`.
  */
@@ -37,7 +37,8 @@ export const noTestImportsInProduction = {
       const isTestModule =
         (specifier.startsWith(".") ||
           specifier.startsWith("@/") ||
-          specifier.startsWith("@watchdog/")) &&
+          specifier.startsWith("@watchdog/") ||
+          specifier.startsWith("#")) &&
         TEST_MODULE.test(specifier);
       if (!isTestPackage && !isTestModule) return;
       context.report({

@@ -11,7 +11,7 @@ export const dbRepoTrimLookupOnly = {
     type: "problem",
     docs: {
       description:
-        "Allow trimmedOrUndefined in packages/db repos only inside lookup-only methods.",
+        "Allow trimmedOrUndefined in packages/server/db repos only inside lookup-only methods.",
     },
   },
   /** @param {{ report: (d: { node: unknown, message: string }) => void }} context */

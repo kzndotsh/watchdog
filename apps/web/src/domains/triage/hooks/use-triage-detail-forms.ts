@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 
 import { collectProposalEvidenceIds } from "@/domains/triage/lib/evidence";
 import type { AcceptFormValues } from "@/domains/triage/types";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 const DEFAULT_CONFIDENCE: ConfidenceTier = "unverified";
 

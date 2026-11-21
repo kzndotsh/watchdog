@@ -21,8 +21,8 @@ import {
   buildPlaybookListItem,
   testCapProvider,
 } from "@/testing/records";
-import type { CredentialSlot } from "@watchdog/core/vault";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 import { SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 const navigate = vi.hoisted(() => vi.fn());

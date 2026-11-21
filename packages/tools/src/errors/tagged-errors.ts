@@ -7,7 +7,7 @@ export const GENERIC_REQUEST_FAILURE = "Tool failed unexpectedly";
  * Vendor failure tags. Each carries a stable, unique `code` and derives its
  * `message` from its own fields; nothing ever parses a message back into a
  * tag. Core maps each tag into its own taxonomy by tag name
- * (`toDomainTag` in `@watchdog/core/jobs`).
+ * (`toDomainTag` in `@watchdog/server/core/jobs`).
  */
 export class RateLimitedError extends Data.TaggedError("RateLimitedError")<{
   readonly service: string;

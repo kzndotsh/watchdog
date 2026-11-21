@@ -1,6 +1,6 @@
 /**
- * Proves the real `oxlint.config.ts` enforces the packages/db repo contract (the rules the
- * retired `check-repo-rules.mjs` line-regex gate enforced) on `packages/db/src/repos/*.repo.ts`
+ * Proves the real `oxlint.config.ts` enforces the packages/server/db repo contract (the rules the
+ * retired `check-repo-rules.mjs` line-regex gate enforced) on `packages/server/db/src/repos/*.repo.ts`
  * only: no throw, no transaction, no NOTIFY, no `.toISOString()`, no `SQL` types, leading
  * `exec: DbExec`, no `trimmedOrNull`, `trimmedOrUndefined` only in lookup methods, no job
  * status set literal, no raw `sql` fragment, no validation import. Each shape the old script
@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const DIR = "packages/db/src/repos";
+const DIR = "packages/server/db/src/repos";
 const rule = (id: string) => `watchdog/${id}`;
 
 /** A repo file whose methods are `methods`; the object is named like the real ones. */
@@ -595,8 +595,8 @@ beforeAll(() => {
   const violating = FAIL.find((c) => c.name === "throw-new")?.src ?? "";
   fixture.write(`${DIR}/_helper.ts`, violating);
   fixture.write(`${DIR}/__tests__/thing.repo.test.ts`, violating);
-  fixture.write("packages/core/src/thing.repo.ts", violating);
-  result = fixture.lint([DIR, "packages/core/src"]);
+  fixture.write("packages/server/core/src/thing.repo.ts", violating);
+  result = fixture.lint([DIR, "packages/server/core/src"]);
 });
 
 const hits = (name: string, id: string) =>
@@ -635,7 +635,7 @@ describe("db repo rules (oxlint.config.ts)", () => {
         f.rule.startsWith("watchdog/db-repo-") &&
         (f.file.endsWith("_helper.ts") ||
           f.file.includes("__tests__") ||
-          f.file.includes("packages/core"))
+          f.file.includes("packages/server/core"))
     );
     expect(out).toEqual([]);
   });
@@ -643,7 +643,7 @@ describe("db repo rules (oxlint.config.ts)", () => {
   it("states the fix and where the rule lives", () => {
     const [hit] = hits("throw-new", "db-repo-no-throw");
     expect(hit?.message).toContain("return null");
-    expect(hit?.message).toContain("packages/core/AGENTS.md");
+    expect(hit?.message).toContain("packages/server/AGENTS.md");
     const [status] = hits("status-set", "db-repo-no-job-status-set");
     expect(status?.message).toContain("OPEN_JOB_STATUSES");
   });

@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@watchdog/domain": "workspace:*",
-    "@watchdog/env": "workspace:*",
     "effect": "catalog:",
     "postal-mime": "^4.2.1",
     "undici": "catalog:",

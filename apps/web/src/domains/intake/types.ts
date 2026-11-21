@@ -1,7 +1,5 @@
 import type { z } from "zod";
 
-import type { EvidenceRecord as CoreEvidenceRecord } from "@watchdog/core/evidence";
-import type { JobListRecord } from "@watchdog/core/jobs";
 import type {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,
@@ -12,6 +10,8 @@ import type {
 } from "@watchdog/domain/schemas/evidence";
 import type { evidenceScopeInputSchema } from "@watchdog/domain/schemas/graph";
 import type { PlaybookRunOutcome } from "@watchdog/domain/schemas/shared";
+import type { EvidenceRecord as CoreEvidenceRecord } from "@watchdog/server/core/evidence";
+import type { JobListRecord } from "@watchdog/server/core/jobs";
 
 export type EvidenceRecord = CoreEvidenceRecord;
 

@@ -19,13 +19,13 @@ import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   isPatchOpOf,
   listInvalidIdentifierOps,
   patchOpText,
 } from "@watchdog/domain/schemas/graph";
 import { normalizeUuidList } from "@watchdog/domain/schemas/shared";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 import {
   Alert,
   AlertDescription,

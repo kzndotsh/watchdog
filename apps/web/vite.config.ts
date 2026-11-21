@@ -91,15 +91,9 @@ const config = defineConfig({
         ? true
         : [
             "@watchdog/ai",
-            "@watchdog/api",
-            "@watchdog/auth",
             "@watchdog/caps",
-            "@watchdog/core",
-            "@watchdog/db",
-            "@watchdog/env",
-            "@watchdog/log",
-            "@watchdog/domain/policy",
-            "@watchdog/domain/schemas",
+            "@watchdog/domain",
+            "@watchdog/server",
             "@watchdog/tools",
             "@watchdog/ui",
           ],

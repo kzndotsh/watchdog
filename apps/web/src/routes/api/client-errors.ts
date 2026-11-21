@@ -12,7 +12,7 @@ import {
   handleClientError,
   type ClientErrorReport,
 } from "@/lib/client-errors.server";
-import { createLogger } from "@watchdog/log";
+import { createLogger } from "@watchdog/server/log";
 
 function logClientError(report: ClientErrorReport): void {
   const log = createLogger({ scope: "web.client" });

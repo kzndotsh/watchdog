@@ -1,6 +1,6 @@
 /**
  * Proves the real `oxlint.config.ts` enforces `watchdog/bounded-input-schema`: in the
- * input-schema modules of `packages/domain/schemas/src` and in `packages/api/src/procedures`, a
+ * input-schema modules of `packages/domain/schemas/src` and in `packages/server/api/src/procedures`, a
  * `z.string()`, `z.array()`, `z.url()` or `z.email()` in an input schema needs a `.max()`
  * or `.length()`. Probe files are written into a throwaway repo that carries the real
  * config and plugin (helpers/oxlint-fixture.ts).
@@ -11,7 +11,7 @@ import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const SCHEMAS = "packages/domain/schemas/src";
-const PROCEDURES = "packages/api/src/procedures";
+const PROCEDURES = "packages/server/api/src/procedures";
 const RULE = "watchdog/bounded-input-schema";
 const Z = 'import { z } from "zod";\n\n';
 
@@ -98,12 +98,16 @@ beforeAll(() => {
     FAIL_CASES["string-bare"]
   );
   fixture.write(`${SCHEMAS}/testing/probe.ts`, FAIL_CASES["string-bare"]);
-  fixture.write("packages/core/src/probe.ts", FAIL_CASES["string-bare"]);
+  fixture.write("packages/server/core/src/probe.ts", FAIL_CASES["string-bare"]);
   fixture.write(
     `${PROCEDURES}/__tests__/probe.test.ts`,
     PROCEDURE_FAIL["named-input-array"]
   );
-  result = fixture.lint([SCHEMAS, PROCEDURES, "packages/core/src/probe.ts"]);
+  result = fixture.lint([
+    SCHEMAS,
+    PROCEDURES,
+    "packages/server/core/src/probe.ts",
+  ]);
 });
 
 const hits = (file: string) => findingsFor(result, file, RULE);
@@ -138,7 +142,7 @@ describe("bounded-input-schema (oxlint.config.ts)", () => {
     expect(hits(`${SCHEMAS}/__tests__/probe.test.ts`)).toHaveLength(0);
     expect(hits(`${SCHEMAS}/testing/probe.ts`)).toHaveLength(0);
     expect(hits(`${PROCEDURES}/__tests__/probe.test.ts`)).toHaveLength(0);
-    expect(hits("packages/core/src/probe.ts")).toHaveLength(0);
+    expect(hits("packages/server/core/src/probe.ts")).toHaveLength(0);
   });
   it("reports once per unbounded schema, at its use site, with the fix", () => {
     const found = hits(`${SCHEMAS}/string-bare.ts`);

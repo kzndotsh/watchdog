@@ -7,13 +7,13 @@ import { useLayoutEffect, useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import type {
-  ProposalQueueItem,
-  ProposalRecord,
-} from "@watchdog/core/proposals";
 import { proposalList } from "@watchdog/domain/schemas/jobs";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
+import type {
+  ProposalQueueItem,
+  ProposalRecord,
+} from "@watchdog/server/core/proposals";
 
 vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,

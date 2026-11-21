@@ -1,0 +1,450 @@
+import { Effect } from "effect";
+import type { z } from "zod";
+
+import {
+  casesRepo,
+  deletedCaseListRepo,
+  isDeletedRow,
+  type CaseLifecycleRow,
+  type DbExec,
+  type DbTx,
+  type DeletedCaseRow,
+} from "#db";
+import { deletedCaseList } from "@watchdog/domain/schemas/cases";
+import type {
+  deletedCaseSchema,
+  deletionPolicySchema,
+  restoredCaseSchema,
+} from "@watchdog/domain/schemas/cases";
+import {
+  PAGE_LIMIT_DEFAULT,
+  type CaseId,
+  type ListInput,
+  type ListPage,
+  type OrganizationId,
+} from "@watchdog/domain/schemas/shared";
+
+import { optionalActorId } from "../actors/require-actor-id";
+import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
+import { breachCapsMode } from "../caps/breach-caps";
+import {
+  assertCaseInOrgEffect,
+  requireTrimmedCaseIdEffect,
+} from "../cases/access";
+import { toRecord } from "../cases/case-record";
+import {
+  caseRetentionDays,
+  daysUntilPurge,
+  purgeDueAt,
+} from "../cases/retention";
+import { errorMessage } from "../errors/error-utils";
+import {
+  boundEchoedId,
+  ConflictError,
+  NotFoundError,
+  type DomainTag,
+} from "../errors/tagged-errors";
+import {
+  removeCaseExportDirEffect,
+  scheduleCaseExportEffect,
+} from "../export/disk/export-sync";
+import { nowDateEffect } from "../infra/clock";
+import type { Db } from "../infra/db-service";
+import { listPageEffect } from "../infra/list-page";
+import { inOrganization } from "../infra/organization-scope";
+import { tryDb, requireWritten } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import { logProcess, logSwallowed } from "../infra/process-log";
+import {
+  jobsRepoFxDb,
+  casesRepoFxDb,
+  casesRepoFx,
+  playbookRunsRepoFx,
+} from "../infra/repos-fx";
+import { cancelWithin, type CancelOutcome, type JobQueue } from "../jobs";
+import {
+  isOrganizationManagerEffect,
+  requireOrganizationManagerEffect,
+} from "../organization/roles";
+import { recordDeletionEventEffect } from "./deletion-event";
+
+/**
+ * Who a tombstone, restore or purge is attributed to: the user (an API key's user) and the
+ * key's `api-key:...` snapshot. No actor is the scheduled purge, recorded as `system`.
+ */
+export type CaseActor = {
+  actorId?: string;
+  actorLabel?: string;
+  /** The API key (`apikey.id`); recorded on the Case activity entry. */
+  actorKeyId?: string;
+};
+
+const MAX_PURGE_ERROR_CHARS = 300;
+
+export const MANAGE_REASON =
+  "Only an owner or admin can delete, restore or purge a Case";
+
+/** A tombstoned Case as Deleted Cases lists it: what was deleted, by whom, and when it goes for good. */
+export type DeletedCaseRecord = z.output<typeof deletedCaseSchema>;
+
+export type DeletionPolicy = z.output<typeof deletionPolicySchema>;
+
+/**
+ * What the delete confirmation and the Cases list need: the configured restore window, whether
+ * this caller may delete, restore and purge (the same check the server enforces, so the UI hides
+ * what the server would refuse) and, for one Case, how many Jobs a delete would cancel. A Case
+ * the caller cannot see is `not_found`.
+ */
+export function getDeletionPolicyEffect(opts: {
+  organizationId: OrganizationId;
+  actorId?: string;
+  caseId?: CaseId;
+}): Effect.Effect<DeletionPolicy, DomainTag, Db> {
+  const program = Effect.gen(function* getDeletionPolicyGen() {
+    const scopedCaseId =
+      opts.caseId === undefined
+        ? undefined
+        : yield* assertCaseInOrgEffect(opts.caseId, opts.organizationId);
+    const canManage = yield* isOrganizationManagerEffect({
+      organizationId: opts.organizationId,
+      actorId: optionalActorId(opts.actorId),
+    });
+    const cancellableJobs =
+      scopedCaseId === undefined || !canManage
+        ? 0
+        : yield* jobsRepoFxDb.countCancellableForCase(scopedCaseId);
+    return {
+      restoreWindowDays: caseRetentionDays(),
+      canManage,
+      cancellableJobs,
+      canIncludeBreachCredentials: canManage && breachCapsMode() === "full",
+    };
+  });
+  return inOrganization(opts.organizationId, program);
+}
+
+/** The date the scheduled purge takes a deleted Case: the one fixed at delete time. */
+function purgeAfterOf(row: { deletedAt: Date; purgeAfter: Date | null }): Date {
+  return row.purgeAfter ?? purgeDueAt(row.deletedAt, caseRetentionDays());
+}
+
+export function boundedMessage(error: unknown): string {
+  return errorMessage(error).slice(0, MAX_PURGE_ERROR_CHARS);
+}
+
+function toDeletedRecord(
+  row: DeletedCaseRow,
+  names: ReadonlyMap<string, { name: string }>,
+  now: Date
+): DeletedCaseRecord {
+  const purgeAfter = purgeAfterOf(row);
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? null,
+    deletedAt: row.deletedAt.toISOString(),
+    deletedById: row.deletedBy,
+    deletedByName:
+      row.deletedBy === null ? null : (names.get(row.deletedBy)?.name ?? null),
+    purgeAt: purgeAfter.toISOString(),
+    daysLeft: daysUntilPurge(purgeAfter, now),
+    purging: row.purgeStartedAt !== null,
+    purgeError: row.purgeError,
+  };
+}
+
+/**
+ * One page of the organization's Deleted Cases list (`deletedCaseList`, ADR-0007), for owners
+ * and admins (anyone else is `forbidden`: the list names Cases a member can no longer see). The
+ * declared filter, `q` and sort, keyset paged, with `total` on the first page. Without `input`
+ * it is the first page of the default view.
+ */
+export function listDeletedCasesEffect(opts: {
+  organizationId: OrganizationId;
+  actorId?: string;
+  input?: ListInput<typeof deletedCaseList>;
+}): Effect.Effect<ListPage<DeletedCaseRecord>, DomainTag, Db> {
+  const program = Effect.gen(function* listDeletedCasesGen() {
+    yield* requireOrganizationManagerEffect({
+      organizationId: opts.organizationId,
+      actorId: opts.actorId,
+      reason: MANAGE_REASON,
+    });
+    return yield* listPageEffect({
+      def: deletedCaseList,
+      repo: deletedCaseListRepo,
+      scope: { organizationId: opts.organizationId },
+      input: opts.input ?? { limit: PAGE_LIMIT_DEFAULT },
+      toItems: (rows) =>
+        Effect.gen(function* deletedCaseItemsGen() {
+          const names = yield* loadActorUsersEffect(
+            rows.map((row) => row.deletedBy)
+          );
+          const now = yield* nowDateEffect;
+          return rows
+            .filter(isDeletedRow)
+            .map((row) => toDeletedRecord(row, names, now));
+        }),
+    });
+  });
+  return inOrganization(opts.organizationId, program);
+}
+
+/**
+ * The tombstoned Case a Case URL names, for owners and admins (the "deleted on X by Y" screen).
+ * A live Case, a foreign one, a missing one and a caller who may not manage the organization are
+ * all `not_found`: the screen never confirms that a deleted Case exists to anyone else.
+ */
+export function getDeletedCaseBySlugEffect(opts: {
+  slug: string;
+  organizationId: OrganizationId;
+  actorId?: string;
+}): Effect.Effect<DeletedCaseRecord, DomainTag, Db> {
+  const program = Effect.gen(function* getDeletedCaseBySlugGen() {
+    const notFound = new NotFoundError({
+      entity: "Case",
+      id: boundEchoedId(opts.slug),
+    });
+    const allowed = yield* requireOrganizationManagerEffect({
+      organizationId: opts.organizationId,
+      actorId: opts.actorId,
+      reason: MANAGE_REASON,
+    }).pipe(
+      Effect.as(true),
+      Effect.catchTag("ForbiddenError", () => Effect.succeed(false))
+    );
+    if (!allowed) return yield* notFound;
+    const row = yield* casesRepoFxDb.getDeletedBySlug(
+      opts.slug,
+      opts.organizationId
+    );
+    if (row === null) return yield* notFound;
+    const names = yield* loadActorUsersEffect([row.deletedBy]);
+    const now = yield* nowDateEffect;
+    return toDeletedRecord(row, names, now);
+  });
+  return inOrganization(opts.organizationId, program);
+}
+
+/**
+ * Tombstone a Case in the caller's transaction: the `deleted` record and activity entry first (the
+ * database refuses the change without the record), then the Case's queued and running work is
+ * cancelled through the lifecycle (`cancelWithin`) and the Case is marked deleted, to be purged
+ * after `purgeAfter`. Returns the cancel's outcome: its `afterCommit` aborts the fibers and
+ * advances the Playbook runs once the caller's transaction has committed.
+ */
+export function tombstoneInTx(
+  tx: DbTx,
+  row: CaseLifecycleRow,
+  actor: CaseActor,
+  now: Date,
+  purgeAfter: Date
+): Effect.Effect<CancelOutcome, DomainTag, JobQueue> {
+  return Effect.gen(function* tombstoneInTxGen() {
+    const actorId = optionalActorId(actor.actorId);
+    yield* recordDeletionEventEffect(tx, row, "deleted", {
+      actorId: actorId ?? null,
+      actorLabel: actor.actorLabel ?? null,
+      actorKeyId: actor.actorKeyId ?? null,
+    });
+    // The lifecycle's cancel: each queued or running Job moves to `cancelled` with code
+    // `case_deleted` and its activity entry. The caller runs `afterCommit` once this commits.
+    const cancelled = yield* cancelWithin(
+      tx,
+      { kind: "case", caseId: row.id },
+      "case_deleted"
+    );
+    yield* playbookRunsRepoFx.cancelRunningForCase(tx, row.id, now);
+    yield* casesRepoFx
+      .tombstone(tx, row.id, row.organizationId, {
+        deletedAt: now,
+        deletedBy: actorId ?? null,
+        purgeAfter,
+      })
+      .pipe(requireWritten("delete Case"));
+    return cancelled;
+  });
+}
+
+/**
+ * Delete a Case: a tombstone, not an erase (#304). The Case, its Graph, Evidence and files stay
+ * until it is restored (owner or admin, inside the window) or purged; every read skips it from
+ * the moment this commits. Queued and running Jobs are cancelled and the deletion is recorded
+ * with its actor in the same transaction. Only an owner or admin may delete (an API key acts as
+ * its user). A foreign, missing or already deleted Case is `not_found`.
+ */
+export function deleteCaseEffect(
+  id: CaseId,
+  opts: CaseActor & { organizationId: OrganizationId }
+): Effect.Effect<void, DomainTag, Db | JobQueue> {
+  const program = Effect.gen(function* deleteCaseGen() {
+    // Role first, then the Case (one order for delete, restore and purge): a caller who may not
+    // manage Cases learns nothing about any Case, whichever id they send.
+    yield* requireOrganizationManagerEffect({
+      organizationId: opts.organizationId,
+      actorId: optionalActorId(opts.actorId),
+      reason: MANAGE_REASON,
+    });
+    const caseId = yield* requireTrimmedCaseIdEffect(id);
+    const existing = yield* casesRepoFxDb.getById(caseId, opts.organizationId);
+    if (!existing) {
+      return yield* new NotFoundError({ entity: "Case", id: caseId });
+    }
+    const now = yield* nowDateEffect;
+    // The window is the deleting process's policy, fixed on the row: a later change of the
+    // setting does not move the date of a Case that is already deleted.
+    const purgeAfter = purgeDueAt(now, caseRetentionDays());
+    const cancelled = yield* transact((tx) =>
+      Effect.gen(function* deleteCaseTx() {
+        const locked = yield* casesRepoFx.getByIdIncludingDeleted(
+          tx,
+          caseId,
+          opts.organizationId,
+          {
+            lock: "update",
+          }
+        );
+        if (locked === null || locked.deletedAt !== null) {
+          return yield* new NotFoundError({ entity: "Case", id: caseId });
+        }
+        return yield* tombstoneInTx(tx, locked, opts, now, purgeAfter);
+      })
+    );
+    yield* cancelled.afterCommit;
+    const logActorId = optionalActorId(opts.actorId);
+    if (logActorId) {
+      logProcess("case.delete", "Case deleted (tombstoned)", {
+        caseId,
+        actorId: logActorId,
+      });
+    }
+    // The Export shadow is a projection of a visible Case: drop it now, rebuilt on restore.
+    yield* removeCaseExportDirEffect(opts.organizationId, existing.slug).pipe(
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          logSwallowed("delete-case-export", error, { slug: existing.slug });
+        })
+      )
+    );
+  });
+  return inOrganization(opts.organizationId, program);
+}
+
+/** A restored Case; `previousSlug` is set when its old slug was taken meanwhile and it got a new one. */
+export type RestoredCaseRecord = z.output<typeof restoredCaseSchema>;
+
+const MAX_SLUG_ATTEMPTS = 50;
+
+/** The first free slug of the organization: `base`, else `base-2`, `base-3`, ... */
+function freeSlugEffect(
+  tx: DbExec,
+  organizationId: OrganizationId,
+  base: string
+): Effect.Effect<string, DomainTag> {
+  return Effect.gen(function* freeSlugGen() {
+    for (let n = 1; n <= MAX_SLUG_ATTEMPTS; n += 1) {
+      const candidate = n === 1 ? base : `${base}-${n}`;
+      const taken = yield* casesRepoFx.getBySlug(tx, candidate, organizationId);
+      if (taken === null) return candidate;
+    }
+    return yield* new ConflictError({
+      reason:
+        "Couldn't find a free link for this Case; rename another Case first",
+    });
+  });
+}
+
+/**
+ * Restore a deleted Case inside its window (owner or admin). A Case that is not deleted or not
+ * in the organization is `not_found`; one past the window, or whose purge has begun, is a
+ * `conflict` (its files may be partly erased, so it can only be purged now).
+ */
+export function restoreCaseEffect(
+  id: CaseId,
+  opts: CaseActor & { organizationId: OrganizationId }
+): Effect.Effect<RestoredCaseRecord, DomainTag, Db> {
+  const program = Effect.gen(function* restoreCaseGen() {
+    yield* requireOrganizationManagerEffect({
+      organizationId: opts.organizationId,
+      actorId: optionalActorId(opts.actorId),
+      reason: MANAGE_REASON,
+    });
+    const caseId = yield* requireTrimmedCaseIdEffect(id);
+    const now = yield* nowDateEffect;
+    const restored = yield* transact((tx) =>
+      Effect.gen(function* restoreCaseTx() {
+        const locked = yield* casesRepoFx.getByIdIncludingDeleted(
+          tx,
+          caseId,
+          opts.organizationId,
+          {
+            lock: "update",
+          }
+        );
+        if (locked === null || locked.deletedAt === null) {
+          return yield* new NotFoundError({ entity: "Case", id: caseId });
+        }
+        if (locked.purgeStartedAt !== null) {
+          return yield* new ConflictError({
+            reason:
+              "This Case is being purged and can no longer be restored; purge it to finish",
+          });
+        }
+        if (
+          purgeAfterOf({
+            deletedAt: locked.deletedAt,
+            purgeAfter: locked.purgeAfter,
+          }) <= now
+        ) {
+          return yield* new ConflictError({
+            reason:
+              "The restore window for this Case has ended; it is purged at the next run",
+          });
+        }
+        // A new Case may have taken the slug while this one was deleted: restore under the
+        // first free one and say so.
+        const slug = yield* freeSlugEffect(
+          tx,
+          opts.organizationId,
+          locked.slug
+        );
+        const actorId = optionalActorId(opts.actorId);
+        yield* recordDeletionEventEffect(tx, { ...locked, slug }, "restored", {
+          actorId: actorId ?? null,
+          actorLabel: opts.actorLabel ?? null,
+          actorKeyId: opts.actorKeyId ?? null,
+        });
+        const row = yield* tryDb(
+          () =>
+            casesRepo.restoreDeleted(
+              tx,
+              caseId,
+              opts.organizationId,
+              slug === locked.slug ? {} : { slug }
+            ),
+          {
+            uniqueIndex: "cases_organization_id_slug_uidx",
+            conflictReason: "Its link was taken a moment ago; try again",
+          }
+        ).pipe(requireWritten("restore Case"));
+        return {
+          ...toRecord(row),
+          previousSlug: slug === locked.slug ? null : locked.slug,
+        };
+      })
+    );
+    logProcess("case.restore", "Case restored", {
+      caseId,
+      ...(optionalActorId(opts.actorId) === undefined
+        ? {}
+        : { actorId: optionalActorId(opts.actorId) }),
+    });
+    // Rebuild the Export shadow that the delete dropped.
+    yield* scheduleCaseExportEffect(caseId).pipe(
+      Effect.forkDetach({ startImmediately: true })
+    );
+    return restored;
+  });
+  return inOrganization(opts.organizationId, program);
+}

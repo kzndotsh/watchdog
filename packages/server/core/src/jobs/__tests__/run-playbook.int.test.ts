@@ -1,0 +1,330 @@
+import { Layer } from "effect";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import { recordingBlobStore } from "#core/blob";
+import { isDomainTag } from "#core/errors";
+import { dumpUrlEffect } from "#core/evidence";
+import { Db, runDomainWith, inOrganization } from "#core/infra";
+import {
+  recordingJobQueue,
+  cancelPlaybookRunEffect,
+  runPlaybookEffect,
+} from "#core/jobs";
+import { vaultLayer } from "#core/vault";
+import { evidenceRepo, jobsRepo, playbookRunsRepo } from "#db";
+import {
+  forceJobStatus,
+  listCaseJobs,
+  resetTestDb,
+  seedCase,
+  testDb as db,
+} from "#test-db";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
+
+import { advancePlaybookRunEffect } from "../stages/chain.ts";
+
+// Enqueues land in a recording queue instead of a real pg-boss.
+const queue = recordingJobQueue();
+const runDomain = runDomainWith(
+  Layer.mergeAll(
+    Layer.provideMerge(vaultLayer, Db.layer),
+    queue.layer,
+    recordingBlobStore().layer
+  )
+);
+
+describe("runPlaybook", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("inserts a running playbook and queues only the first step", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const dumped = await runDomain(
+      dumpUrlEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        sourceUrl: "https://mailhost.test/",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+      })
+    );
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "url-capture",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: {
+          url: "https://mailhost.test/",
+          evidenceId: dumped.id,
+        },
+      })
+    );
+
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]?.status).toBe("queued");
+
+    const run = await playbookRunsRepo.get(db, result.playbookRunId);
+    expect(run?.status).toBe("running");
+  });
+
+  it("normalizes padded playbook id", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "  host-footprint  ",
+        actorId: TEST_ACTOR_ID,
+        seed: { host: "mailhost.test" },
+      })
+    );
+    const run = await playbookRunsRepo.get(db, result.playbookRunId);
+    expect(run?.playbookId).toBe("host-footprint");
+  });
+
+  it("rejects whitespace-only playbook id", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "   ",
+          actorId: TEST_ACTOR_ID,
+          seed: { host: "mailhost.test" },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
+    );
+  });
+
+  it("rejects invalid seed evidenceId before insert", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "url-capture",
+          actorId: TEST_ACTOR_ID,
+          seed: {
+            url: "https://mailhost.test/",
+            evidenceId: "not-a-uuid",
+          },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
+    );
+
+    const jobs = await listCaseJobs(db, cased.id);
+    expect(jobs).toHaveLength(0);
+  });
+
+  it("rejects invalid seed entityId before insert", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "host-footprint",
+          actorId: TEST_ACTOR_ID,
+          seed: {
+            host: "mailhost.test",
+            entityId: "bad-entity-id",
+          },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+
+    const jobs = await listCaseJobs(db, cased.id);
+    expect(jobs).toHaveLength(0);
+  });
+
+  it("host-footprint queues only the first DNS step", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "host-footprint",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: { host: "mailhost.test" },
+      })
+    );
+
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]?.capabilityId).toBe("network.dns.lookup");
+    expect(result.jobs[0]?.status).toBe("queued");
+
+    const run = await playbookRunsRepo.get(db, result.playbookRunId);
+    expect(run?.status).toBe("running");
+  });
+
+  it("throws before insert when extract.ai credentials are missing", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const dumped = await runDomain(
+      dumpUrlEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        sourceUrl: "https://mailhost.test/",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+      })
+    );
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "url-capture-ai",
+          actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
+          seed: {
+            url: "https://mailhost.test/",
+            evidenceId: dumped.id,
+          },
+        })
+      )
+    ).rejects.toThrow(/credential/i);
+
+    const jobs = await listCaseJobs(db, cased.id);
+    expect(jobs).toHaveLength(0);
+  });
+
+  it("host-enumerate inserts only the CT job (fan-out is not pre-inserted)", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "host-enumerate",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: { host: "mailhost.test" },
+      })
+    );
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]?.capabilityId).toBe("network.ct.lookup");
+    expect(result.jobs[0]?.status).toBe("queued");
+  });
+
+  it("url-capture harvest input stays the seed evidenceId", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const dumped = await runDomain(
+      dumpUrlEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        sourceUrl: "https://mailhost.test/",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+      })
+    );
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "url-capture",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: {
+          url: "https://mailhost.test/",
+          evidenceId: dumped.id,
+        },
+      })
+    );
+    const enrich = result.jobs[0];
+    expect(enrich?.capabilityId).toBe("network.url.enrich");
+    if (enrich === undefined) throw new TypeError("expected enrich job");
+    await forceJobStatus(db, enrich.id, "succeeded");
+    await runDomain(
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        advancePlaybookRunEffect({
+          playbookRunId: result.playbookRunId,
+        })
+      )
+    );
+    const members = await jobsRepo.listForPlaybookRun(db, result.playbookRunId);
+    const harvest = members.find((j) => j.capabilityId === "evidence.harvest");
+    expect(harvest?.input).toMatchObject({ evidenceId: dumped.id });
+  });
+});
+
+describe("cancelPlaybookRun", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("cancels the run and its cancellable members", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const started = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "host-footprint",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: { host: "mailhost.test" },
+      })
+    );
+    const cancelled = await runDomain(
+      cancelPlaybookRunEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        started.playbookRunId
+      )
+    );
+    expect(cancelled.cancelledJobIds.length).toBeGreaterThan(0);
+
+    const run = await playbookRunsRepo.get(db, started.playbookRunId);
+    expect(run?.status).toBe("cancelled");
+
+    const members = await jobsRepo.listForPlaybookRun(
+      db,
+      started.playbookRunId
+    );
+    expect(members.every((j) => j.status !== "queued")).toBe(true);
+  });
+
+  it("accepts hidden evidence in the playbook seed", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const dumped = await runDomain(
+      dumpUrlEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        sourceUrl: "https://hidden-seed.test/",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+      })
+    );
+    await evidenceRepo.softDelete(db, cased.id, dumped.id);
+
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "url-capture",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: {
+          url: "https://hidden-seed.test/",
+          evidenceId: dumped.id,
+        },
+      })
+    );
+
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]?.status).toBe("queued");
+  });
+});

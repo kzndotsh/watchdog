@@ -243,7 +243,7 @@ function withHeaders(response: Response, pairs: [string, string][]): Response {
 }
 
 async function loadSecurityHeadersConfig(): Promise<SecurityHeadersConfig> {
-  const { env } = await import("@watchdog/env/server");
+  const { env } = await import("@watchdog/server/env/server");
   return securityHeadersConfig(env);
 }
 

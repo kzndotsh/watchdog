@@ -28,10 +28,10 @@ import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton"
 import { SearchedEvidencePicker } from "@/shared/ui/intake/searched-evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import { patchNeedsConfidence } from "@watchdog/domain/policy/patch-needs-confidence";
 import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Kbd } from "@watchdog/ui/components/kbd";
 import { Textarea } from "@watchdog/ui/components/textarea";

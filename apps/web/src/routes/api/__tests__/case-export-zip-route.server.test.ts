@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { NotFoundError } from "@watchdog/core/errors";
-import type { ZipSink } from "@watchdog/core/export";
 import { testApiKey } from "@watchdog/domain/schemas/testing";
 import { testId, testHttpOrigin } from "@watchdog/domain/test-kit";
+import { NotFoundError } from "@watchdog/server/core/errors";
+import type { ZipSink } from "@watchdog/server/core/export";
 
 const createApiContextMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({
@@ -34,17 +34,17 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: createApiContextMock,
 }));
 
-/** Stands in for the mapped 429 the real `runApp` throws (`jobStartLimitResponse` is tested in `@watchdog/api`). */
+/** Stands in for the mapped 429 the real `runApp` throws (`jobStartLimitResponse` is tested in `@watchdog/server/api`). */
 class RefusedStartError extends Error {
   override name = "RefusedStartError";
 }
 
-/** Stands in for the mapped `forbidden` the real `runApp` throws (`refusalResponse` is tested in `@watchdog/api`). */
+/** Stands in for the mapped `forbidden` the real `runApp` throws (`refusalResponse` is tested in `@watchdog/server/api`). */
 class ForbiddenOptInError extends Error {
   override name = "ForbiddenOptInError";
 }
 
-vi.mock("@watchdog/api", () => ({
+vi.mock("@watchdog/server/api", () => ({
   runAppAs: () => (effect: Effect.Effect<unknown, unknown>) =>
     Effect.runPromise(effect),
   actorLabelFromContext: () => undefined,
@@ -65,10 +65,10 @@ vi.mock("@watchdog/api", () => ({
       : null,
 }));
 
-vi.mock("@watchdog/core/export", async (importOriginal) => ({
+vi.mock("@watchdog/server/core/export", async (importOriginal) => ({
   // The real adapter: the route's response body is what is under test.
   zipSinkFromPromises: (
-    await importOriginal<typeof import("@watchdog/core/export")>()
+    await importOriginal<typeof import("@watchdog/server/core/export")>()
   ).zipSinkFromPromises,
   caseExportSettings: () => ({}),
   requireRawBodyOptInEffect: optInMock,
@@ -77,7 +77,7 @@ vi.mock("@watchdog/core/export", async (importOriginal) => ({
   writeCaseExportZipEffect: writeZipMock,
 }));
 
-vi.mock("@watchdog/log", () => ({
+vi.mock("@watchdog/server/log", () => ({
   createLogger: () => ({
     error: logErrorMock,
     warn: vi.fn(),
@@ -85,7 +85,7 @@ vi.mock("@watchdog/log", () => ({
   }),
 }));
 
-vi.mock("@watchdog/core/jobs", () => ({
+vi.mock("@watchdog/server/core/jobs", () => ({
   startCaseExportJobEffect: startJobMock,
   caseExportLinkEffect: linkMock,
 }));

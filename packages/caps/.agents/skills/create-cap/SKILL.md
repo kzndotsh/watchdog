@@ -33,7 +33,7 @@ Writes only inside the new Cap's folder
 `capabilities.gen.json` and `docs/reference/platform/cap-register.md` via the
 generator, plus a provider constant in `packages/caps/src/providers/` when the
 provider is new. Does not touch other Caps,
-`@watchdog/core`, `@watchdog/db`, or apps.
+`@watchdog/server/core`, `@watchdog/server/db`, or apps.
 
 ## Instructions
 

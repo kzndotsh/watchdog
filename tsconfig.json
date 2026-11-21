@@ -10,10 +10,10 @@
       "@watchdog/ai": ["./packages/ai/src/index.ts"],
       "@watchdog/ai/*": ["./packages/ai/src/*"],
 
-      "@watchdog/api": ["./packages/api/src/index.ts"],
-      "@watchdog/api/*": ["./packages/api/src/*"],
+      "@watchdog/server/api": ["./packages/server/api/src/index.ts"],
+      "@watchdog/server/api/*": ["./packages/server/api/src/*"],
 
-      "@watchdog/auth/*": ["./packages/auth/src/*"],
+      "@watchdog/server/auth/*": ["./packages/server/auth/src/*"],
 
       "@watchdog/caps": ["./packages/caps/src/index.ts"],
       "@watchdog/caps/capabilities.gen.json": [
@@ -27,29 +27,31 @@
       "@watchdog/client": ["./packages/client/src/index.ts"],
       "@watchdog/client/*": ["./packages/client/src/*"],
 
-      "@watchdog/core/blob": ["./packages/core/src/infra/blob.ts"],
-      "@watchdog/core/job-display": [
-        "./packages/core/src/display/job-display.ts"
+      "@watchdog/server/core/blob": [
+        "./packages/server/core/src/infra/blob.ts"
       ],
-      "@watchdog/core/proposal-display": [
-        "./packages/core/src/display/proposal-display.ts"
+      "@watchdog/server/core/job-display": [
+        "./packages/server/core/src/display/job-display.ts"
       ],
-      "@watchdog/core/*": ["./packages/core/src/*"],
+      "@watchdog/server/core/proposal-display": [
+        "./packages/server/core/src/display/proposal-display.ts"
+      ],
+      "@watchdog/server/core/*": ["./packages/server/core/src/*"],
 
-      "@watchdog/db": ["./packages/db/src/index.ts"],
-      "@watchdog/db/*": ["./packages/db/src/*"],
+      "@watchdog/server/db": ["./packages/server/db/src/index.ts"],
+      "@watchdog/server/db/*": ["./packages/server/db/src/*"],
 
-      "@watchdog/env/*": ["./packages/env/src/*"],
+      "@watchdog/server/env/*": ["./packages/server/env/src/*"],
 
-      "@watchdog/log": ["./packages/log/src/index.ts"],
-      "@watchdog/log/*": ["./packages/log/src/*"],
+      "@watchdog/server/log": ["./packages/server/log/src/index.ts"],
+      "@watchdog/server/log/*": ["./packages/server/log/src/*"],
 
       "@watchdog/domain/policy": ["./packages/domain/policy/src/index.ts"],
       "@watchdog/domain/policy/*": ["./packages/domain/policy/src/*"],
 
       "@watchdog/domain/schemas/*": ["./packages/domain/schemas/src/*"],
 
-      "@watchdog/test-db": ["./packages/test-db/src/index.ts"],
+      "@watchdog/server/test-db": ["./packages/server/test-db/src/index.ts"],
 
       "@watchdog/domain/test-kit": ["./packages/domain/test-kit/src/index.ts"],
       "@watchdog/domain/test-kit/http": [

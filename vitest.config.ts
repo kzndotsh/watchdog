@@ -180,7 +180,7 @@ export default defineConfig({
             "packages/*/*/src/**/__tests__/**/*.test.ts",
             "packages/*/scripts/**/__tests__/**/*.test.ts",
             "packages/*/*/scripts/**/__tests__/**/*.test.ts",
-            "apps/worker/src/**/__tests__/**/*.test.ts",
+            "packages/server/worker/src/**/__tests__/**/*.test.ts",
             "apps/cli/src/**/__tests__/**/*.test.ts",
             "apps/cli/src/commands/__tests__/**/*.test.ts",
           ],

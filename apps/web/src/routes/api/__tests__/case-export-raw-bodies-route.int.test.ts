@@ -2,15 +2,15 @@ import { unzipSync } from "fflate";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { authServerDouble } from "@/testing/auth-server-double";
-import { appRuntime } from "@watchdog/api";
 import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
 import { testHttpOrigin } from "@watchdog/domain/test-kit";
+import { appRuntime } from "@watchdog/server/api";
 import {
   resetTestDb,
   seedCase,
   seedOrganizationMember,
   testDb,
-} from "@watchdog/test-db";
+} from "@watchdog/server/test-db";
 
 /**
  * The per-Export opt-in for raw provider responses on `export.zip` (#499), against real data:
@@ -36,7 +36,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 // The integration project does not register the web setup file, so the shared double is mocked here.
 vi.mock("@/auth/server", () => authServerDouble());
 
-vi.mock("@watchdog/auth/server", () => ({
+vi.mock("@watchdog/server/auth/server", () => ({
   createApiContext: vi.fn(async () => {
     const { testApiKey: key, TEST_ORGANIZATION_ID: organizationId } =
       await import("@watchdog/domain/schemas/testing");

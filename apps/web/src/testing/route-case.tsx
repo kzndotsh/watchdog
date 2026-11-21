@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { RouteCaseContext } from "@/shared/hooks/use-route-case";
 import { buildCaseRecord } from "@/testing/records";
-import type { CaseRecord } from "@watchdog/core/cases";
+import type { CaseRecord } from "@watchdog/server/core/cases";
 
 /**
  * Test wrapper that stands in for the Case route: a Work screen (and the hooks and links

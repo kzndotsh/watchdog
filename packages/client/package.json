@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo",
-    "generate": "pnpm --filter @watchdog/api export-contract",
+    "generate": "pnpm --filter @watchdog/server api:export-contract",
     "prepare": "pnpm run generate"
   },
   "dependencies": {

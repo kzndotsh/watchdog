@@ -7,9 +7,9 @@ import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-ac
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { emptyEntityPickerPort } from "@/testing/memory-picker-port";
 import { render, screen } from "@/testing/render-in-case";
-import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
+import type { JobListRecord, JobRecord } from "@watchdog/server/core/jobs";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, ...props }: { children: React.ReactNode }) => (

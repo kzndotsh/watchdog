@@ -13,7 +13,7 @@ Each image carries the migrations of its version. The `web` container applies th
 
 Run from the repository directory, with `COMPOSE="docker compose --env-file .env.production -f docker-compose.prod.yml"`.
 
-1. **Read what changed.** Until release images are published ([#310](https://github.com/kzndotsh/watchdog/issues/310)) the images are built from this repository: `git fetch && git log --oneline HEAD..origin/main` lists the changes. Look for migrations (`packages/db/drizzle/`) and for new or changed variables ([`configuration`](../reference/platform/configuration.md); compare with your `.env.production`: the next start refuses a missing required one).
+1. **Read what changed.** Until release images are published ([#310](https://github.com/kzndotsh/watchdog/issues/310)) the images are built from this repository: `git fetch && git log --oneline HEAD..origin/main` lists the changes. Look for migrations (`packages/server/db/drizzle/`) and for new or changed variables ([`configuration`](../reference/platform/configuration.md); compare with your `.env.production`: the next start refuses a missing required one).
 
 2. **Back up first, with the app stopped.** Stop `web` and `worker`, then take the database dump, the object-store sync and a copy of `.env.production` with the vault key ([`backup-restore`](backup-restore.md)). Stopped, the dump and the bucket match: a live backup can pair a Case with files its deletion already removed. This is your only way back.
 

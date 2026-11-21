@@ -8,7 +8,7 @@
  *      pnpm's strict node_modules makes an undeclared import fail only where it is
  *      resolved, so a missing line can hide until runtime or a bundler.
  *   2. Public: the import path matches an entry of the target's `exports` map. An
- *      internal path (`@watchdog/core/src/...`) or a relative path into another
+ *      internal path (`@watchdog/server/core/src/...`) or a relative path into another
  *      workspace directory (`../../core/src/...`) fails and the message lists the
  *      public entry points.
  *   3. Downward: apps are leaves. No package or other app imports an app.
@@ -17,12 +17,12 @@
  *      literal. A Cap hands its facts to a tool as parameters (the user agent, the key
  *      value); the lists are read from packages/caps/capabilities.gen.json (Cap ids and
  *      declared credentials, `anyOf` groups included).
- *   5. Core folders form no import cycle: the top-level folders of packages/core/src
+ *   5. Core folders form no import cycle: the top-level folders of packages/server/core/src
  *      (`activity`, `cases`, `jobs`, ...) depend on one another in one direction only, so a
  *      concept lives in the folder that owns it. Tests (`__tests__`, `*.test.ts`) are not
  *      counted; files directly under src (`vault-rekey-cli.ts`) are entry points, not folders.
  *      Edges that may close a cycle are named in CORE_CYCLE_ALLOWLIST (empty today).
- *   6. Infra holds no domain: a non-test file of `packages/core/src/infra/` imports no core
+ *   6. Infra holds no domain: a non-test file of `packages/server/core/src/infra/` imports no core
  *      folder but `errors` (the error vocabulary, not a domain). Infra is the leaf the domain
  *      folders stand on; anything that needs a domain folder belongs in that folder.
  *   7. Web domains form no import cycle: the folders of apps/web/src/domains (`jobs`,
@@ -157,7 +157,7 @@ function entryPoints(pkg) {
 
 /**
  * The one sanctioned relative reach into another package: the generated client
- * AppRouter type alias, which keeps `@watchdog/client` free of an `@watchdog/api`
+ * AppRouter type alias, which keeps `@watchdog/client` free of an `@watchdog/server/api`
  * dependency: it is a type-only alias of the live router, so the CLI types follow the API
  * without a runtime dependency.
  */
@@ -173,22 +173,22 @@ const DENIED_IMPORTS = new Map([
   [
     "@watchdog/caps",
     {
-      deny: ["@watchdog/db", "drizzle-orm", "postgres", "pg"],
+      deny: ["@watchdog/server/db", "drizzle-orm", "postgres", "pg"],
       why: "Caps never write the Graph: a Cap returns Proposal ops and reaches storage only through ctx",
     },
   ],
   [
-    "@watchdog/api",
+    "@watchdog/server/api",
     {
-      deny: ["@watchdog/db", "drizzle-orm"],
-      why: "api reaches storage only through @watchdog/core",
+      deny: ["@watchdog/server/db", "drizzle-orm"],
+      why: "api reaches storage only through @watchdog/server/core",
     },
   ],
   [
-    "@watchdog/core",
+    "@watchdog/server/core",
     {
       deny: ["drizzle-orm"],
-      why: "core calls the repos in @watchdog/db, never the ORM",
+      why: "core calls the repos in @watchdog/server/db, never the ORM",
     },
   ],
 ]);
@@ -218,7 +218,7 @@ const CORE_CYCLE_ALLOWLIST = new Set();
 const INFRA_MAY_IMPORT = new Set(["errors"]);
 /** @type {string[]} */
 const infraImportProblems = [];
-const CORE_SRC = "packages/core/src/";
+const CORE_SRC = "packages/server/core/src/";
 /** A non-test file inside a top-level folder of core's src. */
 const CORE_FOLDER_FILE =
   /^packages\/core\/src\/(?<folder>[^/]+)\/(?!(?:.*\/)?(?:__tests__|__fixtures__|testing)\/|.*\.test\.[jt]sx?$)/;
@@ -534,7 +534,7 @@ for (const rel of listed) {
     const [scope = "", pkgName = "", ...rest] = spec.split("/");
     const name = `${scope}/${pkgName}`;
     if (name === owner.name) {
-      // A self-import through a public subpath (`@watchdog/core/cases`) is a folder edge too.
+      // A self-import through a public subpath (`@watchdog/server/core/cases`) is a folder edge too.
       const file =
         owner.exportTargets[`.${rest.length > 0 ? `/${rest.join("/")}` : ""}`];
       if (typeof file === "string") {

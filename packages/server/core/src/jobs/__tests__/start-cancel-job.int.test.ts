@@ -1,0 +1,368 @@
+import { Layer } from "effect";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import { isDomainTag } from "#core/errors";
+import { dumpUrlEffect } from "#core/evidence";
+import { Db, runDomainWith } from "#core/infra";
+import {
+  recordingJobQueue,
+  cancelJobEffect,
+  getJobForCaseEffect,
+  retryJobEffect,
+  startJobEffect,
+} from "#core/jobs";
+import { vaultLayer } from "#core/vault";
+import { evidenceRepo } from "#db";
+import {
+  forceJobStatus,
+  resetTestDb,
+  seedAuthUser,
+  listAllActivity,
+  listCaseJobs,
+  seedCase,
+  seedEntity,
+  seedEvidence,
+  seedJob,
+  testDb as db,
+} from "#test-db";
+import { EGRESS_CLASSES } from "@watchdog/domain/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/domain/schemas/testing";
+import { TEST_ACTOR_ID } from "@watchdog/domain/test-kit";
+
+// Enqueues land in a recording queue instead of a real pg-boss.
+const queue = recordingJobQueue();
+const runDomain = runDomainWith(
+  Layer.mergeAll(Layer.provideMerge(vaultLayer, Db.layer), queue.layer)
+);
+
+describe("startJob", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("inserts a queued dns lookup", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const job = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        input: { host: "mailhost.test" },
+      })
+    );
+    expect(job.status).toBe("queued");
+    const reread = await runDomain(
+      getJobForCaseEffect(cased.id, TEST_ORGANIZATION_ID, job.id)
+    );
+    expect(reread?.id).toBe(job.id);
+    expect(reread?.status).toBe("queued");
+    expect(reread?.input).toEqual({ host: "mailhost.test" });
+    expect(reread?.actorLabel).toBe(TEST_ACTOR_ID);
+  });
+
+  it("resolves actorLabel from auth.user", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const userId = crypto.randomUUID();
+    await seedAuthUser(db, {
+      id: userId,
+      name: "Ada",
+      email: `ada-${userId}@mailhost.test`,
+    });
+    const job = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        actorId: userId,
+        input: { host: "mailhost.test" },
+      })
+    );
+    expect(job.actorLabel).toBe("ada");
+  });
+
+  it("rejects cap input referencing evidence outside the case", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const other = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const foreign = await seedEvidence(db, other.id);
+
+    await expect(
+      runDomain(
+        startJobEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          capabilityId: "network.url.enrich",
+          actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
+          input: {
+            url: "https://mailhost.test/",
+            sourceEvidenceId: foreign.id,
+          },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
+    );
+  });
+
+  it("accepts hidden evidence as enrich sourceEvidenceId", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const dumped = await runDomain(
+      dumpUrlEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        sourceUrl: "https://hidden-enrich.test/",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+      })
+    );
+    await evidenceRepo.softDelete(db, cased.id, dumped.id);
+
+    const job = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.url.enrich",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        input: {
+          url: "https://hidden-enrich.test/",
+          sourceEvidenceId: dumped.id,
+        },
+      })
+    );
+
+    expect(job.status).toBe("queued");
+  });
+
+  it("persists the queued Job with its activity entry and enqueues it", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    queue.sends.length = 0;
+    const job = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.dns.lookup",
+        actorId: TEST_ACTOR_ID,
+        input: { host: "mailhost.test" },
+      })
+    );
+
+    expect((await listCaseJobs(db, cased.id)).map((row) => row.id)).toEqual([
+      job.id,
+    ]);
+    const entries = (await listAllActivity()).filter(
+      (row) => row.kind === "job"
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      caseId: cased.id,
+      action: "queued",
+      subjectId: job.id,
+      toValue: "queued",
+    });
+    expect(queue.sends.map((send) => send.payload.jobId)).toEqual([job.id]);
+  });
+
+  it("persists trimmed graph ids in the Job input", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const entity = await seedEntity(db, cased.id);
+    const evidence = await seedEvidence(db, cased.id);
+
+    const entityJob = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "archive.page.history",
+        actorId: TEST_ACTOR_ID,
+        input: { url: "https://mailhost.test/", entityId: `  ${entity.id}  ` },
+      })
+    );
+    const enrichJob = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        capabilityId: "network.url.enrich",
+        actorId: TEST_ACTOR_ID,
+        input: {
+          url: "https://mailhost.test/",
+          sourceEvidenceId: `  ${evidence.id}  `,
+        },
+      })
+    );
+
+    const stored = await listCaseJobs(db, cased.id);
+    expect(stored.find((row) => row.id === entityJob.id)?.input).toMatchObject({
+      entityId: entity.id,
+    });
+    expect(stored.find((row) => row.id === enrichJob.id)?.input).toMatchObject({
+      sourceEvidenceId: evidence.id,
+    });
+  });
+
+  it.each([
+    ["a whitespace-only capability id", { capabilityId: "   " }],
+    ["a blank actorId", { actorId: "   " }],
+  ])("rejects %s and leaves no Job or entry behind", async (_name, bad) => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    queue.sends.length = 0;
+    await expect(
+      runDomain(
+        startJobEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          capabilityId: "network.dns.lookup",
+          actorId: TEST_ACTOR_ID,
+          input: { host: "mailhost.test" },
+          ...bad,
+        })
+      )
+    ).rejects.toMatchObject({ _tag: "InvalidError" });
+    expect(await listCaseJobs(db, cased.id)).toEqual([]);
+    expect(await listAllActivity()).toEqual([]);
+    expect(queue.sends).toHaveLength(0);
+  });
+
+  it("rejects hidden evidence for process caps", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const evidence = await seedEvidence(db, cased.id, { kind: "file" });
+    await evidenceRepo.softDelete(db, cased.id, evidence.id);
+
+    await expect(
+      runDomain(
+        startJobEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          capabilityId: "evidence.file.analyze",
+          actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
+          input: { evidenceId: evidence.id },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+  });
+});
+
+describe("cancelJob", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("cancels a queued job and rejects a succeeded one", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const queued = await seedJob(db, cased.id, { status: "queued" });
+    const cancelled = await runDomain(
+      cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, queued.id)
+    );
+    expect(cancelled.status).toBe("cancelled");
+
+    const done = await seedJob(db, cased.id, { status: "succeeded" });
+    await expect(
+      runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, done.id))
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
+    );
+  });
+});
+
+describe("retryJob", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+    queue.sends.length = 0;
+  });
+
+  const retry = (
+    caseId: Parameters<typeof retryJobEffect>[0]["caseId"],
+    jobId: string
+  ) =>
+    retryJobEffect({
+      caseId,
+      organizationId: TEST_ORGANIZATION_ID,
+      jobId,
+      actorId: TEST_ACTOR_ID,
+      actorLabel: TEST_ACTOR_ID,
+    });
+
+  it.each(["failed", "cancelled", "succeeded"] as const)(
+    "starts a linked new Job from a %s one and leaves the original unchanged",
+    async (status) => {
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+      const original = await seedJob(db, cased.id, {
+        status,
+        capabilityId: "network.dns.lookup",
+        input: { host: "retry.test" },
+      });
+      const before = await runDomain(
+        getJobForCaseEffect(cased.id, TEST_ORGANIZATION_ID, original.id)
+      );
+
+      const retried = await runDomain(retry(cased.id, original.id));
+
+      expect(retried.id).not.toBe(original.id);
+      expect(retried.status).toBe("queued");
+      expect(retried.capabilityId).toBe("network.dns.lookup");
+      expect(retried.input).toEqual({ host: "retry.test" });
+      expect(retried.caseId).toBe(cased.id);
+      expect(retried.retryOfJobId).toBe(original.id);
+      expect(queue.sends.map((s) => s.payload.jobId)).toEqual([retried.id]);
+
+      const after = await runDomain(
+        getJobForCaseEffect(cased.id, TEST_ORGANIZATION_ID, original.id)
+      );
+      expect(after).toEqual(before);
+      expect(after.retryOfJobId).toBeNull();
+    }
+  );
+
+  it("links a retry of a retry to the Job it retried", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const first = await seedJob(db, cased.id, { status: "failed" });
+    const second = await runDomain(retry(cased.id, first.id));
+    await forceJobStatus(db, second.id, "failed");
+
+    const third = await runDomain(retry(cased.id, second.id));
+
+    expect(third.retryOfJobId).toBe(second.id);
+  });
+
+  it.each(["queued", "running"] as const)(
+    "rejects a %s Job as a conflict and starts nothing",
+    async (status) => {
+      const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+      const open = await seedJob(db, cased.id, { status });
+
+      await expect(runDomain(retry(cased.id, open.id))).rejects.toSatisfy(
+        (error: unknown) => isDomainTag(error) && error.code === "conflict"
+      );
+      expect(queue.sends).toEqual([]);
+    }
+  );
+
+  it("does not find a Job of another Case", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const other = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const foreign = await seedJob(db, other.id, { status: "failed" });
+
+    await expect(runDomain(retry(cased.id, foreign.id))).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+    expect(queue.sends).toEqual([]);
+  });
+
+  it("applies the start checks again: a Cap input that is no longer valid is rejected", async () => {
+    const cased = await seedCase(db, { allowedEgress: [...EGRESS_CLASSES] });
+    const stale = await seedJob(db, cased.id, {
+      status: "failed",
+      capabilityId: "network.dns.lookup",
+      input: {},
+    });
+
+    await expect(runDomain(retry(cased.id, stale.id))).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
+    );
+    expect(queue.sends).toEqual([]);
+  });
+});

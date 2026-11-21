@@ -155,7 +155,7 @@ export function credentialHasScope(
  * The one scope check for HTTP routes outside the oRPC router that accept API keys (Case export,
  * entity export, the activity stream): `null` when the credential holds `scope`, otherwise the
  * 403 to return. The body has the shape of the router's `FORBIDDEN` error, so one client handles
- * both. Router procedures declare their scope in `.meta` instead (`@watchdog/api`).
+ * both. Router procedures declare their scope in `.meta` instead (`@watchdog/server/api`).
  */
 export function requireScope(
   credential: ApiCredential,

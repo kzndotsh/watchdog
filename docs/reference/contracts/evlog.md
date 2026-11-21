@@ -1,15 +1,15 @@
 # Evlog contract
 
-**What this is:** process logging rules for `@watchdog/log` / evlog.  
+**What this is:** process logging rules for `@watchdog/server/log` / evlog.  
 **What this is not:** Graph audit SoT (`Job.logs` / `changesets` / `graph_history`). Wiring (where the logger is installed): [`../platform/jobs-orpc.md`](../platform/jobs-orpc.md).
 
-Package: `@watchdog/log` (`packages/log`). Do not depend on it from `apps/cli` or `@watchdog/client` (stdout is the agent contract). Enforced: oxlint `no-restricted-imports` for `apps/cli` (`oxlint.config.ts`); `client` declares no dependency.
+Package: `@watchdog/server/log` (`packages/server/log`). Do not depend on it from `apps/cli` or `@watchdog/client` (stdout is the agent contract). Enforced: oxlint `no-restricted-imports` for `apps/cli` (`oxlint.config.ts`); `client` declares no dependency.
 
 ## Rules
 
 - **Never** `log.set({ error: someError })`: `JSON.stringify(Error)` drains as `error: {}`. Use `log.error(err)`, or `setLevel("warn")` + `{ name, message }`. Guidance (no lint rule).
 - Auth denials are `warn` + `auth.denied`, not `error`. Guidance; set in `apps/web/src/start.ts`.
-- Never log secrets, Evidence bodies, or Bearer / `x-api-key` plaintext. Partly enforced by evlog redaction in `packages/log/src/init.ts` (the `secrets` builtin, `auditRedactPreset` and `x-api-key`); otherwise guidance. Redaction is by key name: a secret under a key that does not end in `password`, `passwd`, `secret` or `token` and is not in the preset (for example `masterVaultKey`) is not redacted.
+- Never log secrets, Evidence bodies, or Bearer / `x-api-key` plaintext. Partly enforced by evlog redaction in `packages/server/log/src/init.ts` (the `secrets` builtin, `auditRedactPreset` and `x-api-key`); otherwise guidance. Redaction is by key name: a secret under a key that does not end in `password`, `passwd`, `secret` or `token` and is not in the preset (for example `masterVaultKey`) is not redacted.
 - evlog NDJSON is process observability, not Graph audit. `Job.logs`, `changesets` and `graph_history` stay the custody SoT. Breach Caps may store recovered credential fields in Evidence artifacts ([`caps-lexicon.md` D5](../platform/caps-lexicon.md#pre-code-decisions-locked)); that material belongs in the case file, never in process logs.
 
 ## Request timing fields
@@ -22,11 +22,11 @@ Every API route (`/api/**`, `/api/rpc` included) emits one request wide event, a
 | `db.queries` | number | Database calls the request made through core's `tryDb` seam (every `xRepoFx` method and `tryDbWith` go through it), including those inside a `transact` body (the transaction's own BEGIN / COMMIT is not counted) |
 | `db.ms` | number | Total time of those calls, summed. Overlapping calls add up, so it can exceed `durationMs` |
 
-Types: `RequestTimingLogFields` and `DbLogFields` in `packages/log/src/fields.ts`. The accumulator is `packages/log/src/request-timing.ts`: it hangs off the request logger already in AsyncLocalStorage (`runWithRequestLogger`), `tryDb` calls `timedDbCall` once per statement, and `apps/web/src/start.ts` starts it and writes the totals before the event is emitted. Outside a request (worker, CLI, a test with no request logger) `timedDbCall` finds no accumulator, allocates nothing and just runs the call. `db.queries` counts calls to the seam, so a repo function that runs two statements in one `tryDb` counts once; the statement-exact oracle is `captureStatements` ([testing standards](../../contributing/testing/standards.md#query-count-budgets-and-plan-assertions)).
+Types: `RequestTimingLogFields` and `DbLogFields` in `packages/server/log/src/fields.ts`. The accumulator is `packages/server/log/src/request-timing.ts`: it hangs off the request logger already in AsyncLocalStorage (`runWithRequestLogger`), `tryDb` calls `timedDbCall` once per statement, and `apps/web/src/start.ts` starts it and writes the totals before the event is emitted. Outside a request (worker, CLI, a test with no request logger) `timedDbCall` finds no accumulator, allocates nothing and just runs the call. `db.queries` counts calls to the seam, so a repo function that runs two statements in one `tryDb` counts once; the statement-exact oracle is `captureStatements` ([testing standards](../../contributing/testing/standards.md#query-count-budgets-and-plan-assertions)).
 
-**Counts and times only.** The timing fields are numbers: never SQL text, parameters, rows, request or response bodies, or Evidence content. Do not add any of those to the request event when extending it. Tested in `apps/web/src/__tests__/start-timing.test.ts` (the event's keys) and `packages/core/src/infra/__tests__/request-timing.int.test.ts` (the count against the statement log).
+**Counts and times only.** The timing fields are numbers: never SQL text, parameters, rows, request or response bodies, or Evidence content. Do not add any of those to the request event when extending it. Tested in `apps/web/src/__tests__/start-timing.test.ts` (the event's keys) and `packages/server/core/src/infra/__tests__/request-timing.int.test.ts` (the count against the statement log).
 
-`Server-Timing`: in dev and test, API responses and server-function responses also carry `Server-Timing: db;dur=<db.ms>, app;dur=<durationMs>`. It is sent only when the validated `NODE_ENV` (`@watchdog/env`) is `development` or `test` (an allowlist, so never in production); the log fields are not gated. There is no production opt-in.
+`Server-Timing`: in dev and test, API responses and server-function responses also carry `Server-Timing: db;dur=<db.ms>, app;dur=<durationMs>`. It is sent only when the validated `NODE_ENV` (`@watchdog/server/env`) is `development` or `test` (an allowlist, so never in production); the log fields are not gated. There is no production opt-in.
 
 ## Edge request event
 
@@ -34,25 +34,25 @@ The production web server (`apps/web/scripts/serve.mjs`) logs each request it se
 
 ## Error reporting
 
-Optional, off unless `WD_ERROR_REPORTING_DSN` is set (`@watchdog/env/server`); then `initWatchdogLogger({ errorReporting })` installs a sink behind the logger. Operator guide: [`self-host`](../../how-to/self-host.md#error-reporting).
+Optional, off unless `WD_ERROR_REPORTING_DSN` is set (`@watchdog/server/env/server`); then `initWatchdogLogger({ errorReporting })` installs a sink behind the logger. Operator guide: [`self-host`](../../how-to/self-host.md#error-reporting).
 
-- **One path.** The logger's drain hands every wide event to `reportWideEvent` (`packages/log/src/error-report.ts`): an event reports when its level is `error` or `fatal`, or its status is 5xx (a mapped `InternalError` sets its cause as a field, not a level). Uncaught exceptions and unhandled rejections report through `reportError` and then exit 1 as Node would; those handlers are installed only when reporting is on. The browser posts to `/api/client-errors`, which logs an `error` event, so it takes the same path.
+- **One path.** The logger's drain hands every wide event to `reportWideEvent` (`packages/server/log/src/error-report.ts`): an event reports when its level is `error` or `fatal`, or its status is 5xx (a mapped `InternalError` sets its cause as a field, not a level). Uncaught exceptions and unhandled rejections report through `reportError` and then exit 1 as Node would; those handlers are installed only when reporting is on. The browser posts to `/api/client-errors`, which logs an `error` event, so it takes the same path.
 - **Context is an allowlist**: `requestId`, `method`, `path`, `status`, `operation`, `scope`, `jobId`, `capabilityId`, plus `release`, `environment` and `service`. Never add bodies, headers, SQL or Evidence content.
-- **Scrubbing** (`error-scrub.ts`) runs after evlog's redaction, on the report, not the log: keys that name a secret, body, Evidence content or a person are dropped; sensitive env values are removed verbatim; bearer tokens, URL credentials and queries, JWTs, emails and long opaque tokens are removed from strings. Tested in `packages/log/src/__tests__/error-report.test.ts`.
+- **Scrubbing** (`error-scrub.ts`) runs after evlog's redaction, on the report, not the log: keys that name a secret, body, Evidence content or a person are dropped; sensitive env values are removed verbatim; bearer tokens, URL credentials and queries, JWTs, emails and long opaque tokens are removed from strings. Tested in `packages/server/log/src/__tests__/error-report.test.ts`.
 - **A reporter never fails or slows a request**: `reportError` returns at once, the send is not awaited, is rate limited (30 a minute, 10 in flight), has a 3 s timeout and swallows every failure.
 - **Vendor-neutral sink** (`ErrorSink`): the only implementation is `sentry-sink.ts`, the Sentry envelope protocol over `fetch` (Sentry, GlitchTip, Bugsink). It is not the Sentry SDK on purpose: no dependency, no bundle cost, no Node patching.
 
 ## Log export (OTLP)
 
-Optional, off unless `WD_OTLP_ENDPOINT` is set (`@watchdog/env/server`, `otlpSettings()`); then `initWatchdogLogger({ otlp })` adds an exporter next to the file drain and the error sink, in web and worker. Operator guide and backend examples: [`self-host`](../../how-to/self-host.md#log-export-otlp).
+Optional, off unless `WD_OTLP_ENDPOINT` is set (`@watchdog/server/env/server`, `otlpSettings()`); then `initWatchdogLogger({ otlp })` adds an exporter next to the file drain and the error sink, in web and worker. Operator guide and backend examples: [`self-host`](../../how-to/self-host.md#log-export-otlp).
 
-- **No new exporter.** Delivery is evlog's `createOTLPDrain` (`evlog/otlp`, plain `fetch`, record shape `compact`, semantic conventions on) behind `createDrainPipeline` (`evlog/pipeline`). `packages/log/src/otlp-export.ts` only validates settings, scrubs, labels and counts.
+- **No new exporter.** Delivery is evlog's `createOTLPDrain` (`evlog/otlp`, plain `fetch`, record shape `compact`, semantic conventions on) behind `createDrainPipeline` (`evlog/pipeline`). `packages/server/log/src/otlp-export.ts` only validates settings, scrubs, labels and counts.
 - **Same scrubber.** Each event passes `createScrubber(...).scrubValue` from `error-scrub.ts`, the function error reports use, with the validated env's sensitive values plus the endpoint and each header value as secrets. Do not add a second scrubber. Trace and span ids are read before scrubbing (a 32-hex id looks like a key) and restored only when well-formed.
 - **Mapping.** `service` (`watchdog-web` / `watchdog-worker`) to `service.name`; `WD_RELEASE` to `service.version` (set as the event's `version`); `NODE_ENV` to `deployment.environment`; level to `severityText` / `severityNumber`; `requestId`, `job.jobId`, `cap.capabilityId` and every other field stay attributes under their logged names; `traceId` / `spanId` become the record's trace context; `WD_OTLP_RESOURCE_ATTRIBUTES` add resource attributes.
 - **Never slows or fails a request.** `push` scrubs and queues and returns; sends run from the pipeline with a 3 s timeout, batches of 50, a 5 s flush interval, a 500-event buffer (oldest dropped), two attempts. Drops and failed batches are counted (`stats()`), never logged, since a log line from the exporter would be exported again.
-- **Shutdown.** `flushWatchdogLogger({ timeoutMs })` (default 2 s, a no-op when export is off) delivers pending batches, then stops sending so retries end at once. The worker calls it after its last log (`worker.shutdown`, `apps/worker/src/shutdown.ts`); the web server has no shutdown hook, so a batch buffered at exit (up to 5 s of events) can be lost.
+- **Shutdown.** `flushWatchdogLogger({ timeoutMs })` (default 2 s, a no-op when export is off) delivers pending batches, then stops sending so retries end at once. The worker calls it after its last log (`worker.shutdown`, `packages/server/worker/src/shutdown.ts`); the web server has no shutdown hook, so a batch buffered at exit (up to 5 s of events) can be lost.
 - **Invalid settings** (endpoint not http(s), malformed `WD_OTLP_HEADERS` or `WD_OTLP_RESOURCE_ATTRIBUTES`) leave export off with one warning that names the setting, never its value. The env schema accepts any bounded text so a typo cannot block startup.
-- Tested in `packages/log/src/__tests__/otlp-export.test.ts` (a real receiver on a loopback port) and `init-otlp.test.ts`.
+- Tested in `packages/server/log/src/__tests__/otlp-export.test.ts` (a real receiver on a loopback port) and `init-otlp.test.ts`.
 
 ## Gotchas
 

@@ -1,6 +1,6 @@
 # UI: auth screens (`apps/web/src/auth/ui`)
 
-Sign-in, sign-up, password reset, account / security settings, and API keys. Server-side identity is in `@watchdog/auth` (`packages/auth`); this page is about the screens.
+Sign-in, sign-up, password reset, account / security settings, and API keys. Server-side identity is in `@watchdog/server/auth` (`packages/server/auth`); this page is about the screens.
 
 ## Where it came from
 

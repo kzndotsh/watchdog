@@ -26,14 +26,14 @@ import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SettingsMembersSkeleton } from "@/shared/ui/skeletons";
 import {
-  buildInvitationAcceptUrl,
-  invitationAcceptPath,
-} from "@watchdog/auth/invitation-url";
-import { INVITE_ROLE_OPTIONS } from "@watchdog/auth/org-roles";
-import {
   canManageTeam,
   trimmedOrUndefined,
 } from "@watchdog/domain/schemas/shared";
+import {
+  buildInvitationAcceptUrl,
+  invitationAcceptPath,
+} from "@watchdog/server/auth/invitation-url";
+import { INVITE_ROLE_OPTIONS } from "@watchdog/server/auth/org-roles";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Field } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";

@@ -28,7 +28,7 @@ import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { SettingsCredentialsSkeleton } from "@/shared/ui/skeletons";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { CredentialSlot } from "@watchdog/core/vault";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import { Separator } from "@watchdog/ui/components/separator";
 

@@ -11,11 +11,11 @@ import type {
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { memoryPickerPort } from "@/testing/memory-picker-port";
 import { preloadSharedLazyChunks } from "@/testing/shared-lazy-chunks";
-import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/domain/policy/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/domain/schemas/shared";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
+import type { ProposalRecord } from "@watchdog/server/core/proposals";
 
 vi.mock("@/shared/ui/intake/searched-evidence-picker", () => ({
   SearchedEvidencePicker: ({

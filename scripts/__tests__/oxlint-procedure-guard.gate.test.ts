@@ -1,6 +1,6 @@
 /**
  * Proves the real `oxlint.config.ts` enforces `watchdog/procedure-must-be-guarded` in
- * `packages/api/src/procedures`: procedures build from `authed` (or `graphChildWrite`);
+ * `packages/server/api/src/procedures`: procedures build from `authed` (or `graphChildWrite`);
  * the public builder `pub` (however imported, aliased, re-exported or wrapped) needs an
  * adjacent `// public: <reason>` comment. Probe files are written into a throwaway repo
  * that carries the real config and plugin (helpers/oxlint-fixture.ts).
@@ -10,7 +10,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const DIR = "packages/api/src/procedures";
+const DIR = "packages/server/api/src/procedures";
 const RULE = "watchdog/procedure-must-be-guarded";
 
 const OS_PUB = 'import { pub } from "../os";\n\n';
@@ -33,7 +33,7 @@ const FAIL_CASES = {
   "pub-barrel-index": `import { pub } from "../index";\n\n${USE}`,
   "pub-barrel-dir": `import { pub } from "..";\n\n${USE}`,
   "pub-barrel-up-two": `import { pub } from "../../index";\n\n${USE}`,
-  "pub-barrel-package": `import { pub } from "@watchdog/api";\n\n${USE}`,
+  "pub-barrel-package": `import { pub } from "@watchdog/server/api";\n\n${USE}`,
   "pub-barrel-aliased":
     'import { pub as open } from "../index";\n\nexport const a = open.handler(() => 1);\n',
   "pub-barrel-namespace":
@@ -115,9 +115,9 @@ beforeAll(() => {
     fixture.write(`${DIR}/${name}.ts`, src);
   }
   // The same violating source outside the procedures folder and inside its tests.
-  fixture.write("packages/api/src/other.ts", FAIL_CASES["pub-bare"]);
+  fixture.write("packages/server/api/src/other.ts", FAIL_CASES["pub-bare"]);
   fixture.write(`${DIR}/__tests__/probe.test.ts`, FAIL_CASES["pub-bare"]);
-  result = fixture.lint([DIR, "packages/api/src/other.ts"]);
+  result = fixture.lint([DIR, "packages/server/api/src/other.ts"]);
 });
 
 const hits = (file: string) => findingsFor(result, file, RULE);
@@ -134,7 +134,7 @@ describe("procedure-must-be-guarded (oxlint.config.ts)", () => {
     });
   }
   it("does not apply outside the procedures folder", () => {
-    expect(hits("packages/api/src/other.ts")).toHaveLength(0);
+    expect(hits("packages/server/api/src/other.ts")).toHaveLength(0);
   });
   it("does not apply to the folder's tests", () => {
     expect(hits(`${DIR}/__tests__/probe.test.ts`)).toHaveLength(0);

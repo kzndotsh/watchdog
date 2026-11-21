@@ -20,8 +20,8 @@ import {
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusDot } from "@/shared/ui/status-dot";
 import { UnsavedChangesDialog } from "@/shared/ui/unsaved-changes-dialog";
-import type { CredentialSlot } from "@watchdog/core/vault";
 import { putCredentialInputSchema } from "@watchdog/domain/schemas/caps";
+import type { CredentialSlot } from "@watchdog/server/core/vault";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import {
   InputGroup,
