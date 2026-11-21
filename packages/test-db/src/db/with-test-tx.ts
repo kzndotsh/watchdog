@@ -45,6 +45,21 @@ export function ownerDb(): Db {
 }
 
 /**
+ * Refresh the planner statistics of `tables` (public schema) as the owner, from their committed
+ * rows: for a plan test whose plan must not depend on what earlier test files left in the
+ * statistics. ANALYZE needs the owner and cannot see a transaction's uncommitted rows, so the
+ * test seeds through a committing handle (`testDb`) first.
+ */
+export async function analyzeTables(
+  ...tables: readonly string[]
+): Promise<void> {
+  for (const table of tables) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- one table at a time
+    await owner().unsafe(`ANALYZE public.${JSON.stringify(table)}`);
+  }
+}
+
+/**
  * Wipe public Case Graph tables (keeps drizzle migrations + `auth.*`).
  * Used when a test must COMMIT (races, service-level `db.transaction`).
  * `graph_history` is append-only: its TRUNCATE guard needs the transaction to opt in, which this

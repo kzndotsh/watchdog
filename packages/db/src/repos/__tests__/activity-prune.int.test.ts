@@ -5,9 +5,12 @@ import type { ActivityCursor } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
+  analyzeTables,
   captureStatements,
   explainPlan,
+  resetTestDb,
   seedCase,
+  testDb,
   withTestTx,
 } from "@watchdog/test-db";
 
@@ -173,28 +176,31 @@ describe("activityLogRepo.pruneBatch: what is deleted", () => {
 
 describe("activityLogRepo.pruneBatch: plan", () => {
   it("finds each Case's keep boundary once, through (case_id, id desc)", async () => {
-    await withTestTx(async (tx) => {
-      await seedLog(tx);
-      const { statements } = await captureStatements(() =>
-        activityLogRepo.pruneBatch(tx, {
-          before: BEFORE,
-          keepPerCase: 5,
-          limit: 5000,
-        })
-      );
-      const [select] = statements;
-      if (select === undefined) throw new Error("no statement");
-      const plan = JSON.stringify(await explainPlan(select));
-      // One probe per Case in a CTE, on the index that gives the order...
-      expect(plan).toContain('"Subplan Name":"CTE keep"');
-      expect(plan).toContain('"Index Name":"activity_case_id_id_idx"');
-      // ...and never the primary key walked backward and filtered by Case.
-      expect(plan).not.toMatch(
-        /"Scan Direction":"Backward"[^}]*"Index Name":"activity_pkey"/
-      );
-      expect(plan).not.toMatch(
-        /"Index Name":"activity_pkey"[^}]*"Scan Direction":"Backward"/
-      );
-    });
+    // Planned on this test's own statistics: committed rows, analyzed. Statistics an earlier file
+    // left (two organizations, a few rows) make the policy's organization filter look selective
+    // and the plan pick the organization index instead; at scale it never does.
+    await resetTestDb();
+    await seedLog(testDb);
+    await analyzeTables("activity");
+    const { statements } = await captureStatements(() =>
+      activityLogRepo.pruneBatch(testDb, {
+        before: BEFORE,
+        keepPerCase: 5,
+        limit: 5000,
+      })
+    );
+    const [select] = statements;
+    if (select === undefined) throw new Error("no statement");
+    const plan = JSON.stringify(await explainPlan(select));
+    // One probe per Case in a CTE, on the index that gives the order...
+    expect(plan).toContain('"Subplan Name":"CTE keep"');
+    expect(plan).toContain('"Index Name":"activity_case_id_id_idx"');
+    // ...and never the primary key walked backward and filtered by Case.
+    expect(plan).not.toMatch(
+      /"Scan Direction":"Backward"[^}]*"Index Name":"activity_pkey"/
+    );
+    expect(plan).not.toMatch(
+      /"Index Name":"activity_pkey"[^}]*"Scan Direction":"Backward"/
+    );
   });
 });
