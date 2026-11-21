@@ -180,6 +180,15 @@ export const processVariables: readonly ProcessVariable[] = [
     usedBy: [],
   },
   {
+    name: "POSTGRES_WORKER_PASSWORD",
+    group: COMPOSE,
+    description:
+      "Password of the worker role watchdog_worker, which the worker uses (DATABASE_URL_WORKER): the application role's privileges without any write to the Graph. The Postgres container creates the role with it when the volume is first made. Letters and digits only, and different from the other two (openssl rand -hex 24).",
+    sensitive: true,
+    required: true,
+    usedBy: [],
+  },
+  {
     name: "WEB_BIND",
     group: COMPOSE,
     description:

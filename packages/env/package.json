@@ -8,7 +8,8 @@
     "./breach-caps-mode": "./src/breach-caps-mode.ts",
     "./egress-proxy": "./src/egress-proxy.ts",
     "./secrets": "./src/secrets.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./worker": "./src/worker.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.test.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo"

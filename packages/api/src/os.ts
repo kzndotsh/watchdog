@@ -7,6 +7,7 @@ import type {
   ProcedureScope,
 } from "@watchdog/schemas/shared";
 
+import { runAsCaller } from "./caller-role";
 import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
 import { apiErrorMap, withStableCode } from "./error-map";
@@ -94,7 +95,9 @@ const authenticated = base.use(({ context, next }) => {
 
 /**
  * Authenticated procedures. Declare the scope an API key needs with `.meta({ scope })`; this
- * middleware checks it for keys before input validation and lets sessions through.
+ * middleware checks it for keys before input validation and lets sessions through. A key's
+ * request then runs as the worker role, which writes no Graph table, unless the procedure
+ * declares `graph:write` (`runAsCaller`, #720).
  */
 export const authed = authenticated.use(({ context, procedure, next }) => {
   const { credential } = context;
@@ -108,7 +111,7 @@ export const authed = authenticated.use(({ context, procedure, next }) => {
     throw sessionRequiredError();
   }
   assertScope(credential, scope);
-  return next();
+  return runAsCaller(credential, scope, next);
 });
 
 /** Child Graph writes need `graph:write`; agent (API key) callers also need userOverride and cannot set confirmed. */

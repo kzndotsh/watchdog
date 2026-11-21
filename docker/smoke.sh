@@ -5,8 +5,9 @@
 # It needs, already running and reachable from the host (containers run with --network host):
 #   - an EMPTY Postgres database, as its owner        SMOKE_DATABASE_URL
 #     (a role that may create roles, tables and schemas; the script creates the application role
-#     watchdog_app with docker/postgres/app-role.sql, the way the production compose does, and
-#     runs web and worker as it, with the owner URL only for migrations and the admin commands)
+#     watchdog_app and the worker role watchdog_worker with docker/postgres/app-role.sql, the way
+#     the production compose does, and runs web as the first and worker as the second, with the
+#     owner URL only for migrations and the admin commands)
 #   - an S3-compatible server (SeaweedFS in CI)       SMOKE_S3_ENDPOINT, SMOKE_S3_ACCESS_KEY, SMOKE_S3_SECRET_KEY
 # and the images WEB_IMAGE and WORKER_IMAGE. It then checks, in order:
 #   1. two web replicas start at once on the empty database: they take the migration advisory
@@ -14,7 +15,7 @@
 #   2. GET /api/v1/health answers, the sign-in page renders, and the process is not root;
 #   2a. a request is logged once (path without query or cookie) and an asset is served
 #      precompressed (br) with Vary and the immutable cache header, plain without Accept-Encoding;
-#   3. the worker image boots, skips migrations and keeps running;
+#   3. the worker image boots as watchdog_worker, skips migrations and keeps running;
 #   4. a deliberately failing migration (docker/smoke/failing-migration) stops the web container
 #      with a non-zero exit before the app listens, and WD_SKIP_MIGRATIONS=1 lets it start anyway.
 #   5. the first-admin command (bootstrap-admin.mjs) creates an admin who signs in while public
@@ -25,7 +26,7 @@
 #      on an empty vault.
 #   6. the application role owns nothing and cannot ALTER, DROP or TRUNCATE a table, disable a
 #      trigger, create objects or change the audit tables, while ordinary reads work; the web and
-#      worker processes do not hold the owner URL.
+#      worker processes do not hold the owner URL; the worker role writes no Graph table.
 # Every container is named with the SMOKE_PREFIX and removed on exit.
 set -euo pipefail
 
@@ -37,6 +38,7 @@ SMOKE_S3_ACCESS_KEY="${SMOKE_S3_ACCESS_KEY:-watchdog}"
 SMOKE_S3_SECRET_KEY="${SMOKE_S3_SECRET_KEY:-watchdog-smoke-secret}"
 SMOKE_S3_BUCKET="${SMOKE_S3_BUCKET:-watchdog-evidence}"
 SMOKE_APP_PASSWORD="${SMOKE_APP_PASSWORD:-smokeapppassword0123}"
+SMOKE_WORKER_PASSWORD="${SMOKE_WORKER_PASSWORD:-smokeworkerpassword0123}"
 SMOKE_PORT="${SMOKE_PORT:-3000}"
 SMOKE_PREFIX="${SMOKE_PREFIX:-smoke}"
 READY_TIMEOUT_S="${READY_TIMEOUT_S:-120}"
@@ -70,15 +72,18 @@ logs_contain() {
 
 # A throwaway client container of the server's major version (pg_dump must not be older than the
 # server). Reads stdin, so a SQL file can be piped in.
-pg_client() { docker run --rm -i --network host -e POSTGRES_APP_PASSWORD "$PG_CLIENT_IMAGE" "$@"; }
+pg_client() { docker run --rm -i --network host -e POSTGRES_APP_PASSWORD -e POSTGRES_WORKER_PASSWORD "$PG_CLIENT_IMAGE" "$@"; }
 
 # The two roles, as docker-compose.prod.yml sets them up: SMOKE_DATABASE_URL is the owner, and
-# watchdog_app is created by the same SQL file the Postgres container's init runs.
+# watchdog_app and watchdog_worker are created by the same SQL file the Postgres container's init
+# runs.
 db_base="${SMOKE_DATABASE_URL%/*}"
 db_name="${SMOKE_DATABASE_URL##*/}"
 app_url="postgresql://watchdog_app:${SMOKE_APP_PASSWORD}@${SMOKE_DATABASE_URL#*@}"
-POSTGRES_APP_PASSWORD="$SMOKE_APP_PASSWORD" pg_client psql "$SMOKE_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f - \
-  <"$here/postgres/app-role.sql" || fail "could not create the application role"
+worker_url="postgresql://watchdog_worker:${SMOKE_WORKER_PASSWORD}@${SMOKE_DATABASE_URL#*@}"
+POSTGRES_APP_PASSWORD="$SMOKE_APP_PASSWORD" POSTGRES_WORKER_PASSWORD="$SMOKE_WORKER_PASSWORD" \
+  pg_client psql "$SMOKE_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f - \
+  <"$here/postgres/app-role.sql" || fail "could not create the application roles"
 
 # Placeholder secrets that only live for this run. Same shape a real install sets: the app role in
 # DATABASE_URL, the owner in DATABASE_URL_MIGRATE (migrations and the admin commands only).
@@ -235,7 +240,8 @@ empty_out="$(REKEY_ENV="-e WD_MASTER_VAULT_KEY_OLD=change-me-placeholder" rekey 
 
 echo "== 3. worker boots and skips migrations"
 containers+=("$SMOKE_PREFIX-worker")
-docker run -d --name "$SMOKE_PREFIX-worker" --network host "${app_env[@]}" -e "DATABASE_URL_MIGRATE=" "$WORKER_IMAGE" >/dev/null
+docker run -d --name "$SMOKE_PREFIX-worker" --network host "${app_env[@]}" -e "DATABASE_URL_MIGRATE=" \
+  -e "DATABASE_URL_WORKER=$worker_url" "$WORKER_IMAGE" >/dev/null
 sleep 10
 [[ "$(docker inspect -f '{{.State.Running}}' "$SMOKE_PREFIX-worker")" == "true" ]] || fail "worker stopped"
 logs_contain "$SMOKE_PREFIX-worker" "skipping migrations" || fail "worker did not skip migrations"
@@ -330,5 +336,18 @@ for name in "$SMOKE_PREFIX-web-a" "$SMOKE_PREFIX-worker"; do
   fi
 done
 echo "application role: reads work; DDL, TRUNCATE, trigger changes and audit-table edits are denied"
+
+# The worker role (#720): what the worker container logs in as. It reads the Graph and writes none.
+worker_sql() { pg_client psql "$worker_url" -At -v ON_ERROR_STOP=1 -c "$1" 2>&1; }
+[[ "$(worker_sql "select count(*) from public.entities")" == "0" ]] || fail "the worker role cannot read the entities table"
+set +e
+out="$(worker_sql "insert into public.entities default values")"
+code=$?
+set -e
+((code != 0)) || fail "the worker role was allowed to insert into the Graph"
+[[ "$out" == *"permission denied"* ]] || fail "unexpected error for the worker role's Graph insert: $out"
+[[ "$(pg_client psql "$SMOKE_DATABASE_URL" -At -c "select count(*) > 0 from pg_stat_activity where usename = 'watchdog_worker'")" == "t" ]] \
+  || fail "the worker container does not connect as watchdog_worker"
+echo "worker role: reads the Graph, Graph inserts are denied, and the worker connects as it"
 
 echo "smoke: ok"

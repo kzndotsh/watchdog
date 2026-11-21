@@ -4,13 +4,20 @@ import type { ActivityTailer } from "@watchdog/core/activity";
 import { activityTailerLayer } from "@watchdog/core/activity";
 import type { BlobStore } from "@watchdog/core/blob";
 import type { DomainTag } from "@watchdog/core/errors";
-import { coreServicesLayer, Db } from "@watchdog/core/infra";
+import { coreServicesLayer, Db, inWorkerRole } from "@watchdog/core/infra";
 import type { JobQueue } from "@watchdog/core/jobs";
 import { jobQueueProducerLayer } from "@watchdog/core/jobs";
 import type { Vault } from "@watchdog/core/vault";
+import type { ApiCredential, ProcedureScope } from "@watchdog/schemas/shared";
 import type { OutboundClient } from "@watchdog/tools/http";
 
+import { inWorkerRoleRequest, runAsCaller } from "./caller-role";
 import { toOrpcError } from "./map-domain-error";
+
+/** `effect` as the worker role inside an API-key request (`runAsCaller`), unchanged otherwise. */
+function inCallerRole<A, E, R>(effect: Effect.Effect<A, E, R>) {
+  return inWorkerRoleRequest() ? inWorkerRole(effect) : effect;
+}
 
 /**
  * Composition root (ADR-0002 phases 2-3): core's `coreServicesLayer` over the
@@ -90,19 +97,38 @@ if ((import.meta as ModuleMeta).hot !== undefined) {
   appRuntime.runFork(Effect.void);
 }
 
+/** What `runApp` provides. */
+type AppServices =
+  | Db
+  | JobQueue
+  | BlobStore
+  | Vault
+  | ActivityTailer
+  | OutboundClient;
+
 /**
  * Run an application Effect. Maps `DomainTag` in `E` to oRPC errors before
  * `runPromise`, so handlers only see transport errors. Services come from
- * `AppLive`.
+ * `AppLive`. Inside an API-key request (`runAsCaller`) it runs as the worker
+ * role (#720).
  */
 export async function runApp<A>(
-  effect: Effect.Effect<
-    A,
-    DomainTag,
-    Db | JobQueue | BlobStore | Vault | ActivityTailer | OutboundClient
-  >
+  effect: Effect.Effect<A, DomainTag, AppServices>
 ): Promise<A> {
-  return appRuntime.runPromise(effect.pipe(Effect.mapError(toOrpcError)));
+  return appRuntime.runPromise(
+    inCallerRole(effect).pipe(Effect.mapError(toOrpcError))
+  );
+}
+
+/**
+ * `runApp` for a route outside the router (a file download, the activity stream) that has
+ * authenticated its caller itself: each Effect runs in the role the caller gets (`runAsCaller`:
+ * the worker role for an API key unless `scope` is `graph:write`), wherever it is called from.
+ */
+export function runAppAs(credential: ApiCredential, scope: ProcedureScope) {
+  return async <A>(
+    effect: Effect.Effect<A, DomainTag, AppServices>
+  ): Promise<A> => runAsCaller(credential, scope, async () => runApp(effect));
 }
 
 /**
@@ -112,6 +138,9 @@ export async function runApp<A>(
 export function runAppWith<ROut>(layer: Layer.Layer<ROut>) {
   return async <A>(effect: Effect.Effect<A, DomainTag, ROut>): Promise<A> =>
     appRuntime.runPromise(
-      effect.pipe(Effect.mapError(toOrpcError), Effect.provide(layer))
+      inCallerRole(effect).pipe(
+        Effect.mapError(toOrpcError),
+        Effect.provide(layer)
+      )
     );
 }

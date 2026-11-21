@@ -1,3 +1,5 @@
+// First: the worker logs in as its own role (DATABASE_URL_WORKER), before the environment is parsed.
+import "@watchdog/env/worker";
 import "@watchdog/env/server";
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";

@@ -22,7 +22,7 @@
 import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { runApp } from "@watchdog/api";
+import { runAppAs } from "@watchdog/api";
 import { ActivityTailer, replayActivityEffect } from "@watchdog/core/activity";
 import {
   assertCaseInOrgEffect,
@@ -85,6 +85,8 @@ export async function openActivityStream(request: Request): Promise<Response> {
   }
   const denied = requireScope(ctx.credential, "cases:read");
   if (denied) return denied;
+  // An API key's reads run as the worker role (#720), from whichever callback they start.
+  const runApp = runAppAs(ctx.credential, "cases:read");
 
   const url = new URL(request.url);
   const caseIdParsed = parseSseCaseIdParam(url.searchParams.get("caseId"));
