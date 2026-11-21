@@ -51,7 +51,11 @@ export class CasesPage extends BasePage {
   }
 
   /** A row of the Deleted Cases view. */
+  /** A Deleted Cases row; scoped to the page content, since a toast is a listitem naming the Case too. */
   deletedRowFor(name: string): Locator {
-    return this.page.getByRole("listitem").filter({ hasText: name });
+    return this.page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: name });
   }
 }
