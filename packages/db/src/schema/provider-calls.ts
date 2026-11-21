@@ -32,6 +32,7 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
+import { caseIsolation } from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { evidence } from "./evidence";
 import { jobs } from "./jobs";
@@ -78,6 +79,7 @@ export const providerCalls = pgTable(
     createdAt,
   },
   (t) => [
+    caseIsolation("provider_calls", t.caseId),
     unique("provider_calls_job_run_seq_uq").on(t.jobId, t.runId, t.seq),
     // The target of the composite foreign keys of the outcome and the Evidence link.
     unique("provider_calls_id_case_id_uq").on(t.id, t.caseId),
@@ -138,6 +140,7 @@ export const providerCallOutcomes = pgTable(
     createdAt,
   },
   (t) => [
+    caseIsolation("provider_call_outcomes", t.caseId),
     index("provider_call_outcomes_case_started_idx").on(t.caseId, t.startedAt),
     foreignKey({
       name: "provider_call_outcomes_call_id_case_id_fk",
@@ -183,6 +186,7 @@ export const evidenceProviderCalls = pgTable(
     createdAt,
   },
   (t) => [
+    caseIsolation("evidence_provider_calls", t.caseId),
     primaryKey({ columns: [t.evidenceId, t.callId] }),
     index("evidence_provider_calls_call_id_idx").on(t.callId),
     index("evidence_provider_calls_case_id_idx").on(t.caseId),

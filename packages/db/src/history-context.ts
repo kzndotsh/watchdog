@@ -26,7 +26,7 @@ export type NewChangeset = {
 
 /**
  * The organization a transaction acts for: the fifth transaction-local setting of the context,
- * read by the row-level security policies on `cases` and `claims` (through the same
+ * read by the row-level security policies on every Case-scoped table (through the same
  * `graph_history_setting` reader, which maps the empty string a reused pooled connection holds to
  * NULL, so an unset organization matches no row). Its one writer is the organization-scoped handle
  * (`organizationScopedDb`, `setOrganizationContext` in `organization-scope.ts`), which sets it at

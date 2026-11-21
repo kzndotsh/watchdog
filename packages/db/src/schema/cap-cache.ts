@@ -10,6 +10,7 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
+import { caseIsolation } from "./_organization-policy";
 import { cases } from "./cases";
 import type { JobArtifact } from "./jobs";
 
@@ -42,6 +43,7 @@ export const capCache = pgTable(
     expiresAt: timestamptz("expires_at").notNull(),
   },
   (t) => [
+    caseIsolation("cap_cache", t.caseId),
     uniqueIndex("cap_cache_case_cap_input_uidx").on(
       t.caseId,
       t.capabilityId,

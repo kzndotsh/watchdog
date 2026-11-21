@@ -18,6 +18,7 @@ import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz, xid8 } from "./_helpers";
+import { organizationIsolation } from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
@@ -73,6 +74,7 @@ export const activity = pgTable(
     createdAt,
   },
   (t) => [
+    organizationIsolation("activity", t.organizationId),
     index("activity_xid_id_idx").on(t.xid, t.id),
     index("activity_case_id_id_idx").on(t.caseId, t.id.desc()),
     // Recent activity (`activityList`, ADR-0007): each sort is a btree led by the organization;

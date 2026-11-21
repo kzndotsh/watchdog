@@ -34,7 +34,9 @@ import type { PreflightState } from "../stages/preflight.ts";
 
 // Enqueues land in a recording queue instead of a real pg-boss.
 const queue = recordingJobQueue();
-const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
+// The tail and the chain run inside a Job's organization scope (`inJobOrganization`, #719): these
+// tests call them directly, so the pool is in the test organization's scope.
+const runDomain = runDomainWith(Layer.mergeAll(Db.layerOf(db), queue.layer));
 
 function sha(): string {
   return "ab".repeat(32);

@@ -2,10 +2,14 @@ import { Effect } from "effect";
 import { TestClock } from "effect/testing";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { Db, runDomain } from "@watchdog/core/infra";
+import { Db, runDomainWith } from "@watchdog/core/infra";
 import { resetTestDb, seedCase, testDb as db } from "@watchdog/test-db";
 
 import { lookupCapCacheEffect, storeCapCacheEffect } from "../cap-cache.ts";
+
+// The cache is read and written inside a Job's organization scope (`inJobOrganization`, #719):
+// these tests call it directly, so the pool is in the test organization's scope.
+const runDomain = runDomainWith(Db.layerOf(db));
 
 describe("storeCapCacheEffect", () => {
   beforeEach(async () => {
@@ -65,7 +69,7 @@ describe("storeCapCacheEffect", () => {
         yield* TestClock.setTime(start + ttlMs + 1);
         const stale = yield* lookupCapCacheEffect(key);
         return { fresh, stale };
-      }).pipe(Effect.provide(Db.layer), Effect.provide(TestClock.layer()))
+      }).pipe(Effect.provide(Db.layerOf(db)), Effect.provide(TestClock.layer()))
     );
 
     // The wall clock (2026) is before every stored expiry: only the Effect clock can expire it.

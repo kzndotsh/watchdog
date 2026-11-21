@@ -7,7 +7,12 @@ import {
   purgeCaseEffect,
   restoreCaseEffect,
 } from "@watchdog/core/case-deletion";
-import { Db, runDomainWith, transact } from "@watchdog/core/infra";
+import {
+  Db,
+  inOrganization,
+  runDomainWith,
+  transact,
+} from "@watchdog/core/infra";
 import { evidenceLinksRepo, evidenceRepo } from "@watchdog/db";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -141,26 +146,30 @@ describe("Collect queue fixture transitions", () => {
     expect((await rowsById(caseId)).get(R.r1)?.state).toBe("failed");
     await expectConsistent(caseId);
 
+    // The retry's transaction is in the Case's organization, as `retryJobEffect`'s is (#719).
     const retry = await run(
-      transact((tx) =>
-        Effect.gen(function* joinRetryGen() {
-          yield* joinPlaybookRunEffect(
-            tx,
-            { playbookRunId: R.r1, playbookStep: 1, playbookFanIndex: 2 },
-            TEST_ACTOR_ID
-          );
-          return yield* jobsRepoFx.create(tx, {
-            caseId,
-            capabilityId: "network.dns.lookup",
-            input: { host: "retry.example" },
-            status: "queued",
-            actorId: TEST_ACTOR_ID,
-            playbookRunId: R.r1,
-            playbookStep: 1,
-            playbookFanIndex: 2,
-            retryOfJobId: J.a3,
-          });
-        })
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        transact((tx) =>
+          Effect.gen(function* joinRetryGen() {
+            yield* joinPlaybookRunEffect(
+              tx,
+              { playbookRunId: R.r1, playbookStep: 1, playbookFanIndex: 2 },
+              TEST_ACTOR_ID
+            );
+            return yield* jobsRepoFx.create(tx, {
+              caseId,
+              capabilityId: "network.dns.lookup",
+              input: { host: "retry.example" },
+              status: "queued",
+              actorId: TEST_ACTOR_ID,
+              playbookRunId: R.r1,
+              playbookStep: 1,
+              playbookFanIndex: 2,
+              retryOfJobId: J.a3,
+            });
+          })
+        )
       )
     );
     if (retry === null) throw new Error("no retry");

@@ -11,7 +11,10 @@ import {
 } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
-import { insertCasesInScope } from "../organization-scope.ts";
+import {
+  insertCasesInScope,
+  withOrganizationScope,
+} from "../organization-scope.ts";
 import { at } from "./types.ts";
 import type { ListConformance } from "./types.ts";
 
@@ -127,26 +130,36 @@ export const activityConformance: ListConformance = {
         purgeAfter: at(100),
       },
     ]);
-    await exec
-      .insert(activity)
-      .overridingSystemValue()
-      .values([
-        ...ROWS.map((row) => entryOf(row)),
-        // Older members of runs 1 and 2, and a twin of a04 at its minute with the smaller id:
-        // collapsed into the run's newest entry.
-        decoy(0, CASE_2, "job", "running", 30, { groupId: groupOf(1) }),
-        decoy(21, CASE_2, "job", "queued", 5, { groupId: groupOf(1) }),
-        decoy(22, CASE_1, "job", "queued", 5, { groupId: groupOf(2) }),
-        // Not in the allowlist, newest of all (and of run 3): never a row.
-        decoy(23, CASE_1, "job", "logged", 45, { groupId: groupOf(3) }),
-        decoy(24, CASE_1, "task", "updated", 50),
-        decoy(25, CASE_1, "evidence", "hidden", 50),
-        // A tombstoned Case's history, and another organization's.
-        decoy(26, GONE, "job", "queued", 50),
-        decoy(27, FOREIGN, "task", "created", 50, {
-          organizationId: TEST_OTHER_ORGANIZATION_ID,
-        }),
-      ]);
+    const entries = [
+      ...ROWS.map((row) => entryOf(row)),
+      // Older members of runs 1 and 2, and a twin of a04 at its minute with the smaller id:
+      // collapsed into the run's newest entry.
+      decoy(0, CASE_2, "job", "running", 30, { groupId: groupOf(1) }),
+      decoy(21, CASE_2, "job", "queued", 5, { groupId: groupOf(1) }),
+      decoy(22, CASE_1, "job", "queued", 5, { groupId: groupOf(2) }),
+      // Not in the allowlist, newest of all (and of run 3): never a row.
+      decoy(23, CASE_1, "job", "logged", 45, { groupId: groupOf(3) }),
+      decoy(24, CASE_1, "task", "updated", 50),
+      decoy(25, CASE_1, "evidence", "hidden", 50),
+      // A tombstoned Case's history, and another organization's.
+      decoy(26, GONE, "job", "queued", 50),
+      decoy(27, FOREIGN, "task", "created", 50, {
+        organizationId: TEST_OTHER_ORGANIZATION_ID,
+      }),
+    ];
+    // Each organization's entries in its own scope (row-level security on `activity`, #719).
+    for (const organizationId of [
+      TEST_ORGANIZATION_ID,
+      TEST_OTHER_ORGANIZATION_ID,
+    ]) {
+      const own = entries.filter(
+        (entry) => entry.organizationId === organizationId
+      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one organization's scope at a time
+      await withOrganizationScope(exec, organizationId, async (tx) => {
+        await tx.insert(activity).overridingSystemValue().values(own);
+      });
+    }
     return {
       scope: { organizationId: TEST_ORGANIZATION_ID },
       otherScope: { organizationId: TEST_OTHER_ORGANIZATION_ID },

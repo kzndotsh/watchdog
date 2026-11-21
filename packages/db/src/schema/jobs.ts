@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   boolean,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -27,6 +28,10 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { playbookRuns } from "./playbook-runs";
@@ -46,6 +51,8 @@ export const jobs = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     capabilityId: text("capability_id").notNull(),
     /**
      * The fingerprint of the Cap's code, stamped when a worker claims the Job (null while
@@ -118,6 +125,14 @@ export const jobs = pgTable(
     finishedAt: timestamptz("finished_at"),
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "jobs_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("jobs", t.organizationId),
     // Serves the paged list (keyset on the sort key, then id) and the foreign key's own lookup.
     index("jobs_case_updated_idx").on(
       t.caseId,

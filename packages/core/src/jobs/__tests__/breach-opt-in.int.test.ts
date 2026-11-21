@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
 import { isDomainTag } from "@watchdog/core/errors";
-import { Db, runDomainWith } from "@watchdog/core/infra";
+import { Db, inOrganization, runDomainWith } from "@watchdog/core/infra";
 import {
   recordingJobQueue,
   runPlaybookEffect,
@@ -337,30 +337,40 @@ describe("breach Caps are opt-in (WD_BREACH_CAPS)", () => {
         inputHash: "same-input",
       };
       // A result a full-mode Job stored (plaintext in its artifacts).
+      // The cache stage runs in the Job's organization (row-level security, #719).
       await runDomain(
-        storeCapCacheEffect({
-          ...key,
-          capVersion: stampedCapVersion("breach.dehashed.lookup", "full"),
-          jobId: "11111111-1111-4111-8111-0000000005aa",
-          artifacts: [],
-          resultSummary: "full-mode result",
-          ttlMs: 60_000,
-        })
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          storeCapCacheEffect({
+            ...key,
+            capVersion: stampedCapVersion("breach.dehashed.lookup", "full"),
+            jobId: "11111111-1111-4111-8111-0000000005aa",
+            artifacts: [],
+            resultSummary: "full-mode result",
+            ttlMs: 60_000,
+          })
+        )
       );
       // The safe Job asks with the version it was claimed under: a miss.
       expect(
         await runDomain(
-          lookupCapCacheEffect({ ...key, capVersion: state.capVersion })
+          inOrganization(
+            TEST_ORGANIZATION_ID,
+            lookupCapCacheEffect({ ...key, capVersion: state.capVersion })
+          )
         )
       ).toBeNull();
       // A full-mode Job asking the same question is served it.
       expect(
         (
           await runDomain(
-            lookupCapCacheEffect({
-              ...key,
-              capVersion: stampedCapVersion("breach.dehashed.lookup", "full"),
-            })
+            inOrganization(
+              TEST_ORGANIZATION_ID,
+              lookupCapCacheEffect({
+                ...key,
+                capVersion: stampedCapVersion("breach.dehashed.lookup", "full"),
+              })
+            )
           )
         )?.resultSummary
       ).toBe("full-mode result");

@@ -58,9 +58,10 @@ const INTERNAL_TABLES = [
 ] as const;
 
 /**
- * Callable SECURITY DEFINER functions (Collect's flush, a Case's rebuild and the drift check; a
- * Case's organization): revoked from PUBLIC by their migration, so the application role is the
- * only caller.
+ * Callable SECURITY DEFINER functions (Collect's flush, a Case's rebuild and the drift check; the
+ * reads past row-level security of trusted paths: a Case's or a Job's organization, the activity
+ * log as a whole): revoked from PUBLIC by their migration, so the application role is the only
+ * caller.
  */
 const APP_FUNCTIONS = [
   "collect_queue_flush()",
@@ -68,6 +69,12 @@ const APP_FUNCTIONS = [
   "collect_queue_find_drift(integer)",
   // A Case's organization for the worker's trusted paths (row-level security, #718).
   "case_organization_id(uuid)",
+  // A Job's organization, for the worker that holds a Job id from the queue (#719).
+  "job_organization_id(uuid)",
+  // The activity log as a whole, for the process-wide tailer and a cursor's bounds (#719).
+  "activity_log_drain(xid8, bigint, integer)",
+  "activity_log_has_past(xid8, bigint)",
+  "activity_log_newest(boolean)",
 ] as const;
 
 const TABLE_PRIVILEGES = "SELECT, INSERT, UPDATE, DELETE";

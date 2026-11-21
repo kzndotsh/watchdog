@@ -1,4 +1,5 @@
 import {
+  foreignKey,
   index,
   pgTable,
   text,
@@ -11,6 +12,10 @@ import { ENTITY_KINDS } from "@watchdog/schemas/shared";
 import type { EntityKind, CaseId } from "@watchdog/schemas/shared";
 
 import { attribution, rowVersion, timestamps } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 
@@ -23,6 +28,8 @@ export const entities = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     kind: text("kind").$type<EntityKind>().notNull(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
@@ -33,6 +40,14 @@ export const entities = pgTable(
     ...rowVersion,
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "entities_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("entities", t.organizationId),
     uniqueIndex("entities_case_slug_uidx").on(t.caseId, t.slug),
     // The paged Entity list: by name, then id.
     index("entities_case_name_idx").on(t.caseId, t.name, t.id),

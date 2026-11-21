@@ -11,11 +11,16 @@ import {
   testDb as db,
 } from "@watchdog/test-db";
 
-import { runDomain } from "../../infra/run-domain";
+import { Db } from "../../infra/db-service";
+import { runDomainWith } from "../../infra/run-domain";
 import { createJobLog } from "../job-log.ts";
 import type { CollectResult } from "../stages/collect.ts";
 import { landEvidenceEffect } from "../stages/land-evidence.ts";
 import type { PreflightState } from "../stages/preflight.ts";
+
+// The landing and cache stages run inside a Job's organization scope (`inJobOrganization`, #719):
+// these tests call them directly, so the pool is in the test organization's scope.
+const runDomain = runDomainWith(Db.layerOf(db));
 
 async function evidenceEntries() {
   const rows = await activityLogRepo.drain(db, {

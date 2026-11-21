@@ -440,9 +440,16 @@ describe("a table added by a later migration", () => {
       await owner`select count(*)::int as n from public.collect_queue_stale`;
     const rowsBefore =
       await owner`select count(*)::int as n from public.collect_queue`;
-    // A fresh session: this one has not created its own keys table through a write yet.
-    const attacker = connect(
-      urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD })
+    // A fresh session: this one has not created its own keys table through a write yet. In the
+    // probe organization, as `app`, so row-level security (#719) admits its Job.
+    const attacker = postgres(
+      urlFor(DATABASE, { user: APP_ROLE, password: APP_PASSWORD }),
+      {
+        max: 1,
+        idle_timeout: 5,
+        onnotice: () => {},
+        connection: { [ORGANIZATION_SETTING]: "org-probe" },
+      }
     );
     await attacker.unsafe(`
       create function pg_temp.planted() returns trigger language plpgsql as $f$

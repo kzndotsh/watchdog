@@ -16,6 +16,10 @@ import type {
 
 import { attribution, timestamps, timestamptz } from "./_helpers";
 import { openTaskStatus } from "./_open-task";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { entities } from "./entities";
@@ -32,6 +36,8 @@ export const tasks = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     /** Optional Entity of the same Case (composite foreign key below). */
     entityId: uuid("entity_id"),
     title: text("title").notNull(),
@@ -44,6 +50,14 @@ export const tasks = pgTable(
     ...attribution,
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "tasks_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("tasks", t.organizationId),
     // The Task list's `entityId` filter (selective: the Dossier tab) under the default sort; it
     // also serves the Entity foreign key.
     index("tasks_entity_updated_idx").on(

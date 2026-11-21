@@ -38,6 +38,7 @@ export { listAllGraphHistory } from "./db/graph-history.ts";
 export { withSystemHistoryContext } from "./db/system-history-context.ts";
 export {
   withCaseOrganizationScope,
+  withJobOrganizationScope,
   withOrganizationScope,
 } from "./db/organization-scope.ts";
 export {

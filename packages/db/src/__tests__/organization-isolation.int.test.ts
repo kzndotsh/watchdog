@@ -166,12 +166,13 @@ describe("organization isolation (row-level security)", () => {
       }),
       { code: "42501" }
     );
+    // Organization B's Entity id, read by the owner: A's scope cannot see it (#719).
+    const [entity] = await ownerDb.execute<{ id: string }>(
+      sql`select id from entities where case_id = ${caseB}`
+    );
     await expectPostgresRefusal(
       db.transaction(async (tx) => {
         await setOrganizationContext(tx, ORG_A);
-        const [entity] = await tx.execute<{ id: string }>(
-          sql`select id from entities where case_id = ${caseB}`
-        );
         await tx.execute(
           sql`select set_config('watchdog.channel', 'system', true)`
         );

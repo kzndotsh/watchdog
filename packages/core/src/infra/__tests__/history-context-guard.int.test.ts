@@ -2,12 +2,18 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { InternalError } from "@watchdog/core/errors";
-import { runDomain, transact, tryDb } from "@watchdog/core/infra";
+import {
+  inOrganization,
+  runDomain,
+  transact,
+  tryDb,
+} from "@watchdog/core/infra";
 import { entitiesRepo, type NewEntity } from "@watchdog/db";
 import {
   HISTORY_CONTEXT_MISSING_SQLSTATE,
   type CaseId,
 } from "@watchdog/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   expectPostgresRefusal,
   resetTestDb,
@@ -41,8 +47,11 @@ describe("a Graph write that forgot the history context", () => {
   it("fails as InternalError through tryDb, and writes nothing", async () => {
     const cased = await seedCase(db);
     const error = await runDomain(
-      transact((tx) =>
-        tryDb(() => entitiesRepo.create(tx, newEntity(cased.id)))
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        transact((tx) =>
+          tryDb(() => entitiesRepo.create(tx, newEntity(cased.id)))
+        )
       ).pipe(
         Effect.map(() => "wrote" as const),
         Effect.catch((error) => Effect.succeed(error))
@@ -57,15 +66,19 @@ describe("a Graph write that forgot the history context", () => {
 
   it("succeeds once setHistoryContextEffect runs first in the same transaction", async () => {
     const cased = await seedCase(db);
+    // In the Case's organization, as every Graph write is (row-level security, #719).
     await runDomain(
-      transact((tx) =>
-        Effect.gen(function* withContext() {
-          yield* setHistoryContextEffect(tx, {
-            channel: "system",
-            changeset: { caseId: cased.id },
-          });
-          yield* tryDb(() => entitiesRepo.create(tx, newEntity(cased.id)));
-        })
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        transact((tx) =>
+          Effect.gen(function* withContext() {
+            yield* setHistoryContextEffect(tx, {
+              channel: "system",
+              changeset: { caseId: cased.id },
+            });
+            yield* tryDb(() => entitiesRepo.create(tx, newEntity(cased.id)));
+          })
+        )
       )
     );
     expect(await entitiesRepo.listForCase(db, cased.id)).toHaveLength(1);

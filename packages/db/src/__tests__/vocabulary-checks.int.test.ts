@@ -138,7 +138,7 @@ const VALID_ROWS: Record<string, (c: Context, n: number) => RawRow> = {
   }),
   case_deletion_records: (c) => ({
     case_id: c.caseId,
-    organization_id: "org-vocab",
+    organization_id: TEST_ORGANIZATION_ID,
     case_name: "Case",
     case_slug: "case",
     event: "deleted",

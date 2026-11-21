@@ -2,7 +2,7 @@ import { Effect, Fiber, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { replayActivityEffect } from "@watchdog/core/activity";
-import { runDomain } from "@watchdog/core/infra";
+import { inCaseOrganizationUnchecked, runDomain } from "@watchdog/core/infra";
 import { jobsRepo } from "@watchdog/db";
 import {
   TEST_ORGANIZATION_ID,
@@ -259,8 +259,11 @@ describe("live Job log events are scoped to the organization", () => {
     for (const job of [ownJob, foreignJob]) {
       const log = createJobLog();
       log.log("secret-looking progress");
+      // In the Job's organization, as the Job run's own flush is (row-level security, #719).
       // oxlint-disable-next-line eslint/no-await-in-loop -- entries append in order
-      await runDomain(flushJobLogEffect(job, log));
+      await runDomain(
+        inCaseOrganizationUnchecked(job.caseId, flushJobLogEffect(job, log))
+      );
     }
 
     const replay = await runDomain(

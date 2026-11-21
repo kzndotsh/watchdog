@@ -1,12 +1,15 @@
 import { TransactionRollbackError } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import {
   db,
   setGraphHistoryContext,
   setOrganizationContext,
+  type Db,
   type DbTx,
 } from "@watchdog/db";
+import * as schema from "@watchdog/db/schema";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
 /**
@@ -28,6 +31,17 @@ export function owner(): postgres.Sql {
     onnotice: () => {},
   });
   return ownerClient;
+}
+
+let ownerHandle: Db | undefined;
+/**
+ * The owner connection as a Drizzle handle: for test readers of a whole table across
+ * organizations (`listAllActivity`, `listAllGraphHistory`), which row-level security (#719) would
+ * otherwise show only one organization's rows. Never for the code under test.
+ */
+export function ownerDb(): Db {
+  ownerHandle ??= drizzle(owner(), { schema });
+  return ownerHandle;
 }
 
 /**

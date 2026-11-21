@@ -24,6 +24,20 @@ const DAY_MS = 86_400_000;
 const NOW = new Date("2026-10-06T12:00:00.000Z");
 const START: ActivityCursor = { xid: "0", id: 0 };
 
+/**
+ * A raw statement on the log in the test organization's scope: row-level security (#719) shows the
+ * application role no entry without one, so an unscoped UPDATE or DELETE would touch nothing.
+ */
+async function asTestOrganization(
+  query: string,
+  params: readonly (string | number)[]
+): Promise<void> {
+  await client.begin(async (tx) => {
+    await tx`select set_config('watchdog.org_id', ${TEST_ORGANIZATION_ID}, true)`;
+    await tx.unsafe(query, [...params]);
+  });
+}
+
 function daysAgo(days: number): Date {
   return new Date(NOW.getTime() - days * DAY_MS);
 }
@@ -270,7 +284,7 @@ describe("worker consumer and the floor", () => {
     const pruned = await append(one.id, "pruned", 100);
     const head = await append(two.id, "head", 1);
     await activityCursorsRepo.set(db, CONSUMER, cursorOf(stale));
-    await client`DELETE FROM activity WHERE id = ${pruned.id}`;
+    await asTestOrganization("DELETE FROM activity WHERE id = $1", [pruned.id]);
     await activityFloorRepo.raise(db, cursorOf(pruned));
 
     start();
@@ -288,7 +302,7 @@ describe("worker consumer and the floor", () => {
     const pruned = await append(cased.id, "pruned", 100);
     await append(cased.id, "after", 1);
     await activityFloorRepo.raise(db, cursorOf(pruned));
-    await client`DELETE FROM activity WHERE id = ${pruned.id}`;
+    await asTestOrganization("DELETE FROM activity WHERE id = $1", [pruned.id]);
     await activityCursorsRepo.set(db, CONSUMER, cursorOf(pruned));
     start();
     await until(() => handled.length === 1);
@@ -346,7 +360,10 @@ describe("repairRestoredActivityXidsEffect", () => {
     const cased = await seedCase(db);
     const early = await append(cased.id, "early", 3);
     const late = await append(cased.id, "late", 2);
-    await client`UPDATE activity SET xid = ${FUTURE}::xid8 WHERE id = ${late.id}`;
+    await asTestOrganization(
+      "UPDATE activity SET xid = $1::xid8 WHERE id = $2",
+      [FUTURE, late.id]
+    );
     // Held back before the repair: a future xid is never commit-safe.
     expect(await labels()).toEqual(["early"]);
     await activityFloorRepo.raise(db, { xid: FUTURE, id: early.id });

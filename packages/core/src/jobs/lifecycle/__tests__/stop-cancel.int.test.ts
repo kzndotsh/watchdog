@@ -31,6 +31,7 @@ import { deleteCaseEffect } from "../../../case-deletion/tombstone.ts";
 import { InternalError } from "../../../errors/tagged-errors.ts";
 import { recordingBlobStore } from "../../../infra/blob-store.ts";
 import { Db } from "../../../infra/db-service.ts";
+import { inOrganization } from "../../../infra/organization-scope.ts";
 import { transact } from "../../../infra/postgres-tx.ts";
 import { vaultLayer } from "../../../infra/vault.ts";
 import { enqueueCapJobEffect } from "../../boss.ts";
@@ -208,11 +209,14 @@ describe("cancel: a person or a Case delete ends open Jobs", () => {
     const entriesBefore = await terminalEntries(done.id);
 
     const outcome = await program(
-      transact((tx) =>
-        cancelWithin(
-          tx,
-          { kind: "job", caseId: cased.id, jobId: done.id },
-          "user_cancelled"
+      inOrganization(
+        TEST_ORGANIZATION_ID,
+        transact((tx) =>
+          cancelWithin(
+            tx,
+            { kind: "job", caseId: cased.id, jobId: done.id },
+            "user_cancelled"
+          )
         )
       ).pipe(
         Effect.tap((result) => result.afterCommit),
@@ -237,15 +241,18 @@ describe("cancel: a person or a Case delete ends open Jobs", () => {
         const running = yield* Effect.forkChild(executeJobOnMap(job.id));
         yield* Effect.promise(() => capStarted);
         const attempt = yield* Effect.exit(
-          transact((tx) =>
-            Effect.gen(function* cancelThenFail() {
-              yield* cancelWithin(
-                tx,
-                { kind: "case", caseId: cased.id },
-                "case_deleted"
-              );
-              return yield* new InternalError({ reason: "roll it back" });
-            })
+          inOrganization(
+            TEST_ORGANIZATION_ID,
+            transact((tx) =>
+              Effect.gen(function* cancelThenFail() {
+                yield* cancelWithin(
+                  tx,
+                  { kind: "case", caseId: cased.id },
+                  "case_deleted"
+                );
+                return yield* new InternalError({ reason: "roll it back" });
+              })
+            )
           )
         );
         expect(Exit.isFailure(attempt)).toBe(true);
@@ -278,11 +285,15 @@ describe("cancel: a person or a Case delete ends open Jobs", () => {
         yield* Effect.promise(() => capStarted);
         // Another process cancelled the Job and has run its own follow-up: here only the row
         // changed, and the pg-boss signal then aborts the attempt (`claim_lost`).
-        yield* transact((tx) =>
-          cancelWithin(
-            tx,
-            { kind: "job", caseId: cased.id, jobId: job.id },
-            "user_cancelled"
+        // The canceller's transaction is in the Case's organization, as every caller's is.
+        yield* inOrganization(
+          TEST_ORGANIZATION_ID,
+          transact((tx) =>
+            cancelWithin(
+              tx,
+              { kind: "job", caseId: cased.id, jobId: job.id },
+              "user_cancelled"
+            )
           )
         ).pipe(Effect.orDie);
         yield* stop({ kind: "job", jobId: job.id }, "queue_aborted");

@@ -23,6 +23,10 @@ import type {
 } from "@watchdog/schemas/shared";
 
 import { createdAt } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { proposals } from "./proposals";
@@ -47,6 +51,8 @@ export const changesets = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     channel: text("channel").$type<GraphHistoryChannel>().notNull(),
     /** The user; null for a system write. */
     actorId: text("actor_id"),
@@ -65,6 +71,14 @@ export const changesets = pgTable(
     createdAt,
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "changesets_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("changesets", t.organizationId),
     // The Case FK check and the agent write list (`graphWriteList`: one channel, newest first).
     index("changesets_case_channel_created_idx").on(
       t.caseId,

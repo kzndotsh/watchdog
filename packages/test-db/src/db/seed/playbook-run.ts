@@ -7,20 +7,24 @@ import {
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
+import { withCaseOrganizationScope } from "../organization-scope.ts";
+
 export async function seedPlaybookRun(
   exec: DbExec,
   caseId: CaseId,
   overrides?: Partial<NewPlaybookRun>
 ): Promise<PlaybookRunRow> {
   const overridesResolved = overrides ?? {};
-  const created = await playbookRunsRepo.create(exec, {
-    caseId,
-    playbookId: overridesResolved.playbookId ?? "url-capture",
-    seed: overridesResolved.seed ?? { url: "https://mailhost.test/" },
-    status: overridesResolved.status ?? "running",
-    actorId: overridesResolved.actorId ?? TEST_ACTOR_ID,
-    actorKeyId: overridesResolved.actorKeyId,
-  });
+  const created = await withCaseOrganizationScope(exec, caseId, async (tx) =>
+    playbookRunsRepo.create(tx, {
+      caseId,
+      playbookId: overridesResolved.playbookId ?? "url-capture",
+      seed: overridesResolved.seed ?? { url: "https://mailhost.test/" },
+      status: overridesResolved.status ?? "running",
+      actorId: overridesResolved.actorId ?? TEST_ACTOR_ID,
+      actorKeyId: overridesResolved.actorKeyId,
+    })
+  );
   if (!created) {
     throw new Error("seedPlaybookRun failed");
   }

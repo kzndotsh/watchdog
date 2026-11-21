@@ -5,6 +5,7 @@ import { deleteObjectKeysEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import { DAY_MS, nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
+import { forEachOrganization } from "../infra/organization-scope";
 import { transact } from "../infra/postgres-tx";
 import {
   evidenceUploadsRepoFxDb,
@@ -33,24 +34,12 @@ function abandonedBefore(now: Date, graceMs: number): Date {
   return new Date(now.getTime() - graceMs);
 }
 
-/**
- * The orphan sweep (#305): delete the object of every presigned upload still unconfirmed after
- * the grace window, then its record. It never touches a key that backs Evidence (hidden or not:
- * a repeat presign of an already recorded file leaves that file alone) or an upload confirmed or
- * re-presigned meanwhile (the rows are locked, not merely listed).
- *
- * Idempotent and bounded: at most {@link UPLOAD_SWEEP_BATCH} uploads per run, oldest first; the
- * object delete tolerates a key already gone; a failed delete rolls back, leaving the records, so
- * the next run retries them. Two runs at once are safe (`SKIP LOCKED`: each upload goes to one).
- */
-export function sweepAbandonedUploadsEffect(opts?: {
-  graceMs?: number;
-  limit?: number;
-}): Effect.Effect<UploadSweepSummary, DomainTag, Db | BlobStore> {
-  return Effect.gen(function* sweepAbandonedUploadsGen() {
-    const now = yield* nowDateEffect;
-    const before = abandonedBefore(now, opts?.graceMs ?? UPLOAD_SWEEP_GRACE_MS);
-    const limit = Math.min(opts?.limit ?? UPLOAD_SWEEP_BATCH, MAX_BATCH);
+/** One organization's sweep: at most `limit` uploads. */
+function sweepInScopeEffect(
+  before: Date,
+  limit: number
+): Effect.Effect<UploadSweepSummary, DomainTag, Db | BlobStore> {
+  return Effect.gen(function* sweepInScopeGen() {
     // An unconfirmed record whose key already backs Evidence has no object to delete.
     yield* evidenceUploadsRepoFxDb.deleteSupersededByEvidence(before);
     // One transaction holds the rows locked while their objects go, so a confirmation racing the
@@ -71,5 +60,31 @@ export function sweepAbandonedUploadsEffect(opts?: {
         return { swept };
       })
     );
+  });
+}
+
+/**
+ * The orphan sweep (#305): delete the object of every presigned upload still unconfirmed after
+ * the grace window, then its record. It never touches a key that backs Evidence (hidden or not:
+ * a repeat presign of an already recorded file leaves that file alone) or an upload confirmed or
+ * re-presigned meanwhile (the rows are locked, not merely listed).
+ *
+ * Idempotent and bounded: at most {@link UPLOAD_SWEEP_BATCH} uploads per organization per run,
+ * oldest first; the object delete tolerates a key already gone; a failed delete rolls back,
+ * leaving the records, so the next run retries them. Two runs at once are safe (`SKIP LOCKED`: each upload goes to one).
+ */
+export function sweepAbandonedUploadsEffect(opts?: {
+  graceMs?: number;
+  limit?: number;
+}): Effect.Effect<UploadSweepSummary, DomainTag, Db | BlobStore> {
+  return Effect.gen(function* sweepAbandonedUploadsGen() {
+    const now = yield* nowDateEffect;
+    const before = abandonedBefore(now, opts?.graceMs ?? UPLOAD_SWEEP_GRACE_MS);
+    const limit = Math.min(opts?.limit ?? UPLOAD_SWEEP_BATCH, MAX_BATCH);
+    // Row-level security (#719): each organization's uploads in its own scope.
+    const perOrganization = yield* forEachOrganization(() =>
+      sweepInScopeEffect(before, limit)
+    );
+    return { swept: perOrganization.reduce((sum, r) => sum + r.swept, 0) };
   });
 }

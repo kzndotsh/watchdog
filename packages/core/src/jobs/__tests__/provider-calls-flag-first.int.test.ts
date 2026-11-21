@@ -105,7 +105,7 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
     const lock = await holdJobRow(caseId, job.id);
     const started = Date.now();
 
-    await runDomainWith(Layer.mergeAll(Db.layer, hungStore().layer))(
+    await runDomainWith(Layer.mergeAll(Db.layerOf(db), hungStore().layer))(
       persistProviderCallsBestEffort(scope, () => ledger.drain(), 800)
     );
     const held = Date.now() - started;
@@ -133,7 +133,7 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
     });
     const started = Date.now();
 
-    await runDomainWith(Layer.mergeAll(Db.layer, store.layer))(
+    await runDomainWith(Layer.mergeAll(Db.layerOf(db), store.layer))(
       persistProviderCallsBestEffort(scope, () => ledger.drain(), 800)
     );
     const held = Date.now() - started;
@@ -158,7 +158,7 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
       },
     });
 
-    await runDomainWith(Layer.mergeAll(Db.layer, spying.layer))(
+    await runDomainWith(Layer.mergeAll(Db.layerOf(db), spying.layer))(
       persistProviderCallsBestEffort(scope, () => ledger.drain())
     );
 
@@ -168,9 +168,9 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
   it("ends complete when the save completes", async () => {
     const { job, scope, ledger } = await stoppedRun(caseId);
 
-    await runDomainWith(Layer.mergeAll(Db.layer, recordingBlobStore().layer))(
-      persistProviderCallsBestEffort(scope, () => ledger.drain())
-    );
+    await runDomainWith(
+      Layer.mergeAll(Db.layerOf(db), recordingBlobStore().layer)
+    )(persistProviderCallsBestEffort(scope, () => ledger.drain()));
 
     expect(await provenanceOf(job.id)).toBe("complete");
     expect(await providerCallsRepo.listForJob(db, caseId, job.id)).toHaveLength(
@@ -181,9 +181,9 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
   it("keeps a gap an earlier run left when a later run saves fully", async () => {
     const { job, scope, ledger } = await stoppedRun(caseId, "incomplete");
 
-    await runDomainWith(Layer.mergeAll(Db.layer, recordingBlobStore().layer))(
-      persistProviderCallsBestEffort(scope, () => ledger.drain())
-    );
+    await runDomainWith(
+      Layer.mergeAll(Db.layerOf(db), recordingBlobStore().layer)
+    )(persistProviderCallsBestEffort(scope, () => ledger.drain()));
 
     expect(await provenanceOf(job.id)).toBe("incomplete");
   });
@@ -196,7 +196,7 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
       },
     });
 
-    await runDomainWith(Layer.mergeAll(Db.layer, failing.layer))(
+    await runDomainWith(Layer.mergeAll(Db.layerOf(db), failing.layer))(
       persistProviderCallsBestEffort(scope, () => ledger.drain())
     );
 
@@ -223,7 +223,7 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
     await lockTaken;
 
     const run = runDomainWith(
-      Layer.mergeAll(Db.layer, recordingBlobStore().layer)
+      Layer.mergeAll(Db.layerOf(db), recordingBlobStore().layer)
     )(persistProviderCallsBestEffort(scope, () => ledger.drain()));
     await expect.poll(async () => waitingOnLock()).toBeGreaterThan(0);
     open();
@@ -254,7 +254,9 @@ describe("a stopped run is flagged incomplete before its calls are saved", () =>
 
     const fiber = Effect.runFork(
       persistProviderCallsBestEffort(scope, () => ledger.drain(), 800).pipe(
-        Effect.provide(Layer.mergeAll(Db.layer, recordingBlobStore().layer))
+        Effect.provide(
+          Layer.mergeAll(Db.layerOf(db), recordingBlobStore().layer)
+        )
       )
     );
     await expect.poll(async () => waitingOnLock()).toBeGreaterThan(0);

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PlaybookDef } from "@watchdog/caps";
 import { recordingBlobStore } from "@watchdog/core/blob";
-import { Db, runDomainWith } from "@watchdog/core/infra";
+import { Db, runDomainWith, inOrganization } from "@watchdog/core/infra";
 import {
   recordingJobQueue,
   retryJobEffect,
@@ -152,7 +152,12 @@ describe("a finished Playbook run appends its activity entry (#456)", () => {
       .spyOn(activityLogRepo, "append")
       .mockRejectedValueOnce(new Error(APPEND_FAILURE));
     await expect(
-      runDomain(advancePlaybookRunEffect({ playbookRunId: runId }))
+      runDomain(
+        inOrganization(
+          TEST_ORGANIZATION_ID,
+          advancePlaybookRunEffect({ playbookRunId: runId })
+        )
+      )
     ).rejects.toThrow(APPEND_FAILURE);
 
     expect(append).toHaveBeenCalledTimes(1);

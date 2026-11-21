@@ -9,6 +9,7 @@ import {
   resetTestDb,
   seedCase,
   testDb as db,
+  withCaseOrganizationScope,
   withOrganizationScope,
 } from "@watchdog/test-db";
 
@@ -51,13 +52,16 @@ describe("orgCaseFilter (through activityLogRepo.drain)", () => {
       [second.id, "sibling"],
       [theirs.id, "theirs"],
     ] as const) {
+      // Each entry in its Case's organization scope (row-level security on `activity`, #719).
       // oxlint-disable-next-line eslint/no-await-in-loop -- rows are appended in order
-      await activityLogRepo.append(db, {
-        caseId,
-        kind: "task",
-        action: "created",
-        label,
-      });
+      await withCaseOrganizationScope(db, caseId, async (tx) =>
+        activityLogRepo.append(tx, {
+          caseId,
+          kind: "task",
+          action: "created",
+          label,
+        })
+      );
     }
   });
 
@@ -92,12 +96,14 @@ describe("orgCaseFilter (through activityLogRepo.drain)", () => {
     const theirs = await seedCase(db, {
       organizationId: TEST_OTHER_ORGANIZATION_ID,
     });
-    await activityLogRepo.append(db, {
-      caseId: theirs.id,
-      kind: "task",
-      action: "created",
-      label: "theirs too",
-    });
+    await withCaseOrganizationScope(db, theirs.id, async (tx) =>
+      activityLogRepo.append(tx, {
+        caseId: theirs.id,
+        kind: "task",
+        action: "created",
+        label: "theirs too",
+      })
+    );
     expect(await drainedLabels(TEST_ORGANIZATION_ID, theirs.id)).toEqual([]);
     expect(await drainedLabels(TEST_OTHER_ORGANIZATION_ID, theirs.id)).toEqual([
       "theirs too",

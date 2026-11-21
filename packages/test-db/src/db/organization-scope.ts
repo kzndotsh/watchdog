@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 
 import {
   caseOrganizationIdUnchecked,
+  jobOrganizationIdUnchecked,
   cases,
   ORGANIZATION_SETTING,
   setOrganizationContext,
@@ -14,7 +15,7 @@ type CaseInsert = typeof cases.$inferInsert;
 
 /**
  * Run `fn` in `organizationId`'s row-level security scope (#718): the one way a seed or a
- * repository-level test reads or writes `cases` and `claims` directly as the application role,
+ * repository-level test reads or writes Case-scoped tables directly as the application role,
  * which sees none of them without a scope. Opens a transaction on a pool and a savepoint inside a
  * `tx`; the previous scope is restored after `fn`, so a seed of another organization's Case never
  * leaves the code under test in the wrong scope. Pass the `tx` it gives you to the repos.
@@ -57,6 +58,31 @@ export async function insertCasesInScope(
       await tx.insert(cases).values(group);
     });
   }
+}
+
+/**
+ * A test read of a Case's rows in the Case's organization scope; no rows when the Case is gone
+ * (its rows went with it).
+ */
+export async function readInCaseOrganizationScope<T>(
+  exec: DbExec,
+  caseId: string,
+  read: (tx: DbTx) => Promise<T[]>
+): Promise<T[]> {
+  const organizationId = await caseOrganizationIdUnchecked(exec, caseId);
+  if (organizationId === null) return [];
+  return withOrganizationScope(exec, organizationId, read);
+}
+
+/** `withOrganizationScope` in the organization of an existing Job (looked up past the policies). */
+export async function withJobOrganizationScope<T>(
+  exec: DbExec,
+  jobId: string,
+  fn: (tx: DbTx) => Promise<T>
+): Promise<T> {
+  const organizationId = await jobOrganizationIdUnchecked(exec, jobId);
+  if (organizationId === null) throw new Error(`no such Job: ${jobId}`);
+  return withOrganizationScope(exec, organizationId, fn);
 }
 
 /** `withOrganizationScope` in the organization of an existing Case (looked up past the policies). */

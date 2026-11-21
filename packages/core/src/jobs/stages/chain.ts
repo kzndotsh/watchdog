@@ -171,8 +171,10 @@ export function advancePlaybookRunEffect(input: {
 }): Effect.Effect<void, DomainTag, Db | JobQueue> {
   const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;
-  // In the run's Case's organization (row-level security, #718): the reconcile tick and tests
-  // reach this outside a Job's scope. A run that is gone advances nothing.
+  // In the run's Case's organization (row-level security, #718, #719). Every caller is already
+  // in an organization's scope (the Job run, reconcile's per-row repair), where the run is read;
+  // unscoped, or in another organization, the run is not found and nothing advances (fail
+  // closed), as for a run that is gone.
   return Effect.flatMap(playbookRunsRepoFxDb.get(playbookRunId), (found) =>
     found === null
       ? Effect.void

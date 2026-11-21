@@ -4,7 +4,10 @@ import postgres from "postgres";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CaseId } from "@watchdog/schemas/shared";
-import { collectQueueReference } from "@watchdog/schemas/testing";
+import {
+  collectQueueReference,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import {
   collectQueueDiff,
   listCollectQueueStale,
@@ -14,6 +17,8 @@ import {
   seedCase,
   testDb,
 } from "@watchdog/test-db";
+
+import { ORGANIZATION_SETTING } from "../history-context.ts";
 
 /*
  * Collect's queue projection (#574) under real concurrency: separate connections, real COMMITs,
@@ -32,7 +37,15 @@ function connect(as: "app" | "owner" = "app"): postgres.Sql {
       ? (process.env.DATABASE_URL_MIGRATE ?? process.env.DATABASE_URL)
       : process.env.DATABASE_URL;
   if (url === undefined) throw new Error("DATABASE_URL is required");
-  const client = postgres(url, { max: 1, onnotice: () => {} });
+  // The application role sees the test organization's rows only once it is set (row-level
+  // security, #719): a session default of these probe connections, as the seeds' Cases are its.
+  const client = postgres(url, {
+    max: 1,
+    onnotice: () => {},
+    ...(as === "app"
+      ? { connection: { [ORGANIZATION_SETTING]: TEST_ORGANIZATION_ID } }
+      : {}),
+  });
   opened.push(client);
   return client;
 }

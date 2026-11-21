@@ -250,11 +250,15 @@ describe("activityListRepo", () => {
 
   it("refuses an entry whose organization is not its Case's", async () => {
     await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
+      // The transaction's own organization on another organization's Case: row-level security
+      // admits the organization (#719), and the composite foreign key refuses the pair.
+      const theirs = await seedCase(tx, {
+        organizationId: TEST_OTHER_ORGANIZATION_ID,
+      });
       await expectPostgresRefusal(
         tx.insert(activity).values({
-          caseId: cased.id,
-          organizationId: TEST_OTHER_ORGANIZATION_ID,
+          caseId: theirs.id,
+          organizationId: TEST_ORGANIZATION_ID,
           kind: "task",
           action: "created",
         }),

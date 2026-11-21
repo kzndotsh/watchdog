@@ -12,6 +12,10 @@ import { EVIDENCE_KINDS } from "@watchdog/schemas/shared";
 import type { EvidenceKind, CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
+import {
+  caseOrganizationId,
+  organizationIsolation,
+} from "./_organization-policy";
 import { vocabCheck } from "./_vocab";
 import { cases } from "./cases";
 import { entities } from "./entities";
@@ -28,6 +32,8 @@ export const evidence = pgTable(
       .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
+    /** The Case's organization, for row-level security (#719): `caseOrganizationId`. */
+    organizationId: caseOrganizationId(),
     /** Optional Case Entity (same Case, by the composite foreign key below); null = unattached. */
     entityId: uuid("entity_id"),
     kind: text("kind").$type<EvidenceKind>().notNull(),
@@ -52,6 +58,14 @@ export const evidence = pgTable(
     ...timestamps,
   },
   (t) => [
+    // Organization isolation (row-level security, #719): the copied organization must be the
+    // Case's own, and a row is visible and writable in its organization's transactions only.
+    foreignKey({
+      name: "evidence_case_organization_fk",
+      columns: [t.caseId, t.organizationId],
+      foreignColumns: [cases.id, cases.organizationId],
+    }).onDelete("cascade"),
+    organizationIsolation("evidence", t.organizationId),
     // The Evidence list (`evidence-list.repo.ts`, ADR-0007): one btree per declared sort, led by
     // the Case and ending in the id, scanned forwards or backwards for either direction.
     index("evidence_case_captured_idx").on(

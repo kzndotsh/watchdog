@@ -94,7 +94,7 @@ export const PLAN_SESSION_SETTINGS = {
 
 /**
  * `organizationId`: the organization the plans are read in. The perf seed connects as the
- * application role, which row-level security (#718) shows no Case or Claim without one, so the
+ * application role, which row-level security (#718) shows no Case-scoped row without one, so the
  * plan pool sets it for its whole session (a test pool only: the application sets it per
  * transaction) and every plan is the one the policy shapes.
  */

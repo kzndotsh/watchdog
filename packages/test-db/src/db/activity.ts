@@ -1,10 +1,15 @@
 import { asc } from "drizzle-orm";
 
-import { activity, db, type ActivityRow, type DbExec } from "@watchdog/db";
+import { activity, type ActivityRow, type DbExec } from "@watchdog/db";
 
-/** Every `activity` row in id order, with the columns the wire shape leaves out (`actorKeyId`). */
+import { ownerDb } from "./with-test-tx.ts";
+
+/**
+ * Every `activity` row in id order, with the columns the wire shape leaves out (`actorKeyId`): of
+ * every organization by default (read as the owner, past row-level security), or of `exec`'s scope.
+ */
 export async function listAllActivity(
-  exec: DbExec = db
+  exec: DbExec = ownerDb()
 ): Promise<ActivityRow[]> {
   return exec.select().from(activity).orderBy(asc(activity.id));
 }
