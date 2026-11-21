@@ -1,5 +1,7 @@
 /**
- * TanStack Start request middleware (security headers + evlog). The app has no server functions:
+ * TanStack Start: SSR is off for every route (`defaultSsr: false`), so the server renders only the
+ * document shell and the client renders the page; Start stays the server for the API, auth and
+ * live-update routes. Request middleware: security headers + evlog. The app has no server functions:
  * the browser calls the API over `/api/rpc` (CSRF header required there, `lib/rpc-handler.server.ts`)
  * and every other server path is a route that authenticates itself.
  * Dynamic-import drain init inside `.server()` only — never top-level `evlog/fs`
@@ -115,6 +117,8 @@ const evlogRequestMiddleware = createMiddleware().server(
 );
 
 export const startInstance = createStart(() => ({
+  // The client renders every route: loaders and `beforeLoad` never run on the server.
+  defaultSsr: false,
   // Headers outermost so every response carries them; the logger sits just inside so request
   // failures still emit.
   requestMiddleware: [securityHeadersMiddleware, evlogRequestMiddleware],

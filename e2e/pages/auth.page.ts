@@ -1,10 +1,6 @@
 import type { Page } from "@playwright/test";
 
-import {
-  clickHydrated,
-  fillHydrated,
-  waitForHydrated,
-} from "../support/hydration";
+import { waitForHydrated } from "../support/hydration";
 
 export class AuthPage {
   private readonly page: Page;
@@ -71,12 +67,10 @@ export class AuthPage {
     await this.page
       .getByText("Create your first Case")
       .waitFor({ state: "visible", timeout: 30_000 });
-    // The server markup is on screen before React owns the form: a name typed too early
-    // never reaches form state and leaves Create disabled.
-    await fillHydrated(this.page.getByLabel("Case name"), name);
-    await clickHydrated(
-      this.page.getByRole("button", { name: "Create", exact: true })
-    );
+    await this.page.getByLabel("Case name").fill(name);
+    await this.page
+      .getByRole("button", { name: "Create", exact: true })
+      .click();
     await this.page.waitForURL((url) => url.pathname.startsWith("/cases/"), {
       timeout: 30_000,
     });

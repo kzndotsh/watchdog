@@ -4,15 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 const query = vi.fn();
 const getQueryData = vi.fn();
 
-vi.mock("@tanstack/react-start", () => ({
-  createIsomorphicFn: () => ({
-    server: (_handler: () => unknown) => ({
-      client: (clientHandler: () => Promise<unknown>) => async () =>
-        clientHandler(),
-    }),
-  }),
-}));
-
 vi.mock("@better-auth-ui/core", () => ({
   sessionOptions: vi.fn(() => ({ queryKey: ["session"], queryFn: vi.fn() })),
 }));
@@ -35,7 +26,7 @@ function staleTimeOfLastCall(): (query: Query) => number {
   return options.staleTime;
 }
 
-describe("ensureAppSession (client)", () => {
+describe("ensureAppSession", () => {
   it("serves a held session for the session stale time", async () => {
     query.mockResolvedValue({ user: { id: "user-1" } });
 

@@ -4,6 +4,7 @@
 
 ## Data
 
+- SSR is off (`defaultSsr: false` in `src/start.ts`): the server renders only the document shell, and loaders, `beforeLoad` and components run in the browser, so client code needs no server branch, server snapshot or hydration guard.
 - Every domain calls the API through `@/lib/orpc-client` (`orpc`); there are no server functions and no Drizzle here. `/api/rpc` needs the client's `x-csrf-token`, so never call it with a bare `fetch`. What is not a procedure is a route in `routes/api/*` that authenticates itself.
 - The Query cache is the source of truth: a server read is a `useQuery` keyed by all its inputs; never copy loader or query data into state, never fetch in an effect. Loaders await identity only and warm lists with `void prefetchQuery`.
 - Lists read a page at a time through `listView` + `useList` (or `useListFeed` / `useListFirstPage`): no hand-built infinite query, no whole-list read, no tile count from `array.length` ([`lists.md`](../../docs/reference/web/lists.md)). A picker searches on the server through a `PickerPort`.

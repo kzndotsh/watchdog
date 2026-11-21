@@ -1,5 +1,4 @@
 import { expect, test } from "../../fixtures/test";
-import { clickHydrated } from "../../support/hydration";
 
 /**
  * Deleting a Case is a tombstone (#304): it leaves every list at once, an owner or admin can
@@ -20,7 +19,7 @@ test.describe("Delete and restore a Case", () => {
       await expect(casesPage.cardFor(name)).toHaveCount(0);
       const toast = page.getByText(`\u201C${name}\u201D deleted`);
       await expect(toast).toBeVisible({ timeout: 15_000 });
-      await clickHydrated(page.getByRole("button", { name: "Restore" }));
+      await page.getByRole("button", { name: "Restore" }).click();
 
       await expect(page.getByText(`\u201C${name}\u201D restored`)).toBeVisible({
         timeout: 15_000,
@@ -44,7 +43,7 @@ test.describe("Delete and restore a Case", () => {
     const row = casesPage.deletedRowFor(name);
     await expect(row).toBeVisible({ timeout: 15_000 });
     await expect(row).toContainText(/days left to restore/);
-    await clickHydrated(row.getByRole("button", { name: "Restore" }));
+    await row.getByRole("button", { name: "Restore" }).click();
     await expect(page.getByText(`\u201C${name}\u201D restored`)).toBeVisible({
       timeout: 15_000,
     });
@@ -69,7 +68,7 @@ test.describe("Delete and restore a Case", () => {
     await expect(
       page.getByRole("heading", { name: "Case deleted" })
     ).toBeVisible({ timeout: 30_000 });
-    await clickHydrated(page.getByRole("button", { name: "Restore case" }));
+    await page.getByRole("button", { name: "Restore case" }).click();
     await expect(page).toHaveURL(new RegExp(`/cases/${deletedSlug}$`), {
       timeout: 30_000,
     });

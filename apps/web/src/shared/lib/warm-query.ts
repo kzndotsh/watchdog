@@ -25,17 +25,6 @@ type AppWarmEnsureOptions<
   shouldRevalidateIfStale?: boolean;
 };
 
-/**
- * Loader warms are a client head start. On the server they would race the
- * render: a list that settles after the HTML is written is streamed to the
- * client, whose first hydration render then sees data where the server HTML
- * has a skeleton (a hydration mismatch that regenerates the tree and drops
- * early clicks). The server renders pending; the client fetches after mount.
- */
-export function isServerRuntime(): boolean {
-  return typeof window === "undefined";
-}
-
 function isCancelledError(error: unknown): boolean {
   return (
     error instanceof Error &&
@@ -47,7 +36,7 @@ async function swallowCancelled(promise: Promise<unknown>): Promise<void> {
   try {
     await promise;
   } catch (error: unknown) {
-    // Fire-and-forget warm: CancelledError is expected on SSR/HMR teardown.
+    // Fire-and-forget warm: CancelledError is expected on navigation/HMR teardown.
     if (!isCancelledError(error)) {
       // oxlint-disable-next-line effecttsgo/global-console -- browser prefetch diagnostics; covered by warm-query.test.ts
       console.error("[warm-query]", error);
@@ -73,7 +62,6 @@ async function runWarmEnsureQueryData<
     TPageParam
   >
 ): Promise<void> {
-  if (isServerRuntime()) return;
   const { shouldRevalidateIfStale, ...queryOptions } = options;
 
   if (!shouldRevalidateIfStale) {
@@ -123,7 +111,7 @@ export async function ensureAppQueryData<
   return queryClient.query({ ...options, staleTime: "static" });
 }
 
-/** Fire-and-forget warm fetch — swallows SSR/HMR teardown cancellations. */
+/** Fire-and-forget warm fetch — swallows navigation/HMR teardown cancellations. */
 export function warmEnsureQueryData<
   TQueryFnData = unknown,
   TError = DefaultError,
@@ -145,7 +133,7 @@ export function warmEnsureQueryData<
   void swallowCancelled(runWarmEnsureQueryData(queryClient, options));
 }
 
-/** Fire-and-forget warm prefetch — swallows SSR/HMR teardown cancellations. */
+/** Fire-and-forget warm prefetch — swallows navigation/HMR teardown cancellations. */
 export function warmPrefetchQuery<
   TQueryFnData = unknown,
   TError = DefaultError,
@@ -164,7 +152,6 @@ export function warmPrefetchQuery<
     TPageParam
   >
 ): void {
-  if (isServerRuntime()) return;
   void swallowCancelled(queryClient.query(options));
 }
 
@@ -188,7 +175,6 @@ export function warmEnsureInfiniteQueryData<
     TPageParam
   > & { shouldRevalidateIfStale?: boolean }
 ): void {
-  if (isServerRuntime()) return;
   const { shouldRevalidateIfStale, ...queryOptions } = options;
   const warm = async (): Promise<void> => {
     if (!shouldRevalidateIfStale) {

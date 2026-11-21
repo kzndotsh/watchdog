@@ -14,7 +14,7 @@ Query owns server-state caching. The router's `defaultPreloadStaleTime` is `0` (
 
 | Path | Use when |
 | --- | --- |
-| Route `loader` + `queryClient.ensureQueryData(queryOptions)` | Prefetch during navigation and SSR |
+| Route `loader` + `queryClient.ensureQueryData(queryOptions)` | Prefetch during navigation (in the browser: SSR is off) |
 | `useQuery(queryOptions)` | Page and region reads: branch on `listPending` (skeleton) and `error` (`FetchErrorAlert` + retry) |
 | `useMutation` + a named invalidation contract | Writes |
 | The organization activity stream calling the same contracts | Server-pushed job, proposal, graph, evidence, task and Case updates |

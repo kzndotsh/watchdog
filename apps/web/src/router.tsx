@@ -1,6 +1,6 @@
 import "@/lib/zod-jitless";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
 import { createAppQueryClient } from "@/app/lib/query-client";
 import { requestCspNonce } from "@/lib/csp-nonce";
@@ -27,15 +27,11 @@ export function getRouter() {
     defaultPendingComponent: DefaultRoutePendingShell,
     defaultErrorComponent: RouteError,
     defaultStructuralSharing: true,
-    // The CSP nonce Start puts on every script and style it emits.
+    // The CSP nonce Start puts on every script and style of the document shell it still renders.
     ssr: { nonce: requestCspNonce() },
-  });
-
-  setupRouterSsrQueryIntegration({
-    router,
-    queryClient,
-    handleRedirects: true,
-    wrapQueryClient: true,
+    Wrap: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
   });
 
   return router;

@@ -36,7 +36,7 @@ function useAuthNavigate() {
   };
 }
 
-/** Auth + chrome providers. QueryClientProvider comes from router SSR integration. */
+/** Auth + chrome providers. QueryClientProvider is the router's `Wrap` (`router.tsx`). */
 export function Providers({ children }: { children: ReactNode }) {
   const navigate = useAuthNavigate();
   const router = useRouter();

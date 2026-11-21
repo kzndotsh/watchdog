@@ -3,16 +3,16 @@
   "shell": 415758,
   "routes": {
     "/_protected/": 46839,
-    "/_protected/cases/": 20659,
+    "/_protected/cases/": 20601,
     "/_protected/cases/$caseSlug": 1434,
-    "/_protected/cases/$caseSlug/": 64070,
-    "/_protected/cases/$caseSlug/collect": 167882,
+    "/_protected/cases/$caseSlug/": 63721,
+    "/_protected/cases/$caseSlug/collect": 167334,
     "/_protected/cases/$caseSlug/entities/": 88210,
     "/_protected/cases/$caseSlug/entities/$entitySlug": 226315,
-    "/_protected/cases/$caseSlug/graph": 15415,
+    "/_protected/cases/$caseSlug/graph": 15065,
     "/_protected/cases/$caseSlug/identifiers": 98739,
     "/_protected/cases/$caseSlug/tasks": 61052,
-    "/_protected/cases/$caseSlug/triage": 97358,
+    "/_protected/cases/$caseSlug/triage": 96582,
     "/_protected/deleted-cases": 34375,
     "/_protected/library": 39525,
     "/_protected/library_/caps/$capId": 30611,
@@ -20,7 +20,7 @@
     "/_protected/settings/": 74058,
     "/_protected/ui/": 118012,
     "/auth/$path": 16372,
-    "/auth/accept-invitation/$invitationId": 4480,
+    "/auth/accept-invitation/$invitationId": 4477,
     "/onboarding": 1889
   }
 }
