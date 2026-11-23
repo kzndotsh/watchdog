@@ -12,7 +12,8 @@ import {
   updateEntityFieldsEffect,
 } from "#core/graph";
 import {
-  createEntityInputSchema,
+  createEntityInputObjectSchema,
+  toCreateEntityInput,
   deleteEntityInputSchema,
   entityList,
   entitySlugScopeInputSchema,
@@ -31,8 +32,10 @@ import {
 } from "@watchdog/domain/schemas/shared";
 
 import { graphActorFromContext } from "../actor-label";
+import { assertAgentNestedIdentifierCustody } from "../custody";
 import { authed } from "../os";
 import { runApp } from "../runtime";
+import { userOverrideSchema } from "../schemas";
 
 /**
  * The Case's Entity list (`entityList`, ADR-0007): filters, `q` and sort, a page at a time with
@@ -156,7 +159,15 @@ export const create = authed
     tags: ["entities"],
     successStatus: 201,
   })
-  .input(createEntityInputSchema)
+  .use(({ context, next }, input) => {
+    assertAgentNestedIdentifierCustody(input, context.credential);
+    return next();
+  })
+  .input(
+    createEntityInputObjectSchema
+      .extend({ userOverride: userOverrideSchema })
+      .transform(toCreateEntityInput)
+  )
   .output(entitySchema)
   .handler(async ({ input, context }) =>
     runApp(

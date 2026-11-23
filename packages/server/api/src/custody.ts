@@ -45,3 +45,19 @@ export function assertAgentChildWriteCustody(
   requireUserOverride(input.userOverride);
   refuseConfirmed(input.confidence);
 }
+
+/**
+ * `entities.create` with an Identifier, from an API key: the Identifier is a child Graph write,
+ * so it takes the same custody as `identifiers.create` (userOverride, never confirmed).
+ */
+export function assertAgentNestedIdentifierCustody(
+  input: unknown,
+  credential: ApiCredential
+): void {
+  if (credential.kind !== "apiKey" || !isRecord(input)) return;
+  if (input.identifier === undefined) return;
+  requireUserOverride(input.userOverride);
+  refuseConfirmed(
+    isRecord(input.identifier) ? input.identifier.confidence : undefined
+  );
+}

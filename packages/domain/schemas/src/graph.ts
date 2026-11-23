@@ -106,7 +106,9 @@ export type { CreateEntityFields } from "./entity-create";
 export type { CreateEntityInput } from "./entity-create";
 export {
   createEntityFieldsSchema,
+  createEntityInputObjectSchema,
   createEntityInputSchema,
+  toCreateEntityInput,
 } from "./entity-create";
 export type { CreateEdgeFields } from "./edge-create";
 export type { CreateEdgeInput } from "./edge-create";

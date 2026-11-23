@@ -15,6 +15,7 @@ import { AddFoundValueDialog } from "@/domains/collect/components/add-found-valu
 import { procedureDouble } from "@/testing/orpc-client";
 import { buildEntityRecord } from "@/testing/records";
 import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
+import { NAME_MAX } from "@watchdog/domain/schemas/shared";
 import { testCaseId } from "@watchdog/domain/schemas/testing";
 import { testId } from "@watchdog/domain/test-kit";
 
@@ -31,7 +32,7 @@ const VALUE: FoundValueRecord = {
   onEntities: [],
 };
 
-function renderDialog() {
+function renderDialog(value: FoundValueRecord = VALUE) {
   const onClose = vi.fn();
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -41,7 +42,7 @@ function renderDialog() {
       <AddFoundValueDialog
         caseId={CASE_ID}
         jobId={testId(2)}
-        value={VALUE}
+        value={value}
         evidenceIds={[EVIDENCE_ID]}
         onClose={onClose}
       />
@@ -109,5 +110,25 @@ describe("AddFoundValueDialog, New Entity", () => {
       await screen.findByText(/already exists in this Case/)
     ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("caps a long URL's default name at the name limit, and keeps the whole value", async () => {
+    createEntity.mockResolvedValue(buildEntityRecord({ id: testId(9) }));
+    const url = `https://acme.test/${"a".repeat(NAME_MAX + 50)}`;
+    const user = userEvent.setup();
+    renderDialog({ ...VALUE, type: "url", value: url });
+
+    await user.click(screen.getByRole("button", { name: "New Entity" }));
+    expect(screen.getByLabelText("Entity name")).toHaveValue(
+      url.slice(0, NAME_MAX)
+    );
+    await user.click(screen.getByRole("button", { name: "Create Entity" }));
+
+    expect(createEntity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: url.slice(0, NAME_MAX),
+        identifier: expect.objectContaining({ value: url }),
+      })
+    );
   });
 });

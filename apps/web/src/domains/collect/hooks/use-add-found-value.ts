@@ -37,6 +37,8 @@ export function useAddFoundValue({
   onError,
 }: AddFoundValueArgs) {
   const queryClient = useQueryClient();
+  const refreshFound = () =>
+    queryClient.invalidateQueries({ queryKey: jobsKeys.found(caseId, jobId) });
   const create = useCreateIdentifier({ onError });
   const createEntity = useMutation({
     mutationFn: ({
@@ -59,10 +61,18 @@ export function useAddFoundValue({
           evidenceIds: [...evidenceIds],
         },
       }),
+    onSuccess: async (created) => {
+      toast.success(TOAST_ENTITY_CREATED);
+      await Promise.all([
+        invalidateAfterEntityChanged(
+          queryClient,
+          caseId,
+          entityChangedOpts(queryClient, caseId, created.id, created.slug)
+        ),
+        refreshFound(),
+      ]);
+    },
   });
-
-  const refreshFound = () =>
-    queryClient.invalidateQueries({ queryKey: jobsKeys.found(caseId, jobId) });
 
   return {
     isPending: create.isPending || createEntity.isPending,
@@ -95,22 +105,12 @@ export function useAddFoundValue({
       value: FoundValueRecord,
       entity: NewEntityFields
     ): Promise<boolean> => {
-      let created: { id: string; slug: string };
       try {
-        created = await createEntity.mutateAsync({ value, entity });
+        await createEntity.mutateAsync({ value, entity });
       } catch (error) {
         onError(errMessage(error, couldnt("create", "entity")));
         return false;
       }
-      toast.success(TOAST_ENTITY_CREATED);
-      await Promise.all([
-        invalidateAfterEntityChanged(
-          queryClient,
-          caseId,
-          entityChangedOpts(queryClient, caseId, created.id, created.slug)
-        ),
-        refreshFound(),
-      ]);
       return true;
     },
   };

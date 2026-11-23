@@ -21,6 +21,7 @@ import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import type { FoundValueRecord } from "@watchdog/domain/schemas/jobs";
 import {
   IDENTIFIER_TYPE_LABELS,
+  NAME_MAX,
   trimmedEntityKindSchema,
   type EntityKind,
   type IdentifierType,
@@ -71,7 +72,8 @@ function AddFoundValueForm({
 }: Omit<AddFoundValueDialogProps, "value"> & { value: FoundValueRecord }) {
   const [target, setTarget] = useState<Target>("existing");
   const [entity, setEntity] = useState<EntityOption | null>(null);
-  const [name, setName] = useState(value.value);
+  // A URL may run past an Entity name's limit; the Identifier keeps the whole value.
+  const [name, setName] = useState(value.value.slice(0, NAME_MAX));
   const [kind, setKind] = useState<EntityKind>(NEW_ENTITY_KIND[value.type]);
   const [error, setError] = useState<string | null>(null);
   const { add, addAsNewEntity, isPending } = useAddFoundValue({
@@ -143,6 +145,7 @@ function AddFoundValueForm({
             <FieldLabel>Name</FieldLabel>
             <Input
               value={name}
+              maxLength={NAME_MAX}
               onChange={(e) => {
                 setName(e.target.value);
               }}
