@@ -145,7 +145,7 @@ A value a Job found that the next step can start from: a host, IP, URL, email, h
 _Avoid_: Handoff, step output
 
 **Found value**:
-A typed value a Job's report holds (an IP, a certificate name, a scanned URL), listed on the Job's Found tab with where it came from and which Entities already hold it; read from the report through the Cap's `found` reader, complete where the Proposal carries a capped batch. Not a Graph row, a Proposal or a Pivot: Add to Entity writes it as an Identifier at `unverified`. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#found-values).
+A typed value a Job's report holds (an IP, a certificate name, a scanned URL), listed on the Job's Found tab with where it came from and which Entities already hold it; read from the report through the Cap's `found` reader, complete where the Proposal carries a capped batch. Not a Graph row, a Proposal or a Pivot: Add to Entity writes it as an Identifier at `unverified`, on an existing Entity or a new one. Detail: [`caps-lexicon.md`](reference/platform/caps-lexicon.md#found-values).
 _Avoid_: Lead, candidate, finding
 
 **Playbook run**:
