@@ -27,7 +27,10 @@ import {
   parseGraphEvidenceIdsEffect,
   assertConfidenceEvidenceEffect,
 } from "./graph-evidence";
-import { runGraphMutation } from "./mutation/run-graph-mutation";
+import {
+  runGraphMutation,
+  type GraphWriter,
+} from "./mutation/run-graph-mutation";
 import {
   identifiersTable,
   toIdentifierRecord,
@@ -79,6 +82,60 @@ export function toCaseIdentifierRecord(
   };
 }
 
+/** The fields of a new Identifier, without the Entity it goes on. */
+export type NewIdentifierFields = Pick<
+  CreateIdentifierInput,
+  | "type"
+  | "value"
+  | "confidence"
+  | "platform"
+  | "status"
+  | "notes"
+  | "evidenceIds"
+>;
+
+/**
+ * Insert an Identifier on an Entity of the mutation's Case, inside a Graph mutation: the
+ * identifier rules (type, value and platform normalise together) and the confidence evidence
+ * rule. `createEntityEffect` calls it too, to create an Entity holding one.
+ */
+export function insertIdentifierWith(
+  w: GraphWriter,
+  entityId: string,
+  fields: NewIdentifierFields
+): Effect.Effect<IdentifierRecord, DomainTag, Db> {
+  return Effect.gen(function* insertIdentifierGen() {
+    const written = validateIdentifierWrite({
+      type: fields.type,
+      value: fields.value,
+      platform: fields.platform,
+    });
+    if (!written.ok) {
+      return yield* new InvalidError({ reason: written.message });
+    }
+    const { type, value, platform } = written;
+
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+      fields.evidenceIds ?? []
+    );
+    yield* assertConfidenceEvidenceEffect(fields.confidence, evidenceIds);
+
+    return yield* w.insert(
+      identifiersTable,
+      {
+        entityId,
+        type,
+        platform,
+        value,
+        confidence: fields.confidence,
+        status: fields.status,
+        notes: trimmedOrNull(fields.notes),
+      },
+      { evidence: evidenceIds }
+    );
+  });
+}
+
 export function createIdentifierEffect(
   input: CreateIdentifierInput
 ): Effect.Effect<IdentifierRecord, DomainTag, Db> {
@@ -91,36 +148,9 @@ export function createIdentifierEffect(
     },
     (w) =>
       Effect.gen(function* createIdentifierGen() {
-        const written = validateIdentifierWrite({
-          type: input.type,
-          value: input.value,
-          platform: input.platform,
-        });
-        if (!written.ok) {
-          return yield* new InvalidError({ reason: written.message });
-        }
-        const { type, value, platform } = written;
-
-        const evidenceIds = yield* parseGraphEvidenceIdsEffect(
-          input.evidenceIds ?? []
-        );
-        yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
-
         const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
         yield* assertEntityInCaseEffect(w.caseId, entityId, w.tx);
-        return yield* w.insert(
-          identifiersTable,
-          {
-            entityId,
-            type,
-            platform,
-            value,
-            confidence: input.confidence,
-            status: input.status,
-            notes: trimmedOrNull(input.notes),
-          },
-          { evidence: evidenceIds }
-        );
+        return yield* insertIdentifierWith(w, entityId, input);
       })
   );
 }

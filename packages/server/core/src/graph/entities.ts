@@ -37,6 +37,7 @@ import { listByIdsEffect, listPageEffect } from "../infra/list-page";
 import { inOrganization } from "../infra/organization-scope";
 import { entitiesRepoFxDb, entitiesRepoFx } from "../infra/repos-fx";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
+import { insertIdentifierWith, type NewIdentifierFields } from "./identifiers";
 import { runGraphMutation } from "./mutation/run-graph-mutation";
 import {
   entitiesTable,
@@ -67,6 +68,8 @@ export type CreateEntityInput = {
   kind: EntityKind;
   name: string;
   slug: string;
+  /** An Identifier the new Entity holds, written in the same transaction. */
+  identifier?: NewIdentifierFields;
 } & GraphActor;
 
 export type UpdateEntityFieldsInput = {
@@ -312,6 +315,9 @@ export function createEntityEffect(
           caseId: record.caseId,
           kind: record.kind,
         });
+        if (input.identifier !== undefined) {
+          yield* insertIdentifierWith(w, record.id, input.identifier);
+        }
         return record;
       })
   );
