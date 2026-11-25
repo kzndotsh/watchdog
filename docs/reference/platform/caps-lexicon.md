@@ -181,7 +181,7 @@ Every Cap has a required `provider` block (`CapProvider`, `packages/caps/src/sdk
 - **Redistribution verdicts attach to the contact host, not the Cap.** The `hosts` of a provider (`CapProvider.hosts`, `packages/caps/src/providers/`) hold one reviewed verdict per fixed host a Cap declares, next to the quote that decides it (an `unknown` whose terms are silent or unreadable carries none); `redistributionVerdictFor` (`src/redistribution.ts`) derives the host lookup from them (a `provider` host, a `download` URL's host, a `dns` zone): `allowed` only where the provider's text lets the Export hand its raw responses on, `forbidden` where it bars that, `unknown` otherwise. Only `allowed` releases a body to the Export ([`export`](jobs-orpc.md#system-jobs-and-case-export)); `unknown` withholds like `forbidden`. A new host no provider lists fails `redistribution.test.ts`. The credit line a host's data needs is the `attribution` of the provider block of the Caps that name it.
 - [`cap-register.md`](cap-register.md) is generated from these blocks by `pnpm generate:caps`, one table per category. This page and the register state no Cap counts.
 
-**Cut / defer (not Caps):** Spamhaus free DBL; Talos scrape; CheckPhish-as-Collect; CIRCL PDNS/PSSL until partner access; SecurityTrails / DNSDB / RiskIQ / RecordedFuture; scanner clones (ONYPHE / ZoomEye / Netlas / BinaryEdge); Maigret-class → tools hub; GreedyBear enrichment until a Honeynet token grant.
+**Cut / defer (not Caps):** Spamhaus free DBL; Talos scrape; CheckPhish-as-Collect; CIRCL PDNS/PSSL until partner access; DNSDB / RiskIQ / RecordedFuture; scanner clones (ONYPHE / ZoomEye / Netlas / BinaryEdge); Maigret-class → tools hub; GreedyBear enrichment until a Honeynet token grant.
 
 ## Ship gates
 

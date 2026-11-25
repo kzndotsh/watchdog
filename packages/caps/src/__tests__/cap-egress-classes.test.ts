@@ -53,6 +53,7 @@ const EXPECTED: Record<string, EgressClass[]> = {
   "network.ipctl.lookup": PUBLIC,
   "network.ipinfo.lookup": ACCOUNT,
   "network.leakix.lookup": ACCOUNT,
+  "network.securitytrails.lookup": ACCOUNT,
   "network.mnemonic.lookup": PUBLIC,
   "network.shodan.lookup": ACCOUNT,
   "network.tor_exit.lookup": PUBLIC,

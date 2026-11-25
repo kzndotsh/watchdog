@@ -38,6 +38,7 @@ import { ipctlLookup } from "./network/ipctl.lookup/cap";
 import { ipinfoLookup } from "./network/ipinfo.lookup/cap";
 import { leakixLookup } from "./network/leakix.lookup/cap";
 import { mnemonicLookup } from "./network/mnemonic.lookup/cap";
+import { securityTrailsLookup } from "./network/securitytrails.lookup/cap";
 import { shodanLookup } from "./network/shodan.lookup/cap";
 import { torExitLookup } from "./network/tor_exit.lookup/cap";
 import { trancoLookup } from "./network/tranco.lookup/cap";
@@ -98,6 +99,7 @@ const REGISTERED = [
   shodanLookup,
   censysLookup,
   leakixLookup,
+  securityTrailsLookup,
   torExitLookup,
   trancoLookup,
   urlEnrich,
