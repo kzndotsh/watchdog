@@ -138,6 +138,31 @@ describe("fetchSecurityTrailsLookupEffect", () => {
     })
   );
 
+  it.effect("fails when a 2xx body has no subdomains array", () =>
+    Effect.gen(function* missingSubdomainsGen() {
+      mockServer.use(
+        http.get(SUBDOMAINS, () => HttpResponse.json({ endpoint: "/v1" }))
+      );
+
+      const failure = yield* lookup().pipe(Effect.flip);
+
+      expect(failure._tag).toBe("ParseVendorError");
+    })
+  );
+
+  it.effect("fails when a 2xx history body has no records array", () =>
+    Effect.gen(function* missingRecordsGen() {
+      mockServer.use(
+        http.get(SUBDOMAINS, () => HttpResponse.json({ subdomains: [] })),
+        http.get(HISTORY, () => HttpResponse.json({ pages: 1 }))
+      );
+
+      const failure = yield* lookup().pipe(Effect.flip);
+
+      expect(failure._tag).toBe("ParseVendorError");
+    })
+  );
+
   it.effect("rejects a refused key without echoing it", () =>
     Effect.gen(function* rejectedKeyGen() {
       mockServer.use(

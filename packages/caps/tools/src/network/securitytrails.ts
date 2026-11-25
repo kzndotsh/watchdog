@@ -3,6 +3,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { parseVendorError } from "../errors/vendor-errors";
 import { defineJsonProvider } from "../http/define-json-provider";
 import { nowIsoStringEffect } from "../infra/clock";
 import { normalizeHost, normalizeIp } from "../normalize";
@@ -45,7 +46,7 @@ export type SecurityTrailsLookupSnapshot = z.infer<
 
 /** SecurityTrails returns labels (`www`), not names; a label already ending in "." takes the apex with no extra dot. */
 function subdomainNames(host: string, labels: unknown): string[] {
-  if (!Array.isArray(labels)) return [];
+  if (!Array.isArray(labels)) throw parseVendorError("SecurityTrails", host);
   const seen = new Set<string>();
   const names: string[] = [];
   for (const raw of labels) {
@@ -61,8 +62,11 @@ function subdomainNames(host: string, labels: unknown): string[] {
   return names;
 }
 
-function ipSightings(records: unknown): SecurityTrailsIpSighting[] {
-  if (!Array.isArray(records)) return [];
+function ipSightings(
+  host: string,
+  records: unknown
+): SecurityTrailsIpSighting[] {
+  if (!Array.isArray(records)) throw parseVendorError("SecurityTrails", host);
   const out: SecurityTrailsIpSighting[] = [];
   for (const record of records) {
     if (!isRecord(record) || !Array.isArray(record.values)) continue;
@@ -123,8 +127,8 @@ const fetchIpHistory = defineJsonProvider({
     url: `${BASE}/history/${encodeURIComponent(host)}/dns/a`,
   }),
   notFound: () => ({ ipHistory: [], historyPages: 0 }),
-  toSnapshot: ({ body }) => ({
-    ipHistory: ipSightings(body.records),
+  toSnapshot: ({ subject, body }) => ({
+    ipHistory: ipSightings(subject, body.records),
     historyPages: intOrNull(body.pages),
   }),
 });
