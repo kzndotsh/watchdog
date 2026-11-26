@@ -89,7 +89,7 @@ const HISTORY_BODIES: Record<string, Record<string, unknown>> = {
     records: [
       {
         type: "txt",
-        values: [{ value: "v=spf1 -all" }],
+        values: [{ value: "v=spf1 -all" }, { value: "  note  " }, { value: 7 }],
         organizations: [],
         first_seen: "2026-01-01",
         last_seen: "2026-11-26",
@@ -239,7 +239,7 @@ describe("fetchSecurityTrailsLookupEffect", () => {
           ["mx", 1, ["mail.example.net"]],
           ["ns", 1, ["dns1.p08.nsone.net", "ns-1283.awsdns-32.org"]],
           ["soa", 6, ["awsdns-hostmaster.amazon.com"]],
-          ["txt", 1, ["v=spf1 -all"]],
+          ["txt", 1, ["v=spf1 -all", "  note  "]],
         ]);
       })
   );

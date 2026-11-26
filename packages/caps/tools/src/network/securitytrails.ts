@@ -105,7 +105,8 @@ const VALUE_OF: Record<
   mx: (v) => hostOrNull(v.host),
   ns: (v) => hostOrNull(v.nameserver),
   soa: (v) => asString(v.email),
-  txt: (v) => asString(v.value),
+  /** TXT data is character strings: kept verbatim, spaces and empty strings included. */
+  txt: (v) => (typeof v.value === "string" ? v.value : null),
 };
 
 /** SOA history holds one value object per record; every other type holds a list. */
