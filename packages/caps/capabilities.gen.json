@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.securitytrails.lookup",
-    "version": "c3be86fde7fb",
+    "version": "74b870686a12",
     "title": "SecurityTrails lookup",
     "provider": {
       "name": "SecurityTrails",
@@ -1968,6 +1968,9 @@
           "maxLength": 256
         },
         "recordTypes": {
+          "default": [
+            "a"
+          ],
           "description": "DNS history record types (a, aaaa, mx, ns, soa, txt)",
           "minItems": 1,
           "type": "array",
@@ -1998,6 +2001,9 @@
           "minLength": 1
         },
         "recordTypes": {
+          "default": [
+            "a"
+          ],
           "description": "DNS history record types (a, aaaa, mx, ns, soa, txt)",
           "minItems": 1,
           "type": "array",

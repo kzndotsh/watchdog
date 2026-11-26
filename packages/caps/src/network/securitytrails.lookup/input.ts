@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   SECURITYTRAILS_DNS_TYPES,
   securityTrailsDnsTypeSchema,
+  type SecurityTrailsDnsType,
 } from "#tools/network";
 import { hostSeedSchema } from "@watchdog/domain/schemas/caps";
 import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
@@ -30,9 +31,8 @@ export const securityTrailsLookupInput = z.object({
     z
       .array(securityTrailsDnsTypeSchema)
       .min(1)
-      .optional()
+      /** In the schema, so an omitted choice and an explicit `["a"]` share one cache entry. */
+      .default((): SecurityTrailsDnsType[] => ["a"])
       .describe("DNS history record types (a, aaaa, mx, ns, soa, txt)")
   ),
 });
-
-export const DEFAULT_SECURITYTRAILS_RECORD_TYPES = ["a"] as const;

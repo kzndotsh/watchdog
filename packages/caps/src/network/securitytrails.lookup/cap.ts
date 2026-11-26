@@ -10,10 +10,7 @@ import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { foundOfType } from "../../lib/collect/found-values";
 import { securityTrails } from "../../providers";
 import { contact } from "../../sdk";
-import {
-  DEFAULT_SECURITYTRAILS_RECORD_TYPES,
-  securityTrailsLookupInput,
-} from "./input";
+import { securityTrailsLookupInput } from "./input";
 import {
   historicalIps,
   interpretSecurityTrailsLookupReport,
@@ -62,8 +59,7 @@ export const securityTrailsLookup = defineCollectCap({
         ctx.signal,
         {
           userAgent,
-          recordTypes:
-            ctx.input.recordTypes ?? DEFAULT_SECURITYTRAILS_RECORD_TYPES,
+          recordTypes: ctx.input.recordTypes,
         }
       );
       const history = snap.dnsHistory

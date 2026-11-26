@@ -40,7 +40,7 @@ describe("interpretSecurityTrailsLookupReport", () => {
 
   it("proposes the seed, subdomains and A/AAAA history as Identifiers", () => {
     const result = interpretSecurityTrailsLookupReport(fixture, {
-      input: { host: "example.com", entityId },
+      input: { host: "example.com", entityId, recordTypes: ["a"] },
     });
 
     const ids = result.patch
@@ -54,7 +54,7 @@ describe("interpretSecurityTrailsLookupReport", () => {
       ["ip", "2001:db8::1"],
     ]);
     expect(claimText(result, 5)).toMatch(
-      /SecurityTrails for example.com: 3 domain\(s\); DNS history A 1, AAAA 1, MX 1, TXT 1; 2 historical IP\(s\)/
+      /SecurityTrails for example.com: 3 domain\(s\); DNS history A 1, AAAA 1, MX 1 \[mail\.example\.net\], TXT 1 \[v=spf1 -all\]; 2 historical IP\(s\)/
     );
   });
 
@@ -66,7 +66,7 @@ describe("interpretSecurityTrailsLookupReport", () => {
           { type: "a", pages: 4, records: [sighting("200.121.20.1")] },
         ],
       },
-      { input: { host: "example.com", entityId } }
+      { input: { host: "example.com", entityId, recordTypes: ["a"] } }
     );
 
     expect(String(result.summary)).toMatch(/A 1 \(page 1 of 4\)/);
@@ -79,7 +79,7 @@ describe("interpretSecurityTrailsLookupReport", () => {
     );
     const result = interpretSecurityTrailsLookupReport(
       { ...fixture, subdomains, subdomainCount: 90 },
-      { input: { host: "example.com", entityId } }
+      { input: { host: "example.com", entityId, recordTypes: ["a"] } }
     );
 
     expect(
@@ -88,6 +88,27 @@ describe("interpretSecurityTrailsLookupReport", () => {
       )
     ).toHaveLength(80);
     expect(String(result.summary)).toMatch(/proposed 80 of 91/);
+  });
+
+  it("lists at most five distinct non-IP values per type and counts the rest", () => {
+    const hosts = Array.from({ length: 7 }, (_, i) => `ns${i}.example.net`);
+    const result = interpretSecurityTrailsLookupReport(
+      {
+        ...fixture,
+        dnsHistory: [
+          {
+            type: "ns",
+            pages: 1,
+            records: [...hosts, "ns0.example.net"].map(sighting),
+          },
+        ],
+      },
+      { input: { host: "example.com", entityId, recordTypes: ["ns"] } }
+    );
+
+    expect(String(result.summary)).toContain(
+      "NS 8 [ns0.example.net | ns1.example.net | ns2.example.net | ns3.example.net | ns4.example.net +2 more]"
+    );
   });
 
   itRejectsIncompleteReport(
@@ -105,6 +126,16 @@ describe("securityTrailsLookupInput", () => {
     });
 
     expect(input.recordTypes).toEqual(["a", "mx", "txt"]);
+  });
+
+  it("defaults to A so an omitted choice matches an explicit one", () => {
+    const omitted = securityTrailsLookupInput.parse({ host: "example.com" });
+    const explicit = securityTrailsLookupInput.parse({
+      host: "example.com",
+      recordTypes: ["a"],
+    });
+
+    expect(omitted).toEqual(explicit);
   });
 
   it("rejects an unknown record type", () => {

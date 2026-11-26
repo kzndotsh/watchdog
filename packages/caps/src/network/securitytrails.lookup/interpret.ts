@@ -29,10 +29,32 @@ export function historicalIps(
     .flatMap((h) => h.records.map((r) => r.value));
 }
 
+const CLAIM_VALUES_PER_TYPE = 5;
+const CLAIM_VALUE_MAX_CHARS = 80;
+
+function clip(value: string): string {
+  return value.length > CLAIM_VALUE_MAX_CHARS
+    ? `${value.slice(0, CLAIM_VALUE_MAX_CHARS - 1)}…`
+    : value;
+}
+
+/** Distinct non-IP values, bounded; IPs are already Identifiers. */
+function valuesPart(h: SecurityTrailsDnsHistory): string {
+  if (h.type === "a" || h.type === "aaaa") return "";
+  const distinct = [...new Set(h.records.map((r) => r.value))];
+  if (distinct.length === 0) return "";
+  const shown = distinct.slice(0, CLAIM_VALUES_PER_TYPE).map(clip);
+  const more =
+    distinct.length > shown.length
+      ? ` +${distinct.length - shown.length} more`
+      : "";
+  return ` [${shown.join(" | ")}${more}]`;
+}
+
 function historyPart(h: SecurityTrailsDnsHistory): string {
   const pages =
     h.pages !== null && h.pages > 1 ? ` (page 1 of ${h.pages})` : "";
-  return `${h.type.toUpperCase()} ${h.records.length}${pages}`;
+  return `${h.type.toUpperCase()} ${h.records.length}${pages}${valuesPart(h)}`;
 }
 
 function summarize(
