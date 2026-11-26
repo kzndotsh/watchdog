@@ -81,8 +81,12 @@ export {
 } from "./ipinfo";
 export {
   fetchSecurityTrailsLookupEffect,
+  SECURITYTRAILS_DNS_TYPES,
+  securityTrailsDnsSightingSchema,
+  securityTrailsDnsTypeSchema,
   securityTrailsLookupSnapshotSchema,
-  securityTrailsIpSightingSchema,
+  type SecurityTrailsDnsHistory,
+  type SecurityTrailsDnsSighting,
+  type SecurityTrailsDnsType,
   type SecurityTrailsLookupSnapshot,
-  type SecurityTrailsIpSighting,
 } from "./securitytrails";

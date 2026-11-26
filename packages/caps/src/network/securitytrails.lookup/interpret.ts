@@ -1,6 +1,9 @@
 import type { z } from "zod";
 
-import type { SecurityTrailsLookupSnapshot } from "#tools/network";
+import type {
+  SecurityTrailsDnsHistory,
+  SecurityTrailsLookupSnapshot,
+} from "#tools/network";
 
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
@@ -17,6 +20,21 @@ import type { securityTrailsLookupInput } from "./input";
 
 type SecurityTrailsInput = z.infer<typeof securityTrailsLookupInput>;
 
+/** A and AAAA answers are addresses; MX, NS, SOA and TXT stay in the Claim and the Evidence. */
+export function historicalIps(
+  history: readonly SecurityTrailsDnsHistory[]
+): string[] {
+  return history
+    .filter((h) => h.type === "a" || h.type === "aaaa")
+    .flatMap((h) => h.records.map((r) => r.value));
+}
+
+function historyPart(h: SecurityTrailsDnsHistory): string {
+  const pages =
+    h.pages !== null && h.pages > 1 ? ` (page 1 of ${h.pages})` : "";
+  return `${h.type.toUpperCase()} ${h.records.length}${pages}`;
+}
+
 function summarize(
   report: SecurityTrailsLookupSnapshot,
   domains: readonly string[],
@@ -29,26 +47,26 @@ function summarize(
     report.subdomainCount !== report.subdomains.length
       ? ` (SecurityTrails counts ${report.subdomainCount})`
       : "";
-  const pages =
-    report.historyPages !== null && report.historyPages > 1
-      ? ` from page 1 of ${report.historyPages}`
-      : "";
+  const history =
+    report.dnsHistory.length > 0
+      ? report.dnsHistory.map(historyPart).join(", ")
+      : "none requested";
   return (
     `SecurityTrails for ${report.host}: ${subdomainTotal} domain(s)${reported}` +
     `${identifierTruncationNote(subdomainTotal, DOMAIN_IDENTIFIER_BATCH_LIMIT)}; ` +
-    `${ipTotal} historical A IP(s)${pages}` +
+    `DNS history ${history}; ${ipTotal} historical IP(s)` +
     `${identifierTruncationNote(ipTotal, DOMAIN_IDENTIFIER_BATCH_LIMIT)}. ` +
-    "A past resolution does not show who controls an address."
+    "A past record does not show who controls a name or address."
   );
 }
 
-/** Pure interpret: subdomains as domain Identifiers, historical A values as ip Identifiers. */
+/** Pure interpret: subdomains as domain Identifiers, historical A/AAAA values as ip Identifiers. */
 export function interpretSecurityTrailsLookupReport(
   report: SecurityTrailsLookupSnapshot,
   opts: CapInterpretOpts<SecurityTrailsInput>
 ): CapInterpretResult {
   const domains = withSeedHost(report.host, report.subdomains);
-  const ips = report.ipHistory.map((s) => s.ip);
+  const ips = historicalIps(report.dnsHistory);
   return interpretIdentifierBatches({
     entityId: opts.input.entityId,
     batches: [

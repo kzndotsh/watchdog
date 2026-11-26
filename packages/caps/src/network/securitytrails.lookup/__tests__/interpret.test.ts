@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import type { SecurityTrailsLookupSnapshot } from "#tools/network";
+import type {
+  SecurityTrailsDnsSighting,
+  SecurityTrailsLookupSnapshot,
+} from "#tools/network";
 import { testId } from "@watchdog/domain/test-kit";
 
 import { claimText, dataOf, itRejectsIncompleteReport } from "../../../testing";
 import { securityTrailsLookup } from "../cap.ts";
+import { securityTrailsLookupInput } from "../input.ts";
 import { interpretSecurityTrailsLookupReport } from "../interpret.ts";
+
+function sighting(value: string): SecurityTrailsDnsSighting {
+  return {
+    value,
+    firstSeen: "2026-11-18",
+    lastSeen: "2026-11-26",
+    organizations: [],
+    cname: null,
+  };
+}
 
 describe("interpretSecurityTrailsLookupReport", () => {
   const entityId = testId(1);
@@ -16,18 +30,15 @@ describe("interpretSecurityTrailsLookupReport", () => {
     source: "api.securitytrails.com/v1",
     subdomains: ["www.example.com", "api.example.com"],
     subdomainCount: 2,
-    ipHistory: [
-      {
-        ip: "200.121.20.1",
-        firstSeen: "2017-05-26",
-        lastSeen: "2018-01-02",
-        organizations: ["netDNA"],
-      },
+    dnsHistory: [
+      { type: "a", pages: 1, records: [sighting("200.121.20.1")] },
+      { type: "aaaa", pages: 1, records: [sighting("2001:db8::1")] },
+      { type: "mx", pages: 1, records: [sighting("mail.example.net")] },
+      { type: "txt", pages: 1, records: [sighting("v=spf1 -all")] },
     ],
-    historyPages: 1,
   };
 
-  it("proposes the seed, subdomains and historical IPs as Identifiers", () => {
+  it("proposes the seed, subdomains and A/AAAA history as Identifiers", () => {
     const result = interpretSecurityTrailsLookupReport(fixture, {
       input: { host: "example.com", entityId },
     });
@@ -40,19 +51,25 @@ describe("interpretSecurityTrailsLookupReport", () => {
       ["domain", "www.example.com"],
       ["domain", "api.example.com"],
       ["ip", "200.121.20.1"],
+      ["ip", "2001:db8::1"],
     ]);
-    expect(claimText(result, 4)).toMatch(
-      /SecurityTrails for example.com: 3 domain\(s\); 1 historical A IP\(s\)/
+    expect(claimText(result, 5)).toMatch(
+      /SecurityTrails for example.com: 3 domain\(s\); DNS history A 1, AAAA 1, MX 1, TXT 1; 2 historical IP\(s\)/
     );
   });
 
-  it("names the history page count when more pages exist", () => {
+  it("names the page count of a type with more history", () => {
     const result = interpretSecurityTrailsLookupReport(
-      { ...fixture, historyPages: 4 },
+      {
+        ...fixture,
+        dnsHistory: [
+          { type: "a", pages: 4, records: [sighting("200.121.20.1")] },
+        ],
+      },
       { input: { host: "example.com", entityId } }
     );
 
-    expect(String(result.summary)).toMatch(/from page 1 of 4/);
+    expect(String(result.summary)).toMatch(/A 1 \(page 1 of 4\)/);
   });
 
   it("notes subdomain truncation past the batch limit", () => {
@@ -78,4 +95,24 @@ describe("interpretSecurityTrailsLookupReport", () => {
     { host: "example.com" },
     { host: "example.com" }
   );
+});
+
+describe("securityTrailsLookupInput", () => {
+  it("puts record types in one canonical order without repeats", () => {
+    const input = securityTrailsLookupInput.parse({
+      host: "example.com",
+      recordTypes: ["TXT", "a", "mx", "a"],
+    });
+
+    expect(input.recordTypes).toEqual(["a", "mx", "txt"]);
+  });
+
+  it("rejects an unknown record type", () => {
+    const parsed = securityTrailsLookupInput.safeParse({
+      host: "example.com",
+      recordTypes: ["a", "cname"],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
 });
