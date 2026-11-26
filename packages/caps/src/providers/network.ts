@@ -230,3 +230,20 @@ export const tranco = defineProvider({
     "tranco-list.eu": "unknown",
   },
 });
+
+/**
+ * Recorded Future's terms govern SecurityTrails (§9.16). The free version is for "internal,
+ * non-commercial security purposes"; paid use is internal only.
+ */
+export const securityTrails = defineProvider({
+  name: "SecurityTrails",
+  url: "https://securitytrails.com",
+  termsUrl: "https://www.recordedfuture.com/legal/terms-of-use",
+  tier: "freemium",
+  commercialUse: "restricted",
+  hosts: {
+    // recordedfuture.com/legal/terms-of-use §3(B): "prohibited from reselling or otherwise
+    // distributing or disclosing Recorded Future Output ... to any third parties".
+    "api.securitytrails.com": "forbidden",
+  },
+});

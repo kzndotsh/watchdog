@@ -76,6 +76,7 @@ These Caps query breach and leak corpora about people. They are **opt-in**: whil
 | `network.ipinfo.lookup` | [IPinfo](https://ipinfo.io) | [terms](https://ipinfo.io/terms-of-service) | freemium | restricted | none | `IPINFO_API_TOKEN` |
 | `network.leakix.lookup` | [LeakIX](https://leakix.net) | [terms](https://leakix.net/terms-and-conditions) | freemium | restricted | none | `LEAKIX_API_KEY` |
 | `network.mnemonic.lookup` | [mnemonic](https://www.mnemonic.no) | [terms](https://docs.mnemonic.no/service-integration-guides/passivedns/docs/public/01-public_api.html) | free | unknown | none | none |
+| `network.securitytrails.lookup` | [SecurityTrails](https://securitytrails.com) | [terms](https://www.recordedfuture.com/legal/terms-of-use) | freemium | restricted | none | `SECURITYTRAILS_API_KEY` |
 | `network.shodan.lookup` | [Shodan](https://www.shodan.io) | [terms](https://account.shodan.io/billing) | paid | restricted | none | `SHODAN_API_KEY` |
 | `network.tor_exit.lookup` | [Tor Project](https://www.torproject.org) | [terms](https://check.torproject.org/exit-addresses) | free | unknown | none | none |
 | `network.tranco.lookup` | [Tranco](https://tranco-list.eu) | [terms](https://tranco-list.eu/api_documentation) | free | unknown | none | none |

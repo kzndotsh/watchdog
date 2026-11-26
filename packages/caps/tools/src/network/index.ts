@@ -79,3 +79,10 @@ export {
   ipinfoLookupSnapshotSchema,
   type IpinfoLookupSnapshot,
 } from "./ipinfo";
+export {
+  fetchSecurityTrailsLookupEffect,
+  securityTrailsLookupSnapshotSchema,
+  securityTrailsIpSightingSchema,
+  type SecurityTrailsLookupSnapshot,
+  type SecurityTrailsIpSighting,
+} from "./securitytrails";
