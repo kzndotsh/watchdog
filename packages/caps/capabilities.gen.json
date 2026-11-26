@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.securitytrails.lookup",
-    "version": "c004a7b7f2d5",
+    "version": "c3be86fde7fb",
     "title": "SecurityTrails lookup",
     "provider": {
       "name": "SecurityTrails",

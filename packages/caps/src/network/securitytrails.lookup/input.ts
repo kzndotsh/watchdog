@@ -15,10 +15,10 @@ function canonicalTypes(value: unknown): unknown {
     items.map((t) => (typeof t === "string" ? t.trim().toLowerCase() : t))
   );
   const known = SECURITYTRAILS_DNS_TYPES.filter((t) => picked.has(t));
-  const unknown = [...picked].filter(
+  const unrecognized = [...picked].filter(
     (t) => !(SECURITYTRAILS_DNS_TYPES as readonly unknown[]).includes(t)
   );
-  return [...known, ...unknown];
+  return [...known, ...unrecognized];
 }
 
 export const securityTrailsLookupInput = z.object({
