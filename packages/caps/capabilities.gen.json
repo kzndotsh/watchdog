@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.securitytrails.lookup",
-    "version": "d64d57d824a9",
+    "version": "d4a0160fe07b",
     "title": "SecurityTrails lookup",
     "provider": {
       "name": "SecurityTrails",
@@ -1966,6 +1966,25 @@
         "entityId": {
           "type": "string",
           "maxLength": 256
+        },
+        "recordTypes": {
+          "default": [
+            "a"
+          ],
+          "description": "DNS history record types (a, aaaa, mx, ns, soa, txt)",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "a",
+              "aaaa",
+              "mx",
+              "ns",
+              "soa",
+              "txt"
+            ]
+          }
         }
       },
       "required": [
@@ -1980,13 +1999,32 @@
           "description": "Domain",
           "type": "string",
           "minLength": 1
+        },
+        "recordTypes": {
+          "default": [
+            "a"
+          ],
+          "description": "DNS history record types (a, aaaa, mx, ns, soa, txt)",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "a",
+              "aaaa",
+              "mx",
+              "ns",
+              "soa",
+              "txt"
+            ]
+          }
         }
       },
       "required": [
         "host"
       ]
     },
-    "description": "Find a domain's subdomains and the IP addresses it has resolved to over time through SecurityTrails. Uses two queries of the account's monthly quota. Past resolutions do not show ownership.",
+    "description": "Find a domain's subdomains and its DNS history (A by default; AAAA, MX, NS, SOA or TXT on request) through SecurityTrails. Uses one query of the account's monthly quota for the subdomains plus one per record type. Past records do not show ownership.",
     "dataSource": "api.securitytrails.com/v1",
     "kind": "collect",
     "flags": [
@@ -2016,7 +2054,7 @@
       "Passive",
       "Footprint"
     ],
-    "timeoutMs": 60000,
+    "timeoutMs": 240000,
     "jobPolicy": {
       "cacheTtlMs": 21600000
     },

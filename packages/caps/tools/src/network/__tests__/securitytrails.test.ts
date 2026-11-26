@@ -11,20 +11,92 @@ import { Effect } from "effect";
 import { http, HttpResponse, mockServer } from "@watchdog/domain/test-kit/http";
 
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
-import { fetchSecurityTrailsLookupEffect } from "../securitytrails";
+import {
+  fetchSecurityTrailsLookupEffect,
+  type SecurityTrailsDnsType,
+} from "../securitytrails";
 
 const SUBDOMAINS =
   "https://api.securitytrails.com/v1/domain/example.com/subdomains";
-const HISTORY = "https://api.securitytrails.com/v1/history/example.com/dns/a";
+const HISTORY =
+  "https://api.securitytrails.com/v1/history/example.com/dns/:type";
 
-function lookup() {
+function lookup(recordTypes: readonly SecurityTrailsDnsType[] = ["a"]) {
   return fetchSecurityTrailsLookupEffect(
     "Example.com",
     "st-key",
     AbortSignal.timeout(5000),
-    { userAgent: "watchdog-test" }
+    { userAgent: "watchdog-test", recordTypes }
   ).pipe(Effect.provide(toolsHttpClientLayer));
 }
+
+function emptySubdomains() {
+  return http.get(SUBDOMAINS, () => HttpResponse.json({ subdomains: [] }));
+}
+
+/** Record shapes as SecurityTrails returned them for github.com on 2026-11-26, trimmed. */
+const HISTORY_BODIES: Record<string, Record<string, unknown>> = {
+  aaaa: { type: "a/ipv6", records: [], pages: 0 },
+  mx: {
+    type: "mx",
+    pages: 1,
+    records: [
+      {
+        type: "mx",
+        values: [{ priority: 0, host: "Mail.Example.net.", mx_count: 0 }],
+        organizations: ["Microsoft Corporation"],
+        first_seen: "2026-03-22",
+        last_seen: "2026-11-26",
+      },
+    ],
+  },
+  ns: {
+    type: "ns",
+    pages: 1,
+    records: [
+      {
+        type: "ns",
+        values: [
+          { nameserver: "dns1.p08.nsone.net", nameserver_count: 0 },
+          { nameserver: "ns-1283.awsdns-32.org", nameserver_count: 0 },
+        ],
+        organizations: [],
+        first_seen: "2026-01-01",
+        last_seen: "2026-11-26",
+      },
+    ],
+  },
+  soa: {
+    type: "soa",
+    pages: 6,
+    records: [
+      {
+        type: "soa",
+        values: {
+          ttl: 7200,
+          email: "awsdns-hostmaster.amazon.com",
+          email_count: 0,
+        },
+        organizations: ["Amazon.com, Inc."],
+        first_seen: "2026-11-18",
+        last_seen: "2026-11-26",
+      },
+    ],
+  },
+  txt: {
+    type: "txt",
+    pages: 1,
+    records: [
+      {
+        type: "txt",
+        values: [{ value: "v=spf1 -all" }, { value: "  note  " }, { value: 7 }],
+        organizations: [],
+        first_seen: "2026-01-01",
+        last_seen: "2026-11-26",
+      },
+    ],
+  },
+};
 
 describe("fetchSecurityTrailsLookupEffect", () => {
   beforeAll(() => {
@@ -39,23 +111,23 @@ describe("fetchSecurityTrailsLookupEffect", () => {
     mockServer.close();
   });
 
-  it.effect("sends the key in the APIKEY header on both calls", () =>
-    Effect.gen(function* sendsApiKeyGen() {
-      const keys: (string | null)[] = [];
+  it.effect("makes one keyed call for subdomains and one per record type", () =>
+    Effect.gen(function* oneCallPerTypeGen() {
+      const calls: string[] = [];
       mockServer.use(
         http.get(SUBDOMAINS, ({ request }) => {
-          keys.push(request.headers.get("APIKEY"));
+          calls.push(`subdomains:${request.headers.get("APIKEY")}`);
           return HttpResponse.json({ subdomains: [] });
         }),
-        http.get(HISTORY, ({ request }) => {
-          keys.push(request.headers.get("APIKEY"));
+        http.get(HISTORY, ({ request, params }) => {
+          calls.push(`${String(params.type)}:${request.headers.get("APIKEY")}`);
           return HttpResponse.json({ pages: 1, records: [] });
         })
       );
 
-      yield* lookup();
+      yield* lookup(["a", "mx"]);
 
-      expect(keys).toEqual(["st-key", "st-key"]);
+      expect(calls).toEqual(["subdomains:st-key", "a:st-key", "mx:st-key"]);
     })
   );
 
@@ -83,23 +155,33 @@ describe("fetchSecurityTrailsLookupEffect", () => {
     })
   );
 
-  it.effect("flattens A history into one sighting per IP value", () =>
+  it.effect("flattens A history into one sighting per IP, with its alias", () =>
     Effect.gen(function* flattensHistoryGen() {
       mockServer.use(
-        http.get(SUBDOMAINS, () => HttpResponse.json({ subdomains: [] })),
+        emptySubdomains(),
         http.get(HISTORY, () =>
           HttpResponse.json({
-            pages: 3,
+            pages: 9,
             type: "a/ipv4",
             records: [
               {
-                first_seen: "2017-05-26",
-                last_seen: "2018-01-02",
-                organizations: ["netDNA"],
+                type: "a",
+                cname: "Shops.Example.net.",
+                first_seen: "2026-11-21",
+                last_seen: "2026-11-26",
+                organizations: ["GitHub, Inc."],
                 values: [
-                  { ip: "200.121.20.1", ip_count: 10_231 },
+                  { ip: "140.82.114.3", ip_count: 0 },
                   { ip: "not-an-ip" },
                 ],
+              },
+              {
+                type: "a",
+                cname: "",
+                first_seen: "2026-11-18",
+                last_seen: "2026-11-21",
+                organizations: [],
+                values: [{ ip: "140.82.113.4", ip_count: 0 }],
               },
             ],
           })
@@ -108,16 +190,58 @@ describe("fetchSecurityTrailsLookupEffect", () => {
 
       const snap = yield* lookup();
 
-      expect(snap.ipHistory).toEqual([
+      expect(snap.dnsHistory).toEqual([
         {
-          ip: "200.121.20.1",
-          firstSeen: "2017-05-26",
-          lastSeen: "2018-01-02",
-          organizations: ["netDNA"],
+          type: "a",
+          pages: 9,
+          records: [
+            {
+              value: "140.82.114.3",
+              firstSeen: "2026-11-21",
+              lastSeen: "2026-11-26",
+              organizations: ["GitHub, Inc."],
+              cname: "shops.example.net",
+            },
+            {
+              value: "140.82.113.4",
+              firstSeen: "2026-11-18",
+              lastSeen: "2026-11-21",
+              organizations: [],
+              cname: null,
+            },
+          ],
         },
       ]);
-      expect(snap.historyPages).toBe(3);
     })
+  );
+
+  it.effect(
+    "reads each record type's value, including SOA's single object",
+    () =>
+      Effect.gen(function* perTypeValuesGen() {
+        mockServer.use(
+          emptySubdomains(),
+          http.get(HISTORY, ({ params }) =>
+            HttpResponse.json(HISTORY_BODIES[String(params.type)] ?? {})
+          )
+        );
+
+        const snap = yield* lookup(["aaaa", "mx", "ns", "soa", "txt"]);
+
+        expect(
+          snap.dnsHistory.map((h) => [
+            h.type,
+            h.pages,
+            h.records.map((r) => r.value),
+          ])
+        ).toEqual([
+          ["aaaa", 0, []],
+          ["mx", 1, ["mail.example.net"]],
+          ["ns", 1, ["dns1.p08.nsone.net", "ns-1283.awsdns-32.org"]],
+          ["soa", 6, ["awsdns-hostmaster.amazon.com"]],
+          ["txt", 1, ["v=spf1 -all", "  note  "]],
+        ]);
+      })
   );
 
   it.effect("returns an empty snapshot when SecurityTrails answers 404", () =>
@@ -131,10 +255,13 @@ describe("fetchSecurityTrailsLookupEffect", () => {
         )
       );
 
-      const snap = yield* lookup();
+      const snap = yield* lookup(["a", "ns"]);
 
       expect(snap.subdomains).toEqual([]);
-      expect(snap.ipHistory).toEqual([]);
+      expect(snap.dnsHistory).toEqual([
+        { type: "a", pages: 0, records: [] },
+        { type: "ns", pages: 0, records: [] },
+      ]);
     })
   );
 
@@ -153,7 +280,7 @@ describe("fetchSecurityTrailsLookupEffect", () => {
   it.effect("fails when a 2xx history body has no records array", () =>
     Effect.gen(function* missingRecordsGen() {
       mockServer.use(
-        http.get(SUBDOMAINS, () => HttpResponse.json({ subdomains: [] })),
+        emptySubdomains(),
         http.get(HISTORY, () => HttpResponse.json({ pages: 1 }))
       );
 

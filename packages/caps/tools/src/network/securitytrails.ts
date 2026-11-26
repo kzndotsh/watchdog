@@ -12,11 +12,32 @@ import { asNumber, asString, isRecord } from "../parse/coerce";
 const SOURCE = "api.securitytrails.com/v1";
 const BASE = "https://api.securitytrails.com/v1";
 
-export const securityTrailsIpSightingSchema = z.object({
-  ip: z.string(),
+/** The record types SecurityTrails keeps DNS history for, one quota query each. */
+export const SECURITYTRAILS_DNS_TYPES = [
+  "a",
+  "aaaa",
+  "mx",
+  "ns",
+  "soa",
+  "txt",
+] as const;
+export const securityTrailsDnsTypeSchema = z.enum(SECURITYTRAILS_DNS_TYPES);
+export type SecurityTrailsDnsType = z.infer<typeof securityTrailsDnsTypeSchema>;
+
+export const securityTrailsDnsSightingSchema = z.object({
+  /** An IP for A/AAAA, a host for MX/NS, the responsible mailbox for SOA, the record text for TXT. */
+  value: z.string(),
   firstSeen: z.string().nullable(),
   lastSeen: z.string().nullable(),
   organizations: z.array(z.string()),
+  /** The alias an A/AAAA answer came through, when there was one. */
+  cname: z.string().nullable(),
+});
+
+const dnsHistorySchema = z.object({
+  type: securityTrailsDnsTypeSchema,
+  pages: z.number().int().nullable(),
+  records: z.array(securityTrailsDnsSightingSchema),
 });
 
 const subdomainsPartSchema = z.object({
@@ -24,22 +45,19 @@ const subdomainsPartSchema = z.object({
   subdomainCount: z.number().int().nullable(),
 });
 
-const ipHistoryPartSchema = z.object({
-  ipHistory: z.array(securityTrailsIpSightingSchema),
-  historyPages: z.number().int().nullable(),
-});
-
 export const securityTrailsLookupSnapshotSchema = z.object({
   host: z.string().min(1),
   queriedAt: z.string().min(1),
   source: z.literal(SOURCE),
   ...subdomainsPartSchema.shape,
-  ...ipHistoryPartSchema.shape,
+  /** First page of history per requested record type, in request order. */
+  dnsHistory: z.array(dnsHistorySchema),
 });
 
-export type SecurityTrailsIpSighting = z.infer<
-  typeof securityTrailsIpSightingSchema
+export type SecurityTrailsDnsSighting = z.infer<
+  typeof securityTrailsDnsSightingSchema
 >;
+export type SecurityTrailsDnsHistory = z.infer<typeof dnsHistorySchema>;
 export type SecurityTrailsLookupSnapshot = z.infer<
   typeof securityTrailsLookupSnapshotSchema
 >;
@@ -62,32 +80,64 @@ function subdomainNames(host: string, labels: unknown): string[] {
   return names;
 }
 
-function ipSightings(
+function ipOrNull(raw: unknown): string | null {
+  const s = asString(raw);
+  if (s === null) return null;
+  try {
+    return normalizeIp(s);
+  } catch {
+    return null;
+  }
+}
+
+function hostOrNull(raw: unknown): string | null {
+  const s = asString(raw);
+  return s === null ? null : normalizeHost(s);
+}
+
+/** Where each record type keeps its value (observed live 2026-11-26 against github.com). */
+const VALUE_OF: Record<
+  SecurityTrailsDnsType,
+  (value: Record<string, unknown>) => string | null
+> = {
+  a: (v) => ipOrNull(v.ip),
+  aaaa: (v) => ipOrNull(v.ip),
+  mx: (v) => hostOrNull(v.host),
+  ns: (v) => hostOrNull(v.nameserver),
+  soa: (v) => asString(v.email),
+  /** TXT data is character strings: kept verbatim, spaces and empty strings included. */
+  txt: (v) => (typeof v.value === "string" ? v.value : null),
+};
+
+/** SOA history holds one value object per record; every other type holds a list. */
+function recordValues(values: unknown): unknown[] {
+  if (Array.isArray(values)) return values;
+  return isRecord(values) ? [values] : [];
+}
+
+function sightings(
   host: string,
+  type: SecurityTrailsDnsType,
   records: unknown
-): SecurityTrailsIpSighting[] {
+): SecurityTrailsDnsSighting[] {
   if (!Array.isArray(records)) throw parseVendorError("SecurityTrails", host);
-  const out: SecurityTrailsIpSighting[] = [];
+  const out: SecurityTrailsDnsSighting[] = [];
   for (const record of records) {
-    if (!isRecord(record) || !Array.isArray(record.values)) continue;
+    if (!isRecord(record)) continue;
     const organizations = Array.isArray(record.organizations)
       ? record.organizations.filter((o): o is string => typeof o === "string")
       : [];
-    for (const value of record.values) {
-      if (!isRecord(value)) continue;
-      const raw = asString(value.ip);
-      if (!raw) continue;
-      let ip: string;
-      try {
-        ip = normalizeIp(raw);
-      } catch {
-        continue;
-      }
+    const cname = hostOrNull(record.cname);
+    for (const raw of recordValues(record.values)) {
+      if (!isRecord(raw)) continue;
+      const value = VALUE_OF[type](raw);
+      if (value === null) continue;
       out.push({
-        ip,
-        firstSeen: asString(record.first_seen) ?? null,
-        lastSeen: asString(record.last_seen) ?? null,
+        value,
+        firstSeen: asString(record.first_seen),
+        lastSeen: asString(record.last_seen),
         organizations,
+        cname,
       });
     }
   }
@@ -117,32 +167,38 @@ const fetchSubdomains = defineJsonProvider({
   }),
 });
 
-/** First page of A-record history. @see https://docs.securitytrails.com/reference/dns-history-by-record-type-old-1 */
-const fetchIpHistory = defineJsonProvider({
+/** First page of one record type's history. @see https://docs.securitytrails.com/reference/dns-history-by-record-type-old-1 */
+const fetchDnsHistory = defineJsonProvider({
   service: "SecurityTrails",
-  schema: ipHistoryPartSchema,
+  schema: dnsHistorySchema,
   key: { header: "APIKEY" },
   normalize: normalizeHost,
-  request: (host, _options: SecurityTrailsOptions) => ({
-    url: `${BASE}/history/${encodeURIComponent(host)}/dns/a`,
+  request: (
+    host,
+    options: SecurityTrailsOptions & { type: SecurityTrailsDnsType }
+  ) => ({
+    url: `${BASE}/history/${encodeURIComponent(host)}/dns/${options.type}`,
   }),
-  notFound: () => ({ ipHistory: [], historyPages: 0 }),
-  toSnapshot: ({ subject, body }) => ({
-    ipHistory: ipSightings(subject, body.records),
-    historyPages: intOrNull(body.pages),
+  notFound: ({ options }) => ({ type: options.type, pages: 0, records: [] }),
+  toSnapshot: ({ subject, body, options }) => ({
+    type: options.type,
+    pages: intOrNull(body.pages),
+    records: sightings(subject, options.type, body.records),
   }),
 });
 
 /**
- * SecurityTrails subdomains plus the first page of A-record history for one domain: two calls,
- * so two units of the account's monthly quota. Key in the `APIKEY` header.
+ * SecurityTrails subdomains plus the first page of history for each requested record type: one
+ * quota query for the subdomains and one per type. Key in the `APIKEY` header.
  * @see https://docs.securitytrails.com/docs/authentication
  */
 export function fetchSecurityTrailsLookupEffect(
   hostRaw: string,
   key: string,
   signal: AbortSignal,
-  options: SecurityTrailsOptions
+  options: SecurityTrailsOptions & {
+    recordTypes: readonly SecurityTrailsDnsType[];
+  }
 ): Effect.Effect<
   SecurityTrailsLookupSnapshot,
   ToolsTag,
@@ -151,14 +207,20 @@ export function fetchSecurityTrailsLookupEffect(
   return Effect.gen(function* fetchSecurityTrailsLookupGen() {
     const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
-    const subdomains = yield* fetchSubdomains(host, key, signal, options);
-    const history = yield* fetchIpHistory(host, key, signal, options);
+    const { userAgent } = options;
+    const subdomains = yield* fetchSubdomains(host, key, signal, { userAgent });
+    const dnsHistory: SecurityTrailsDnsHistory[] = [];
+    for (const type of options.recordTypes) {
+      dnsHistory.push(
+        yield* fetchDnsHistory(host, key, signal, { userAgent, type })
+      );
+    }
     return securityTrailsLookupSnapshotSchema.parse({
       host,
       queriedAt,
       source: SOURCE,
       ...subdomains,
-      ...history,
+      dnsHistory,
     });
   });
 }

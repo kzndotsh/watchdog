@@ -11,17 +11,21 @@ import { foundOfType } from "../../lib/collect/found-values";
 import { securityTrails } from "../../providers";
 import { contact } from "../../sdk";
 import { securityTrailsLookupInput } from "./input";
-import { interpretSecurityTrailsLookupReport } from "./interpret";
+import {
+  historicalIps,
+  interpretSecurityTrailsLookupReport,
+} from "./interpret";
 
 export const securityTrailsLookup = defineCollectCap({
   id: "network.securitytrails.lookup",
   provider: securityTrails,
   title: "SecurityTrails lookup",
   description:
-    "Find a domain's subdomains and the IP addresses it has resolved to over time through SecurityTrails. Uses two queries of the account's monthly quota. Past resolutions do not show ownership.",
+    "Find a domain's subdomains and its DNS history (A by default; AAAA, MX, NS, SOA or TXT on request) through SecurityTrails. Uses one query of the account's monthly quota for the subdomains plus one per record type. Past records do not show ownership.",
   dataSource: "api.securitytrails.com/v1",
   input: securityTrailsLookupInput,
-  timeoutMs: 60_000,
+  /** Up to seven sequential requests (subdomains plus six record types) at 30 s each, with headroom. */
+  timeoutMs: 240_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.securitytrails.com", { keyed: true })],
@@ -54,11 +58,15 @@ export const securityTrailsLookup = defineCollectCap({
         host,
         key,
         ctx.signal,
-        { userAgent }
+        {
+          userAgent,
+          recordTypes: ctx.input.recordTypes,
+        }
       );
-      ctx.log(
-        `subdomains=${snap.subdomains.length} ipHistory=${snap.ipHistory.length}`
-      );
+      const history = snap.dnsHistory
+        .map((h) => `${h.type}=${h.records.length}`)
+        .join(" ");
+      ctx.log(`subdomains=${snap.subdomains.length} ${history}`);
       return { snap, artifactName: `securitytrails-${host}.json` };
     }),
   interpretSnap: interpretSecurityTrailsLookupReport,
@@ -66,8 +74,8 @@ export const securityTrailsLookup = defineCollectCap({
     ...foundOfType("domain", snap.subdomains, "Subdomain"),
     ...foundOfType(
       "ip",
-      snap.ipHistory.map((s) => s.ip),
-      "Historical A record"
+      historicalIps(snap.dnsHistory),
+      "Historical A/AAAA record"
     ),
   ],
 });
