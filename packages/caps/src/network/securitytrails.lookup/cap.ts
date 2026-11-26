@@ -24,7 +24,8 @@ export const securityTrailsLookup = defineCollectCap({
     "Find a domain's subdomains and its DNS history (A by default; AAAA, MX, NS, SOA or TXT on request) through SecurityTrails. Uses one query of the account's monthly quota for the subdomains plus one per record type. Past records do not show ownership.",
   dataSource: "api.securitytrails.com/v1",
   input: securityTrailsLookupInput,
-  timeoutMs: 60_000,
+  /** Up to seven sequential requests (subdomains plus six record types) at 30 s each, with headroom. */
+  timeoutMs: 240_000,
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   contacts: [contact.provider("api.securitytrails.com", { keyed: true })],

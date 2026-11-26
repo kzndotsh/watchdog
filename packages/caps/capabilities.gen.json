@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.securitytrails.lookup",
-    "version": "74b870686a12",
+    "version": "5206ff4f9f19",
     "title": "SecurityTrails lookup",
     "provider": {
       "name": "SecurityTrails",
@@ -2054,7 +2054,7 @@
       "Passive",
       "Footprint"
     ],
-    "timeoutMs": 60000,
+    "timeoutMs": 240000,
     "jobPolicy": {
       "cacheTtlMs": 21600000
     },
