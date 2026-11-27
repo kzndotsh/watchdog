@@ -12,7 +12,8 @@ import { CLAIM_CLASSES, CONFIDENCE_TIERS } from "./vocab";
  * The Case's Claim list (ADR-0007): one per Case. An Entity's Claims are this list with
  * `entityId` fixed (the Dossier Claims tab). Retracted Claims (retracted, contested or disproved)
  * are the `retracted` view, never mixed with the live ones, as hidden Evidence is: absent means
- * the live Claims. Oldest first by default, so a Claim keeps its number in the Dossier.
+ * the live Claims. `uncited` keeps the Claims that cite no Evidence (or, false, those that do).
+ * Oldest first by default, so a Claim keeps its number in the Dossier.
  */
 export const claimList = defineList({
   name: "claims",
@@ -20,6 +21,7 @@ export const claimList = defineList({
   scope: caseScopeInputSchema,
   filters: {
     retracted: flag("Retracted"),
+    uncited: flag("No Evidence"),
     class: choices("Class", CLAIM_CLASSES, CLAIM_CLASS_LABELS),
     confidence: choices("Confidence", CONFIDENCE_TIERS, CONFIDENCE_TIER_LABELS),
     entityId: ref("Entity", "entity"),

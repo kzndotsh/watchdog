@@ -1,4 +1,5 @@
 import {
+  countClaimsByConfidenceEffect,
   createClaimEffect,
   getClaimsByIdsEffect,
   listClaimsEffect,
@@ -7,6 +8,7 @@ import {
 } from "#core/graph";
 import {
   getClaimsInputSchema,
+  claimConfidenceCountsSchema,
   claimList,
   createClaimInputSchema,
   retractClaimInputSchema,
@@ -38,6 +40,30 @@ export const list = authed
   .output(claimListPageSchema)
   .handler(async ({ input, context }) =>
     runApp(listClaimsEffect(input.caseId, context.actor.organizationId, input))
+  );
+
+/**
+ * The Claims the list's filters and `q` match, per confidence tier, and how many cite no
+ * Evidence. Takes the list's input; cursor, limit and sort are ignored.
+ */
+export const confidenceCounts = authed
+  .meta({ scope: "cases:read" })
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/claims/confidence-counts",
+    summary: "Count claims in a case by confidence",
+    tags: ["claims"],
+  })
+  .input(claimList.input)
+  .output(claimConfidenceCountsSchema)
+  .handler(async ({ input, context }) =>
+    runApp(
+      countClaimsByConfidenceEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input
+      )
+    )
   );
 
 /**

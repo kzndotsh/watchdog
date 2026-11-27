@@ -32,6 +32,7 @@ const SCREEN_LABEL: Record<WorkScreen, string> = {
   entities: "Entities",
   identifiers: "Identifiers",
   graph: "Graph",
+  claims: "Claims",
   collect: "Collect",
   triage: "Triage",
   tasks: "Tasks",

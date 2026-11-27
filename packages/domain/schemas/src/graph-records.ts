@@ -162,6 +162,23 @@ export const identifierTypeCountsSchema = z.object({
   isCapped: z.boolean(),
 });
 export type IdentifierTypeCounts = z.infer<typeof identifierTypeCountsSchema>;
+
+/** A count that stops at `LIST_TOTAL_CAP + 1`: above the cap means "more than the cap". */
+const cappedCountSchema = z.number().int().nonnegative();
+
+/**
+ * `claims.confidenceCounts`: the Claims screen's tier cards. The Claims the list's other filters
+ * and `q` match, in all, per confidence tier, and those citing no Evidence (`uncited`). Each is
+ * its own count, capped at `LIST_TOTAL_CAP + 1`.
+ */
+export const claimConfidenceCountsSchema = z.object({
+  all: cappedCountSchema,
+  confirmed: cappedCountSchema,
+  possible: cappedCountSchema,
+  unverified: cappedCountSchema,
+  uncited: cappedCountSchema,
+});
+export type ClaimConfidenceCounts = z.infer<typeof claimConfidenceCountsSchema>;
 export const edgeListPageSchema = listPageSchema(caseEdgeSchema);
 
 /** An Entity picker's item (#573): label parts and kind, no notes, counts or Connection. */

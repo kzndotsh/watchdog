@@ -64,6 +64,7 @@ export const router = {
   },
   claims: {
     list: claims.list,
+    confidenceCounts: claims.confidenceCounts,
     getMany: claims.getMany,
     create: claims.create,
     update: claims.update,

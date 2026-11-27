@@ -29,6 +29,7 @@ import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1.$'
 import { Route as AuthAcceptInvitationInvitationIdRouteImport } from './routes/auth/accept-invitation.$invitationId'
 import { Route as ProtectedCasesCaseSlugIndexRouteImport } from './routes/_protected/cases/$caseSlug/index'
+import { Route as ProtectedCasesCaseSlugClaimsRouteImport } from './routes/_protected/cases/$caseSlug/claims'
 import { Route as ProtectedCasesCaseSlugCollectRouteImport } from './routes/_protected/cases/$caseSlug/collect'
 import { Route as ProtectedCasesCaseSlugGraphRouteImport } from './routes/_protected/cases/$caseSlug/graph'
 import { Route as ProtectedCasesCaseSlugIdentifiersRouteImport } from './routes/_protected/cases/$caseSlug/identifiers'
@@ -144,6 +145,12 @@ const ProtectedCasesCaseSlugIndexRoute =
     path: '/',
     getParentRoute: () => ProtectedCasesCaseSlugRoute,
   } as any)
+const ProtectedCasesCaseSlugClaimsRoute =
+  ProtectedCasesCaseSlugClaimsRouteImport.update({
+    id: '/claims',
+    path: '/claims',
+    getParentRoute: () => ProtectedCasesCaseSlugRoute,
+  } as any)
 const ProtectedCasesCaseSlugCollectRoute =
   ProtectedCasesCaseSlugCollectRouteImport.update({
     id: '/collect',
@@ -242,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/cases/': typeof ProtectedCasesIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/ui/': typeof ProtectedUiIndexRoute
+  '/cases/$caseSlug/claims': typeof ProtectedCasesCaseSlugClaimsRoute
   '/cases/$caseSlug/collect': typeof ProtectedCasesCaseSlugCollectRoute
   '/cases/$caseSlug/graph': typeof ProtectedCasesCaseSlugGraphRoute
   '/cases/$caseSlug/identifiers': typeof ProtectedCasesCaseSlugIdentifiersRoute
@@ -275,6 +283,7 @@ export interface FileRoutesByTo {
   '/cases': typeof ProtectedCasesIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/ui': typeof ProtectedUiIndexRoute
+  '/cases/$caseSlug/claims': typeof ProtectedCasesCaseSlugClaimsRoute
   '/cases/$caseSlug/collect': typeof ProtectedCasesCaseSlugCollectRoute
   '/cases/$caseSlug/graph': typeof ProtectedCasesCaseSlugGraphRoute
   '/cases/$caseSlug/identifiers': typeof ProtectedCasesCaseSlugIdentifiersRoute
@@ -311,6 +320,7 @@ export interface FileRoutesById {
   '/_protected/cases/': typeof ProtectedCasesIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_protected/ui/': typeof ProtectedUiIndexRoute
+  '/_protected/cases/$caseSlug/claims': typeof ProtectedCasesCaseSlugClaimsRoute
   '/_protected/cases/$caseSlug/collect': typeof ProtectedCasesCaseSlugCollectRoute
   '/_protected/cases/$caseSlug/graph': typeof ProtectedCasesCaseSlugGraphRoute
   '/_protected/cases/$caseSlug/identifiers': typeof ProtectedCasesCaseSlugIdentifiersRoute
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/cases/'
     | '/settings/'
     | '/ui/'
+    | '/cases/$caseSlug/claims'
     | '/cases/$caseSlug/collect'
     | '/cases/$caseSlug/graph'
     | '/cases/$caseSlug/identifiers'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/cases'
     | '/settings'
     | '/ui'
+    | '/cases/$caseSlug/claims'
     | '/cases/$caseSlug/collect'
     | '/cases/$caseSlug/graph'
     | '/cases/$caseSlug/identifiers'
@@ -415,6 +427,7 @@ export interface FileRouteTypes {
     | '/_protected/cases/'
     | '/_protected/settings/'
     | '/_protected/ui/'
+    | '/_protected/cases/$caseSlug/claims'
     | '/_protected/cases/$caseSlug/collect'
     | '/_protected/cases/$caseSlug/graph'
     | '/_protected/cases/$caseSlug/identifiers'
@@ -587,6 +600,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedCasesCaseSlugIndexRouteImport
       parentRoute: typeof ProtectedCasesCaseSlugRoute
     }
+    '/_protected/cases/$caseSlug/claims': {
+      id: '/_protected/cases/$caseSlug/claims'
+      path: '/claims'
+      fullPath: '/cases/$caseSlug/claims'
+      preLoaderRoute: typeof ProtectedCasesCaseSlugClaimsRouteImport
+      parentRoute: typeof ProtectedCasesCaseSlugRoute
+    }
     '/_protected/cases/$caseSlug/collect': {
       id: '/_protected/cases/$caseSlug/collect'
       path: '/collect'
@@ -682,6 +702,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedCasesCaseSlugRouteChildren {
+  ProtectedCasesCaseSlugClaimsRoute: typeof ProtectedCasesCaseSlugClaimsRoute
   ProtectedCasesCaseSlugCollectRoute: typeof ProtectedCasesCaseSlugCollectRoute
   ProtectedCasesCaseSlugGraphRoute: typeof ProtectedCasesCaseSlugGraphRoute
   ProtectedCasesCaseSlugIdentifiersRoute: typeof ProtectedCasesCaseSlugIdentifiersRoute
@@ -694,6 +715,7 @@ interface ProtectedCasesCaseSlugRouteChildren {
 
 const ProtectedCasesCaseSlugRouteChildren: ProtectedCasesCaseSlugRouteChildren =
   {
+    ProtectedCasesCaseSlugClaimsRoute: ProtectedCasesCaseSlugClaimsRoute,
     ProtectedCasesCaseSlugCollectRoute: ProtectedCasesCaseSlugCollectRoute,
     ProtectedCasesCaseSlugGraphRoute: ProtectedCasesCaseSlugGraphRoute,
     ProtectedCasesCaseSlugIdentifiersRoute:

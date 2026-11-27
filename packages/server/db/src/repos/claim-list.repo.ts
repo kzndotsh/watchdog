@@ -1,8 +1,10 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, notExists } from "drizzle-orm";
+import { QueryBuilder } from "drizzle-orm/pg-core";
 
 import { claimList } from "@watchdog/domain/schemas/graph";
 
 import { claims } from "../schema/claims";
+import { claimEvidence } from "../schema/evidence-links";
 import { defineListRepo } from "./_list-query";
 import { claimColumns } from "./claims.repo";
 
@@ -28,6 +30,21 @@ export const claimListRepo = defineListRepo(claimList, {
     confidence: (tiers) =>
       tiers.length > 0 ? inArray(claims.confidence, [...tiers]) : undefined,
     entityId: (id) => (id === null ? undefined : eq(claims.entityId, id)),
+    // `claim_evidence`'s primary key `(claim_id, evidence_id)` serves the probe.
+    uncited: (isUncited) =>
+      isUncited
+        ? notExists(
+            new QueryBuilder()
+              .select({ one: claimEvidence.claimId })
+              .from(claimEvidence)
+              .where(
+                and(
+                  eq(claimEvidence.claimId, claims.id),
+                  eq(claimEvidence.caseId, claims.caseId)
+                )
+              )
+          )
+        : undefined,
   },
   // `claims_entity_created_idx (entity_id, created_at, id)`
   selective: { entityId: claims.entityId },

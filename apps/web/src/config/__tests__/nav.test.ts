@@ -17,6 +17,7 @@ describe("nav config", () => {
 
   it("exposes case and workspace nav groups", () => {
     expect(CASE_NAV_ITEMS.map((item) => item.screen)).toEqual([
+      "claims",
       "entities",
       "identifiers",
       "graph",

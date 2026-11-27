@@ -13,6 +13,8 @@ import {
   eventList,
   questionList,
 } from "@watchdog/domain/schemas/graph";
+import type { ClaimConfidenceCounts } from "@watchdog/domain/schemas/graph";
+import { LIST_TOTAL_CAP, opsOf } from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ListInput,
@@ -23,7 +25,11 @@ import type {
 import { assertCaseInOrgEffect } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import {
+  listByIdsEffect,
+  listCountsByEffect,
+  listPageEffect,
+} from "../infra/list-page";
 import { inOrganization } from "../infra/organization-scope";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { toCaseEdgeRecord, type CaseEdgeRecord } from "./edges";
@@ -82,6 +88,44 @@ export function listClaimsEffect(
       scope: { caseId: scopedCaseId },
       input,
       toItems: claimItems,
+    });
+  });
+  return inOrganization(organizationId, program);
+}
+
+/**
+ * The Claims screen's tier cards (`claims.confidenceCounts`): the Claims the list's other filters
+ * and `q` match, in all and per confidence tier, and those citing no Evidence. The `confidence`
+ * and `uncited` filters in `input` are ignored (each card applies its own), as are cursor, limit
+ * and sort. Each card is its own count, capped at `LIST_TOTAL_CAP + 1`.
+ */
+export function countClaimsByConfidenceEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: ListInput<typeof claimList>
+): Effect.Effect<ClaimConfidenceCounts, DomainTag, Db> {
+  const program = Effect.gen(function* countClaimsByConfidenceGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const query = opsOf(claimList).queryOf(input);
+    const base = { ...query.filters, confidence: [], uncited: false };
+    const countOf = (filters: Partial<typeof query.filters>) =>
+      listCountsByEffect({
+        repo: claimListRepo,
+        scope: { caseId: scopedCaseId },
+        query: { ...query, filters: { ...base, ...filters } },
+        key: "confidence",
+        cap: LIST_TOTAL_CAP,
+      }).pipe(
+        Effect.map(({ counts }) =>
+          counts.reduce((sum, row) => sum + row.count, 0)
+        )
+      );
+    return yield* Effect.all({
+      all: countOf({}),
+      confirmed: countOf({ confidence: ["confirmed"] }),
+      possible: countOf({ confidence: ["possible"] }),
+      unverified: countOf({ confidence: ["unverified"] }),
+      uncited: countOf({ uncited: true }),
     });
   });
   return inOrganization(organizationId, program);

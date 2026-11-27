@@ -1,4 +1,4 @@
-import { claims, type DbExec } from "#db";
+import { claimEvidence, claims, type DbExec } from "#db";
 import type {
   CaseId,
   ClaimClass,
@@ -8,6 +8,7 @@ import { testId } from "@watchdog/domain/test-kit/fixtures";
 
 import { seedCase } from "../seed/case.ts";
 import { seedEntity } from "../seed/entity.ts";
+import { seedEvidence } from "../seed/evidence.ts";
 import { withSystemHistoryContext } from "../system-history-context.ts";
 import { at, inChoices } from "./types.ts";
 import type { ListConformance } from "./types.ts";
@@ -23,13 +24,14 @@ type Seeded = {
   readonly confidence: ConfidenceTier;
   readonly text: string;
   readonly isRetracted?: boolean;
+  readonly isCited?: boolean;
   readonly minute: number;
 };
 
 /*
  * Ids rise with `n`. Added minutes tie in threes (10) and twos (20); c04 and c06 are retracted,
  * so the default view (the live Claims) holds six rows and every walk crosses a tie at a page
- * boundary (page size 2).
+ * boundary (page size 2). c03 and c05 cite Evidence; the rest are uncited.
  */
 const ROWS: readonly Seeded[] = [
   {
@@ -54,6 +56,7 @@ const ROWS: readonly Seeded[] = [
     class: "observation",
     confidence: "confirmed",
     text: "bravo seen",
+    isCited: true,
     minute: 10,
   },
   {
@@ -71,6 +74,7 @@ const ROWS: readonly Seeded[] = [
     class: "observation",
     confidence: "confirmed",
     text: "india example.test",
+    isCited: true,
     minute: 30,
   },
   {
@@ -132,6 +136,7 @@ export const claimConformance: ListConformance = {
       class: row.class,
       confidence: row.confidence,
       retracted: row.isRetracted === true,
+      cited: row.isCited === true,
     },
   })),
   async seed(exec: DbExec) {
@@ -144,6 +149,7 @@ export const claimConformance: ListConformance = {
       name: "Decoy",
       slug: "decoy",
     });
+    const evidence = await seedEvidence(exec, owner.id, { label: "Cited" });
     await withSystemHistoryContext(exec, async (tx) => {
       await tx
         .insert(claims)
@@ -152,6 +158,19 @@ export const claimConformance: ListConformance = {
             insertValues(seeded, owner.id, entityIdOf(seeded.entity))
           )
         );
+      await tx.insert(claimEvidence).values(
+        ROWS.flatMap((seeded) =>
+          seeded.isCited === true
+            ? [
+                {
+                  claimId: testId(1100 + seeded.n),
+                  evidenceId: evidence.id,
+                  caseId: owner.id,
+                },
+              ]
+            : []
+        )
+      );
       // A decoy in another Case that matches every search and sits first in every order.
       await tx.insert(claims).values(
         insertValues(
@@ -184,12 +203,14 @@ export const claimConformance: ListConformance = {
     class: (facts, classes) => inChoices(classes, facts.class),
     confidence: (facts, tiers) => inChoices(tiers, facts.confidence),
     entityId: (facts, id) => id === null || facts.entityId === id,
+    uncited: (facts, isUncited) => isUncited !== true || facts.cited !== true,
   },
   samples: {
     retracted: [true],
     class: [["observation"], ["allegation", "other"]],
     confidence: [["possible"]],
     entityId: [ENTITY_A, ENTITY_B, testId(1199)],
+    uncited: [true],
   },
   searches: [
     { q: "example.test", expect: ["c08", "c05"] },
