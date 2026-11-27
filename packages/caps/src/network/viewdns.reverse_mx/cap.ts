@@ -18,7 +18,7 @@ export const viewDnsReverseMx = defineCollectCap({
   provider: viewDns,
   title: "ViewDNS reverse mail server",
   description:
-    "List domains that use a given mail server, through ViewDNS. Uses one ViewDNS query. Sharing a mail server does not show common ownership.",
+    "List domains that use a given mail server, through ViewDNS. Sharing a mail server does not show common ownership.",
   dataSource: "api.viewdns.info/reversemx",
   input: viewDnsReverseMxInput,
   timeoutMs: 60_000,

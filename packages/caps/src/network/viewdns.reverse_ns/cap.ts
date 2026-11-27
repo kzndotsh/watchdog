@@ -18,7 +18,7 @@ export const viewDnsReverseNs = defineCollectCap({
   provider: viewDns,
   title: "ViewDNS reverse nameserver",
   description:
-    "List domains that use a given nameserver, through ViewDNS. Uses one ViewDNS query. Sharing a nameserver does not show common ownership.",
+    "List domains that use a given nameserver, through ViewDNS. Sharing a nameserver does not show common ownership.",
   dataSource: "api.viewdns.info/reversens",
   input: viewDnsReverseNsInput,
   timeoutMs: 60_000,

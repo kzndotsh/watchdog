@@ -2066,7 +2066,7 @@
   },
   {
     "id": "network.viewdns.reverse_whois",
-    "version": "3a0165727bcd",
+    "version": "809d67a13b4d",
     "title": "ViewDNS reverse WHOIS",
     "provider": {
       "name": "ViewDNS",
@@ -2117,7 +2117,7 @@
         "query"
       ]
     },
-    "description": "List domains whose WHOIS record mentions an email address, person or organization, through ViewDNS. Needs a paid ViewDNS plan: a trial key still uses a query and gets nothing back. A WHOIS match does not prove the same registrant.",
+    "description": "List domains whose WHOIS record mentions an email address, person or organization, through ViewDNS. A WHOIS match does not prove the same registrant.",
     "dataSource": "api.viewdns.info/reversewhois",
     "kind": "collect",
     "flags": [
@@ -2156,7 +2156,7 @@
   },
   {
     "id": "network.viewdns.reverse_ns",
-    "version": "1d5e0ccc5cc2",
+    "version": "e80c9a245567",
     "title": "ViewDNS reverse nameserver",
     "provider": {
       "name": "ViewDNS",
@@ -2207,7 +2207,7 @@
         "host"
       ]
     },
-    "description": "List domains that use a given nameserver, through ViewDNS. Uses one ViewDNS query. Sharing a nameserver does not show common ownership.",
+    "description": "List domains that use a given nameserver, through ViewDNS. Sharing a nameserver does not show common ownership.",
     "dataSource": "api.viewdns.info/reversens",
     "kind": "collect",
     "flags": [
@@ -2245,7 +2245,7 @@
   },
   {
     "id": "network.viewdns.reverse_mx",
-    "version": "d7fbefc15dd8",
+    "version": "6c4db77f1d51",
     "title": "ViewDNS reverse mail server",
     "provider": {
       "name": "ViewDNS",
@@ -2296,7 +2296,7 @@
         "host"
       ]
     },
-    "description": "List domains that use a given mail server, through ViewDNS. Uses one ViewDNS query. Sharing a mail server does not show common ownership.",
+    "description": "List domains that use a given mail server, through ViewDNS. Sharing a mail server does not show common ownership.",
     "dataSource": "api.viewdns.info/reversemx",
     "kind": "collect",
     "flags": [

@@ -17,7 +17,7 @@ export const viewDnsReverseWhois = defineCollectCap({
   provider: viewDns,
   title: "ViewDNS reverse WHOIS",
   description:
-    "List domains whose WHOIS record mentions an email address, person or organization, through ViewDNS. Needs a paid ViewDNS plan: a trial key still uses a query and gets nothing back. A WHOIS match does not prove the same registrant.",
+    "List domains whose WHOIS record mentions an email address, person or organization, through ViewDNS. A WHOIS match does not prove the same registrant.",
   dataSource: "api.viewdns.info/reversewhois",
   input: viewDnsReverseWhoisInput,
   timeoutMs: 60_000,
