@@ -102,7 +102,7 @@ function Route({
   );
 }
 
-function renderPage(initial: Search = {}) {
+function renderPage(initial: Search = {}, countsFailOnce = false) {
   listClaims.mockReset();
   listClaims.mockImplementation(
     memoryListProcedure(CLAIMS, {
@@ -116,13 +116,13 @@ function renderPage(initial: Search = {}) {
   );
   countClaims.mockReset();
   countClaims.mockResolvedValue({
-    counts: [
-      { confidence: "possible", count: 1 },
-      { confidence: "unverified", count: 1 },
-    ],
+    all: 1001,
+    confirmed: 0,
+    possible: 1,
+    unverified: 1,
     uncited: 1,
-    isCapped: false,
   });
+  if (countsFailOnce) countClaims.mockRejectedValueOnce(new Error("boom"));
   getEntities.mockResolvedValue([ADA]);
   const onPatch = vi.fn();
   const client = new QueryClient({
@@ -161,13 +161,39 @@ describe("ClaimsPage", () => {
     });
     expect(await within(unverified).findByText("1")).toBeVisible();
     expect(
-      within(screen.getByRole("button", { name: /^All/ })).getByText("2")
+      within(screen.getByRole("button", { name: /^All/ })).getByText("1,000+")
     ).toBeVisible();
     expect(screen.getByRole("button", { name: /^Possible/ })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
     expect(countClaims).toHaveBeenCalledWith({ caseId: ACTIVE.id });
+  });
+
+  it("selects no card when the tier filters match none", async () => {
+    renderPage({ confidence: ["possible", "unverified"] });
+    await screen.findByText("Registered ada.example");
+
+    expect(screen.queryAllByRole("button", { pressed: true })).toEqual([]);
+  });
+
+  it("shows a retryable error, not a loading count, when the counts fail", async () => {
+    const user = userEvent.setup();
+    renderPage({}, true);
+
+    expect(
+      await screen.findByText("Couldn't load the Claim counts.")
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole("button", { name: /^All/ })).getByText("—")
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(
+      await within(screen.getByRole("button", { name: /^All/ })).findByText(
+        "1,000+"
+      )
+    ).toBeVisible();
   });
 
   it("writes the tier to the URL when a card is picked, and No Evidence as `uncited`", async () => {

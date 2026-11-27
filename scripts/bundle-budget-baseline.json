@@ -6,6 +6,7 @@
     "/_protected/cases/": 20601,
     "/_protected/cases/$caseSlug": 1434,
     "/_protected/cases/$caseSlug/": 63721,
+    "/_protected/cases/$caseSlug/claims": 35800,
     "/_protected/cases/$caseSlug/collect": 167334,
     "/_protected/cases/$caseSlug/entities/": 88210,
     "/_protected/cases/$caseSlug/entities/$entitySlug": 226315,

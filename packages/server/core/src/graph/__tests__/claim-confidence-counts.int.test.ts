@@ -52,7 +52,7 @@ describe("countClaimsByConfidence", () => {
     await claim(ada.id, "Registered ada.example", "possible", [evidence.id]);
     await claim(ada.id, "Uses the handle ada88", "unverified");
     await claim(ada.id, "Runs a mail server", "unverified");
-    await claim(acme.id, "Incorporated in 2021", "possible");
+    await claim(acme.id, "Incorporated by ada in 2021", "possible");
     const input = (extra: Record<string, unknown>) =>
       claimList.input.parse({ caseId: cased.id, ...extra });
     const counts = async (extra: Record<string, unknown>) =>
@@ -68,30 +68,50 @@ describe("countClaimsByConfidence", () => {
     return { ada, counts, list };
   }
 
-  it("counts the Case's Claims per tier and those citing no Evidence", async () => {
+  it("counts the Case's Claims in all, per tier and those citing no Evidence", async () => {
     const { counts } = await seedClaims();
 
     expect(await counts({})).toEqual({
-      counts: [
-        { confidence: "possible", count: 2 },
-        { confidence: "unverified", count: 2 },
-      ],
+      all: 4,
+      confirmed: 0,
+      possible: 2,
+      unverified: 2,
       uncited: 3,
-      isCapped: false,
     });
   });
 
-  it("applies the list's filters and q", async () => {
+  it("applies the Entity filter and q, each on its own", async () => {
     const { ada, counts } = await seedClaims();
 
-    expect(await counts({ entityId: ada.id, q: "ada" })).toEqual({
-      counts: [
-        { confidence: "possible", count: 1 },
-        { confidence: "unverified", count: 1 },
-      ],
-      uncited: 1,
-      isCapped: false,
+    expect(await counts({ entityId: ada.id })).toEqual({
+      all: 3,
+      confirmed: 0,
+      possible: 1,
+      unverified: 2,
+      uncited: 2,
     });
+    expect(await counts({ q: "ada" })).toEqual({
+      all: 3,
+      confirmed: 0,
+      possible: 2,
+      unverified: 1,
+      uncited: 2,
+    });
+    expect(await counts({ entityId: ada.id, q: "ada" })).toEqual({
+      all: 2,
+      confirmed: 0,
+      possible: 1,
+      unverified: 1,
+      uncited: 1,
+    });
+  });
+
+  it("ignores the tier and uncited filters, which each card applies itself", async () => {
+    const { counts } = await seedClaims();
+
+    expect(await counts({ confidence: ["possible"], uncited: true })).toEqual(
+      await counts({})
+    );
   });
 
   it("lists only the Claims citing no Evidence under the uncited filter", async () => {
@@ -102,7 +122,7 @@ describe("countClaimsByConfidence", () => {
     expect(page.items.map((row) => row.text)).toEqual([
       "Uses the handle ada88",
       "Runs a mail server",
-      "Incorporated in 2021",
+      "Incorporated by ada in 2021",
     ]);
   });
 });

@@ -39,9 +39,9 @@ export const claimListView = listView(claimList, {
 });
 
 /**
- * The Claims screen's tier tabs (`claims.confidenceCounts`): the view's Claims per confidence tier
- * and those citing no Evidence, counted with the tier and `uncited` filters cleared so every tab
- * keeps its count whichever is open. Under `claimsKeys.all`, so it refreshes with the list.
+ * The Claims screen's tier cards (`claims.confidenceCounts`). The server ignores the tier and
+ * `uncited` filters, so they are cleared here too: every card's view shares one cache entry.
+ * Under `claimsKeys.all`, so it refreshes with the list.
  */
 export const claimConfidenceCountsQuery = (
   caseId: string,
@@ -58,7 +58,6 @@ export const claimConfidenceCountsQuery = (
     queryKey: orpc.claims.confidenceCounts.queryKey({ input }),
     queryFn: async () => orpc.claims.confidenceCounts.call(input),
     enabled: scopeCaseIdEnabled(caseId),
-    placeholderData: (previous) => previous,
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
   });

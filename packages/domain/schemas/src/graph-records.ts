@@ -13,7 +13,7 @@ import {
 import { caseIdSchema } from "./ids";
 import { listPageSchema } from "./lists/list-page";
 import { boundedListSchema } from "./pagination";
-import { CONFIDENCE_TIERS, IDENTIFIER_TYPES } from "./vocab";
+import { IDENTIFIER_TYPES } from "./vocab";
 
 export const entitySchema = z.object({
   id: z.uuid(),
@@ -163,21 +163,20 @@ export const identifierTypeCountsSchema = z.object({
 });
 export type IdentifierTypeCounts = z.infer<typeof identifierTypeCountsSchema>;
 
+/** A count that stops at `LIST_TOTAL_CAP + 1`: above the cap means "more than the cap". */
+const cappedCountSchema = z.number().int().nonnegative();
+
 /**
- * `claims.confidenceCounts`: the Claims the list's filters and `q` match, per confidence tier
- * (tiers with none left out), and how many of them cite no Evidence (`uncited`). Each count stops
- * at `LIST_TOTAL_CAP + 1` matching rows: `isCapped` means a count stopped there.
+ * `claims.confidenceCounts`: the Claims screen's tier cards. The Claims the list's other filters
+ * and `q` match, in all, per confidence tier, and those citing no Evidence (`uncited`). Each is
+ * its own count, capped at `LIST_TOTAL_CAP + 1`.
  */
 export const claimConfidenceCountsSchema = z.object({
-  counts: boundedListSchema(
-    z.object({
-      confidence: confidenceTierSchema,
-      count: z.number().int().positive(),
-    }),
-    CONFIDENCE_TIERS.length
-  ),
-  uncited: z.number().int().nonnegative(),
-  isCapped: z.boolean(),
+  all: cappedCountSchema,
+  confirmed: cappedCountSchema,
+  possible: cappedCountSchema,
+  unverified: cappedCountSchema,
+  uncited: cappedCountSchema,
 });
 export type ClaimConfidenceCounts = z.infer<typeof claimConfidenceCountsSchema>;
 export const edgeListPageSchema = listPageSchema(caseEdgeSchema);

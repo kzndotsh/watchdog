@@ -20,6 +20,7 @@ import { PageHeader } from "@/shared/layout/page-header";
 import { Chip } from "@/shared/ui/chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { EntityMention } from "@/shared/ui/entity-mention";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ListBody, ListCount, ListToolbar } from "@/shared/ui/list";
 import {
   ClaimClassBadge,
@@ -56,10 +57,14 @@ const CLAIM_TIER_CARDS = [
 ] as const;
 type ClaimTierCard = (typeof CLAIM_TIER_CARDS)[number];
 
-function cardOf(query: ListQuery<typeof claimList>): ClaimTierCard {
-  if (query.filters.uncited) return "uncited";
-  const tiers = query.filters.confidence;
-  return tiers.length === 1 && tiers[0] !== undefined ? tiers[0] : "all";
+/** The card whose filter is exactly the view's tier filters, or `null` for any other mix. */
+function cardOf(query: ListQuery<typeof claimList>): ClaimTierCard | null {
+  const { uncited, confidence } = query.filters;
+  if (uncited) return confidence.length === 0 ? "uncited" : null;
+  if (confidence.length === 0) return "all";
+  return confidence.length === 1 && confidence[0] !== undefined
+    ? confidence[0]
+    : null;
 }
 
 function patchOf(
@@ -76,34 +81,28 @@ function cardLabel(card: ClaimTierCard): string {
   return CONFIDENCE_TIER_LABELS[card];
 }
 
-function countOf(card: ClaimTierCard, counts: ClaimConfidenceCounts): number {
-  if (card === "all") {
-    return counts.counts.reduce((sum, row) => sum + row.count, 0);
-  }
-  if (card === "uncited") return counts.uncited;
-  return counts.counts.find((row) => row.confidence === card)?.count ?? 0;
-}
-
-/** A card's count: "…" while the counts load, "1,000+" once a count stops at the cap. */
+/** A card's count: "…" while the counts load, "—" if they failed, "1,000+" past the cap. */
 function countText(
   card: ClaimTierCard,
-  counts: ClaimConfidenceCounts | undefined
+  counts: ClaimConfidenceCounts | undefined,
+  isError: boolean
 ): string {
-  if (counts === undefined) return "…";
-  const n = countOf(card, counts);
-  return counts.isCapped && n > LIST_TOTAL_CAP
+  if (counts === undefined) return isError ? "—" : "…";
+  const n = counts[card];
+  return n > LIST_TOTAL_CAP
     ? `${LIST_TOTAL_CAP.toLocaleString()}+`
     : n.toLocaleString();
 }
 
 type TierCardsProps = {
-  selected: ClaimTierCard;
+  selected: ClaimTierCard | null;
   counts: ClaimConfidenceCounts | undefined;
+  isError: boolean;
   onPick: (card: ClaimTierCard) => void;
 };
 
 /** One card per tier, each a filter. The counts come from the server, whatever page is loaded. */
-function TierCards({ selected, counts, onPick }: TierCardsProps) {
+function TierCards({ selected, counts, isError, onPick }: TierCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
       {CLAIM_TIER_CARDS.map((card) => (
@@ -130,7 +129,7 @@ function TierCards({ selected, counts, onPick }: TierCardsProps) {
               card === "uncited" && "text-warning"
             )}
           >
-            {countText(card, counts)}
+            {countText(card, counts, isError)}
           </span>
         </button>
       ))}
@@ -230,8 +229,15 @@ function ClaimsActive({ active, search, onSearchChange }: ClaimsActiveProps) {
         <TierCards
           selected={cardOf(list.query)}
           counts={counts.data}
+          isError={counts.isError}
           onPick={(card) => {
             onSearchChange(patchOf(card));
+          }}
+        />
+        <FetchErrorAlert
+          error={counts.isError ? "Couldn't load the Claim counts." : null}
+          onRetry={() => {
+            void counts.refetch();
           }}
         />
         <ListToolbar

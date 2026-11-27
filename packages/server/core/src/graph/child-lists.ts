@@ -14,11 +14,7 @@ import {
   questionList,
 } from "@watchdog/domain/schemas/graph";
 import type { ClaimConfidenceCounts } from "@watchdog/domain/schemas/graph";
-import {
-  CONFIDENCE_TIERS,
-  LIST_TOTAL_CAP,
-  opsOf,
-} from "@watchdog/domain/schemas/shared";
+import { LIST_TOTAL_CAP, opsOf } from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ListInput,
@@ -98,9 +94,10 @@ export function listClaimsEffect(
 }
 
 /**
- * The Claims the list's filters and `q` match, per confidence tier, and how many of them cite no
- * Evidence (`claims.confidenceCounts`): the Claims screen's tiles. Cursor, limit and sort in
- * `input` are ignored.
+ * The Claims screen's tier cards (`claims.confidenceCounts`): the Claims the list's other filters
+ * and `q` match, in all and per confidence tier, and those citing no Evidence. The `confidence`
+ * and `uncited` filters in `input` are ignored (each card applies its own), as are cursor, limit
+ * and sort. Each card is its own count, capped at `LIST_TOTAL_CAP + 1`.
  */
 export function countClaimsByConfidenceEffect(
   caseId: CaseId,
@@ -110,28 +107,26 @@ export function countClaimsByConfidenceEffect(
   const program = Effect.gen(function* countClaimsByConfidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const query = opsOf(claimList).queryOf(input);
-    const countBy = (filters: typeof query.filters) =>
+    const base = { ...query.filters, confidence: [], uncited: false };
+    const countOf = (filters: Partial<typeof query.filters>) =>
       listCountsByEffect({
         repo: claimListRepo,
         scope: { caseId: scopedCaseId },
-        query: { ...query, filters },
+        query: { ...query, filters: { ...base, ...filters } },
         key: "confidence",
         cap: LIST_TOTAL_CAP,
-      });
-    const all = yield* countBy(query.filters);
-    const uncited = yield* countBy({ ...query.filters, uncited: true });
-    return {
-      counts: all.counts.flatMap((row) => {
-        const confidence = CONFIDENCE_TIERS.find(
-          (known) => known === row.value
-        );
-        return confidence === undefined
-          ? []
-          : [{ confidence, count: row.count }];
-      }),
-      uncited: uncited.counts.reduce((sum, row) => sum + row.count, 0),
-      isCapped: all.isCapped || uncited.isCapped,
-    };
+      }).pipe(
+        Effect.map(({ counts }) =>
+          counts.reduce((sum, row) => sum + row.count, 0)
+        )
+      );
+    return yield* Effect.all({
+      all: countOf({}),
+      confirmed: countOf({ confidence: ["confirmed"] }),
+      possible: countOf({ confidence: ["possible"] }),
+      unverified: countOf({ confidence: ["unverified"] }),
+      uncited: countOf({ uncited: true }),
+    });
   });
   return inOrganization(organizationId, program);
 }

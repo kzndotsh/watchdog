@@ -65,9 +65,11 @@ export const primaryRoutes: RouteSmoke[] = [
     path: "/cases/$caseSlug/claims",
     axe: true,
     ready: async (page) => {
-      await expect(page.getByRole("button", { name: /^All/ })).toBeVisible({
-        timeout: 30_000,
-      });
+      // Loaded, not just painted: the counts have landed ("…" is the loading count).
+      await expect(page.getByRole("button", { name: /^All/ })).toHaveText(
+        /^All\d/,
+        { timeout: 30_000 }
+      );
     },
   },
   {
