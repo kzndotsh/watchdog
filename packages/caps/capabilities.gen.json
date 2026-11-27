@@ -167,7 +167,7 @@
   },
   {
     "id": "network.ip.lookup",
-    "version": "b7fd7ab12ab7",
+    "version": "54e2036aa083",
     "title": "IP lookup",
     "provider": {
       "name": "Team Cymru",
@@ -257,7 +257,7 @@
   },
   {
     "id": "network.ipctl.lookup",
-    "version": "a1e8219afadb",
+    "version": "f20c06f258b5",
     "title": "ipctl IP lookup",
     "provider": {
       "name": "ipctl",
@@ -348,7 +348,7 @@
   },
   {
     "id": "network.ipinfo.lookup",
-    "version": "e89c045eabbc",
+    "version": "e4984ee109e5",
     "title": "IPinfo lookup",
     "provider": {
       "name": "IPinfo",
@@ -441,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "9d7ce58c6870",
+    "version": "ca0dbad4696b",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "06f20d66db8e",
+    "version": "35916f9f7123",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
@@ -606,7 +606,7 @@
   },
   {
     "id": "network.whoxy.lookup",
-    "version": "e525387fc74d",
+    "version": "88e4901498d7",
     "title": "Whoxy lookup",
     "provider": {
       "name": "Whoxy",
@@ -699,7 +699,7 @@
   },
   {
     "id": "network.ct.lookup",
-    "version": "864c431a73bf",
+    "version": "c3a3b5d96874",
     "title": "Certificate transparency",
     "provider": {
       "name": "crt.sh",
@@ -792,7 +792,7 @@
   },
   {
     "id": "network.certspotter.lookup",
-    "version": "cf4ca343f294",
+    "version": "6137cb28fa9c",
     "title": "Cert Spotter",
     "provider": {
       "name": "Cert Spotter",
@@ -875,7 +875,7 @@
   },
   {
     "id": "network.c99.lookup",
-    "version": "b32775614f20",
+    "version": "b212e5a723da",
     "title": "C99 subdomain finder",
     "provider": {
       "name": "C99",
@@ -968,7 +968,7 @@
   },
   {
     "id": "network.hackertarget.lookup",
-    "version": "55536844fd59",
+    "version": "9cd403ff5cbf",
     "title": "HackerTarget reverse IP",
     "provider": {
       "name": "HackerTarget",
@@ -1055,7 +1055,7 @@
   },
   {
     "id": "network.mnemonic.lookup",
-    "version": "ca70829519c3",
+    "version": "1c2fdafc6687",
     "title": "Mnemonic PassiveDNS",
     "provider": {
       "name": "mnemonic",
@@ -1145,7 +1145,7 @@
   },
   {
     "id": "network.urlscan.lookup",
-    "version": "b7467a644743",
+    "version": "bdc2cd277251",
     "title": "URLScan search",
     "provider": {
       "name": "urlscan.io",
@@ -1232,7 +1232,7 @@
   },
   {
     "id": "network.urlscan.submit",
-    "version": "95e53c9c7bd8",
+    "version": "93e172658165",
     "title": "URLScan submit",
     "provider": {
       "name": "urlscan.io",
@@ -1646,7 +1646,7 @@
   },
   {
     "id": "network.shodan.lookup",
-    "version": "ef5cbda2009e",
+    "version": "d91cae2614c5",
     "title": "Shodan lookup",
     "provider": {
       "name": "Shodan",
@@ -1739,7 +1739,7 @@
   },
   {
     "id": "network.censys.lookup",
-    "version": "8444c616f8c8",
+    "version": "b2e4811da986",
     "title": "Censys lookup",
     "provider": {
       "name": "Censys",
@@ -1839,7 +1839,7 @@
   },
   {
     "id": "network.leakix.lookup",
-    "version": "45f9b050d658",
+    "version": "9e9480944e82",
     "title": "LeakIX lookup",
     "provider": {
       "name": "LeakIX",
@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.securitytrails.lookup",
-    "version": "4a9c5e1e1726",
+    "version": "de7def670f23",
     "title": "SecurityTrails lookup",
     "provider": {
       "name": "SecurityTrails",
@@ -2066,14 +2066,14 @@
   },
   {
     "id": "network.viewdns.reverse_whois",
-    "version": "809d67a13b4d",
+    "version": "0d9e91925711",
     "title": "ViewDNS reverse WHOIS",
     "provider": {
       "name": "ViewDNS",
       "url": "https://viewdns.info",
       "termsUrl": "https://viewdns.info/api/terms/",
       "tier": "freemium",
-      "commercialUse": "unknown"
+      "commercialUse": "allowed"
     },
     "egress": [
       "account_lookup"
@@ -2090,7 +2090,7 @@
       "type": "object",
       "properties": {
         "query": {
-          "description": "Registrant email, person name or organization",
+          "description": "Registrant email, person name or organization (5 to 256 characters)",
           "type": "string",
           "minLength": 1
         },
@@ -2108,7 +2108,7 @@
       "type": "object",
       "properties": {
         "query": {
-          "description": "Registrant email, person name or organization",
+          "description": "Registrant email, person name or organization (5 to 256 characters)",
           "type": "string",
           "minLength": 1
         }
@@ -2156,14 +2156,14 @@
   },
   {
     "id": "network.viewdns.reverse_ns",
-    "version": "e80c9a245567",
+    "version": "10a71a622000",
     "title": "ViewDNS reverse nameserver",
     "provider": {
       "name": "ViewDNS",
       "url": "https://viewdns.info",
       "termsUrl": "https://viewdns.info/api/terms/",
       "tier": "freemium",
-      "commercialUse": "unknown"
+      "commercialUse": "allowed"
     },
     "egress": [
       "account_lookup"
@@ -2245,14 +2245,14 @@
   },
   {
     "id": "network.viewdns.reverse_mx",
-    "version": "6c4db77f1d51",
+    "version": "3c21b6340542",
     "title": "ViewDNS reverse mail server",
     "provider": {
       "name": "ViewDNS",
       "url": "https://viewdns.info",
       "termsUrl": "https://viewdns.info/api/terms/",
       "tier": "freemium",
-      "commercialUse": "unknown"
+      "commercialUse": "allowed"
     },
     "egress": [
       "account_lookup"
@@ -2334,7 +2334,7 @@
   },
   {
     "id": "network.tor_exit.lookup",
-    "version": "10a6f8436d14",
+    "version": "d7e64ed61d10",
     "title": "Tor exit-node check",
     "provider": {
       "name": "Tor Project",
@@ -2416,7 +2416,7 @@
   },
   {
     "id": "network.tranco.lookup",
-    "version": "ba245fa75483",
+    "version": "dace85b80141",
     "title": "Tranco top-sites rank",
     "provider": {
       "name": "Tranco",
@@ -5476,7 +5476,7 @@
   },
   {
     "id": "threat.cymru_mhr.lookup",
-    "version": "709763dd705a",
+    "version": "6c17cf490778",
     "title": "Team Cymru Malware Hash Registry",
     "provider": {
       "name": "Team Cymru",

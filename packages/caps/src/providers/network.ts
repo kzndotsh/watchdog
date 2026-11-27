@@ -248,18 +248,16 @@ export const securityTrails = defineProvider({
   },
 });
 
-/**
- * ViewDNS API terms (viewdns.info/api/terms/) bar reselling or redistributing access to the API
- * but say nothing found on storing or exporting results, so the owner must review by hand.
- * 250 free sandbox queries; reverse WHOIS needs a paid plan.
- */
+/** The API terms bar only reselling access: "do not sell, assign, sublicense, redistribute, or syndicate access to any of our APIs". */
 export const viewDns = defineProvider({
   name: "ViewDNS",
   url: "https://viewdns.info",
   termsUrl: "https://viewdns.info/api/terms/",
   tier: "freemium",
-  commercialUse: "unknown",
+  commercialUse: "allowed",
   hosts: {
-    "api.viewdns.info": "unknown",
+    // viewdns.info/api/terms/ (revised 2018-09-01) restricts redistributing access, not results;
+    // "Permitted Uses" bars only illegal use and mass unsolicited advertising.
+    "api.viewdns.info": "allowed",
   },
 });

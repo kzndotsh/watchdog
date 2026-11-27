@@ -34,19 +34,21 @@ describe("interpretViewDnsReverseWhoisReport", () => {
     ],
   };
 
-  function domainValues(patch: PatchOp[]): unknown[] {
+  function proposedIdentifiers(patch: PatchOp[]): unknown[] {
     return patch.flatMap((op) =>
-      op.kind === "identifier.create" ? [dataOf(op).value] : []
+      op.kind === "identifier.create"
+        ? [[dataOf(op).type, dataOf(op).value]]
+        : []
     );
   }
 
   it("proposes the matched domains, names registrars and states the collision caveat", () => {
     const result = interpretViewDnsReverseWhoisReport(fixture, { input });
 
-    expect(domainValues(result.patch)).toEqual([
-      "alpha.example",
-      "beta.example",
-      "gamma.example",
+    expect(proposedIdentifiers(result.patch)).toEqual([
+      ["domain", "alpha.example"],
+      ["domain", "beta.example"],
+      ["domain", "gamma.example"],
     ]);
     expect(
       expectProposesClaim(result, { textMatches: /^ViewDNS lists/ }).data.text
@@ -95,7 +97,7 @@ describe("interpretViewDnsReverseWhoisReport", () => {
       { input }
     );
 
-    expect(domainValues(result.patch)).toHaveLength(80);
+    expect(proposedIdentifiers(result.patch)).toHaveLength(80);
     expectProposesClaim(result, { textMatches: /proposed 80 of 90/ });
   });
 

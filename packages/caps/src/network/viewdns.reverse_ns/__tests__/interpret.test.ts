@@ -26,18 +26,20 @@ describe("interpretViewDnsReverseNsReport", () => {
     domains: ["alpha.example", "beta.example"],
   };
 
-  function domainValues(patch: PatchOp[]): unknown[] {
+  function proposedIdentifiers(patch: PatchOp[]): unknown[] {
     return patch.flatMap((op) =>
-      op.kind === "identifier.create" ? [dataOf(op).value] : []
+      op.kind === "identifier.create"
+        ? [[dataOf(op).type, dataOf(op).value]]
+        : []
     );
   }
 
   it("proposes the listed domains and states the shared-nameserver caveat", () => {
     const result = interpretViewDnsReverseNsReport(fixture, { input });
 
-    expect(domainValues(result.patch)).toEqual([
-      "alpha.example",
-      "beta.example",
+    expect(proposedIdentifiers(result.patch)).toEqual([
+      ["domain", "alpha.example"],
+      ["domain", "beta.example"],
     ]);
     expect(
       expectProposesClaim(result, { textMatches: /^ViewDNS lists/ }).data.text
@@ -52,7 +54,9 @@ describe("interpretViewDnsReverseNsReport", () => {
       { input }
     );
 
-    expect(domainValues(result.patch)).toEqual(["alpha.example"]);
+    expect(proposedIdentifiers(result.patch)).toEqual([
+      ["domain", "alpha.example"],
+    ]);
   });
 
   it("names ViewDNS's own count and the page when the list is partial", () => {
@@ -81,7 +85,7 @@ describe("interpretViewDnsReverseNsReport", () => {
       { input }
     );
 
-    expect(domainValues(result.patch)).toHaveLength(80);
+    expect(proposedIdentifiers(result.patch)).toHaveLength(80);
     expectProposesClaim(result, { textMatches: /proposed 80 of 90/ });
   });
 

@@ -5,7 +5,7 @@ import { optionalUuidSchema } from "@watchdog/domain/schemas/shared";
 
 export const viewDnsReverseWhoisInput = z.object({
   query: reverseWhoisQuerySeedSchema.describe(
-    "Registrant email, person name or organization"
+    "Registrant email, person name or organization (5 to 256 characters)"
   ),
   entityId: optionalUuidSchema,
 });
