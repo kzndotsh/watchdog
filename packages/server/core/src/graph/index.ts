@@ -40,6 +40,7 @@ export {
   getEdgesByIdsEffect,
   getEventsByIdsEffect,
   getQuestionsByIdsEffect,
+  countClaimsByConfidenceEffect,
   listClaimsEffect,
   listEdgesEffect,
   listEventsEffect,

@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BriefcaseIcon,
   CheckSquareIcon,
+  QuoteIcon,
   GitForkIcon,
   HashIcon,
   InboxIcon,
@@ -18,6 +19,7 @@ export const WORK_TO = {
   entities: "/cases/$caseSlug/entities",
   identifiers: "/cases/$caseSlug/identifiers",
   graph: "/cases/$caseSlug/graph",
+  claims: "/cases/$caseSlug/claims",
   collect: "/cases/$caseSlug/collect",
   triage: "/cases/$caseSlug/triage",
   tasks: "/cases/$caseSlug/tasks",
@@ -59,6 +61,7 @@ export type NavGroup =
 
 /** Case graph nouns: rendered with the Case switcher (flat), not in NAV_GROUPS. */
 export const CASE_NAV_ITEMS: WorkNavItem[] = [
+  { screen: "claims", label: "Claims", icon: QuoteIcon },
   { screen: "entities", label: "Entities", icon: ShapesIcon },
   { screen: "identifiers", label: "Identifiers", icon: HashIcon },
   { screen: "graph", label: "Graph", icon: GitForkIcon },

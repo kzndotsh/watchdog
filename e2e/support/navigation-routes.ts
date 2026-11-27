@@ -62,6 +62,15 @@ export const primaryRoutes: RouteSmoke[] = [
     },
   },
   {
+    path: "/cases/$caseSlug/claims",
+    axe: true,
+    ready: async (page) => {
+      await expect(page.getByRole("button", { name: /^All/ })).toBeVisible({
+        timeout: 30_000,
+      });
+    },
+  },
+  {
     path: "/cases/$caseSlug/identifiers",
     ready: async (page) => {
       await expect(

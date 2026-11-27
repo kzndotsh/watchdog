@@ -13,6 +13,12 @@ import {
   eventList,
   questionList,
 } from "@watchdog/domain/schemas/graph";
+import type { ClaimConfidenceCounts } from "@watchdog/domain/schemas/graph";
+import {
+  CONFIDENCE_TIERS,
+  LIST_TOTAL_CAP,
+  opsOf,
+} from "@watchdog/domain/schemas/shared";
 import type {
   CaseId,
   ListInput,
@@ -23,7 +29,11 @@ import type {
 import { assertCaseInOrgEffect } from "../cases/access";
 import type { DomainTag } from "../errors/tagged-errors";
 import type { Db } from "../infra/db-service";
-import { listByIdsEffect, listPageEffect } from "../infra/list-page";
+import {
+  listByIdsEffect,
+  listCountsByEffect,
+  listPageEffect,
+} from "../infra/list-page";
 import { inOrganization } from "../infra/organization-scope";
 import { evidenceLinksRepoFxDb } from "../infra/repos-fx";
 import { toCaseEdgeRecord, type CaseEdgeRecord } from "./edges";
@@ -83,6 +93,45 @@ export function listClaimsEffect(
       input,
       toItems: claimItems,
     });
+  });
+  return inOrganization(organizationId, program);
+}
+
+/**
+ * The Claims the list's filters and `q` match, per confidence tier, and how many of them cite no
+ * Evidence (`claims.confidenceCounts`): the Claims screen's tiles. Cursor, limit and sort in
+ * `input` are ignored.
+ */
+export function countClaimsByConfidenceEffect(
+  caseId: CaseId,
+  organizationId: OrganizationId,
+  input: ListInput<typeof claimList>
+): Effect.Effect<ClaimConfidenceCounts, DomainTag, Db> {
+  const program = Effect.gen(function* countClaimsByConfidenceGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const query = opsOf(claimList).queryOf(input);
+    const countBy = (filters: typeof query.filters) =>
+      listCountsByEffect({
+        repo: claimListRepo,
+        scope: { caseId: scopedCaseId },
+        query: { ...query, filters },
+        key: "confidence",
+        cap: LIST_TOTAL_CAP,
+      });
+    const all = yield* countBy(query.filters);
+    const uncited = yield* countBy({ ...query.filters, uncited: true });
+    return {
+      counts: all.counts.flatMap((row) => {
+        const confidence = CONFIDENCE_TIERS.find(
+          (known) => known === row.value
+        );
+        return confidence === undefined
+          ? []
+          : [{ confidence, count: row.count }];
+      }),
+      uncited: uncited.counts.reduce((sum, row) => sum + row.count, 0),
+      isCapped: all.isCapped || uncited.isCapped,
+    };
   });
   return inOrganization(organizationId, program);
 }

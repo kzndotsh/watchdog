@@ -240,6 +240,11 @@ const PROJECTIONS: Readonly<Record<string, { list: string; reason: string }>> =
  */
 const VIEW_COUNTS: Readonly<Record<string, { list: string; reason: string }>> =
   {
+    "claims.confidenceCounts": {
+      list: "claims",
+      reason:
+        "the Claims screen's tiles count each confidence tier and the uncited Claims of the view, whatever page is loaded",
+    },
     "identifiers.typeCounts": {
       list: "identifiers",
       reason:

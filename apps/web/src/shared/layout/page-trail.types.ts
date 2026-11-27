@@ -17,6 +17,7 @@ export type TrailItem = {
 
 /** Last-crumb ids that may show `PageHeader count`. */
 export type CountOnTrailId =
+  | "claims"
   | "deleted-cases"
   | "entities"
   | "identifiers"

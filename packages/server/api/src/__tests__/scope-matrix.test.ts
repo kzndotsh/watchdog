@@ -67,6 +67,7 @@ describe("declared scopes", () => {
         "cases.purge": "session",
         "cases.restore": "session",
         "cases.update": "graph:write",
+        "claims.confidenceCounts": "cases:read",
         "claims.create": "graph:write",
         "claims.getMany": "cases:read",
         "claims.list": "cases:read",

@@ -11,7 +11,10 @@ export type {
   PatchResource,
   PatchVerb,
 } from "./patch";
-export type { IdentifierTypeCounts } from "./graph-records";
+export type {
+  ClaimConfidenceCounts,
+  IdentifierTypeCounts,
+} from "./graph-records";
 export {
   patchOpDependencies,
   patchOpDependents,
@@ -207,6 +210,7 @@ export { edgeList, getEdgesInputSchema } from "./edge-list";
 export {
   caseEdgeSchema,
   caseIdentifierSchema,
+  claimConfidenceCountsSchema,
   claimListPageSchema,
   claimSchema,
   edgeListPageSchema,

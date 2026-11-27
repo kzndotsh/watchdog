@@ -73,6 +73,7 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
     case "/cases/$caseSlug/entities":
     case "/cases/$caseSlug/identifiers":
     case "/cases/$caseSlug/graph":
+    case "/cases/$caseSlug/claims":
     case "/cases/$caseSlug/collect":
     case "/cases/$caseSlug/triage":
     case "/cases/$caseSlug/tasks": {
