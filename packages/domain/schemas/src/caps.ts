@@ -49,6 +49,7 @@ export {
   keybaseQuerySeedSchema,
   parsePgpQuerySeed,
   pgpQuerySeedSchema,
+  reverseWhoisQuerySeedSchema,
   threatfoxQuerySeedSchema,
   urlhausQuerySeedSchema,
 } from "./cap-seed";

@@ -92,6 +92,19 @@ function parseKeybaseQuerySeed(raw: string): string | null {
   return null;
 }
 
+/** The longest person or organization name a reverse WHOIS query carries. */
+const REVERSE_WHOIS_TEXT_MAX = 128;
+
+function parseReverseWhoisQuerySeed(raw: string): string | null {
+  const text = raw.trim().replaceAll(/\s+/g, " ");
+  if (text.includes("@")) {
+    const email = validateIdentifierValue("email", text);
+    return email.ok ? email.value : null;
+  }
+  if (text.length < 2 || text.length > REVERSE_WHOIS_TEXT_MAX) return null;
+  return /\p{Cc}/u.test(text) ? null : text;
+}
+
 function seedStringSchema(
   parse: (raw: string) => string | null,
   message: string
@@ -205,4 +218,10 @@ export function parsePgpQuerySeed(raw: string): string | null {
 export const pgpQuerySeedSchema = /* @__PURE__ */ seedStringSchema(
   parsePgpQuerySeed,
   "Invalid PGP query seed."
+);
+
+/** Reverse WHOIS query seed: an email (normalized like an email Identifier) or a person or organization name. */
+export const reverseWhoisQuerySeedSchema = seedStringSchema(
+  parseReverseWhoisQuerySeed,
+  "Invalid reverse WHOIS query seed."
 );
