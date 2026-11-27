@@ -1,7 +1,7 @@
 [
   {
     "id": "network.dns.lookup",
-    "version": "f7087cbdcae9",
+    "version": "941d230cea55",
     "title": "DNS lookup",
     "provider": {
       "name": "This server's DNS resolver",
@@ -84,7 +84,7 @@
   },
   {
     "id": "network.dns.reverse",
-    "version": "2213d8e79c93",
+    "version": "b66af9d233e3",
     "title": "Reverse DNS",
     "provider": {
       "name": "This server's DNS resolver",
@@ -167,7 +167,7 @@
   },
   {
     "id": "network.ip.lookup",
-    "version": "e6e762117c73",
+    "version": "54e2036aa083",
     "title": "IP lookup",
     "provider": {
       "name": "Team Cymru",
@@ -257,7 +257,7 @@
   },
   {
     "id": "network.ipctl.lookup",
-    "version": "dae7a0158619",
+    "version": "f20c06f258b5",
     "title": "ipctl IP lookup",
     "provider": {
       "name": "ipctl",
@@ -348,7 +348,7 @@
   },
   {
     "id": "network.ipinfo.lookup",
-    "version": "4626d9a9f78b",
+    "version": "e4984ee109e5",
     "title": "IPinfo lookup",
     "provider": {
       "name": "IPinfo",
@@ -441,7 +441,7 @@
   },
   {
     "id": "network.whois.lookup",
-    "version": "8790ddc73c91",
+    "version": "ca0dbad4696b",
     "title": "WHOIS lookup",
     "provider": {
       "name": "Domain registries (RDAP)",
@@ -521,7 +521,7 @@
   },
   {
     "id": "network.whoisxml.lookup",
-    "version": "5e71f8587a05",
+    "version": "35916f9f7123",
     "title": "WhoisXML lookup",
     "provider": {
       "name": "WhoisXML",
@@ -606,7 +606,7 @@
   },
   {
     "id": "network.whoxy.lookup",
-    "version": "03060a1bac6e",
+    "version": "88e4901498d7",
     "title": "Whoxy lookup",
     "provider": {
       "name": "Whoxy",
@@ -699,7 +699,7 @@
   },
   {
     "id": "network.ct.lookup",
-    "version": "607844036920",
+    "version": "c3a3b5d96874",
     "title": "Certificate transparency",
     "provider": {
       "name": "crt.sh",
@@ -792,7 +792,7 @@
   },
   {
     "id": "network.certspotter.lookup",
-    "version": "db91db1c0cf4",
+    "version": "6137cb28fa9c",
     "title": "Cert Spotter",
     "provider": {
       "name": "Cert Spotter",
@@ -875,7 +875,7 @@
   },
   {
     "id": "network.c99.lookup",
-    "version": "a20028c780d8",
+    "version": "b212e5a723da",
     "title": "C99 subdomain finder",
     "provider": {
       "name": "C99",
@@ -968,7 +968,7 @@
   },
   {
     "id": "network.hackertarget.lookup",
-    "version": "a9165a06f509",
+    "version": "9cd403ff5cbf",
     "title": "HackerTarget reverse IP",
     "provider": {
       "name": "HackerTarget",
@@ -1055,7 +1055,7 @@
   },
   {
     "id": "network.mnemonic.lookup",
-    "version": "49bf1399b64b",
+    "version": "1c2fdafc6687",
     "title": "Mnemonic PassiveDNS",
     "provider": {
       "name": "mnemonic",
@@ -1145,7 +1145,7 @@
   },
   {
     "id": "network.urlscan.lookup",
-    "version": "eb1c656a3c64",
+    "version": "bdc2cd277251",
     "title": "URLScan search",
     "provider": {
       "name": "urlscan.io",
@@ -1232,7 +1232,7 @@
   },
   {
     "id": "network.urlscan.submit",
-    "version": "b67f83bee798",
+    "version": "93e172658165",
     "title": "URLScan submit",
     "provider": {
       "name": "urlscan.io",
@@ -1334,7 +1334,7 @@
   },
   {
     "id": "network.domain.mail_config",
-    "version": "a83b969c1c7f",
+    "version": "120f99da333c",
     "title": "Mail config",
     "provider": {
       "name": "This server's DNS resolver",
@@ -1409,7 +1409,7 @@
   },
   {
     "id": "network.domain.txt_inventory",
-    "version": "8686c9156bf7",
+    "version": "39ca5553fa6c",
     "title": "TXT inventory",
     "provider": {
       "name": "This server's DNS resolver",
@@ -1484,7 +1484,7 @@
   },
   {
     "id": "network.host.tls_audit",
-    "version": "a77a8b0a96b4",
+    "version": "9ebc1c16abd4",
     "title": "TLS audit",
     "provider": {
       "name": "The target itself",
@@ -1568,7 +1568,7 @@
   },
   {
     "id": "network.host.http_probe",
-    "version": "11b0888bfde6",
+    "version": "038c7ede213a",
     "title": "HTTP surface",
     "provider": {
       "name": "The target itself",
@@ -1646,7 +1646,7 @@
   },
   {
     "id": "network.shodan.lookup",
-    "version": "c9d3f36eda2d",
+    "version": "d91cae2614c5",
     "title": "Shodan lookup",
     "provider": {
       "name": "Shodan",
@@ -1739,7 +1739,7 @@
   },
   {
     "id": "network.censys.lookup",
-    "version": "ebe2c4487077",
+    "version": "b2e4811da986",
     "title": "Censys lookup",
     "provider": {
       "name": "Censys",
@@ -1839,7 +1839,7 @@
   },
   {
     "id": "network.leakix.lookup",
-    "version": "01d0965c8aa4",
+    "version": "9e9480944e82",
     "title": "LeakIX lookup",
     "provider": {
       "name": "LeakIX",
@@ -1935,7 +1935,7 @@
   },
   {
     "id": "network.securitytrails.lookup",
-    "version": "d4a0160fe07b",
+    "version": "de7def670f23",
     "title": "SecurityTrails lookup",
     "provider": {
       "name": "SecurityTrails",
@@ -2065,8 +2065,276 @@
     ]
   },
   {
+    "id": "network.viewdns.reverse_whois",
+    "version": "0d9e91925711",
+    "title": "ViewDNS reverse WHOIS",
+    "provider": {
+      "name": "ViewDNS",
+      "url": "https://viewdns.info",
+      "termsUrl": "https://viewdns.info/api/terms/",
+      "tier": "freemium",
+      "commercialUse": "allowed"
+    },
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.viewdns.info",
+        "access": "keyed"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "Registrant email, person name or organization (5 to 256 characters)",
+          "type": "string",
+          "minLength": 1
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "Registrant email, person name or organization (5 to 256 characters)",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "description": "List domains whose WHOIS record mentions an email address, person or organization, through ViewDNS. A WHOIS match does not prove the same registrant.",
+    "dataSource": "api.viewdns.info/reversewhois",
+    "kind": "collect",
+    "flags": [
+      "needs_key",
+      "third_party"
+    ],
+    "consumes": [
+      {
+        "kind": "identifier",
+        "type": "email"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      }
+    ],
+    "useCases": [
+      "Passive",
+      "Footprint"
+    ],
+    "timeoutMs": 60000,
+    "jobPolicy": {
+      "cacheTtlMs": 86400000
+    },
+    "credentials": [
+      {
+        "name": "VIEWDNS_API_KEY"
+      }
+    ]
+  },
+  {
+    "id": "network.viewdns.reverse_ns",
+    "version": "10a71a622000",
+    "title": "ViewDNS reverse nameserver",
+    "provider": {
+      "name": "ViewDNS",
+      "url": "https://viewdns.info",
+      "termsUrl": "https://viewdns.info/api/terms/",
+      "tier": "freemium",
+      "commercialUse": "allowed"
+    },
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.viewdns.info",
+        "access": "keyed"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Nameserver",
+          "type": "string",
+          "minLength": 1
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "host"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Nameserver",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "host"
+      ]
+    },
+    "description": "List domains that use a given nameserver, through ViewDNS. Sharing a nameserver does not show common ownership.",
+    "dataSource": "api.viewdns.info/reversens",
+    "kind": "collect",
+    "flags": [
+      "needs_key",
+      "third_party"
+    ],
+    "consumes": [
+      {
+        "kind": "host"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      }
+    ],
+    "useCases": [
+      "Passive",
+      "Footprint"
+    ],
+    "timeoutMs": 60000,
+    "jobPolicy": {
+      "cacheTtlMs": 86400000
+    },
+    "credentials": [
+      {
+        "name": "VIEWDNS_API_KEY"
+      }
+    ]
+  },
+  {
+    "id": "network.viewdns.reverse_mx",
+    "version": "3c21b6340542",
+    "title": "ViewDNS reverse mail server",
+    "provider": {
+      "name": "ViewDNS",
+      "url": "https://viewdns.info",
+      "termsUrl": "https://viewdns.info/api/terms/",
+      "tier": "freemium",
+      "commercialUse": "allowed"
+    },
+    "egress": [
+      "account_lookup"
+    ],
+    "contacts": [
+      {
+        "kind": "provider",
+        "host": "api.viewdns.info",
+        "access": "keyed"
+      }
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Mail server",
+          "type": "string",
+          "minLength": 1
+        },
+        "entityId": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "host"
+      ]
+    },
+    "inputForm": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Mail server",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "host"
+      ]
+    },
+    "description": "List domains that use a given mail server, through ViewDNS. Sharing a mail server does not show common ownership.",
+    "dataSource": "api.viewdns.info/reversemx",
+    "kind": "collect",
+    "flags": [
+      "needs_key",
+      "third_party"
+    ],
+    "consumes": [
+      {
+        "kind": "host"
+      }
+    ],
+    "produces": [
+      {
+        "kind": "evidence",
+        "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      }
+    ],
+    "useCases": [
+      "Passive",
+      "Footprint"
+    ],
+    "timeoutMs": 60000,
+    "jobPolicy": {
+      "cacheTtlMs": 86400000
+    },
+    "credentials": [
+      {
+        "name": "VIEWDNS_API_KEY"
+      }
+    ]
+  },
+  {
     "id": "network.tor_exit.lookup",
-    "version": "f8a2e43789f4",
+    "version": "d7e64ed61d10",
     "title": "Tor exit-node check",
     "provider": {
       "name": "Tor Project",
@@ -2148,7 +2416,7 @@
   },
   {
     "id": "network.tranco.lookup",
-    "version": "2a447f2de3bc",
+    "version": "dace85b80141",
     "title": "Tranco top-sites rank",
     "provider": {
       "name": "Tranco",
@@ -2725,7 +2993,7 @@
   },
   {
     "id": "archive.commoncrawl.lookup",
-    "version": "21a707f63e02",
+    "version": "b3b9eccca0e1",
     "title": "Common Crawl",
     "provider": {
       "name": "Common Crawl",
@@ -3087,7 +3355,7 @@
   },
   {
     "id": "identity.email.lookup",
-    "version": "917adc6d15c1",
+    "version": "aadbaa5d1c8c",
     "title": "Email lookup",
     "provider": {
       "name": "This server's DNS resolver",
@@ -3171,7 +3439,7 @@
   },
   {
     "id": "identity.emailrep.lookup",
-    "version": "bf127653ebd9",
+    "version": "f94ae8e2a795",
     "title": "EmailRep lookup",
     "provider": {
       "name": "EmailRep",
@@ -3261,7 +3529,7 @@
   },
   {
     "id": "identity.pgp.lookup",
-    "version": "02aca4daa6e7",
+    "version": "62dc4b655243",
     "title": "PGP lookup",
     "provider": {
       "name": "PGP keyservers",
@@ -3377,7 +3645,7 @@
   },
   {
     "id": "identity.github.lookup",
-    "version": "441e883ecd36",
+    "version": "1e1145e0aacc",
     "title": "GitHub lookup",
     "provider": {
       "name": "GitHub",
@@ -3471,7 +3739,7 @@
   },
   {
     "id": "identity.keybase.lookup",
-    "version": "5df75827cdf9",
+    "version": "cad0a004ad2f",
     "title": "Keybase lookup",
     "provider": {
       "name": "Keybase",
@@ -3574,7 +3842,7 @@
   },
   {
     "id": "identity.gravatar.lookup",
-    "version": "5f4048e342ab",
+    "version": "a24d93c5d8f6",
     "title": "Gravatar lookup",
     "provider": {
       "name": "Gravatar",
@@ -3666,7 +3934,7 @@
   },
   {
     "id": "breach.hibp.lookup",
-    "version": "3d91b57583cc",
+    "version": "a9553648a1e4",
     "title": "HIBP lookup",
     "provider": {
       "name": "Have I Been Pwned",
@@ -3760,7 +4028,7 @@
   },
   {
     "id": "breach.hudsonrock.lookup",
-    "version": "2c4e0c61b166",
+    "version": "2da8fa914dd2",
     "title": "Hudson Rock lookup",
     "provider": {
       "name": "Hudson Rock",
@@ -3864,7 +4132,7 @@
   },
   {
     "id": "breach.dehashed.lookup",
-    "version": "3c0a8534d434",
+    "version": "7777db1971a4",
     "title": "DeHashed lookup",
     "provider": {
       "name": "DeHashed",
@@ -3956,7 +4224,7 @@
   },
   {
     "id": "breach.snusbase.lookup",
-    "version": "ce7cdca2b7d1",
+    "version": "ea9219a381e1",
     "title": "Snusbase lookup",
     "provider": {
       "name": "Snusbase",
@@ -4048,7 +4316,7 @@
   },
   {
     "id": "breach.leakradar.lookup",
-    "version": "b1714a36aaef",
+    "version": "bd475d232f0c",
     "title": "LeakRadar lookup",
     "provider": {
       "name": "LeakRadar",
@@ -4193,7 +4461,7 @@
   },
   {
     "id": "breach.emailosint.lookup",
-    "version": "910e95c16e15",
+    "version": "623159ae2e64",
     "title": "EmailOSINT lookup",
     "provider": {
       "name": "EmailOSINT",
@@ -4284,7 +4552,7 @@
   },
   {
     "id": "threat.virustotal.lookup",
-    "version": "80789ee17308",
+    "version": "62797f360b46",
     "title": "VirusTotal lookup",
     "provider": {
       "name": "VirusTotal",
@@ -4380,7 +4648,7 @@
   },
   {
     "id": "threat.abuseipdb.lookup",
-    "version": "3ccaebe83c58",
+    "version": "0ef5cff255ca",
     "title": "AbuseIPDB lookup",
     "provider": {
       "name": "AbuseIPDB",
@@ -4473,7 +4741,7 @@
   },
   {
     "id": "threat.threatfox.lookup",
-    "version": "ec52cca21d01",
+    "version": "59b46e20454d",
     "title": "ThreatFox lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4573,7 +4841,7 @@
   },
   {
     "id": "threat.urlhaus.lookup",
-    "version": "8151f0aa9ebc",
+    "version": "c416b88c340f",
     "title": "URLhaus lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4680,7 +4948,7 @@
   },
   {
     "id": "threat.malwarebazaar.lookup",
-    "version": "b5098eb68cd0",
+    "version": "df5537af2b3f",
     "title": "MalwareBazaar lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4769,7 +5037,7 @@
   },
   {
     "id": "threat.feodo.lookup",
-    "version": "68148d009b5a",
+    "version": "044c79e6ee67",
     "title": "Feodo Tracker lookup",
     "provider": {
       "name": "abuse.ch",
@@ -4858,7 +5126,7 @@
   },
   {
     "id": "threat.greynoise.lookup",
-    "version": "158e2297fbf9",
+    "version": "21a541eb4e0a",
     "title": "GreyNoise Community",
     "provider": {
       "name": "GreyNoise",
@@ -4947,7 +5215,7 @@
   },
   {
     "id": "threat.hashlookup.lookup",
-    "version": "924b4bd3063d",
+    "version": "b19b6b2ac5ea",
     "title": "CIRCL hashlookup",
     "provider": {
       "name": "CIRCL",
@@ -5034,7 +5302,7 @@
   },
   {
     "id": "threat.bgpranking.lookup",
-    "version": "0bdb0ba26b4f",
+    "version": "d5c9a74dca97",
     "title": "CIRCL BGP Ranking",
     "provider": {
       "name": "CIRCL",
@@ -5121,7 +5389,7 @@
   },
   {
     "id": "threat.dshield.lookup",
-    "version": "f62ebb33b4de",
+    "version": "278b12dfc3bd",
     "title": "SANS ISC DShield",
     "provider": {
       "name": "SANS ISC DShield",
@@ -5208,7 +5476,7 @@
   },
   {
     "id": "threat.cymru_mhr.lookup",
-    "version": "8683aba41b98",
+    "version": "6c17cf490778",
     "title": "Team Cymru Malware Hash Registry",
     "provider": {
       "name": "Team Cymru",
@@ -5290,7 +5558,7 @@
   },
   {
     "id": "threat.firehol.lookup",
-    "version": "30e559c86b02",
+    "version": "460a085d8de6",
     "title": "FireHOL level1 blocklist",
     "provider": {
       "name": "FireHOL",
@@ -5372,7 +5640,7 @@
   },
   {
     "id": "threat.otx.lookup",
-    "version": "4792325ec6aa",
+    "version": "8673e15a89e3",
     "title": "OTX lookup",
     "provider": {
       "name": "AlienVault OTX",
@@ -5564,7 +5832,7 @@
   },
   {
     "id": "threat.xforce.lookup",
-    "version": "62333a65aee3",
+    "version": "87582b03d2e0",
     "title": "IBM X-Force Exchange lookup",
     "provider": {
       "name": "IBM X-Force Exchange",
@@ -5670,7 +5938,7 @@
   },
   {
     "id": "threat.greedybear.lookup",
-    "version": "abdb86327f88",
+    "version": "c0d6fb2b2595",
     "title": "GreedyBear scanner feed",
     "provider": {
       "name": "GreedyBear",
@@ -5763,7 +6031,7 @@
   },
   {
     "id": "threat.honeydb.lookup",
-    "version": "7c4050b74c0e",
+    "version": "c42754ece346",
     "title": "HoneyDB lookup",
     "provider": {
       "name": "HoneyDB",

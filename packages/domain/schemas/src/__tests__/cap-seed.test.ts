@@ -13,6 +13,7 @@ import {
   ipSeedSchema,
   keybaseQuerySeedSchema,
   pgpQuerySeedSchema,
+  reverseWhoisQuerySeedSchema,
   threatfoxQuerySeedSchema,
   urlhausQuerySeedSchema,
 } from "../cap-seed";
@@ -112,6 +113,37 @@ describe("cap seed schemas", () => {
     expect(() => pgpQuerySeedSchema.parse("12345")).toThrow();
   });
 
+  it("reverseWhoisQuerySeedSchema normalizes an email like an email Identifier", () => {
+    expect(reverseWhoisQuerySeedSchema.parse("  Ada@Example.COM ")).toBe(
+      "ada@example.com"
+    );
+  });
+
+  it("reverseWhoisQuerySeedSchema trims a name and collapses inner whitespace", () => {
+    expect(reverseWhoisQuerySeedSchema.parse("  Ada   Lovelace\n")).toBe(
+      "Ada Lovelace"
+    );
+    expect(reverseWhoisQuerySeedSchema.parse("Example Holdings Ltd.")).toBe(
+      "Example Holdings Ltd."
+    );
+  });
+
+  it("reverseWhoisQuerySeedSchema rejects empty, malformed-email and over-long input", () => {
+    expect(() => reverseWhoisQuerySeedSchema.parse("   ")).toThrow();
+    expect(() => reverseWhoisQuerySeedSchema.parse("Ada")).toThrow();
+    expect(() => reverseWhoisQuerySeedSchema.parse("not@@email")).toThrow();
+    expect(() => reverseWhoisQuerySeedSchema.parse("x".repeat(257))).toThrow();
+    expect(() => reverseWhoisQuerySeedSchema.parse("bad\u0007name")).toThrow();
+  });
+
+  it("reverseWhoisQuerySeedSchema enforces ViewDNS's 5 to 256 character bound", () => {
+    expect(reverseWhoisQuerySeedSchema.parse("Ada L")).toBe("Ada L");
+    expect(() => reverseWhoisQuerySeedSchema.parse("Ada ")).toThrow();
+    expect(reverseWhoisQuerySeedSchema.parse("x".repeat(256))).toHaveLength(
+      256
+    );
+  });
+
   it("seed schemas are JSON Schema representable for cap inputForm", () => {
     const schemas = [
       hostSeedSchema,
@@ -127,6 +159,7 @@ describe("cap seed schemas", () => {
       githubHandleSeedSchema,
       keybaseQuerySeedSchema,
       pgpQuerySeedSchema,
+      reverseWhoisQuerySeedSchema,
     ];
     for (const schema of schemas) {
       expect(() =>

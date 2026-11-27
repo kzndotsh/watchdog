@@ -247,3 +247,17 @@ export const securityTrails = defineProvider({
     "api.securitytrails.com": "forbidden",
   },
 });
+
+/** The API terms bar only reselling access: "do not sell, assign, sublicense, redistribute, or syndicate access to any of our APIs". */
+export const viewDns = defineProvider({
+  name: "ViewDNS",
+  url: "https://viewdns.info",
+  termsUrl: "https://viewdns.info/api/terms/",
+  tier: "freemium",
+  commercialUse: "allowed",
+  hosts: {
+    // viewdns.info/api/terms/ (revised 2018-09-01) restricts redistributing access, not results;
+    // "Permitted Uses" bars only illegal use and mass unsolicited advertising.
+    "api.viewdns.info": "allowed",
+  },
+});

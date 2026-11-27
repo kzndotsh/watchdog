@@ -92,6 +92,28 @@ function parseKeybaseQuerySeed(raw: string): string | null {
   return null;
 }
 
+/** ViewDNS refuses a reverse WHOIS search term outside 5 to 256 characters. */
+const REVERSE_WHOIS_QUERY_MIN = 5;
+const REVERSE_WHOIS_QUERY_MAX = 256;
+
+function emailOrNull(text: string): string | null {
+  const email = validateIdentifierValue("email", text);
+  return email.ok ? email.value : null;
+}
+
+function parseReverseWhoisQuerySeed(raw: string): string | null {
+  const text = raw.trim().replaceAll(/\s+/g, " ");
+  const value = text.includes("@") ? emailOrNull(text) : text;
+  if (value === null) return null;
+  if (
+    value.length < REVERSE_WHOIS_QUERY_MIN ||
+    value.length > REVERSE_WHOIS_QUERY_MAX
+  ) {
+    return null;
+  }
+  return /\p{Cc}/u.test(value) ? null : value;
+}
+
 function seedStringSchema(
   parse: (raw: string) => string | null,
   message: string
@@ -205,4 +227,10 @@ export function parsePgpQuerySeed(raw: string): string | null {
 export const pgpQuerySeedSchema = /* @__PURE__ */ seedStringSchema(
   parsePgpQuerySeed,
   "Invalid PGP query seed."
+);
+
+/** Reverse WHOIS query seed: an email (normalized like an email Identifier) or a person or organization name. */
+export const reverseWhoisQuerySeedSchema = seedStringSchema(
+  parseReverseWhoisQuerySeed,
+  "Invalid reverse WHOIS query seed."
 );

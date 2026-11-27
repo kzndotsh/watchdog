@@ -43,6 +43,12 @@ export const NETWORK_CASES: readonly DeclarationCase[] = [
   { id: "network.leakix.lookup", inputs: [{ query: IP }, { query: HOST }] },
   { id: "network.mnemonic.lookup", inputs: [{ query: HOST }] },
   { id: "network.securitytrails.lookup", inputs: [{ host: HOST }] },
+  {
+    id: "network.viewdns.reverse_whois",
+    inputs: [{ query: "ada@example.com" }],
+  },
+  { id: "network.viewdns.reverse_ns", inputs: [{ host: HOST }] },
+  { id: "network.viewdns.reverse_mx", inputs: [{ host: HOST }] },
   { id: "network.shodan.lookup", inputs: [{ ip: IP }] },
   { id: "network.tor_exit.lookup", inputs: [{ ip: IP }] },
   { id: "network.tranco.lookup", inputs: [{ host: HOST }] },

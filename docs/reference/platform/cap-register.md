@@ -83,6 +83,9 @@ These Caps query breach and leak corpora about people. They are **opt-in**: whil
 | `network.url.enrich` | [Internet Archive](https://archive.org) | [terms](https://archive.org/about/terms.php) | free | unknown | none | none |
 | `network.urlscan.lookup` | [urlscan.io](https://urlscan.io) | [terms](https://urlscan.io/terms/) | freemium | restricted | none | none |
 | `network.urlscan.submit` | [urlscan.io](https://urlscan.io) | [terms](https://urlscan.io/terms/) | freemium | restricted | none | `URLSCAN_API_KEY` |
+| `network.viewdns.reverse_mx` | [ViewDNS](https://viewdns.info) | [terms](https://viewdns.info/api/terms/) | freemium | allowed | none | `VIEWDNS_API_KEY` |
+| `network.viewdns.reverse_ns` | [ViewDNS](https://viewdns.info) | [terms](https://viewdns.info/api/terms/) | freemium | allowed | none | `VIEWDNS_API_KEY` |
+| `network.viewdns.reverse_whois` | [ViewDNS](https://viewdns.info) | [terms](https://viewdns.info/api/terms/) | freemium | allowed | none | `VIEWDNS_API_KEY` |
 | `network.whois.lookup` | [Domain registries (RDAP)](https://about.rdap.org/) | [terms](https://about.rdap.org/) | free | unknown | none | none |
 | `network.whoisxml.lookup` | [WhoisXML](https://www.whoisxmlapi.com) | [terms](https://main.whoisxmlapi.com/terms-of-service) | freemium | restricted | none | `WHOIS_API_KEY` |
 | `network.whoxy.lookup` | [Whoxy](https://www.whoxy.com) | [terms](https://www.whoxy.com/terms.php) | paid | unknown | none | `WHOXY_API_KEY` |

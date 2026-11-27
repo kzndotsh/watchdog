@@ -90,3 +90,16 @@ export {
   type SecurityTrailsDnsType,
   type SecurityTrailsLookupSnapshot,
 } from "./securitytrails";
+export {
+  fetchViewDnsReverseHostEffect,
+  fetchViewDnsReverseWhoisEffect,
+  VIEWDNS_REVERSE_HOST_VIA,
+  viewDnsReverseHostSnapshotSchema,
+  viewDnsReverseHostViaSchema,
+  viewDnsReverseWhoisSnapshotSchema,
+  viewDnsWhoisMatchSchema,
+  type ViewDnsReverseHostSnapshot,
+  type ViewDnsReverseHostVia,
+  type ViewDnsReverseWhoisSnapshot,
+  type ViewDnsWhoisMatch,
+} from "./viewdns";
