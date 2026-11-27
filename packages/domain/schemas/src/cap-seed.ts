@@ -92,17 +92,26 @@ function parseKeybaseQuerySeed(raw: string): string | null {
   return null;
 }
 
-/** The longest person or organization name a reverse WHOIS query carries. */
-const REVERSE_WHOIS_TEXT_MAX = 128;
+/** ViewDNS refuses a reverse WHOIS search term outside 5 to 256 characters. */
+const REVERSE_WHOIS_QUERY_MIN = 5;
+const REVERSE_WHOIS_QUERY_MAX = 256;
+
+function emailOrNull(text: string): string | null {
+  const email = validateIdentifierValue("email", text);
+  return email.ok ? email.value : null;
+}
 
 function parseReverseWhoisQuerySeed(raw: string): string | null {
   const text = raw.trim().replaceAll(/\s+/g, " ");
-  if (text.includes("@")) {
-    const email = validateIdentifierValue("email", text);
-    return email.ok ? email.value : null;
+  const value = text.includes("@") ? emailOrNull(text) : text;
+  if (value === null) return null;
+  if (
+    value.length < REVERSE_WHOIS_QUERY_MIN ||
+    value.length > REVERSE_WHOIS_QUERY_MAX
+  ) {
+    return null;
   }
-  if (text.length < 2 || text.length > REVERSE_WHOIS_TEXT_MAX) return null;
-  return /\p{Cc}/u.test(text) ? null : text;
+  return /\p{Cc}/u.test(value) ? null : value;
 }
 
 function seedStringSchema(

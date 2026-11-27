@@ -247,3 +247,19 @@ export const securityTrails = defineProvider({
     "api.securitytrails.com": "forbidden",
   },
 });
+
+/**
+ * ViewDNS API terms (viewdns.info/api/terms/) bar reselling or redistributing access to the API
+ * but say nothing found on storing or exporting results, so the owner must review by hand.
+ * 250 free sandbox queries; reverse WHOIS needs a paid plan.
+ */
+export const viewDns = defineProvider({
+  name: "ViewDNS",
+  url: "https://viewdns.info",
+  termsUrl: "https://viewdns.info/api/terms/",
+  tier: "freemium",
+  commercialUse: "unknown",
+  hosts: {
+    "api.viewdns.info": "unknown",
+  },
+});

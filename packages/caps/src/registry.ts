@@ -45,6 +45,9 @@ import { trancoLookup } from "./network/tranco.lookup/cap";
 import { urlEnrich } from "./network/url.enrich/cap";
 import { urlscanLookup } from "./network/urlscan.lookup/cap";
 import { urlscanSubmit } from "./network/urlscan.submit/cap";
+import { viewDnsReverseMx } from "./network/viewdns.reverse_mx/cap";
+import { viewDnsReverseNs } from "./network/viewdns.reverse_ns/cap";
+import { viewDnsReverseWhois } from "./network/viewdns.reverse_whois/cap";
 import { whoisLookup } from "./network/whois.lookup/cap";
 import { whoisXmlLookup } from "./network/whoisxml.lookup/cap";
 import { whoxyLookup } from "./network/whoxy.lookup/cap";
@@ -100,6 +103,9 @@ const REGISTERED = [
   censysLookup,
   leakixLookup,
   securityTrailsLookup,
+  viewDnsReverseWhois,
+  viewDnsReverseNs,
+  viewDnsReverseMx,
   torExitLookup,
   trancoLookup,
   urlEnrich,

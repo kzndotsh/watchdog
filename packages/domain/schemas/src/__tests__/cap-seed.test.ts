@@ -130,10 +130,18 @@ describe("cap seed schemas", () => {
 
   it("reverseWhoisQuerySeedSchema rejects empty, malformed-email and over-long input", () => {
     expect(() => reverseWhoisQuerySeedSchema.parse("   ")).toThrow();
-    expect(() => reverseWhoisQuerySeedSchema.parse("a")).toThrow();
+    expect(() => reverseWhoisQuerySeedSchema.parse("Ada")).toThrow();
     expect(() => reverseWhoisQuerySeedSchema.parse("not@@email")).toThrow();
-    expect(() => reverseWhoisQuerySeedSchema.parse("x".repeat(129))).toThrow();
+    expect(() => reverseWhoisQuerySeedSchema.parse("x".repeat(257))).toThrow();
     expect(() => reverseWhoisQuerySeedSchema.parse("bad\u0007name")).toThrow();
+  });
+
+  it("reverseWhoisQuerySeedSchema enforces ViewDNS's 5 to 256 character bound", () => {
+    expect(reverseWhoisQuerySeedSchema.parse("Ada L")).toBe("Ada L");
+    expect(() => reverseWhoisQuerySeedSchema.parse("Ada ")).toThrow();
+    expect(reverseWhoisQuerySeedSchema.parse("x".repeat(256))).toHaveLength(
+      256
+    );
   });
 
   it("seed schemas are JSON Schema representable for cap inputForm", () => {

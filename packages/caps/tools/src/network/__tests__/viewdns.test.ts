@@ -410,6 +410,33 @@ describe("fetchViewDnsReverseWhoisEffect", () => {
   );
 
   it.effect(
+    "returns no matches when ViewDNS leaves out the array for a count of 0",
+    () =>
+      Effect.gen(function* emptyWhoisGen() {
+        mockServer.use(
+          http.get(`${BASE}/reversewhois/`, () =>
+            HttpResponse.json({
+              query: {
+                tool: "reversewhois_PRO",
+                query: "nobody@nowhere.example",
+              },
+              response: {
+                result_count: "0",
+                total_pages: "0",
+                current_page: "1",
+              },
+            })
+          )
+        );
+
+        const snap = yield* reverseWhois("nobody@nowhere.example");
+
+        expect(snap.matches).toEqual([]);
+        expect(snap.resultCount).toBe(0);
+      })
+  );
+
+  it.effect(
     "fails when a 2xx response has no matches array but a non-zero count",
     () =>
       Effect.gen(function* noMatchesGen() {
