@@ -19,7 +19,7 @@ import { normalizeHost } from "../normalize";
 import { asNumber, asString, isRecord } from "../parse/coerce";
 
 const SERVICE = "ViewDNS";
-const SOURCE = "api.viewdns.info";
+const SOURCE = "api.viewdns.info" as const;
 const BASE = "https://api.viewdns.info";
 
 /** What a free or sandbox key gets back from reverse WHOIS in place of a result. */

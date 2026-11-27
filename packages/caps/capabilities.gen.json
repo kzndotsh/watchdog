@@ -2066,7 +2066,7 @@
   },
   {
     "id": "network.viewdns.reverse_whois",
-    "version": "26b97fce0adb",
+    "version": "3a0165727bcd",
     "title": "ViewDNS reverse WHOIS",
     "provider": {
       "name": "ViewDNS",
@@ -2156,7 +2156,7 @@
   },
   {
     "id": "network.viewdns.reverse_ns",
-    "version": "4134f1709dff",
+    "version": "1d5e0ccc5cc2",
     "title": "ViewDNS reverse nameserver",
     "provider": {
       "name": "ViewDNS",
@@ -2245,7 +2245,7 @@
   },
   {
     "id": "network.viewdns.reverse_mx",
-    "version": "8b565076954c",
+    "version": "d7fbefc15dd8",
     "title": "ViewDNS reverse mail server",
     "provider": {
       "name": "ViewDNS",
